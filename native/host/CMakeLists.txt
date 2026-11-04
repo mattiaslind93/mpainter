@@ -749,6 +749,13 @@ target_include_directories(bts-warp-grid-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-warp-grid-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-warp-grid-tests PRIVATE Qt6::Core)
 
+add_executable(bts-warp-editor-tests ${BTS_HOST_SOURCE_DIR}/../tests/warp_editor_test.cc
+  ${BTS_HOST_SOURCE_DIR}/WarpEditor.cc ${BTS_HOST_SOURCE_DIR}/ColorPicker.cc)
+target_include_directories(bts-warp-editor-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
+target_compile_features(bts-warp-editor-tests PRIVATE cxx_std_20)
+target_compile_definitions(bts-warp-editor-tests PRIVATE BTS_STANDALONE_COLOR_PICKER)
+target_link_libraries(bts-warp-editor-tests PRIVATE bts-export-config Qt6::Widgets)
+
 add_executable(bts-image-sequence-tests ${BTS_HOST_SOURCE_DIR}/../tests/image_sequence_test.cc)
 target_include_directories(bts-image-sequence-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-image-sequence-tests PRIVATE cxx_std_20)
