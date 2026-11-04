@@ -87,7 +87,7 @@ inline bool set_layer_channel(TextureSet &set,const QUuid &id,int channel,bool e
   else if(channel==14)edited.displacement.enabled=enabled;
   else edited.users[channel-6].enabled=enabled;
   layer=std::move(edited);
-  if(removed_selection)set.selected_effect={};
+  if(removed_selection)set.selected_effect=QUuid();
   return true;
 }
 }

@@ -131,11 +131,11 @@ class LayerStackList final : public QListWidget {
   }
   void update_gap(QPoint point) {
     last_position_=point;const auto index=indexAt({5,point.y()});
-    gap_=index.isValid()?index.row()+(point.y()>visualRect(index).center().y()?1:0):point.y()<0?0:count();into_folder_=false;drop_target_={};drop_above_=point.y()<0;
+    gap_=index.isValid()?index.row()+(point.y()>visualRect(index).center().y()?1:0):point.y()<0?0:count();into_folder_=false;drop_target_=QUuid();drop_above_=point.y()<0;
     if(asset_drag_){while(gap_<count()&&!item(gap_)->data(Qt::UserRole+10).toString().isEmpty())++gap_;viewport()->update();return;}
     if(index.isValid()){const auto rect=visualRect(index);into_folder_=point.x()>=20+index.data(Qt::UserRole+2).toInt()*20&&index.data(Qt::UserRole+3).toBool()&&index.data(Qt::UserRole+10).toString().isEmpty()&&point.y()>rect.top()+rect.height()/4&&point.y()<rect.bottom()-rect.height()/4;int target_row=index.row();if(!into_folder_&&index.data(Qt::UserRole+2).toInt()>0&&point.x()<20+index.data(Qt::UserRole+2).toInt()*20){while(target_row>0&&item(target_row)->data(Qt::UserRole+2).toInt()>0)--target_row;}drop_target_=QUuid(item(target_row)->data(Qt::UserRole).toString());drop_above_=gap_<=index.row();}
     viewport()->update();
   }
-  void clear_gap(){asset_drag_=false;scroll_.stop();gap_=-1;into_folder_=false;drop_target_={};viewport()->update();}
+  void clear_gap(){asset_drag_=false;scroll_.stop();gap_=-1;into_folder_=false;drop_target_=QUuid();viewport()->update();}
 };
 }

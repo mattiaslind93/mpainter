@@ -44,9 +44,9 @@ inline void normalize_uniform_material_selection(TextureSet &set) {
  const auto &model=set.material_layering;if(!model.enabled||model.active_mask<0)return;const int which=model.active_mask;const auto groups=material_stack_membership(set);
  const auto visible=[&](const QUuid &id){return groups.contains(id)&&groups.at(id)==which&&id!=model.mask_roots[which];};
  if(!visible(set.selected_layer)){
-  auto next=model.mask_selections[which];if(!visible(next)){next={};for(auto it=set.layers.rbegin();it!=set.layers.rend();++it)if(visible(it->id)){next=it->id;break;}}
+  auto next=model.mask_selections[which];if(!visible(next)){next=QUuid();for(auto it=set.layers.rbegin();it!=set.layers.rend();++it)if(visible(it->id)){next=it->id;break;}}
   if(next.isNull())throw std::invalid_argument("Keep at least one layer in each opacity stack; add a replacement before deleting its last layer");
-  set.selected_layer=next;set.selected_mask=false;set.selected_effect={};set.selected_geometry=false;
+  set.selected_layer=next;set.selected_mask=false;set.selected_effect=QUuid();set.selected_geometry=false;
  }
  set.material_layering.mask_selections[which]=set.selected_layer;
 }
@@ -87,7 +87,7 @@ inline void require_material_layering_workflow(const TextureDocument &document,c
 struct MaterialLayeringBrushRoute {
  struct Channels {std::array<bool,5> channels;std::array<bool,8> users;bool ao,displacement;};
  std::optional<Channels> main;QUuid owner;
- void restore(BrushSettings &brush) {if(main){brush.channels=main->channels;brush.users=main->users;brush.ao=main->ao;brush.displacement=main->displacement;main.reset();owner={};}}
+ void restore(BrushSettings &brush) {if(main){brush.channels=main->channels;brush.users=main->users;brush.ao=main->ao;brush.displacement=main->displacement;main.reset();owner=QUuid();}}
  void synchronize(BrushSettings &brush,const TextureSet *set) {
   const bool mask=set&&set->material_layering.enabled&&set->material_layering.active_mask>=0;
   if(!mask){restore(brush);return;}

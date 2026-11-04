@@ -16,16 +16,16 @@ TextureSet precompose_capture_source(const TextureSet &source,int below){
  TextureLayer group;group.kind=LayerKind::Folder;group.name="Pre-compose";group.channels.fill(true);group.ao_enabled=true;group.displacement.enabled=true;group.displacement.blending=LayerBlend::Normal;group.blending.fill(LayerBlend::Passthrough);group.ao_blending=LayerBlend::Passthrough;group.displacement.blending=LayerBlend::Passthrough;
  for(auto &u:group.users){u.enabled=true;u.blending=LayerBlend::Passthrough;}
  for(auto &l:result.layers){if(l.depth==0)l.parent=group.id;++l.depth;}
- result.selected_layer=group.id;result.selected_mask=false;result.selected_geometry=false;result.selected_effect={};result.layers.push_back(std::move(group));
+ result.selected_layer=group.id;result.selected_mask=false;result.selected_geometry=false;result.selected_effect=QUuid();result.layers.push_back(std::move(group));
  TextureDocument::validate_hierarchy(result);return result;
 }
 void install_precompose_layer(TextureSet &set,TextureLayer cache,int index,bool update){
  if(index<1||index>int(set.layers.size())||set.layers[index-1].depth!=0)throw std::invalid_argument("Pre-compose insertion changed");
- cache.name="Pre-compose";cache.precompose_below=true;cache.kind=LayerKind::Fill;cache.depth=0;cache.parent={};cache.mask.reset();cache.visible=true;cache.fill.mode=6;cache.fill.filtering=2;cache.fill.bump_bias=-set.bump_offset();cache.opacity.fill(1);cache.blending.fill(LayerBlend::Normal);cache.ao_opacity=1;cache.ao_blending=LayerBlend::Normal;
+ cache.name="Pre-compose";cache.precompose_below=true;cache.kind=LayerKind::Fill;cache.depth=0;cache.parent=QUuid();cache.mask.reset();cache.visible=true;cache.fill.mode=6;cache.fill.filtering=2;cache.fill.bump_bias=-set.bump_offset();cache.opacity.fill(1);cache.blending.fill(LayerBlend::Normal);cache.ao_opacity=1;cache.ao_blending=LayerBlend::Normal;
  for(auto &u:cache.users){u.opacity=1;u.blending=LayerBlend::Normal;}cache.displacement.opacity=1;cache.displacement.blending=LayerBlend::Normal;
  if(update){if(index==int(set.layers.size())||!set.layers[index].precompose_below)throw std::invalid_argument("Pre-compose cache no longer exists");cache.id=set.layers[index].id;set.layers[index]=std::move(cache);}
  else set.layers.insert(set.layers.begin()+index,std::move(cache));
- set.selected_layer=set.layers[index].id;set.selected_mask=false;set.selected_geometry=false;set.selected_effect={};set.instance_layers.reset();TextureDocument::validate_hierarchy(set);
+ set.selected_layer=set.layers[index].id;set.selected_mask=false;set.selected_geometry=false;set.selected_effect=QUuid();set.instance_layers.reset();TextureDocument::validate_hierarchy(set);
 }
 std::uint64_t flatten_available_ram_bytes(){const auto available=texture_available_ram_bytes();return available;}
 FlattenPlan prepare_flatten_layer(const TextureSet &source,const QUuid &id){
@@ -73,7 +73,7 @@ std::optional<FlattenedLayer> flatten_layer_pixels(const TextureSet &source,cons
  TextureSet content=source;content.instance_layers.reset();content.instance_hierarchies.clear();content.layers.assign(layers.begin()+first,layers.begin()+last+1);
  const bool has_content=std::any_of(content.layers.begin(),content.layers.end(),[](const auto &layer){return layer.visible&&(layer.kind==LayerKind::Fill||!layer.pixels.empty()||!layer.ao_pixels.empty()||!layer.displacement.pixels.empty()||!layer.effects.empty()||std::any_of(layer.users.begin(),layer.users.end(),[](const auto &user){return !user.pixels.empty();}));});
  if(!has_content)throw std::invalid_argument("No visible texture data in the selected layer/group");
- const int depth=found->depth;for(auto &layer:content.layers){if(layer.instance)throw std::invalid_argument("Flatten an instance at its source");layer.depth-=depth;if(layer.id==id)layer.parent={};}
+ const int depth=found->depth;for(auto &layer:content.layers){if(layer.instance)throw std::invalid_argument("Flatten an instance at its source");layer.depth-=depth;if(layer.id==id)layer.parent=QUuid();}
  auto &root=content.layers.back();root.opacity.fill(1);root.blending.fill(LayerBlend::Normal);root.channels=layer_source_channels(root.channels,root.kind==LayerKind::Fill&&bool(root.fill.native_material));root.ao_opacity=1;root.ao_blending=LayerBlend::Normal;root.ao_enabled=true;root.mask.reset();
  for(auto &user:root.users){user.opacity=1;user.blending=LayerBlend::Normal;user.enabled=true;}root.displacement.opacity=1;root.displacement.blending=LayerBlend::Normal;root.displacement.enabled=true;
  std::array<bool,15> contextual{};bool needs_context=false;
@@ -120,6 +120,6 @@ std::optional<FlattenedLayer> flatten_layer_pixels(const TextureSet &source,cons
 void install_flattened_layer(TextureSet &set,TextureLayer layer,const QUuid &source){
  const auto found=std::find_if(set.layers.begin(),set.layers.end(),[&](const auto &value){return value.id==source;});
  if(found==set.layers.end())throw std::invalid_argument("Flatten source no longer exists");
- const auto index=found-set.layers.begin();found->visible=false;set.selected_layer=layer.id;set.selected_mask=false;set.selected_geometry=false;set.selected_effect={};set.layers.insert(set.layers.begin()+index+1,std::move(layer));TextureDocument::validate_hierarchy(set);
+ const auto index=found-set.layers.begin();found->visible=false;set.selected_layer=layer.id;set.selected_mask=false;set.selected_geometry=false;set.selected_effect=QUuid();set.layers.insert(set.layers.begin()+index+1,std::move(layer));TextureDocument::validate_hierarchy(set);
 }
 }

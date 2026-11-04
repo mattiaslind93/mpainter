@@ -2461,7 +2461,7 @@ int capture_ac_panels(const QString &directory){
   if(shell.findChild<QWidget *>("propertiesSlot")->isHidden())qFatal("AC properties did not return");
   show();
   fill.kind=LayerKind::Paint;
-  set.layers={fill};set.selected_layer=fill.id;set.selected_mask=false;set.selected_effect={};
+  set.layers={fill};set.selected_layer=fill.id;set.selected_mask=false;set.selected_effect=QUuid();
   show();
   if(auto *normal=shell.findChild<QToolButton *>("brushChannel3");!normal||!normal->isHidden())qFatal("AC paint still shows nrm");
   if(auto *bump=shell.findChild<QToolButton *>("brushChannel4");!bump||bump->isHidden()||bump->text()!="bump")qFatal("AC paint bump missing");

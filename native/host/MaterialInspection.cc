@@ -643,7 +643,7 @@ struct MaterialInspection::Impl {
       std::printf("BTS_GPU_GEOMETRY_READY uid=%u tiles=%zu layer_composite_cpu=0\n",uid,binding.projection_cache.size());
     }
   }
-  void invalidate(std::uint32_t uid){gpu_queued.erase(uid);gpu_stack_queued.erase(uid);if(auto found=bindings.find(uid);found!=bindings.end()){found->second.mask_async_layer={};found->second.gpu_uniform_values={};found->second.gpu_stack_active={};found->second.gpu_unbound_waiting={};found->second.gpu_stack_set.reset();}if(pending&&pending->result.uid==uid)pending.reset();++generation[uid];queued.erase(uid);if(job.valid()&&running_uid==uid&&cancel)cancel->store(true);}
+  void invalidate(std::uint32_t uid){gpu_queued.erase(uid);gpu_stack_queued.erase(uid);if(auto found=bindings.find(uid);found!=bindings.end()){found->second.mask_async_layer=QUuid();found->second.gpu_uniform_values={};found->second.gpu_stack_active={};found->second.gpu_unbound_waiting={};found->second.gpu_stack_set.reset();}if(pending&&pending->result.uid==uid)pending.reset();++generation[uid];queued.erase(uid);if(job.valid()&&running_uid==uid&&cancel)cancel->store(true);}
 };
 std::uint64_t MaterialInspection::release_bake_scratch(){return impl_->gpu_preview.release_bake_scratch();}
 void MaterialInspection::publish_native_material_preview(const std::string &resource,const std::string &hash){impl_->gpu_preview.publish_native_material_preview(resource,hash);}
@@ -796,7 +796,7 @@ void MaterialInspection::poll_gpu_programs(){
   }
 }
 bool MaterialInspection::gpu_programs_pending()const{return impl_->gpu_preview.programs_pending();}
-void MaterialInspection::reset(bool terminal) {if(terminal)NativeWorldNormalGeometryJob::shutdown();impl_->cycles.reset();impl_->cycles_entry_waiting=false;impl_->cycles_entry_requested=false;impl_->cycles_preparation_failed=false;impl_->cycles_preparation_error.clear();impl_->texture_preparation_owner={};impl_->preparing_textures.clear();impl_->texture_upload_waiting=false;impl_->texture_upload_error.clear();bool projection_jobs=false,margin_jobs=false;for(auto &[uid,binding]:impl_->bindings)if(binding.world_geometry_job)binding.world_geometry_job->cancelled=true;for(auto &[uid,binding]:impl_->bindings)if(binding.projection_job){binding.projection_job->cancelled=true;projection_jobs=true;}if(projection_jobs)ProjectionGeometryJob::pool().waitForDone();for(auto &[uid,binding]:impl_->bindings)if(binding.margin_job){binding.margin_job->cancelled=true;margin_jobs=true;}if(margin_jobs)MarginGeometryJob::pool().waitForDone();impl_->gpu_mips_pending=false;impl_->histogram_job.reset();impl_->histogram_failure.reset();impl_->material_sample_job.reset();impl_->material_sample_failure.reset();impl_->thumbnail_job.reset();impl_->thumbnail_failure.reset();impl_->layer_capture_job.reset();impl_->layer_capture_failure.reset();impl_->layering_sources.reset();impl_->layering_sources_pending=false;for(auto &[uid,binding]:impl_->bindings){binding.world_ao_lease.reset();binding.world_ao={};}impl_->gpu_preview.reset(terminal);impl_->gpu_stack_queued.clear();impl_->gpu_queued.clear();impl_->pending.reset();if(impl_->cancel)impl_->cancel->store(true);if(impl_->job.valid()){try{impl_->job.get();}catch(...){}}impl_->queued.clear();impl_->running.reset();impl_->cancel.reset();impl_->generation.clear();impl_->bindings.clear();}
+void MaterialInspection::reset(bool terminal) {if(terminal)NativeWorldNormalGeometryJob::shutdown();impl_->cycles.reset();impl_->cycles_entry_waiting=false;impl_->cycles_entry_requested=false;impl_->cycles_preparation_failed=false;impl_->cycles_preparation_error.clear();impl_->texture_preparation_owner=QUuid();impl_->preparing_textures.clear();impl_->texture_upload_waiting=false;impl_->texture_upload_error.clear();bool projection_jobs=false,margin_jobs=false;for(auto &[uid,binding]:impl_->bindings)if(binding.world_geometry_job)binding.world_geometry_job->cancelled=true;for(auto &[uid,binding]:impl_->bindings)if(binding.projection_job){binding.projection_job->cancelled=true;projection_jobs=true;}if(projection_jobs)ProjectionGeometryJob::pool().waitForDone();for(auto &[uid,binding]:impl_->bindings)if(binding.margin_job){binding.margin_job->cancelled=true;margin_jobs=true;}if(margin_jobs)MarginGeometryJob::pool().waitForDone();impl_->gpu_mips_pending=false;impl_->histogram_job.reset();impl_->histogram_failure.reset();impl_->material_sample_job.reset();impl_->material_sample_failure.reset();impl_->thumbnail_job.reset();impl_->thumbnail_failure.reset();impl_->layer_capture_job.reset();impl_->layer_capture_failure.reset();impl_->layering_sources.reset();impl_->layering_sources_pending=false;for(auto &[uid,binding]:impl_->bindings){binding.world_ao_lease.reset();binding.world_ao={};}impl_->gpu_preview.reset(terminal);impl_->gpu_stack_queued.clear();impl_->gpu_queued.clear();impl_->pending.reset();if(impl_->cancel)impl_->cancel->store(true);if(impl_->job.valid()){try{impl_->job.get();}catch(...){}}impl_->queued.clear();impl_->running.reset();impl_->cancel.reset();impl_->generation.clear();impl_->bindings.clear();}
 bool MaterialInspection::geometry_visibility_enabled(std::uint32_t uid) const{const auto found=impl_->bindings.find(uid);return found!=impl_->bindings.end()&&found->second.geometry_visibility_on;}
 // UV helper nodes borrow image IDs without incrementing their users. The host calls
 // collection only after releasing helper/engine caches and refreshing the source depsgraph.
@@ -1335,14 +1335,14 @@ bool MaterialInspection::queue_layer_edit(const TextureSet &source,CompositeChan
   const auto &layers=evaluation_layers(set);const auto selected_mask=std::find_if(layers.begin(),layers.end(),[&](const auto &layer){return layer.id==set.selected_layer;});const bool has_selected_mask=selected_mask!=layers.end()&&bool(selected_mask->mask);
   // A mask image can outlive its selection. Do not carry that presentation job
   // into a newly selected unmasked layer, or poison its next save as unsupported.
-  if(!has_selected_mask){binding.edit_channels[15]=false;binding.gpu_stack_active[15]=false;binding.mask_async_layer={};
+  if(!has_selected_mask){binding.edit_channels[15]=false;binding.gpu_stack_active[15]=false;binding.mask_async_layer=QUuid();
     if(auto job=impl_->gpu_stack_queued.find(set.material_session_uid);job!=impl_->gpu_stack_queued.end()){job->second.channels[15]=false;if(std::none_of(job->second.channels.begin(),job->second.channels.end(),[](bool value){return value;}))impl_->gpu_stack_queued.erase(job);}
     if(auto failed=impl_->failed_channels.find(set.material_session_uid);failed!=impl_->failed_channels.end()){failed->second[15]=false;if(std::none_of(failed->second.begin(),failed->second.end(),[](bool value){return value;})){impl_->failed_channels.erase(failed);impl_->failures.erase(set.material_session_uid);}}
   }
   // Material-view edits can change an upstream content anchor while its old
   // mask inspection image is unbound. Its layer ID alone does not establish
   // freshness: reselecting that same consumer must queue the latest prefix.
-  if(!channels[15])for(int c=0;c<17;++c)if(c!=15&&channels[c]){binding.mask_async_layer={};break;}
+  if(!channels[15])for(int c=0;c<17;++c)if(c!=15&&channels[c]){binding.mask_async_layer=QUuid();break;}
   channels[15]=(channels[15]||set.selected_mask||binding.displayed_channel==int(InspectionMode::Mask))&&has_selected_mask&&binding.mask_image&&binding.mask_texture;
   if(channels[15])binding.mask_async_layer=set.selected_layer;
   bool any=false;for(int c=0;c<17;++c){if(channels[c]&&composite_image(binding,c)&&composite_texture(binding,c))any=true;else channels[c]=false;}
@@ -1452,8 +1452,8 @@ NativeSourceEditBatch MaterialInspection::prepare_native_source_edits(std::span<
   if(std::any_of(evaluation_layers(snapshot).begin(),evaluation_layers(snapshot).end(),[](const auto &layer){return TextureDocument::anchor_dependent(layer);}))for(int c=0;c<17;++c)channels[c]=channels[c]||complete_composite_channels[c];
   Patch patch{&binding,snapshot,binding.mask_async_layer,binding.edit_channels,binding.gpu_stack_active,binding.gpu_unbound_waiting};
   const auto &layers=evaluation_layers(snapshot);const auto selected=std::find_if(layers.begin(),layers.end(),[&](const auto &layer){return layer.id==snapshot.selected_layer;});const bool has_mask=selected!=layers.end()&&bool(selected->mask);
-  if(!has_mask){patch.edit_channels[15]=patch.gpu_stack_active[15]=false;patch.mask_async_layer={};}
-  if(!channels[15])for(int c=0;c<17;++c)if(c!=15&&channels[c]){patch.mask_async_layer={};break;}
+  if(!has_mask){patch.edit_channels[15]=patch.gpu_stack_active[15]=false;patch.mask_async_layer=QUuid();}
+  if(!channels[15])for(int c=0;c<17;++c)if(c!=15&&channels[c]){patch.mask_async_layer=QUuid();break;}
   channels[15]=(channels[15]||snapshot.selected_mask||binding.displayed_channel==int(InspectionMode::Mask))&&has_mask&&binding.mask_image&&binding.mask_texture;if(channels[15])patch.mask_async_layer=snapshot.selected_layer;
   bool any=false;for(int c=0;c<17;++c){
    const bool required=c<5||c==6||(c==5&&(set.ao_channel||set.mesh_maps[3]))||(c>=7&&c<15&&(set.users[c-7].allocated||set.users[c-7].present))||(c==15&&has_mask&&(set.selected_mask||binding.displayed_channel==int(InspectionMode::Mask)))||(c==16&&set.displacement.allocated);
@@ -1525,7 +1525,7 @@ bool MaterialInspection::prepare_texture_resources(const QUuid &owner,const std:
 }
 bool MaterialInspection::cancel_texture_preparation(const QUuid &owner){
  if(owner.isNull()||impl_->texture_preparation_owner!=owner)return false;
- impl_->texture_preparation_owner={};impl_->preparing_textures.clear();impl_->texture_upload_waiting=false;impl_->texture_upload_error.clear();return true;
+ impl_->texture_preparation_owner=QUuid();impl_->preparing_textures.clear();impl_->texture_upload_waiting=false;impl_->texture_upload_error.clear();return true;
 }
 
 bool MaterialInspection::updates_pending(bool include_preparation)const{return impl_->gpu_preview.programs_pending()||impl_->cycles.pending()||impl_->layering_sources_pending||(include_preparation&&(impl_->gpu_preview.native_preparations_pending()||impl_->texture_upload_waiting))||bool(impl_->layer_capture_job)||bool(impl_->thumbnail_job)||bool(impl_->material_sample_job)||bool(impl_->histogram_job)|| impl_->gpu_preview.metadata_pending()||impl_->cpu_pending()||impl_->gpu_mips_pending||!impl_->gpu_queued.empty()||!impl_->gpu_stack_queued.empty()||std::any_of(impl_->bindings.begin(),impl_->bindings.end(),[](const auto &entry){return entry.second.world_view_dirty||entry.second.world_objects_dirty||bool(entry.second.margin_job)||bool(entry.second.projection_job)||NativeWorldNormalContextRoute::producer_pending(entry.second.world_set.has_value(),bool(entry.second.world_geometry_job))||(entry.second.world_set&&entry.second.world_tile<entry.second.world_tiles.size());});}

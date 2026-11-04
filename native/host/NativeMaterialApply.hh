@@ -11,7 +11,7 @@ inline QUuid apply_native_material_asset(TextureSet &set,const StudioAsset &asse
     const auto id=target.isNull()?set.selected_layer:target;
     auto &layer=TextureDocument::layer(set,id);
     apply_native_material_bindings(layer,asset,false);
-    set.selected_layer=id;set.selected_mask=false;set.selected_effect={};
+    set.selected_layer=id;set.selected_mask=false;set.selected_effect=QUuid();
     return id;
   }
   TextureDocument::add_fill(set);

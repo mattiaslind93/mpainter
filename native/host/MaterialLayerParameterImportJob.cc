@@ -76,7 +76,7 @@ void MaterialLayerParameterImportJob::start(MaterialParameterImportTarget target
    [this](const QString &text){if(active_&&!cancelled_)text_=text;},
    [this]{if(active_&&(cancelled_||!candidate_))finish();}); // NO deliver_when.
   timer_.start();
- }catch(...){active_=false;token_={};throw;}
+ }catch(...){active_=false;token_=QUuid();throw;}
 }
 void MaterialLayerParameterImportJob::release(){if(leased_){hooks_.release(token_);leased_=false;}}
 void MaterialLayerParameterImportJob::cancel(){
@@ -86,7 +86,7 @@ void MaterialLayerParameterImportJob::cancel(){
 }
 void MaterialLayerParameterImportJob::fail(const QString &error){error_=error;cancel();}
 void MaterialLayerParameterImportJob::finish(){
- release();candidate_.reset();target_={};timer_.stop();active_=false;token_={};
+ release();candidate_.reset();target_={};timer_.stop();active_=false;token_=QUuid();
  text_=!error_.isEmpty()?"Parameter import failed":cancelled_?"Parameter import cancelled; project unchanged.":"Material parameters imported.";
 }
 void MaterialLayerParameterImportJob::poll(){

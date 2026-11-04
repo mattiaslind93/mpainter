@@ -56,7 +56,7 @@ ShaderController::ShaderController(WorkspaceShell *shell,ShaderHooks hooks):QObj
  auto *list=shell_->texture_sets();list->setContextMenuPolicy(Qt::CustomContextMenu);connect(list,&QListWidget::customContextMenuRequested,this,[this,list](QPoint point){menu(list->row(list->itemAt(point)));});for(auto *button:dialog_->findChildren<QPushButton *>()){button->setAutoDefault(false);button->setDefault(false);}sync();
 }
 const TextureSet *ShaderController::selected()const{const auto *doc=hooks_.document();if(!doc)return nullptr;for(const auto &set:doc->texture_sets())if(set.material_session_uid==hooks_.material())return &set;return nullptr;}
-void ShaderController::reset_document(){frame_.stop();idle_.stop();before_.reset();undo_history_.clear();redo_history_.clear();project_={};selected_={};}
+void ShaderController::reset_document(){frame_.stop();idle_.stop();before_.reset();undo_history_.clear();redo_history_.clear();project_=QUuid();selected_=QUuid();}
 void ShaderController::apply(){if(auto *doc=hooks_.document()){for(const auto &set:doc->texture_sets())if(!set.disabled&&set.uniform_editable)hooks_.apply(set);hooks_.repaint();}}
 void ShaderController::finish(){idle_.stop();if(frame_.isActive()){frame_.stop();apply();}if(before_){if(auto *doc=hooks_.document();doc&&*before_!=doc->shader_instances()){undo_history_.push_back(std::move(*before_));if(undo_history_.size()>128)undo_history_.erase(undo_history_.begin());redo_history_.clear();}before_.reset();}undo_->setEnabled(!undo_history_.empty());redo_->setEnabled(!redo_history_.empty());}
 void ShaderController::change(const std::function<void(ShaderInstances &)> &edit,bool immediate){

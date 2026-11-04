@@ -99,7 +99,7 @@ bool MaterialLayeringUi::consume_shelf(const StudioAsset &asset){
 }
 void MaterialLayeringUi::clear_buffer(){
  shelf_cancelled_|=bool(shelf_);shelf_.reset();if(target_&&hooks_.cancel_load)for(int input=0;input<4;++input)for(int channel:{0,1,2,4,5}){TextureLoadTarget target;target.document=target_->project;target.set=target_->set;target.buffer=buffer_;target.material_input=input;target.channel=channel;hooks_.cancel_load(target);}
- if(preparing_&&hooks_.release)hooks_.release();preparing_=false;target_.reset();buffer_={};sources_.clear();
+ if(preparing_&&hooks_.release)hooks_.release();preparing_=false;target_.reset();buffer_=QUuid();sources_.clear();
 }
 void MaterialLayeringUi::open(){try{
  if(import_progress_||(hooks_.parameter_import_status&&hooks_.parameter_import_status().pending))throw std::runtime_error("Finish parameter Import before opening the material editor");
