@@ -227,7 +227,7 @@ PaintPixels::Pixel &PaintPixels::writable(int channel,int x,int y) {
   hash_cache_.at(channel).reset();
   auto &page=channels_.at(channel)[page_key(x,y)];
   if (!page) page=std::make_shared<Page>();
-  else if (!page.unique()) page=std::make_shared<Page>(*page);
+  else if (!(page.use_count() == 1)) page=std::make_shared<Page>(*page);
   page->gpu_version.store(0,std::memory_order_relaxed);
   return page->pixels[(y%page_side)*page_side+x%page_side];
 }
