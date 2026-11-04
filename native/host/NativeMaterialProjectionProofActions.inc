@@ -42,7 +42,7 @@
         if(!document||selected_material<0)throw std::runtime_error("BJ Save without project");
         const auto &set=document->set(snapshot.materials[selected_material].session_id);
         const auto path=workspace->property("bjProject").toString();if(path.isEmpty())throw std::runtime_error("BJ private Save path missing");
-        const auto expected=bts::projection_ui_proof::witness(*document,assets.project_assets(),set.id,set.selected_layer);
+        const auto expected=bts::projection_ui_proof::witness(*document,assets.project_assets(),set.id,set.selected_layer,qEnvironmentVariableIsSet("BTS_POLYHAVEN_DEMO")?QJsonArray{1001}:QJsonArray{1001,1002,1011});
         QFile file(path+".bj-witness.json");if(!file.open(QIODevice::WriteOnly))throw std::runtime_error("BJ witness write failed");file.write(QJsonDocument(expected).toJson());file.close();
         save_document(path);
       });

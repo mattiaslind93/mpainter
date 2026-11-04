@@ -1,0 +1,296 @@
+{
+  "materials": 47,
+  "textured": 30,
+  "procedural": 17,
+  "maps": 157,
+  "texture_bytes": 251393682,
+  "native_archive_bytes": 7775705,
+  "library_bytes": 260357624,
+  "unique_texture_sources": 157,
+  "original_inputs_preserved": true,
+  "world_normal_graphs_supported": true,
+  "all_source_checksums_verified": true,
+  "embedded_previews_256px": true,
+  "warnings": {
+    "Aluminium Ribbed": [
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeBump is retained, not replaced by a constant"
+    ],
+    "Calf Hide": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Carbon Fibre": [
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeBump is retained, not replaced by a constant"
+    ],
+    "Coated Metal": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Bare Concrete": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Clean Concrete": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Dusty Concrete": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Plain Concrete": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Denim": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Knit Wool": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Rough Fabric": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Suit Tweed": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Gravel Ground": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Brushed Iron": [
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeBump is retained, not replaced by a constant"
+    ],
+    "Galvanized Steel": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Hammered Metal": [
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeBump is retained, not replaced by a constant"
+    ],
+    "Powder Coat": [
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeBump is retained, not replaced by a constant"
+    ],
+    "Raw Iron": [
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeBump is retained, not replaced by a constant"
+    ],
+    "Rough Iron": [
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeBump is retained, not replaced by a constant"
+    ],
+    "Polished Iron": [
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeBump is retained, not replaced by a constant"
+    ],
+    "Coarse Leather": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Soft Leather": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Worn Leather": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Mortar Brick Wall": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Pebbles": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Grainy Plastic": [
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeBump is retained, not replaced by a constant"
+    ],
+    "Striped Plastic": [
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeBump is retained, not replaced by a constant"
+    ],
+    "Diamond Plate Plastic": [
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeBump is retained, not replaced by a constant"
+    ],
+    "Coarse Rust": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Fine Rust": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Silicone": [
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeBump is retained, not replaced by a constant"
+    ],
+    "Painted Steel": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Rough Steel": [
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeBump is retained, not replaced by a constant"
+    ],
+    "Worn Rusty Steel": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Cherry Wood": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Rough Wood": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Walnut Wood": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Wool": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Reptile Scales": [
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeBump is retained, not replaced by a constant"
+    ],
+    "Leaf Litter": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Lichen Rock": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Rubber": [
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeBump is retained, not replaced by a constant"
+    ],
+    "Gold": [
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeBump is retained, not replaced by a constant"
+    ],
+    "Copper": [
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeBump is retained, not replaced by a constant"
+    ],
+    "Marble": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Stone Wall": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ],
+    "Ceramic Tiles": [
+      "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+      "Thin Wall: input type is not editable yet",
+      "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+      "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+    ]
+  },
+  "ui": {
+    "materials_tested": [
+      "Gold",
+      "Denim",
+      "Carbon Fibre",
+      "Cherry Wood"
+    ],
+    "uv_and_triplanar": true,
+    "projection_changes_gpu_samples": true,
+    "packed_open": {
+      "actual_tiles": [
+        1001
+      ],
+      "data_first": true,
+      "layer": "{92ee680b-1229-41ef-aa8e-e55603051caf}",
+      "resource_count": 15,
+      "set": "{4bef5e09-851b-42ce-817f-f32956eaf839}",
+      "source_bytes_parameters_and_resolved_pixels_equal": true
+    },
+    "resolution": 128
+  },
+  "run": {
+    "command": "distrobox enter bts-build -- env BTS_POLYHAVEN_OUTPUT=/mnt/mpainter-phase1/build/polyhaven/ui-alias-fixed /usr/bin/time -v bash /mnt/mpainter-phase1/mpainter/scripts/polyhaven/run-headless.sh test",
+    "exit_status": 0,
+    "elapsed_seconds": 129.27,
+    "maximum_rss_kib": 1939884,
+    "swap_operations": 0,
+    "build_parallel": 4,
+    "headless": "xvfb-run, bts-build",
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "warm_open_regression": "Missing resource-binding generation invalidation fixed; same save/open test no longer stalls on derived normals."
+  }
+}

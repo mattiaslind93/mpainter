@@ -1,0 +1,5 @@
+bts-asset-tests: PASS (exit 0, assertions enabled)
+BTS_NUMERIC_LOCALE value=C decimal=.
+Workspace asset drop: actual Shelf MIME, top/middle/bottom insertion, smart folder, double-click, geometry constraint and visible progress/error PASS
+
+run-headless.sh cpu: exit 0; sequential under Xvfb in bts-build.

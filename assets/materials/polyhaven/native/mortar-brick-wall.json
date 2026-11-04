@@ -1,0 +1,746 @@
+{
+    "channels": [
+        {
+            "channel": 0,
+            "error": "",
+            "supported": true
+        },
+        {
+            "channel": 1,
+            "error": "",
+            "supported": true
+        },
+        {
+            "channel": 2,
+            "error": "",
+            "supported": true
+        },
+        {
+            "channel": 4,
+            "error": "Native bump/normal extraction unavailable: Normal Map source has no authored scalar Height",
+            "supported": false
+        },
+        {
+            "channel": 5,
+            "error": "",
+            "supported": true
+        },
+        {
+            "channel": 14,
+            "error": "",
+            "supported": true
+        }
+    ],
+    "material": {
+        "filename": "material.btsnative.blend",
+        "id": "5637a33f-7b83-4fd7-8103-9ee8c65f022a",
+        "material": {
+            "ao": 1,
+            "base_color": [
+                0.5,
+                0.5,
+                0.5,
+                1
+            ],
+            "bump": 0.5,
+            "metallic": 0,
+            "normal": [
+                0,
+                0,
+                1
+            ],
+            "roughness": 0.30000001192092896
+        },
+        "name": "Mortar Brick Wall",
+        "native_material": {
+            "channels": [
+                0,
+                1,
+                2,
+                5,
+                14
+            ],
+            "color_from_aces": [
+                1,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                1
+            ],
+            "color_to_aces": [
+                1,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                1
+            ],
+            "group": "",
+            "material": "Mortar Brick Wall",
+            "node_types": [
+                "ShaderNodeBsdfPrincipled",
+                "ShaderNodeDisplacement",
+                "ShaderNodeMapping",
+                "ShaderNodeMixRGB",
+                "ShaderNodeNormalMap",
+                "ShaderNodeOutputMaterial",
+                "ShaderNodeTexCoord",
+                "ShaderNodeTexImage"
+            ],
+            "parameters": [
+                {
+                    "editable": false,
+                    "id": "Base Color",
+                    "mapping": false,
+                    "max": 65504,
+                    "min": 0,
+                    "name": "Base Color",
+                    "ramp": {
+                    },
+                    "source_node": "ShaderNodeMixRGB",
+                    "source_socket": "Color",
+                    "type": 2,
+                    "value": [
+                        0.7999999523162842,
+                        0.7999999523162842,
+                        0.7999999523162842,
+                        1
+                    ]
+                },
+                {
+                    "editable": true,
+                    "id": "Metallic",
+                    "mapping": false,
+                    "max": 1,
+                    "min": 0,
+                    "name": "Metallic",
+                    "ramp": {
+                    },
+                    "source_node": "",
+                    "source_socket": "",
+                    "type": 0,
+                    "value": [
+                        0
+                    ]
+                },
+                {
+                    "editable": true,
+                    "id": "Roughness",
+                    "mapping": false,
+                    "max": 1,
+                    "min": 0,
+                    "name": "Roughness",
+                    "ramp": {
+                    },
+                    "source_node": "ShaderNodeTexImage",
+                    "source_socket": "Color",
+                    "type": 0,
+                    "value": [
+                        0.5
+                    ]
+                },
+                {
+                    "editable": true,
+                    "id": "IOR",
+                    "mapping": false,
+                    "max": 1000,
+                    "min": 1,
+                    "name": "IOR",
+                    "ramp": {
+                    },
+                    "source_node": "",
+                    "source_socket": "",
+                    "type": 0,
+                    "value": [
+                        1.5
+                    ]
+                },
+                {
+                    "editable": true,
+                    "id": "Alpha",
+                    "mapping": false,
+                    "max": 1,
+                    "min": 0,
+                    "name": "Alpha",
+                    "ramp": {
+                    },
+                    "source_node": "",
+                    "source_socket": "",
+                    "type": 0,
+                    "value": [
+                        1
+                    ]
+                },
+                {
+                    "editable": false,
+                    "id": "Normal",
+                    "mapping": false,
+                    "max": 3.4028234663852886e+38,
+                    "min": -3.4028234663852886e+38,
+                    "name": "Normal",
+                    "ramp": {
+                    },
+                    "source_node": "ShaderNodeNormalMap",
+                    "source_socket": "Normal",
+                    "type": 1,
+                    "value": [
+                        0,
+                        0,
+                        0
+                    ]
+                },
+                {
+                    "editable": true,
+                    "id": "Diffuse Roughness",
+                    "mapping": false,
+                    "max": 1,
+                    "min": 0,
+                    "name": "Diffuse Roughness",
+                    "ramp": {
+                    },
+                    "source_node": "",
+                    "source_socket": "",
+                    "type": 0,
+                    "value": [
+                        0
+                    ]
+                },
+                {
+                    "editable": true,
+                    "id": "Subsurface Weight",
+                    "mapping": false,
+                    "max": 1,
+                    "min": 0,
+                    "name": "Subsurface Weight",
+                    "ramp": {
+                    },
+                    "source_node": "",
+                    "source_socket": "",
+                    "type": 0,
+                    "value": [
+                        0
+                    ]
+                },
+                {
+                    "editable": true,
+                    "id": "Subsurface Radius",
+                    "mapping": false,
+                    "max": 100,
+                    "min": 0,
+                    "name": "Subsurface Radius",
+                    "ramp": {
+                    },
+                    "source_node": "",
+                    "source_socket": "",
+                    "type": 1,
+                    "value": [
+                        0.6857361197471619,
+                        0.2548108994960785,
+                        0.12951120734214783
+                    ]
+                },
+                {
+                    "editable": true,
+                    "id": "Subsurface Scale",
+                    "mapping": false,
+                    "max": 10,
+                    "min": 0,
+                    "name": "Subsurface Scale",
+                    "ramp": {
+                    },
+                    "source_node": "",
+                    "source_socket": "",
+                    "type": 0,
+                    "value": [
+                        0.004999999888241291
+                    ]
+                },
+                {
+                    "editable": true,
+                    "id": "Subsurface Anisotropy",
+                    "mapping": false,
+                    "max": 1,
+                    "min": -1,
+                    "name": "Subsurface Anisotropy",
+                    "ramp": {
+                    },
+                    "source_node": "",
+                    "source_socket": "",
+                    "type": 0,
+                    "value": [
+                        0
+                    ]
+                },
+                {
+                    "editable": true,
+                    "id": "Specular IOR Level",
+                    "mapping": false,
+                    "max": 1,
+                    "min": 0,
+                    "name": "Specular IOR Level",
+                    "ramp": {
+                    },
+                    "source_node": "",
+                    "source_socket": "",
+                    "type": 0,
+                    "value": [
+                        0.5
+                    ]
+                },
+                {
+                    "editable": true,
+                    "id": "Specular Tint",
+                    "mapping": false,
+                    "max": 65504,
+                    "min": 0,
+                    "name": "Specular Tint",
+                    "ramp": {
+                    },
+                    "source_node": "",
+                    "source_socket": "",
+                    "type": 2,
+                    "value": [
+                        1,
+                        1,
+                        1,
+                        1
+                    ]
+                },
+                {
+                    "editable": true,
+                    "id": "Anisotropic",
+                    "mapping": false,
+                    "max": 1,
+                    "min": 0,
+                    "name": "Anisotropic",
+                    "ramp": {
+                    },
+                    "source_node": "",
+                    "source_socket": "",
+                    "type": 0,
+                    "value": [
+                        0
+                    ]
+                },
+                {
+                    "editable": true,
+                    "id": "Anisotropic Rotation",
+                    "mapping": false,
+                    "max": 1,
+                    "min": 0,
+                    "name": "Anisotropic Rotation",
+                    "ramp": {
+                    },
+                    "source_node": "",
+                    "source_socket": "",
+                    "type": 0,
+                    "value": [
+                        0
+                    ]
+                },
+                {
+                    "editable": true,
+                    "id": "Tangent",
+                    "mapping": false,
+                    "max": 3.4028234663852886e+38,
+                    "min": -3.4028234663852886e+38,
+                    "name": "Tangent",
+                    "ramp": {
+                    },
+                    "source_node": "",
+                    "source_socket": "",
+                    "type": 1,
+                    "value": [
+                        0,
+                        0,
+                        0
+                    ]
+                },
+                {
+                    "editable": true,
+                    "id": "Transmission Weight",
+                    "mapping": false,
+                    "max": 1,
+                    "min": 0,
+                    "name": "Transmission Weight",
+                    "ramp": {
+                    },
+                    "source_node": "",
+                    "source_socket": "",
+                    "type": 0,
+                    "value": [
+                        0
+                    ]
+                },
+                {
+                    "editable": true,
+                    "id": "Coat Weight",
+                    "mapping": false,
+                    "max": 1,
+                    "min": 0,
+                    "name": "Coat Weight",
+                    "ramp": {
+                    },
+                    "source_node": "",
+                    "source_socket": "",
+                    "type": 0,
+                    "value": [
+                        0
+                    ]
+                },
+                {
+                    "editable": true,
+                    "id": "Coat Roughness",
+                    "mapping": false,
+                    "max": 1,
+                    "min": 0,
+                    "name": "Coat Roughness",
+                    "ramp": {
+                    },
+                    "source_node": "",
+                    "source_socket": "",
+                    "type": 0,
+                    "value": [
+                        0.029999999329447746
+                    ]
+                },
+                {
+                    "editable": true,
+                    "id": "Coat IOR",
+                    "mapping": false,
+                    "max": 4,
+                    "min": 1,
+                    "name": "Coat IOR",
+                    "ramp": {
+                    },
+                    "source_node": "",
+                    "source_socket": "",
+                    "type": 0,
+                    "value": [
+                        1.5
+                    ]
+                },
+                {
+                    "editable": true,
+                    "id": "Coat Tint",
+                    "mapping": false,
+                    "max": 65504,
+                    "min": 0,
+                    "name": "Coat Tint",
+                    "ramp": {
+                    },
+                    "source_node": "",
+                    "source_socket": "",
+                    "type": 2,
+                    "value": [
+                        1,
+                        1,
+                        1,
+                        1
+                    ]
+                },
+                {
+                    "editable": true,
+                    "id": "Coat Normal",
+                    "mapping": false,
+                    "max": 3.4028234663852886e+38,
+                    "min": -3.4028234663852886e+38,
+                    "name": "Coat Normal",
+                    "ramp": {
+                    },
+                    "source_node": "",
+                    "source_socket": "",
+                    "type": 1,
+                    "value": [
+                        0,
+                        0,
+                        0
+                    ]
+                },
+                {
+                    "editable": true,
+                    "id": "Sheen Weight",
+                    "mapping": false,
+                    "max": 1,
+                    "min": 0,
+                    "name": "Sheen Weight",
+                    "ramp": {
+                    },
+                    "source_node": "",
+                    "source_socket": "",
+                    "type": 0,
+                    "value": [
+                        0
+                    ]
+                },
+                {
+                    "editable": true,
+                    "id": "Sheen Roughness",
+                    "mapping": false,
+                    "max": 1,
+                    "min": 0,
+                    "name": "Sheen Roughness",
+                    "ramp": {
+                    },
+                    "source_node": "",
+                    "source_socket": "",
+                    "type": 0,
+                    "value": [
+                        0.5
+                    ]
+                },
+                {
+                    "editable": true,
+                    "id": "Sheen Tint",
+                    "mapping": false,
+                    "max": 65504,
+                    "min": 0,
+                    "name": "Sheen Tint",
+                    "ramp": {
+                    },
+                    "source_node": "",
+                    "source_socket": "",
+                    "type": 2,
+                    "value": [
+                        1,
+                        1,
+                        1,
+                        1
+                    ]
+                },
+                {
+                    "editable": true,
+                    "id": "Emission Color",
+                    "mapping": false,
+                    "max": 65504,
+                    "min": 0,
+                    "name": "Emission Color",
+                    "ramp": {
+                    },
+                    "source_node": "",
+                    "source_socket": "",
+                    "type": 2,
+                    "value": [
+                        1,
+                        1,
+                        1,
+                        1
+                    ]
+                },
+                {
+                    "editable": true,
+                    "id": "Emission Strength",
+                    "mapping": false,
+                    "max": 1000000,
+                    "min": 0,
+                    "name": "Emission Strength",
+                    "ramp": {
+                    },
+                    "source_node": "",
+                    "source_socket": "",
+                    "type": 0,
+                    "value": [
+                        0
+                    ]
+                },
+                {
+                    "editable": true,
+                    "id": "Thin Film Thickness",
+                    "mapping": false,
+                    "max": 100000,
+                    "min": 0,
+                    "name": "Thin Film Thickness",
+                    "ramp": {
+                    },
+                    "source_node": "",
+                    "source_socket": "",
+                    "type": 0,
+                    "value": [
+                        0
+                    ]
+                },
+                {
+                    "editable": true,
+                    "id": "Thin Film IOR",
+                    "mapping": false,
+                    "max": 1000,
+                    "min": 1,
+                    "name": "Thin Film IOR",
+                    "ramp": {
+                    },
+                    "source_node": "",
+                    "source_socket": "",
+                    "type": 0,
+                    "value": [
+                        1.3300000429153442
+                    ]
+                }
+            ],
+            "surface_type": "ShaderNodeBsdfPrincipled",
+            "version": 2,
+            "warnings": [
+                "Base Color: linked ShaderNodeMixRGB is retained, not replaced by a constant",
+                "Thin Wall: input type is not editable yet",
+                "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+                "Bump shading uses the current mesh. This material's original displacement is kept separately and is not included; the original displaced result is not reproduced."
+            ]
+        },
+        "path": "",
+        "physical_size_cm": null,
+        "sha256": "0e1040fa879dc6e0870b288c132d3d8c9e1f3ed5cbb8209f1e5e0cd04d3f9ea3",
+        "tags": [
+            "blender-native",
+            "native-channel:0",
+            "native-channel:1",
+            "native-channel:2",
+            "native-channel:5",
+            "native-channel:14",
+            "preview:color-metallic-roughness-sphere",
+            "preview:blender-source-shaderball"
+        ],
+        "usages": [
+            "material"
+        ]
+    },
+    "preview": {
+        "image_sha256": "a98bc0b9045f1a78fce99a8d27b0c25c35ea12fe058e889ac1115f3f04020efb",
+        "mesh": "Shader_Ball_JL_01",
+        "renderer": "Blender Cycles CPU"
+    },
+    "source_inputs_preserved": true,
+    "textures": [
+        {
+            "metadata": {
+                "filename": "red_brick_diff_1k.jpg",
+                "id": "749730bc-0625-47db-a884-fd61f0fa95be",
+                "name": "red_brick_diff_1k.jpg",
+                "path": "native/images/6dea3a2b5a3185ff48d299d182c405a9f787129d79677792db6de4afd81c47f6.jpg",
+                "physical_size_cm": null,
+                "sha256": "6dea3a2b5a3185ff48d299d182c405a9f787129d79677792db6de4afd81c47f6",
+                "tags": [
+                    "blender-native-image"
+                ],
+                "texture_files": [
+                    {
+                        "filename": "red_brick_diff_1k.jpg",
+                        "path": "native/images/6dea3a2b5a3185ff48d299d182c405a9f787129d79677792db6de4afd81c47f6.jpg",
+                        "sha256": "6dea3a2b5a3185ff48d299d182c405a9f787129d79677792db6de4afd81c47f6",
+                        "size": 766044,
+                        "tile": 0
+                    }
+                ],
+                "usages": [
+                    "texture"
+                ]
+            }
+        },
+        {
+            "metadata": {
+                "filename": "red_brick_rough_1k.jpg",
+                "id": "13db5e3b-cc60-4de2-b75a-10557340ffbb",
+                "name": "red_brick_rough_1k.jpg",
+                "path": "native/images/9bc9ece8264eb53d6f290bd2950ece5e462f83ce9e65b945fb1caf9972973ab9.jpg",
+                "physical_size_cm": null,
+                "sha256": "9bc9ece8264eb53d6f290bd2950ece5e462f83ce9e65b945fb1caf9972973ab9",
+                "tags": [
+                    "blender-native-image"
+                ],
+                "texture_files": [
+                    {
+                        "filename": "red_brick_rough_1k.jpg",
+                        "path": "native/images/9bc9ece8264eb53d6f290bd2950ece5e462f83ce9e65b945fb1caf9972973ab9.jpg",
+                        "sha256": "9bc9ece8264eb53d6f290bd2950ece5e462f83ce9e65b945fb1caf9972973ab9",
+                        "size": 178614,
+                        "tile": 0
+                    }
+                ],
+                "usages": [
+                    "texture"
+                ]
+            }
+        },
+        {
+            "metadata": {
+                "filename": "red_brick_disp_1k.png",
+                "id": "52e57e80-2062-4a2e-814b-d435dc817abf",
+                "name": "red_brick_disp_1k.png",
+                "path": "native/images/a76152c550d9fbeec216fa02a0ae3541e6e31241ce080614fded5272d2684c3a.png",
+                "physical_size_cm": null,
+                "sha256": "a76152c550d9fbeec216fa02a0ae3541e6e31241ce080614fded5272d2684c3a",
+                "tags": [
+                    "blender-native-image"
+                ],
+                "texture_files": [
+                    {
+                        "filename": "red_brick_disp_1k.png",
+                        "path": "native/images/a76152c550d9fbeec216fa02a0ae3541e6e31241ce080614fded5272d2684c3a.png",
+                        "sha256": "a76152c550d9fbeec216fa02a0ae3541e6e31241ce080614fded5272d2684c3a",
+                        "size": 1646752,
+                        "tile": 0
+                    }
+                ],
+                "usages": [
+                    "texture"
+                ]
+            }
+        },
+        {
+            "metadata": {
+                "filename": "red_brick_ao_1k.jpg",
+                "id": "31045541-98a2-4f53-9d22-1db459365659",
+                "name": "red_brick_ao_1k.jpg",
+                "path": "native/images/cce94207a108753618c7b44fd8298eef0390764235529c8fbff3d92f2075d48b.jpg",
+                "physical_size_cm": null,
+                "sha256": "cce94207a108753618c7b44fd8298eef0390764235529c8fbff3d92f2075d48b",
+                "tags": [
+                    "blender-native-image"
+                ],
+                "texture_files": [
+                    {
+                        "filename": "red_brick_ao_1k.jpg",
+                        "path": "native/images/cce94207a108753618c7b44fd8298eef0390764235529c8fbff3d92f2075d48b.jpg",
+                        "sha256": "cce94207a108753618c7b44fd8298eef0390764235529c8fbff3d92f2075d48b",
+                        "size": 749544,
+                        "tile": 0
+                    }
+                ],
+                "usages": [
+                    "texture"
+                ]
+            }
+        },
+        {
+            "metadata": {
+                "filename": "red_brick_nor_gl_1k.png",
+                "id": "462c0661-cf4e-461a-aac0-7c4f8f46e55b",
+                "name": "red_brick_nor_gl_1k.png",
+                "path": "native/images/e1116366df05651cb54edea4977563a4c0d4ee7a523be61a51fb895c279fa9a8.png",
+                "physical_size_cm": null,
+                "sha256": "e1116366df05651cb54edea4977563a4c0d4ee7a523be61a51fb895c279fa9a8",
+                "tags": [
+                    "blender-native-image"
+                ],
+                "texture_files": [
+                    {
+                        "filename": "red_brick_nor_gl_1k.png",
+                        "path": "native/images/e1116366df05651cb54edea4977563a4c0d4ee7a523be61a51fb895c279fa9a8.png",
+                        "sha256": "e1116366df05651cb54edea4977563a4c0d4ee7a523be61a51fb895c279fa9a8",
+                        "size": 2236680,
+                        "tile": 0
+                    }
+                ],
+                "usages": [
+                    "texture"
+                ]
+            }
+        }
+    ],
+    "world_normal_error": ""
+}

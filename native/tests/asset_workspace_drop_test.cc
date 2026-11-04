@@ -1,4 +1,5 @@
 #include "WorkspaceShell.hh"
+#include "BuiltinPolyHaven.hh"
 #include "LayerStackList.hh"
 #include "AssetApplyProgress.hh"
 #include "AssetThumbnail.hh"
@@ -32,11 +33,13 @@ int bts::run_asset_workspace_drop_test(const QString &directory){
  callbacks.asset_selected=[&](const StudioAsset &asset){assert(asset.id==material.id);++double_clicks;};
  auto *placeholder=new QLabel("CPU regression fixture\n3D rendering is not initialized");placeholder->setAlignment(Qt::AlignCenter);
  WorkspaceShell shell(placeholder,std::move(callbacks));window=&shell;shell.set_asset_catalog(&catalog);shell.resize(1440,1000);shell.show();shell.reset_reference_layout();shell.show_texture_set(&set,&options,&brush);QApplication::processEvents();
- // Count library materials, not the fixed capacity of the blending editor.
- auto *count=shell.findChild<QLabel *>("layerMaterialLibraryCount");assert(count&&!count->isHidden()&&count->text()=="1 library material");
- AssetCatalog empty_catalog(library.filePath("empty"));shell.set_asset_catalog(&empty_catalog);assert(count->isHidden());
- empty_catalog.add(material);shell.refresh_alpha_shelf();assert(!count->isHidden()&&count->text()=="1 library material");
- StudioAsset second=material;second.id=QUuid::createUuid();empty_catalog.add(second);shell.refresh_alpha_shelf();assert(count->text()=="2 library materials");
+ // Count bundled and user library materials independently of editor capacity.
+ const auto builtin_count=builtin_polyhaven_materials().size();
+ const auto label_for=[](std::size_t n){return n==1?QString("1 library material"):QString("%1 library materials").arg(n);};
+ auto *count=shell.findChild<QLabel *>("layerMaterialLibraryCount");assert(count&&!count->isHidden()&&count->text()==label_for(builtin_count+1));
+ AssetCatalog empty_catalog(library.filePath("empty"));shell.set_asset_catalog(&empty_catalog);assert(count->isHidden()==(builtin_count==0));assert(count->text()==label_for(builtin_count));
+ empty_catalog.add(material);shell.refresh_alpha_shelf();assert(!count->isHidden()&&count->text()==label_for(builtin_count+1));
+ StudioAsset second=material;second.id=QUuid::createUuid();empty_catalog.add(second);shell.refresh_alpha_shelf();assert(count->text()==label_for(builtin_count+2));
  shell.set_asset_catalog(nullptr);assert(count->isHidden());shell.set_asset_catalog(&catalog);
  auto *shelf=shell.findChild<QListWidget *>("shelfAssets");auto *layers=dynamic_cast<LayerStackList *>(shell.findChild<QListWidget *>("layerStack"));assert(shelf&&layers);QListWidgetItem *material_item=nullptr;for(int i=0;i<shelf->count();++i)if(QUuid(shelf->item(i)->data(Qt::UserRole).toString())==material.id)material_item=shelf->item(i);assert(material_item&&(material_item->flags()&Qt::ItemIsDragEnabled));
  std::unique_ptr<QMimeData> mime(shelf->model()->mimeData({shelf->indexFromItem(material_item)}));assert(mime->data("application/x-bts-asset")==material.id.toString().toUtf8());

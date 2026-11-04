@@ -48,12 +48,12 @@ inline QJsonObject resource_witness(const StudioAsset &asset){
 }
 // Metadata, retained immutable bytes and already-resolved bitmap pixels only.
 // No CPU material evaluation, cache hydration or stock asset fallback occurs.
-template<class Assets>QJsonObject witness(const TextureDocument &document,const Assets &assets,const QUuid &set_id,const QUuid &layer_id){
+template<class Assets>QJsonObject witness(const TextureDocument &document,const Assets &assets,const QUuid &set_id,const QUuid &layer_id,const QJsonArray &required_tiles=QJsonArray{1001,1002,1011}){
  const TextureSet *owner=nullptr;const TextureLayer *target=nullptr;
  for(const auto &set:document.texture_sets())if(set.id==set_id){owner=&set;for(const auto &layer:set.layers)if(layer.id==layer_id)target=&layer;}
  require(owner&&target&&target->kind==LayerKind::Fill,"BJ witness needs actual Fill target");
  QJsonArray tiles;for(int tile:owner->tiles)tiles.append(tile);
- require(tiles==QJsonArray{1001,1002,1011},"BJ fixture actual tile membership differs");
+ require(!required_tiles.isEmpty()&&tiles==required_tiles,"Projection fixture actual tile membership differs");
  require(!target->channels[3],"BJ internal Normal became an artist channel");
  if(target->fill.native_material&&target->fill.native_material->height_policy==NativeHeightPolicy::RawAuthoredFloatV1)require(owner->bump_origin==.5f,"BJ raw H neutral origin differs");
  QJsonArray textures;texture_witness(target->fill.texture,textures,0);
@@ -74,7 +74,7 @@ template<class Assets>QJsonObject witness(const TextureDocument &document,const 
 }
 template<class Assets>QJsonObject validate(const TextureDocument &document,const Assets &assets,const QJsonObject &expected){
  require(expected["version"].toInt()==1,"BJ packed witness version differs");
- const auto actual=witness(document,assets,QUuid(expected["set"].toString()),QUuid(expected["layer"].toString()));
+ const auto actual=witness(document,assets,QUuid(expected["set"].toString()),QUuid(expected["layer"].toString()),expected["tiles"].toArray());
  require(actual==expected,"BJ packed authored mapping/source bytes/pixel closure changed");
  return {{"data_first",true},{"set",expected["set"]},{"layer",expected["layer"]},{"actual_tiles",actual["tiles"]},
   {"source_bytes_parameters_and_resolved_pixels_equal",true},{"resource_count",actual["resources"].toArray().size()}};

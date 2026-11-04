@@ -3,7 +3,7 @@
 namespace bts {
 inline QStringList shelf_category_names(){return {"All","Project","Alphas","Grunges","Procedurals","Textures","Hard Surfaces","Skin","Filters","Brushes","Particles","Tools","Materials","Material presets","Mask generators","Environments","Color profiles","Flattened layers","Baked"};}
 inline bool is_hidden_shelf_asset(const StudioAsset &asset){
-  return asset.search_terms.contains("internal:smart-mask-textures")||
+  return asset.search_terms.contains("internal:polyhaven-texture")||asset.search_terms.contains("internal:smart-mask-textures")||
          asset.search_terms.contains("internal:folder-material-texture")||
          asset.search_terms.contains("builtin:standard-material")||
          asset.search_terms.contains("builtin:standard-smart-material");

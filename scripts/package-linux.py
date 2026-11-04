@@ -27,6 +27,7 @@ shutil.rmtree(stage/'5.2/scripts/startup/bl_app_templates_system',ignore_errors=
 # Resource-only packages must never inherit stock material libraries.
 for directory in ['branding','meshes']:
     shutil.copytree(root/'assets'/directory,stage/('branding' if directory=='branding' else 'assets/meshes'))
+shutil.copytree(root/'assets/materials',stage/'assets/materials')
 subprocess.run([sys.executable,str(root/'scripts/sanitize-runtime.py'),str(stage/'5.2')],check=True)
 plugins=stage/'plugins';plugins.mkdir()
 for directory in ['platforms','imageformats','iconengines','platforminputcontexts','xcbglintegrations','wayland-decoration-client','wayland-graphics-integration-client','wayland-shell-integration','tls']:

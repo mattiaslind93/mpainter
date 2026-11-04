@@ -1,0 +1,16 @@
+{
+  "artifact": "mPainter-0.9.0-alpha-linux-x86_64.AppImage",
+  "bytes": 696822264,
+  "sha256": "20c89bfabb18f79d5bca03eeb5324b2920e4a3730e369440ebd7ee6c38704f74",
+  "baseline": {
+    "bytes": 438475256,
+    "sha256": "a9c97f33058e7fed15cbb8abc3d68882ac811563c331a18c22bfedccf952c129"
+  },
+  "delta_bytes": 258347008,
+  "extracted_library_files": 254,
+  "all_library_files_byte_identical": true,
+  "notice_and_jl01_byte_identical": true,
+  "screenshot_sha256": "a1dd4ff6b0554b7f3afce87240c37b9ddf8b1bff22b8c0e04020d1244d0ad104",
+  "appimage_build_compression": "zstd level 5, 2 workers",
+  "test_exit_status": 0
+}

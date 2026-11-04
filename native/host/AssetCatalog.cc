@@ -1,3 +1,4 @@
+#include "BuiltinPolyHaven.hh"
 #include "SmartMaterialPreset.hh"
 #include "ResourceAvailability.hh"
 #include "BlendMaterialBindings.hh"
@@ -109,6 +110,8 @@ AssetCatalog::AssetCatalog(QString directory):directory_(std::move(directory)){
   for(int kind=0;kind<2;++kind){StudioAsset asset;asset.name=kind==0?"Shape":"Sign Plus";asset.filename=asset.name+".builtin";asset.scope=AssetScope::Builtin;asset.usages={"alpha"};BrushAlpha alpha;alpha.kind=kind==0?AlphaKind::Shape:AlphaKind::Plus;asset.alpha=alpha;assets_.push_back(std::move(asset));}
   for(int simple=0;simple<2;++simple){StudioAsset asset;asset.name=simple?"Atom Simple":"Atom";asset.filename=asset.name+".builtin";asset.scope=AssetScope::Builtin;asset.usages={"alpha","procedural"};auto bitmap=std::make_shared<AlphaBitmap>();bitmap->width=bitmap->height=128;bitmap->name=asset.name.toStdString();bitmap->pixels.resize(128*128);FillProjection p;p.middle_dot=!simple;p.border_dots=!simple;for(int y=0;y<128;++y)for(int x=0;x<128;++x)bitmap->pixels[y*128+x]=fill_uv_sample(p,x,y,128);BrushAlpha alpha;alpha.kind=AlphaKind::Bitmap;alpha.bitmap=bitmap;asset.alpha=alpha;assets_.push_back(std::move(asset));}
   for(auto preset:builtin_brush_presets()){StudioAsset asset;asset.id=QUuid::createUuidV5(QUuid("{557ad8f1-4d31-4d95-8b22-e1a56ca507b3}"),preset.name.toUtf8());asset.name=preset.name;asset.filename=QString("stock-brush-%1.btsbrush").arg(assets_.size());asset.scope=AssetScope::Builtin;asset.usages={"brush"};asset.brush_preset=std::move(preset.brush);asset.bytes=write_brush_preset({asset.name,*asset.brush_preset});hydrate_asset_presets(asset);assets_.push_back(std::move(asset));}
+  const auto &textures=builtin_polyhaven_textures();assets_.insert(assets_.end(),textures.begin(),textures.end());
+  const auto &materials=builtin_polyhaven_materials();assets_.insert(assets_.end(),materials.begin(),materials.end());
   const auto &masks=builtin_smart_mask_assets();assets_.insert(assets_.end(),masks.begin(),masks.end());
 }
 void AssetCatalog::add(StudioAsset asset){asset.revision=asset_revision.fetch_add(1);

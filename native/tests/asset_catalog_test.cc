@@ -1,10 +1,26 @@
 #include "AssetCatalog.hh"
 #include "AssetCategories.hh"
+#include "NativeMaterialImageDependencies.hh"
+#include <set>
 #include <QCoreApplication>
 #include <QTemporaryDir>
 #include <cassert>
 int main(int argc,char **argv){QCoreApplication app(argc,argv);QTemporaryDir dir;assert(dir.isValid());bts::AssetCatalog catalog(dir.path());
-for(const auto &asset:catalog.assets()){assert(!asset.material);assert(!asset.smart_material);assert(!asset.material_preset);assert(!bts::asset_in_category(asset,"Materials"));assert(asset.bytes.isEmpty()||asset.smart_mask||asset.brush_preset);}
+int materials=0,images=0;std::set<QUuid> ids;
+for(const auto &asset:catalog.assets()){
+ assert(ids.insert(asset.id).second);assert(!asset.smart_material);assert(!asset.material_preset);
+ if(asset.search_terms.contains("polyhaven")&&asset.material){
+  ++materials;assert(asset.scope==bts::AssetScope::Builtin);assert(bts::is_native_material_asset(asset));
+  assert(bts::asset_in_category(asset,"Materials")&&bts::asset_in_category(asset,"Material presets"));
+  assert(!bts::native_material_bundle_preview(asset.bytes).isEmpty());
+  assert(asset.fill_preset&&asset.fill_preset->mode==0&&asset.fill_preset->native_material);
+  bts::validate_native_material_dependencies(asset,catalog.assets());
+ }else if(asset.search_terms.contains("internal:polyhaven-texture")){
+  ++images;assert(asset.bytes.isEmpty()&&!asset.texture_files.empty());
+  assert(!bts::asset_in_category(asset,"All")&&!bts::asset_in_category(asset,"Textures"));
+ }else{assert(!asset.material);assert(!bts::asset_in_category(asset,"Materials"));assert(asset.bytes.isEmpty()||asset.smart_mask||asset.brush_preset);}
+}
+assert(materials==47&&images>100);
 int generators=0;for(const auto &asset:catalog.assets())if(bts::asset_in_category(asset,"Mask generators")){++generators;assert(asset.smart_mask);assert(asset.filename.endsWith(".btsmask"));}assert(generators==10);
 // Blender imports remain in Materials and must also be discoverable as presets.
 for(const auto &filename:{"material.btsnative.blend","material.btsuniform"}){

@@ -29,3 +29,18 @@ both Linux packaging steps. SHA-256:
 
 Blender's optional world HDRIs retain their adjacent CC0 notice and attribution
 to Greg Zaal / Poly Haven. They are not the default environment.
+
+## Poly Haven starter materials
+
+The built-in Materials / Material presets starter library includes texture maps
+from [Poly Haven](https://polyhaven.com), dedicated to the public domain under
+[CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/).
+Poly Haven permits redistribution, including in commercial products:
+https://polyhaven.com/license. Individual sources, download checksums and the
+reviewed mapping are recorded in `assets/materials/polyhaven/manifest.json`.
+
+The procedural starter shaders are original mPainter work, also provided under
+CC0 1.0. Their neutral material names describe approximate surfaces; they do not
+certify wood species, hide species or an exact physical match. No Adobe or
+Substance material data is included. The independently rendered thumbnails use
+Shader_Ball_JL_01; its separate CC BY 4.0 attribution above still applies.

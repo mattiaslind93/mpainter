@@ -1,3 +1,4 @@
+#include "PolyHavenPreparation.hh"
 #include "TextureResidencyMemory.hh"
 #include "GPU_host_texture_memory.hh"
 #include "TextureSetResidency.hh"
@@ -2238,6 +2239,8 @@ int main(int argc, char **argv)
   parser.addOption({"cpu-asset-dragdrop-test", "Verify Shelf to Layers dispatch and capture offscreen UI without a GPU", "directory"});
   parser.addOption({"cpu-render-status-test", "Verify visible CUDA errors and CPU fallback without a GPU"});
   parser.addOption({"cpu-workspace-shutdown-test", "Verify pending nested editor retirement without initializing Blender or a viewport"});
+  parser.addOption({"cpu-prepare-polyhaven", "Prepare one built-in CC0 material", "directory"});
+  parser.addOption({"polyhaven-source", "Generated source materials", "directory"});
   parser.addOption({"cpu-native-material-test", "Inspect detached Blender material groups without a GPU", "directory"});
   parser.addOption({"cpu-bake-source-test", "Verify native OBJ/ABC/USD high-poly and cage import", "directory"});
   parser.addOption({"headless-surface-bake-test", "Verify displaced surface maps on an offscreen GPU", "directory"});
@@ -2260,6 +2263,7 @@ int main(int argc, char **argv)
     bts::configure_spsm_source_hydration();
     if(parser.isSet("headless-cycles-cuda-test")){host.diagnostic_cycles_cuda_render(parser.value("headless-cycles-cuda-test"));return 0;}
     if(parser.isSet("headless-viewport-test"))return bts::run_viewport_headless_demo(host,parser.value("headless-viewport-test"),parser.value("open-document"));
+    if(parser.isSet("cpu-prepare-polyhaven"))return bts::prepare_polyhaven(host,parser.value("cpu-prepare-polyhaven"),parser.value("polyhaven-source"));
     if(parser.isSet("cpu-native-material-test"))return bts::run_native_material_inspection_demo(host,parser.value("cpu-native-material-test"));
     if(parser.isSet("cpu-bake-source-test"))return bts::run_bake_source_cpu_demo(host,parser.value("cpu-bake-source-test"));
     if(parser.isSet("headless-surface-bake-test"))return bts::run_bake_source_cpu_demo(host,parser.value("headless-surface-bake-test"));

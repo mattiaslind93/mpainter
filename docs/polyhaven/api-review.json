@@ -1,0 +1,810 @@
+{
+  "catalog_url": "https://api.polyhaven.com/assets?t=textures",
+  "catalog_sha256": "79efa9ba748f2fec975de3e9507012c7782ff0778376e7e0987ea3cd151b36e0",
+  "license": "https://polyhaven.com/license",
+  "rows": [
+    {
+      "name": "Aluminium Ribbed",
+      "original_slug": "procedural",
+      "polyhaven_slug": "procedural",
+      "review": "Original procedural shader.",
+      "api_checks": []
+    },
+    {
+      "name": "Calf Hide",
+      "original_slug": "leather_red_02",
+      "polyhaven_slug": "leather_white",
+      "review": "Smooth animal hide; species is an approximation, not certified calf.",
+      "api_checks": [
+        {
+          "slug": "leather_red_02",
+          "info_url": "https://api.polyhaven.com/info/leather_red_02",
+          "files_url": "https://api.polyhaven.com/files/leather_red_02",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "924342edd8a261c66458c95a1c5b676ec569a3ec9dc6a55abeef56fb9f3bf95a",
+          "files_sha256": "d2d6d34788483e360a759aec2fa3d7ae182f0b2d2c32dd567f1499023bfe7aac"
+        },
+        {
+          "slug": "leather_white",
+          "info_url": "https://api.polyhaven.com/info/leather_white",
+          "files_url": "https://api.polyhaven.com/files/leather_white",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "066248a168fb93d5cefc4183f199be6baab5429c544de819bfacf31b6ed492c6",
+          "files_sha256": "7ebf43c2a3a0ae41d2d305770f59e981c24a63298e1f7d167f760c614427f166"
+        }
+      ]
+    },
+    {
+      "name": "Carbon Fibre",
+      "original_slug": "procedural",
+      "polyhaven_slug": "procedural",
+      "review": "Original procedural shader.",
+      "api_checks": []
+    },
+    {
+      "name": "Coated Metal",
+      "original_slug": "metal_plate",
+      "polyhaven_slug": "blue_metal_plate",
+      "review": "Painted/coated sheet instead of bare patterned plate.",
+      "api_checks": [
+        {
+          "slug": "metal_plate",
+          "info_url": "https://api.polyhaven.com/info/metal_plate",
+          "files_url": "https://api.polyhaven.com/files/metal_plate",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "936858202f58af8e3fd850e398c45f1425f59f5f4ed01626c2bbc6d6aa53c2a0",
+          "files_sha256": "6a67dcc408c32005533f935e37a4796d60f46ec4e1e7b6147746c2f280602e13"
+        },
+        {
+          "slug": "blue_metal_plate",
+          "info_url": "https://api.polyhaven.com/info/blue_metal_plate",
+          "files_url": "https://api.polyhaven.com/files/blue_metal_plate",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "26c27eff4ae69a357d14809375374467609a15913261f3bb2e1bc27997196e5b",
+          "files_sha256": "eef58641c5e0a42d4e5bb158ba8a665e3a5691f64b6951abc4bbf8f73ab1ba9a"
+        }
+      ]
+    },
+    {
+      "name": "Bare Concrete",
+      "original_slug": "concrete_floor_worn_001",
+      "polyhaven_slug": "concrete_floor_worn_001",
+      "review": "Retained: API texture type and surface tags match the intended material.",
+      "api_checks": [
+        {
+          "slug": "concrete_floor_worn_001",
+          "info_url": "https://api.polyhaven.com/info/concrete_floor_worn_001",
+          "files_url": "https://api.polyhaven.com/files/concrete_floor_worn_001",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "e06e3478c49b6b49a02f9d827baa61d27bace6ef168b0187718f05013bf8fa0f",
+          "files_sha256": "08980460d563b8af368138d670472bff5baa627a3524023123585a6ef70f832a"
+        }
+      ]
+    },
+    {
+      "name": "Clean Concrete",
+      "original_slug": "concrete_floor_02",
+      "polyhaven_slug": "concrete",
+      "review": "Bare concrete panels; avoids moss in original floor texture.",
+      "api_checks": [
+        {
+          "slug": "concrete_floor_02",
+          "info_url": "https://api.polyhaven.com/info/concrete_floor_02",
+          "files_url": "https://api.polyhaven.com/files/concrete_floor_02",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "0262f31641310ebdddfedb9bae115c01bf739d303350b3c52be4bfb0926031c0",
+          "files_sha256": "a2abc0b46396c3141a7232354983e1c080cabe56af0dd2ecc1be1d3b3d366363"
+        },
+        {
+          "slug": "concrete",
+          "info_url": "https://api.polyhaven.com/info/concrete",
+          "files_url": "https://api.polyhaven.com/files/concrete",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "6783c276e4f6bb1067318d8a259e6f70a573f4650b4715f7255450cc2f9d48ba",
+          "files_sha256": "b2925a84bf12054a7121eae8c9c1bb7b206f7114688ea274791d8a9791c48267"
+        }
+      ]
+    },
+    {
+      "name": "Dusty Concrete",
+      "original_slug": "concrete_wall_008",
+      "polyhaven_slug": "concrete_wall_008",
+      "review": "Retained: API texture type and surface tags match the intended material.",
+      "api_checks": [
+        {
+          "slug": "concrete_wall_008",
+          "info_url": "https://api.polyhaven.com/info/concrete_wall_008",
+          "files_url": "https://api.polyhaven.com/files/concrete_wall_008",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "850ab32a959af8ddb193b0995e43a49cf586482537bd7e22f17d0746e4ae9ef5",
+          "files_sha256": "f6eaac1a6c504fad48aba03470fcbc65db60054cd6dc03ed4e4d69a1bc5b72c4"
+        }
+      ]
+    },
+    {
+      "name": "Plain Concrete",
+      "original_slug": "concrete_wall_004",
+      "polyhaven_slug": "rough_concrete",
+      "review": "Plain cement instead of stained painted wall.",
+      "api_checks": [
+        {
+          "slug": "concrete_wall_004",
+          "info_url": "https://api.polyhaven.com/info/concrete_wall_004",
+          "files_url": "https://api.polyhaven.com/files/concrete_wall_004",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "18a0c6165600c8be404fd1a7a2b8e222ce29a83777aef9a4a5fb822e68dcebc5",
+          "files_sha256": "0e62a3075cda02eccb7c2e2e47e57e86315a60f6bea084c86a4c9c6cf05640e8"
+        },
+        {
+          "slug": "rough_concrete",
+          "info_url": "https://api.polyhaven.com/info/rough_concrete",
+          "files_url": "https://api.polyhaven.com/files/rough_concrete",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "4e2f19f927b4337f890f8d5b45f401882a24d50e5c3b6cada1c2f43ec8d937d2",
+          "files_sha256": "293ccc610cbb371fbcda28d28bc32408a41fd471fae8dd41a60d1d1e3bcc8b40"
+        }
+      ]
+    },
+    {
+      "name": "Denim",
+      "original_slug": "denmin_fabric_02",
+      "polyhaven_slug": "denim_fabric_03",
+      "review": "Even twill weave without the large folds of the original.",
+      "api_checks": [
+        {
+          "slug": "denmin_fabric_02",
+          "info_url": "https://api.polyhaven.com/info/denmin_fabric_02",
+          "files_url": "https://api.polyhaven.com/files/denmin_fabric_02",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "8ba9e78d7ef3bed6cb8379e463e6bb2eb9ce4c16f3cd5e913b2b7b696b349f8c",
+          "files_sha256": "d7bd065725a26752a68178c2e665dfb3b1b3e840053cfef0a25cd4f55c6f347d"
+        },
+        {
+          "slug": "denim_fabric_03",
+          "info_url": "https://api.polyhaven.com/info/denim_fabric_03",
+          "files_url": "https://api.polyhaven.com/files/denim_fabric_03",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "e735132b9907d2b7e68a7adf7c85058aa0537ba87b0d4f9d85ecf146c3c656fe",
+          "files_sha256": "0137186c90a9dd0f0f02eddfcc944d6c0960cdb2eb583a8ee432af05235756e1"
+        }
+      ]
+    },
+    {
+      "name": "Knit Wool",
+      "original_slug": "knitted_fleece",
+      "polyhaven_slug": "knitted_fleece",
+      "review": "Retained: API texture type and surface tags match the intended material.",
+      "api_checks": [
+        {
+          "slug": "knitted_fleece",
+          "info_url": "https://api.polyhaven.com/info/knitted_fleece",
+          "files_url": "https://api.polyhaven.com/files/knitted_fleece",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "3928d7c596d4679a52df1528615b2a24e48ae39d9a470aba84106701077f43b4",
+          "files_sha256": "40be10ad36f6502e9a1e67ea2b581ab392bec6e4b9ded79bb78f5ab72fd66844"
+        }
+      ]
+    },
+    {
+      "name": "Rough Fabric",
+      "original_slug": "hessian_230",
+      "polyhaven_slug": "hessian_230",
+      "review": "Retained: API texture type and surface tags match the intended material.",
+      "api_checks": [
+        {
+          "slug": "hessian_230",
+          "info_url": "https://api.polyhaven.com/info/hessian_230",
+          "files_url": "https://api.polyhaven.com/files/hessian_230",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "dad5ec5b9d0847d6fc6b02e15e92f6cd21df6efcb695bb6f349c5354cf5786e6",
+          "files_sha256": "e3ae175e1ea48b897b8804e9c73d29f5acb8ee79cbc303a756500c6b1dd605a5"
+        }
+      ]
+    },
+    {
+      "name": "Suit Tweed",
+      "original_slug": "fabric_pattern_07",
+      "polyhaven_slug": "poly_wool_herringbone",
+      "review": "Wool blend herringbone instead of picnic/towel checks.",
+      "api_checks": [
+        {
+          "slug": "fabric_pattern_07",
+          "info_url": "https://api.polyhaven.com/info/fabric_pattern_07",
+          "files_url": "https://api.polyhaven.com/files/fabric_pattern_07",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "d7131dbb7ab696d55de645e1da05de5ed250ab441238d155bc984ef8152318ed",
+          "files_sha256": "313de448d01da21c807581f80f4629b7435d1303609b3333bb23f864129fd372"
+        },
+        {
+          "slug": "poly_wool_herringbone",
+          "info_url": "https://api.polyhaven.com/info/poly_wool_herringbone",
+          "files_url": "https://api.polyhaven.com/files/poly_wool_herringbone",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "429ab0963bdfe634cbd8e8aec0e2eb7da5f4f311e44fc76119cfea0ed18cf4b5",
+          "files_sha256": "4fcdb7cee772205baf892df1cd6e03eaf78d019f6a19e2afe850b24ed4fa52ee"
+        }
+      ]
+    },
+    {
+      "name": "Gravel Ground",
+      "original_slug": "gravel_floor",
+      "polyhaven_slug": "gravel_floor",
+      "review": "Retained: API texture type and surface tags match the intended material.",
+      "api_checks": [
+        {
+          "slug": "gravel_floor",
+          "info_url": "https://api.polyhaven.com/info/gravel_floor",
+          "files_url": "https://api.polyhaven.com/files/gravel_floor",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "0a1c8b4dfa7449935f89f56682550424ae4103864ffe7521af3148e1e7521e23",
+          "files_sha256": "ed4c4054a8f7bd0a0f1d89309aeb80935a40ca15793b9408e781e34bce9df4e6"
+        }
+      ]
+    },
+    {
+      "name": "Brushed Iron",
+      "original_slug": "procedural",
+      "polyhaven_slug": "procedural",
+      "review": "Original procedural shader.",
+      "api_checks": []
+    },
+    {
+      "name": "Galvanized Steel",
+      "original_slug": "corrugated_iron",
+      "polyhaven_slug": "corrugated_iron_03",
+      "review": "Galvanized steel sheeting; corrugation retained as a surface approximation.",
+      "api_checks": [
+        {
+          "slug": "corrugated_iron",
+          "info_url": "https://api.polyhaven.com/info/corrugated_iron",
+          "files_url": "https://api.polyhaven.com/files/corrugated_iron",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "848abd0f15e6a7306d6de57d8845fdea78c549badd114782b67836d88d04a8d6",
+          "files_sha256": "b7ef58656dc0397cf9df1161896a143da315c0d0bad96c0b3d7755a0dc9841e2"
+        },
+        {
+          "slug": "corrugated_iron_03",
+          "info_url": "https://api.polyhaven.com/info/corrugated_iron_03",
+          "files_url": "https://api.polyhaven.com/files/corrugated_iron_03",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "bede843f9cc40561c0fe73c344cc6f1eddf36eb37a5343d5713a772a3202b544",
+          "files_sha256": "3c76275ddc4aa85f7335d64d7170a2db7fb6be56f135b81975bba1fa3be841f8"
+        }
+      ]
+    },
+    {
+      "name": "Hammered Metal",
+      "original_slug": "procedural",
+      "polyhaven_slug": "procedural",
+      "review": "Original procedural shader.",
+      "api_checks": []
+    },
+    {
+      "name": "Powder Coat",
+      "original_slug": "procedural",
+      "polyhaven_slug": "procedural",
+      "review": "Original procedural shader.",
+      "api_checks": []
+    },
+    {
+      "name": "Raw Iron",
+      "original_slug": "metal_plate",
+      "polyhaven_slug": "procedural",
+      "review": "Original patterned painted rusty plate is unsuitable; original bare-metal shader.",
+      "api_checks": [
+        {
+          "slug": "metal_plate",
+          "info_url": "https://api.polyhaven.com/info/metal_plate",
+          "files_url": "https://api.polyhaven.com/files/metal_plate",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "936858202f58af8e3fd850e398c45f1425f59f5f4ed01626c2bbc6d6aa53c2a0",
+          "files_sha256": "6a67dcc408c32005533f935e37a4796d60f46ec4e1e7b6147746c2f280602e13"
+        }
+      ]
+    },
+    {
+      "name": "Rough Iron",
+      "original_slug": "rusty_metal",
+      "polyhaven_slug": "procedural",
+      "review": "API candidate render revealed yellow paint; use original rough bare-iron shader.",
+      "api_checks": [
+        {
+          "slug": "rusty_metal",
+          "info_url": "https://api.polyhaven.com/info/rusty_metal",
+          "files_url": "https://api.polyhaven.com/files/rusty_metal",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "9bd10dbe881c1adfecc7241f6af31794b7d695b24b469682b874be0e1aded285",
+          "files_sha256": "c529a5740679598e4b56f7dbc1030944ee4d68f33b3f9a6e4eae184fd947f44c"
+        }
+      ]
+    },
+    {
+      "name": "Polished Iron",
+      "original_slug": "procedural",
+      "polyhaven_slug": "procedural",
+      "review": "Original procedural shader.",
+      "api_checks": []
+    },
+    {
+      "name": "Coarse Leather",
+      "original_slug": "brown_leather",
+      "polyhaven_slug": "brown_leather",
+      "review": "Retained: API texture type and surface tags match the intended material.",
+      "api_checks": [
+        {
+          "slug": "brown_leather",
+          "info_url": "https://api.polyhaven.com/info/brown_leather",
+          "files_url": "https://api.polyhaven.com/files/brown_leather",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "ec8647574f92fd4a540554e839897e8103a72d380a071cfebae15bac132181ca",
+          "files_sha256": "c988de9b099cc47ac170a2fdb55622684be5df102323a447bdc511a5525a6baa"
+        }
+      ]
+    },
+    {
+      "name": "Soft Leather",
+      "original_slug": "leather_red_02",
+      "polyhaven_slug": "leather_red_02",
+      "review": "Retained: API texture type and surface tags match the intended material.",
+      "api_checks": [
+        {
+          "slug": "leather_red_02",
+          "info_url": "https://api.polyhaven.com/info/leather_red_02",
+          "files_url": "https://api.polyhaven.com/files/leather_red_02",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "924342edd8a261c66458c95a1c5b676ec569a3ec9dc6a55abeef56fb9f3bf95a",
+          "files_sha256": "d2d6d34788483e360a759aec2fa3d7ae182f0b2d2c32dd567f1499023bfe7aac"
+        }
+      ]
+    },
+    {
+      "name": "Worn Leather",
+      "original_slug": "leather_white",
+      "polyhaven_slug": "fabric_leather_01",
+      "review": "Aged wrinkled leather instead of smooth new white leather.",
+      "api_checks": [
+        {
+          "slug": "leather_white",
+          "info_url": "https://api.polyhaven.com/info/leather_white",
+          "files_url": "https://api.polyhaven.com/files/leather_white",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "066248a168fb93d5cefc4183f199be6baab5429c544de819bfacf31b6ed492c6",
+          "files_sha256": "7ebf43c2a3a0ae41d2d305770f59e981c24a63298e1f7d167f760c614427f166"
+        },
+        {
+          "slug": "fabric_leather_01",
+          "info_url": "https://api.polyhaven.com/info/fabric_leather_01",
+          "files_url": "https://api.polyhaven.com/files/fabric_leather_01",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "038e772e8f37db2d2c9357b0afd0767def57b5a617d1dcf5b47b073be337ecce",
+          "files_sha256": "742c8faba2de8d5fc76c9dd1f635862c9a9a4abdfe77c7f1214b7b1afc688bbe"
+        }
+      ]
+    },
+    {
+      "name": "Mortar Brick Wall",
+      "original_slug": "red_brick",
+      "polyhaven_slug": "red_brick",
+      "review": "Retained: API texture type and surface tags match the intended material.",
+      "api_checks": [
+        {
+          "slug": "red_brick",
+          "info_url": "https://api.polyhaven.com/info/red_brick",
+          "files_url": "https://api.polyhaven.com/files/red_brick",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "640b68c75250f26df5efdf01f68fade0262da29b98cca7ea867dc57fa2d4849a",
+          "files_sha256": "84596c2f282a2a0b1d2f2a7f14ee938c663e1c41594dd84225e68498fb040b6f"
+        }
+      ]
+    },
+    {
+      "name": "Pebbles",
+      "original_slug": "ganges_river_pebbles",
+      "polyhaven_slug": "ganges_river_pebbles",
+      "review": "Retained: API texture type and surface tags match the intended material.",
+      "api_checks": [
+        {
+          "slug": "ganges_river_pebbles",
+          "info_url": "https://api.polyhaven.com/info/ganges_river_pebbles",
+          "files_url": "https://api.polyhaven.com/files/ganges_river_pebbles",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "ada20ae3e821e094a26029c506ffe396bbb0c19f26af17db0a5c98a5634515a1",
+          "files_sha256": "baeb49f41ff789bc4391d95739238ca114ef1d8d1e6d1977c12969847cfecb38"
+        }
+      ]
+    },
+    {
+      "name": "Grainy Plastic",
+      "original_slug": "procedural",
+      "polyhaven_slug": "procedural",
+      "review": "Original procedural shader.",
+      "api_checks": []
+    },
+    {
+      "name": "Striped Plastic",
+      "original_slug": "procedural",
+      "polyhaven_slug": "procedural",
+      "review": "Original procedural shader.",
+      "api_checks": []
+    },
+    {
+      "name": "Diamond Plate Plastic",
+      "original_slug": "procedural",
+      "polyhaven_slug": "procedural",
+      "review": "Original procedural shader.",
+      "api_checks": []
+    },
+    {
+      "name": "Coarse Rust",
+      "original_slug": "rust_coarse_01",
+      "polyhaven_slug": "rust_coarse_01",
+      "review": "Retained: API texture type and surface tags match the intended material.",
+      "api_checks": [
+        {
+          "slug": "rust_coarse_01",
+          "info_url": "https://api.polyhaven.com/info/rust_coarse_01",
+          "files_url": "https://api.polyhaven.com/files/rust_coarse_01",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "63cd04adc3791b214ff77e4550b32fcb1f2300bf849891a60110b982559aa1aa",
+          "files_sha256": "94b136f629aa5b09323092157cb9cdb984593826291c71581625c930aa800193"
+        }
+      ]
+    },
+    {
+      "name": "Fine Rust",
+      "original_slug": "rusty_metal_02",
+      "polyhaven_slug": "rusty_metal_04",
+      "review": "Fine red-brown surface corrosion; visually checked diffuse, replacing greenish tarnished sheet.",
+      "api_checks": [
+        {
+          "slug": "rusty_metal_02",
+          "info_url": "https://api.polyhaven.com/info/rusty_metal_02",
+          "files_url": "https://api.polyhaven.com/files/rusty_metal_02",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "b5e1ab7c067463a2982f816fe41914b8b09be4f4d41ab019eea38212c7025905",
+          "files_sha256": "e248ddfbc83b6351491de9418478ffc94c7b65a2291c2814a0f21c7d568c9c1d"
+        },
+        {
+          "slug": "rusty_metal_04",
+          "info_url": "https://api.polyhaven.com/info/rusty_metal_04",
+          "files_url": "https://api.polyhaven.com/files/rusty_metal_04",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "546520f3e7848e8c723ca9d18b3fc4a9d267b1801477baadb9495ee0728b56d6",
+          "files_sha256": "ef4a5596419b0a8b958ed226c65905e6f08fb6486fe96302e13be9cda6948d94"
+        }
+      ]
+    },
+    {
+      "name": "Silicone",
+      "original_slug": "procedural",
+      "polyhaven_slug": "procedural",
+      "review": "Original procedural shader.",
+      "api_checks": []
+    },
+    {
+      "name": "Painted Steel",
+      "original_slug": "worn_corrugated_iron",
+      "polyhaven_slug": "painted_metal_shutter",
+      "review": "Painted sheet; corrugated shutter is an approximation.",
+      "api_checks": [
+        {
+          "slug": "worn_corrugated_iron",
+          "info_url": "https://api.polyhaven.com/info/worn_corrugated_iron",
+          "files_url": "https://api.polyhaven.com/files/worn_corrugated_iron",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "73b9c6b0df881aa0f55453d7fe4d43a7668550197049d48ea8983e6779239a40",
+          "files_sha256": "ac3a02f7a6d867205a53d4d475fadaeb9b6a1d0e6cf0af1a3c6d2793ac5e9639"
+        },
+        {
+          "slug": "painted_metal_shutter",
+          "info_url": "https://api.polyhaven.com/info/painted_metal_shutter",
+          "files_url": "https://api.polyhaven.com/files/painted_metal_shutter",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "60db3c9400a5cc6b4a42a499352471874ff0b2a4aa70c19f801b45f1c5fd2d52",
+          "files_sha256": "1e2494528c5a538e35196f5bc28f726cc84cadf44cd9e5de289d9158e0b3cfda"
+        }
+      ]
+    },
+    {
+      "name": "Rough Steel",
+      "original_slug": "metal_plate_02",
+      "polyhaven_slug": "procedural",
+      "review": "Duplicate rusty plate replaced by original rough uncoated steel shader.",
+      "api_checks": [
+        {
+          "slug": "metal_plate_02",
+          "info_url": "https://api.polyhaven.com/info/metal_plate_02",
+          "files_url": "https://api.polyhaven.com/files/metal_plate_02",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "19a2638b5fac33bd18c3bbd8fe7e079fae2fbe5a8b9b1c7f7a48d8166866f551",
+          "files_sha256": "78e07f476a05124651f1453ff255c4dba4d500dfe38e77e06308829392eec507"
+        }
+      ]
+    },
+    {
+      "name": "Worn Rusty Steel",
+      "original_slug": "metal_plate_02",
+      "polyhaven_slug": "metal_plate_02",
+      "review": "Retained: API texture type and surface tags match the intended material.",
+      "api_checks": [
+        {
+          "slug": "metal_plate_02",
+          "info_url": "https://api.polyhaven.com/info/metal_plate_02",
+          "files_url": "https://api.polyhaven.com/files/metal_plate_02",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "19a2638b5fac33bd18c3bbd8fe7e079fae2fbe5a8b9b1c7f7a48d8166866f551",
+          "files_sha256": "78e07f476a05124651f1453ff255c4dba4d500dfe38e77e06308829392eec507"
+        }
+      ]
+    },
+    {
+      "name": "Cherry Wood",
+      "original_slug": "wood_planks",
+      "polyhaven_slug": "cherry_veneer",
+      "review": "Actual cherry wood grain instead of weathered generic planks.",
+      "api_checks": [
+        {
+          "slug": "wood_planks",
+          "info_url": "https://api.polyhaven.com/info/wood_planks",
+          "files_url": "https://api.polyhaven.com/files/wood_planks",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "c7f438a01ada917ec70bac2be7bb889ae33414895d12b4b06757e984d88ae1cc",
+          "files_sha256": "1bdda954a9db72c30039857ba58af22d13d6586273b22b5dca5f758ab5ac8499"
+        },
+        {
+          "slug": "cherry_veneer",
+          "info_url": "https://api.polyhaven.com/info/cherry_veneer",
+          "files_url": "https://api.polyhaven.com/files/cherry_veneer",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "fa88191a111c12ccd8c9a67432e568f8564e94c3b161b859d5b37d6b3bde5877",
+          "files_sha256": "9448638598ad47edae7ee483b6063923565a776a4b81b41f9ac137aa5884bdf4"
+        }
+      ]
+    },
+    {
+      "name": "Rough Wood",
+      "original_slug": "wood_table_worn",
+      "polyhaven_slug": "rough_wood",
+      "review": "Rough natural timber instead of furniture tabletop.",
+      "api_checks": [
+        {
+          "slug": "wood_table_worn",
+          "info_url": "https://api.polyhaven.com/info/wood_table_worn",
+          "files_url": "https://api.polyhaven.com/files/wood_table_worn",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "c9e1ce2bdd85cf4144d8715eebba482d788db37917007b8076549bb98359e0a8",
+          "files_sha256": "74f885b16c5822f32907e90e74d84c39a2760c164bfcda31b4ad9cf2e7b3ede1"
+        },
+        {
+          "slug": "rough_wood",
+          "info_url": "https://api.polyhaven.com/info/rough_wood",
+          "files_url": "https://api.polyhaven.com/files/rough_wood",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "12f06bd8424f72500dc210902aadf5a32a19b99cf8cfc69f04acd05088a2742a",
+          "files_sha256": "33d4cd8061a14864c35efbc73a5bc1d165130e6f1ff928b098f9bb1c877c07a2"
+        }
+      ]
+    },
+    {
+      "name": "Walnut Wood",
+      "original_slug": "dark_wood",
+      "polyhaven_slug": "walnut_veneer",
+      "review": "Actual walnut veneer instead of generic dark wood.",
+      "api_checks": [
+        {
+          "slug": "dark_wood",
+          "info_url": "https://api.polyhaven.com/info/dark_wood",
+          "files_url": "https://api.polyhaven.com/files/dark_wood",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "71903a8d2f586533344cbe54aeb61a1c230f0a01e1b291b62f652436b7bb2bb5",
+          "files_sha256": "345b92e082cb37654afa7c6176c6312e336c682f9f91dc76c01fad64f111e421"
+        },
+        {
+          "slug": "walnut_veneer",
+          "info_url": "https://api.polyhaven.com/info/walnut_veneer",
+          "files_url": "https://api.polyhaven.com/files/walnut_veneer",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "95adc76ecf7d78e3f6aeef44cc65449a6e9be7c32e429fb800e6bb8c6e17132d",
+          "files_sha256": "303a623b3e3baa74146cdcfc7958099c85fe2f312e72820b51c8b2ebeda05916"
+        }
+      ]
+    },
+    {
+      "name": "Wool",
+      "original_slug": "curly_teddy_natural",
+      "polyhaven_slug": "wool_boucle",
+      "review": "Actual looped wool instead of teddy plush.",
+      "api_checks": [
+        {
+          "slug": "curly_teddy_natural",
+          "info_url": "https://api.polyhaven.com/info/curly_teddy_natural",
+          "files_url": "https://api.polyhaven.com/files/curly_teddy_natural",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "cd0a4ed975e5f0b4b9c1535b625e56b40137959e5de448e631cfd24dc9d24c02",
+          "files_sha256": "1e5c0d6fe2e14a5dbe7e0f1f69ab90e774c3a661fb8cfda1173591fbb10ec19d"
+        },
+        {
+          "slug": "wool_boucle",
+          "info_url": "https://api.polyhaven.com/info/wool_boucle",
+          "files_url": "https://api.polyhaven.com/files/wool_boucle",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "e319051e9e313a953bd0cb06e84a75b5a9fa245073f18e9871122817b3650045",
+          "files_sha256": "586b969dc23245d67f46b6284f171d2587e4b1acb1007840446fc52addcfce11"
+        }
+      ]
+    },
+    {
+      "name": "Reptile Scales",
+      "original_slug": "procedural",
+      "polyhaven_slug": "procedural",
+      "review": "Original procedural shader.",
+      "api_checks": []
+    },
+    {
+      "name": "Leaf Litter",
+      "original_slug": "brown_mud_leaves_01",
+      "polyhaven_slug": "brown_mud_leaves_01",
+      "review": "Retained: API texture type and surface tags match the intended material.",
+      "api_checks": [
+        {
+          "slug": "brown_mud_leaves_01",
+          "info_url": "https://api.polyhaven.com/info/brown_mud_leaves_01",
+          "files_url": "https://api.polyhaven.com/files/brown_mud_leaves_01",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "a184d17cc62fa9442a3c6acf26a906f8b07a741edf53ed8e48e49b93d4ed3a96",
+          "files_sha256": "a1529e39aade7ccf239181261d76f1c1bc41df27b6ab0edfcf6a5de95d3c0f8a"
+        }
+      ]
+    },
+    {
+      "name": "Lichen Rock",
+      "original_slug": "mossy_rock",
+      "polyhaven_slug": "lichen_rock",
+      "review": "Actual lichen-covered rock instead of generic moss.",
+      "api_checks": [
+        {
+          "slug": "mossy_rock",
+          "info_url": "https://api.polyhaven.com/info/mossy_rock",
+          "files_url": "https://api.polyhaven.com/files/mossy_rock",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "c3f6c904053e8fd14424ee88bbae24fa40b70f16e4b2b554d6bd3ddc70775440",
+          "files_sha256": "1e37d8f79fe2f8d43ef3a20814f0baad2fb93e48835617a4346d7ee37764ad41"
+        },
+        {
+          "slug": "lichen_rock",
+          "info_url": "https://api.polyhaven.com/info/lichen_rock",
+          "files_url": "https://api.polyhaven.com/files/lichen_rock",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "ef92ac2f4f2ac917288a1257e24f79be657e2c0daccaa72bdd6df8c923608219",
+          "files_sha256": "fc7b543af6768eeacb66166d29175f093fa30ec7956adc483c6934b96c67e0ff"
+        }
+      ]
+    },
+    {
+      "name": "Rubber",
+      "original_slug": "procedural",
+      "polyhaven_slug": "procedural",
+      "review": "Original procedural shader.",
+      "api_checks": []
+    },
+    {
+      "name": "Gold",
+      "original_slug": "procedural",
+      "polyhaven_slug": "procedural",
+      "review": "Original procedural shader.",
+      "api_checks": []
+    },
+    {
+      "name": "Copper",
+      "original_slug": "procedural",
+      "polyhaven_slug": "procedural",
+      "review": "Original procedural shader.",
+      "api_checks": []
+    },
+    {
+      "name": "Marble",
+      "original_slug": "marble_01",
+      "polyhaven_slug": "marble_01",
+      "review": "Retained: API texture type and surface tags match the intended material.",
+      "api_checks": [
+        {
+          "slug": "marble_01",
+          "info_url": "https://api.polyhaven.com/info/marble_01",
+          "files_url": "https://api.polyhaven.com/files/marble_01",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "7f4f6fb7c6dfd840946696b7b703865b60b972df1d1155de3a5eaa4a4e39b4f9",
+          "files_sha256": "4837766b9fb2ecd05598affea2d062abbc6b07b71e78c19d56cdc6755c75359f"
+        }
+      ]
+    },
+    {
+      "name": "Stone Wall",
+      "original_slug": "rock_face_03",
+      "polyhaven_slug": "rustic_stone_wall",
+      "review": "Stone masonry wall instead of natural rock face.",
+      "api_checks": [
+        {
+          "slug": "rock_face_03",
+          "info_url": "https://api.polyhaven.com/info/rock_face_03",
+          "files_url": "https://api.polyhaven.com/files/rock_face_03",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "8ec4b5e5de30a7aabf9e3ed9dd434c23fa983e7ced6a0612119dbf5cf9a643bb",
+          "files_sha256": "c351a9a3b30b6d31ff05383890906fd974e9546b6eb1cf01f0cd1f4554c2a2bf"
+        },
+        {
+          "slug": "rustic_stone_wall",
+          "info_url": "https://api.polyhaven.com/info/rustic_stone_wall",
+          "files_url": "https://api.polyhaven.com/files/rustic_stone_wall",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "7c01b2147e41468f4835eff3b442a186301d9a5bb3ce36744d7492da3636639b",
+          "files_sha256": "de26cc30f9bfb0d23a5215b7b679fa7cd9ccd1c4c639cb31ef3f6e68a3e208bd"
+        }
+      ]
+    },
+    {
+      "name": "Ceramic Tiles",
+      "original_slug": "floor_tiles_06",
+      "polyhaven_slug": "floor_tiles_06",
+      "review": "Retained: API texture type and surface tags match the intended material.",
+      "api_checks": [
+        {
+          "slug": "floor_tiles_06",
+          "info_url": "https://api.polyhaven.com/info/floor_tiles_06",
+          "files_url": "https://api.polyhaven.com/files/floor_tiles_06",
+          "exists": true,
+          "texture_type": 1,
+          "info_sha256": "d4f432a994fff5d71449a4e48409ae6c8c7fe693c091ee58aefcb1fe795ee675",
+          "files_sha256": "6c9e760e24c62b4e2ffa81315359e93409e68c1f6081a63c9a36da9d62489c73"
+        }
+      ]
+    }
+  ]
+}
