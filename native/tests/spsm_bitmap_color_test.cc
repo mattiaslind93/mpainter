@@ -74,7 +74,7 @@ void color_synthetic(){
  require(!leaf.fill.alpha_mask[0]&&!leaf.fill.alpha_mask[2]&&leaf.values.base_color==std::array<float,4>{1,1,1,1},"A or implicit tint changed RGB interpretation");
  require(leaf.effects[0].channel==0&&leaf.effects[1].channel==2&&leaf.effects[1].gamma==1.75f&&raw_linear_color_source(leaf),"Per-channel Levels or final matrix order changed");
  require(!fill_has_texture(named(original.material,"leaf").fill)&&original.source==output.source&&!output.appearance_verified,"Original IR/source was mutated");
- auto isolated=output.material.set;isolated.layers={leaf};isolated.layers[0].depth=0;isolated.layers[0].parent={};isolated.texture_resolution=128;isolated.precision[0]=ChannelPrecision::RGB32F;isolated.precision[2]=ChannelPrecision::L32F;
+ auto isolated=output.material.set;isolated.layers={leaf};isolated.layers[0].depth=0;isolated.layers[0].parent=QUuid();isolated.texture_resolution=128;isolated.precision[0]=ChannelPrecision::RGB32F;isolated.precision[2]=ChannelPrecision::L32F;
  double maximum=0;unsigned components=0;
  for(int tile:{1001,1017})for(auto xy:{std::pair(0,0),std::pair(25,81),std::pair(63,64),std::pair(127,127)}){
   std::array<double,3> rgb{};const auto &header=*image->original.encoded->header;

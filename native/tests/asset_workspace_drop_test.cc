@@ -58,7 +58,7 @@ int bts::run_asset_workspace_drop_test(const QString &directory){
  // A texture dropped on a mask effect still targets that effect, not a new layer.
  auto &masked=TextureDocument::layer(set,top.id);masked.mask=LayerMask{};MaskEffect fill;fill.kind=MaskEffectKind::Fill;texture_effect=fill.id;masked.mask->effects.push_back(fill);set.selected_layer=top.id;set.selected_mask=true;set.selected_effect=fill.id;shell.show_texture_set(&set,&options,&brush);QApplication::processEvents();
  int effect_row=-1;for(int i=0;i<layers->count();++i)if(QUuid(layers->item(i)->data(Qt::UserRole+10).toString())==fill.id)effect_row=i;assert(effect_row>=0);
- QMimeData texture_mime;texture_mime.setData("application/x-bts-asset",texture.id.toString().toUtf8());drop(effect_row,texture_mime,false);assert(texture_drops==1);set.selected_mask=false;set.selected_effect={};
+ QMimeData texture_mime;texture_mime.setData("application/x-bts-asset",texture.id.toString().toUtf8());drop(effect_row,texture_mime,false);assert(texture_drops==1);set.selected_mask=false;set.selected_effect=QUuid();
  // Real Shelf dispatch remains wired; catalog refresh may have replaced items.
  for(int i=0;i<shelf->count();++i)if(QUuid(shelf->item(i)->data(Qt::UserRole).toString())==material.id){Q_EMIT shelf->itemDoubleClicked(shelf->item(i));break;}assert(double_clicks==1);
  // Shared geometry publication used by viewport drops, within one candidate.

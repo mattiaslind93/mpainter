@@ -32,7 +32,7 @@ int main(){SceneSnapshot scene;MaterialSummary material;material.session_id=1;ma
  next=document;next.set(1).normal_mixing=NormalMixing::Replace;flags=changes(next);assert(flags[3]&&flags[6]);
  next=document;next.set(1).texture_resolution=256;assert(!layer_edit_compatible(edit_set_state(document.edit_state(),set.id),edit_set_state(next.edit_state(),set.id)));
  {
-  auto before=document;auto &b=before.set(1);b.layers={TextureLayer{}};b.selected_layer=b.layers.front().id;b.selected_mask=b.selected_geometry=false;b.selected_effect={};auto after=before;auto &a=after.set(1);PaintPixels::Stamp ink{{.5,.5},{.3,0},{0,.3}};ink.channels={true,false,false,false,false};ink.values.base_color={1,0,0,1};
+  auto before=document;auto &b=before.set(1);b.layers={TextureLayer{}};b.selected_layer=b.layers.front().id;b.selected_mask=b.selected_geometry=false;b.selected_effect=QUuid();auto after=before;auto &a=after.set(1);PaintPixels::Stamp ink{{.5,.5},{.3,0},{0,.3}};ink.channels={true,false,false,false,false};ink.values.base_color={1,0,0,1};
   {PaintRecordingScope recording;TextureDocument::layer(a,a.selected_layer).pixels.stamp(128,ink,a.tiles);}
   const auto count=PaintPixels::recipe_materializations();const auto old_state=edit_set_state(before.edit_state(),b.id),new_state=edit_set_state(after.edit_state(),a.id);
   const auto undo=layer_edit_channels(a,b,new_state,old_state),redo=layer_edit_channels(b,a,old_state,new_state);assert(undo[0]&&redo[0]&&PaintPixels::recipe_materializations()==count);

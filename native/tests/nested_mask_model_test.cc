@@ -86,7 +86,7 @@ void anchors_and_paste(){
 void selected_reopen(){
   Fixture f;const auto json=f.document->to_json();const std::array<TextureSetBinding,1> bindings{{{f.set().id,17,f.set().name}}};
   auto reopened=TextureDocument::from_json(json,bindings);require(reopened.set(17).selected_effect==f.paint&&reopened.to_json()==json,"Nested selected UUID did not survive document JSON reopen");
-  auto duplicate=*f.document;auto &effects=duplicate.set(17).layers.front().mask->effects;edit_mask_effect(effects,f.paint)->id=f.outer;duplicate.set(17).selected_effect={};
+  auto duplicate=*f.document;auto &effects=duplicate.set(17).layers.front().mask->effects;edit_mask_effect(effects,f.paint)->id=f.outer;duplicate.set(17).selected_effect=QUuid();
   rejects([&]{TextureDocument::from_json(duplicate.to_json(),bindings);},"Nested UUID collision across levels accepted");
 }
 void instances(){
