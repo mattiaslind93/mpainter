@@ -121,7 +121,12 @@ ProjectFileIdentity durable_project_write(const QString &path,
   const auto temporary=staged.fileName();staged.close();
   writer(temporary);
   QFile complete(temporary);
-  if(!complete.open(QIODevice::ReadWrite))throw std::runtime_error("Cannot reopen completed project for flush");
+#ifdef Q_OS_WIN
+  const auto flush_mode=QIODevice::ReadWrite; // FlushFileBuffers requires write access.
+#else
+  const auto flush_mode=QIODevice::ReadOnly;
+#endif
+  if(!complete.open(flush_mode))throw std::runtime_error("Cannot reopen completed project for flush");
   sync_project_fd(complete.handle());
   complete.close(); // Windows cannot replace an open file without delete sharing.
   const auto saved=ProjectFileIdentity::read(temporary);

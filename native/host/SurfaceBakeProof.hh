@@ -29,7 +29,7 @@ inline void surface_bake_regressions(){
   const auto flat=run(options);
   for(int role:{3,4,6}){const auto &p=flat[role]->tiles.at(1001).pixels->rgba;for(std::size_t i=0;i<p.size();i+=4)if(p[i+3])require(std::abs(p[i]-(role==4?.5f:1.f))<1e-6f,"Plane must have neutral curvature and no self-occlusion");}
   options.normal_detail=1;options.curvature_scale=8;auto &normal=options.normal_maps[1];normal.width=normal.height=32;auto &pixels=normal.tiles[1001];pixels.resize(1024);
-  for(int y=0;y<32;++y)for(int x=0;x<32;++x)pixels[y*32+x]=normalized_normal({.5f*std::sin(2*std::numbers::pi*(x+.5f)/32),0,1});
+  for(int y=0;y<32;++y)for(int x=0;x<32;++x)pixels[y*32+x]=normalized_normal({static_cast<float>(.5f*std::sin(2*std::numbers::pi*(x+.5f)/32)),0,1});
   const auto detailed=run(options);float low=1,high=0;const auto &p=detailed[4]->tiles.at(1001).pixels->rgba;
   for(std::size_t i=0;i<p.size();i+=4)if(p[i+3]){low=std::min(low,p[i]);high=std::max(high,p[i]);}require(low<.45f&&high>.55f,"Normal-map detail must produce signed curvature on a flat mesh");
   options.normal_detail=0;const auto neutral=run(options);require(neutral[4]->tiles.at(1001).hash==flat[4]->tiles.at(1001).hash,"Disabling normal detail must restore geometry curvature");
