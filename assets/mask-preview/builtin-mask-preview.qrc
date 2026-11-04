@@ -1,0 +1,13 @@
+<RCC>
+  <qresource prefix="/builtin-mask-preview">
+    <file>shaderball-jl01-map-1.png</file>
+    <file>shaderball-jl01-map-3.png</file>
+    <file>shaderball-jl01-map-4.png</file>
+    <file>shaderball-jl01-map-5.png</file>
+    <file>shaderball-jl01-map-6.png</file>
+    <file>shaderball-jl01-norm-ao.png</file>
+    <file>shaderball-jl01-pos-curv.png</file>
+    <file>shaderball-jl01-uv-mask.png</file>
+    <file>shaderball-jl01-wsn-thick.png</file>
+  </qresource>
+</RCC>

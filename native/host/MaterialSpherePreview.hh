@@ -16,6 +16,8 @@ inline void init_shaderball_preview_resources() {
   // Preview geometry is generated mathematically.
 }
 
+inline void init_mask_preview_resources() { Q_INIT_RESOURCE(builtin_mask_preview); }
+
 namespace bts {
 namespace detail {
 
@@ -144,17 +146,49 @@ inline const ShaderBallGbuffer &sphere_preview_gbuffer() {
  }();return gb;
 }
 struct ShaderBallUvSurface {MeshMaps maps;FillSurfaceAtlas atlas;};
+inline const ShaderBallGbuffer &shaderball_jl01_gbuffer() {
+  static const ShaderBallGbuffer gb = [] {
+    init_mask_preview_resources();
+    ShaderBallGbuffer out;
+    out.norm_ao =
+        QImage(QStringLiteral(":/builtin-mask-preview/shaderball-jl01-norm-ao.png"))
+            .convertToFormat(QImage::Format_RGBA64);
+    out.pos_curv =
+        QImage(QStringLiteral(":/builtin-mask-preview/shaderball-jl01-pos-curv.png"))
+            .convertToFormat(QImage::Format_RGBA64);
+    out.uv_mask =
+        QImage(QStringLiteral(":/builtin-mask-preview/shaderball-jl01-uv-mask.png"))
+            .convertToFormat(QImage::Format_RGBA64);
+    out.wsn_thick =
+        QImage(QStringLiteral(":/builtin-mask-preview/shaderball-jl01-wsn-thick.png"))
+            .convertToFormat(QImage::Format_RGBA64);
+    if (!out.norm_ao.isNull() &&
+        out.norm_ao.size() == out.pos_curv.size() &&
+        out.norm_ao.size() == out.uv_mask.size()) {
+      out.w = out.norm_ao.width();
+      out.h = out.norm_ao.height();
+    }
+    return out;
+  }();
+  return gb;
+}
+
 inline ShaderBallUvSurface shaderball_uv_surface(int size){
- ShaderBallUvSurface result;result.atlas.resolution=result.atlas.height=size;result.atlas.extent=2;
- auto &points=result.atlas.tiles[1001];points.resize(std::size_t(size)*size);
- for(int role:{1,3,4,5,6}){
-  std::vector<float> data(std::size_t(size)*size*4,1.f);
-  for(int y=0;y<size;++y)for(int x=0;x<size;++x){const double u=(x+.5)/size,v=(y+.5)/size,longitude=(u-.5)*2*std::numbers::pi,latitude=(v-.5)*std::numbers::pi;
-   const std::array<float,3> n{float(std::cos(latitude)*std::sin(longitude)),float(std::sin(latitude)),float(std::cos(latitude)*std::cos(longitude))};const auto i=std::size_t(y)*size+x;auto &point=points[i];point.valid=true;point.footprint=2.f/size;point.normal=n;point.position=n;
-   for(int c=0;c<3;++c)data[i*4+c]=(role==1||role==5)?n[c]*.5f+.5f:role==3?1.f:.5f;
+  init_mask_preview_resources();ShaderBallUvSurface result;
+  result.atlas.resolution=result.atlas.height=size;result.atlas.extent=2;
+  auto &points=result.atlas.tiles[1001];points.resize(std::size_t(size)*size);
+  for(int role:{1,3,4,5,6}){
+    const auto image=QImage(QString(":/builtin-mask-preview/shaderball-jl01-map-%1.png").arg(role)).convertToFormat(QImage::Format_RGBA64).scaled(size,size,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+    if(image.isNull())throw std::runtime_error("Shaderball UV map missing");
+    std::vector<float> data(std::size_t(size)*size*4);
+    for(int y=0;y<size;++y){const auto *row=reinterpret_cast<const QRgba64 *>(image.constScanLine(size-1-y));for(int x=0;x<size;++x){
+      const auto i=std::size_t(y)*size+x;auto &point=points[i];point.valid=true;point.footprint=2.f/size;
+      const std::array<float,3> v{row[x].red()/65535.f,row[x].green()/65535.f,row[x].blue()/65535.f};
+      for(int c=0;c<3;++c){data[i*4+c]=v[c];if(role==1)point.normal[c]=v[c]*2-1;if(role==5)point.position[c]=v[c]*2-1;}data[i*4+3]=1;
+    }}
+    auto pixels=std::make_shared<const MeshMapPixels>(size,std::move(data));MeshMap map;map.name=mesh_map_names[role];map.tiles[1001]={size,pixels->hash,pixels};result.maps[role]=std::move(map);
   }
-  auto pixels=std::make_shared<const MeshMapPixels>(size,std::move(data));MeshMap map;map.name=mesh_map_names[role];map.tiles[1001]={size,pixels->hash,pixels};result.maps[role]=std::move(map);
- }return result;
+  return result;
 }
 
 inline std::array<double, 3>
@@ -881,9 +915,10 @@ inline QImage smart_mask_sphere_preview(const LayerMask &mask, int size = 58, bo
   thread_local int cached_size=0;thread_local detail::ShaderBallUvSurface surface;
   int canvas=32;while(canvas<size)canvas*=2;
   if(cached_size!=canvas){surface=detail::shaderball_uv_surface(canvas);cached_size=canvas;}
-  QImage image(size,size,QImage::Format_RGB32);image.fill(QColor(bts::theme::Canvas));MaskCompareInputs context;context.projection=&surface.atlas;
+  // Fixed reference raster background, independent of the surrounding UI theme.
+  QImage image(size,size,QImage::Format_RGB32);image.fill(qRgb(30,30,30));MaskCompareInputs context;context.projection=&surface.atlas;
   const auto encode=[](double v){return v<=.0031308?12.92*v:1.055*std::pow(v,1/2.4)-.055;};
-  for(int y=0;y<size;++y)for(int x=0;x<size;++x){const auto gb=detail::sphere_preview_gbuffer().sample((x+.5)/size,(y+.5)/size);if(gb.cov<=.005)continue;
+  for(int y=0;y<size;++y)for(int x=0;x<size;++x){const auto gb=detail::shaderball_jl01_gbuffer().sample((x+.5)/size,(y+.5)/size);if(gb.cov<=.005)continue;
     const float value=mask.enabled?mask.value(std::clamp(int(gb.u*canvas),0,canvas-1),std::clamp(int(gb.v*canvas),0,canvas-1),1001,canvas,canvas,nullptr,&surface.maps,&context):1.f;
     const double shading=.76+.24*std::max(0.0,gb.nx*.3+gb.ny*.6+gb.nz*.74162);
     if(material_view){MaterialValues material;material.base_color={std::lerp(.025f,.9f,value),std::lerp(.025f,.12f,value),std::lerp(.025f,.015f,value),1};material.metallic=0;material.roughness=.35f;const auto rgb=detail::shade_shaderball_pixel(material,gb.nx,gb.ny,gb.nz,gb.ao,gb.curv,1);int channels[3];for(int c=0;c<3;++c)channels[c]=qRound(255*std::clamp(encode(std::clamp(rgb[c],0.0,1.0))*gb.cov+encode(.013)*(1-gb.cov),0.0,1.0));image.setPixel(x,y,qRgb(channels[0],channels[1],channels[2]));continue;}

@@ -64,6 +64,14 @@ StudioAsset asset_metadata_read(const QJsonObject &object){
   if(asset.id.isNull()||asset.name.isEmpty()||asset.name.contains(QChar(0))||asset.filename.isEmpty()||asset.filename.contains('/')||asset.filename.contains('\\')||asset.filename.contains(QChar(0))||asset.path.contains(QChar(0))||usages.isEmpty())throw std::invalid_argument("Invalid resource metadata");
   const ResourceAvailability text_memory;std::uint64_t text_units=resource_sum(resource_sum(asset.name.size(),asset.filename.size()),asset.path.size());
   for(const auto &usage:usages){const auto value=usage.toString();if(!QStringList{"alpha","texture","environment","procedural","material","smartmask","smartmaterial","grunge","hardsurface","skin","filter","brush","particle","tool","colorprofile"}.contains(value)||asset.usages.contains(value))throw std::invalid_argument("Invalid resource usage");asset.usages.append(value);}
+  // Migrate only the shipped identity and its untouched default label. A user
+  // resource or a custom title with the same words must keep its own name.
+  if(asset.usages.contains("smartmask"))for(const auto &entry:builtin_mask_names){
+    const auto filename=QString::fromUtf8(entry.slug.data(),entry.slug.size())+".btsmask";
+    const auto id=QUuid::createUuidV5(QUuid("{954c6511-3b9d-4f1f-bbdd-173dfbb99b69}"),filename.toUtf8());
+    if(asset.id==id&&asset.filename==filename&&asset.name==QString::fromUtf8(entry.legacy_name.data(),entry.legacy_name.size()))
+      asset.name=QString::fromUtf8(entry.name.data(),entry.name.size());
+  }
   asset.smart_material=asset.usages.contains("smartmaterial");
   if((asset.smart_material||asset.usages.contains("smartmask")||asset.usages.contains("brush"))&&asset.usages.size()!=1)throw std::invalid_argument("Preset resources require one dedicated usage");
   if(object.contains("texture_files")){if(!asset.usages.contains("texture"))throw std::invalid_argument("Disk texture files require Texture usage");asset.texture_files=read_texture_sources(object["texture_files"]);if(texture_sources_hash(asset.texture_files)!=object["sha256"].toString())throw std::invalid_argument("Texture file manifest checksum mismatch");}

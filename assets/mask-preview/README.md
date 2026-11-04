@@ -1,0 +1,1 @@
+Mask thumbnail geometry and baked mesh maps restored byte-for-byte from the mfPainter reference (`feat/environment-preflight-mac`, `assets/procedurals/shaderball-jl01-*.png`). These are preview surface inputs, not mask archives or pre-rendered mask thumbnails. The native CPU/GPU evaluators render each mask on this surface. Material previews keep the generated mPainter sphere.

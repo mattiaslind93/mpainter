@@ -129,6 +129,8 @@ shutil.copy2(root/'packaging/se.mattiaslind.mpainter.desktop',stage/'se.mattiasl
 shutil.copy2(root/'packaging/se.mattiaslind.mpainter.metainfo.xml',stage/'se.mattiaslind.mpainter.metainfo.xml')
 shutil.copy2(root/'assets/branding/mpainter-icon-256.png',stage/'se.mattiaslind.mpainter.png')
 licenses=stage/'licenses';licenses.mkdir()
+shutil.copy2(root/'assets/grunges/README.md',licenses/'mask-grunges.md')
+shutil.copy2(root/'assets/mask-preview/README.md',licenses/'mask-preview.md')
 shutil.copytree(root/'third_party/optix',licenses/'OptiX')
 for name in ['LICENSE','NOTICE.md','README.md']:shutil.copy2(root/name,stage/name)
 # Preserve the installed Blender third-party license inventory.

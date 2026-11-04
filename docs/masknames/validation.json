@@ -1,0 +1,261 @@
+{
+  "reference_branch": "feat/environment-preflight-mac",
+  "reference_head": "5b1e4d00c62f46ca7206d6fb84f0015bf9c16ce5",
+  "reference_working_tree": true,
+  "cpu": [
+    {
+      "fill_and_folder": true,
+      "invert_difference": 5447.710427477956,
+      "maximum": 0.7803036570549011,
+      "minimum": 0,
+      "name": "Rust",
+      "reference_pixel_exact": true
+    },
+    {
+      "fill_and_folder": true,
+      "invert_difference": 6246.756814125925,
+      "maximum": 0.6964842677116394,
+      "minimum": 0,
+      "name": "Edge Wear",
+      "reference_pixel_exact": true
+    },
+    {
+      "fill_and_folder": true,
+      "invert_difference": 2843.9514004271477,
+      "maximum": 0.7800279855728149,
+      "minimum": 0,
+      "name": "Crease Dirt",
+      "reference_pixel_exact": true
+    },
+    {
+      "fill_and_folder": true,
+      "invert_difference": 6568.300503104925,
+      "maximum": 0.7819600105285645,
+      "minimum": 0,
+      "name": "Moss",
+      "reference_pixel_exact": true
+    },
+    {
+      "fill_and_folder": true,
+      "invert_difference": 6235.55014789477,
+      "maximum": 1,
+      "minimum": 0,
+      "name": "Ground Dirt",
+      "reference_pixel_exact": true
+    },
+    {
+      "fill_and_folder": true,
+      "invert_difference": 2904.6231999909505,
+      "maximum": 0.3209961950778961,
+      "minimum": 0,
+      "name": "Scratches",
+      "reference_pixel_exact": true
+    },
+    {
+      "fill_and_folder": true,
+      "invert_difference": 3030.688662480563,
+      "maximum": 0.30591684579849243,
+      "minimum": 0,
+      "name": "Leaks & Stains",
+      "reference_pixel_exact": true
+    },
+    {
+      "fill_and_folder": true,
+      "invert_difference": 7975.878500849009,
+      "maximum": 0.9605172872543335,
+      "minimum": 0,
+      "name": "Surface Dust",
+      "reference_pixel_exact": true
+    },
+    {
+      "fill_and_folder": true,
+      "invert_difference": 5124.363802522421,
+      "maximum": 0.9003738164901733,
+      "minimum": 0,
+      "name": "Position height",
+      "reference_pixel_exact": true
+    },
+    {
+      "fill_and_folder": true,
+      "invert_difference": 13710.17786693573,
+      "maximum": 1,
+      "minimum": 0,
+      "name": "Curvature edges",
+      "reference_pixel_exact": true
+    }
+  ],
+  "gpu": [
+    {
+      "gpu_sphere_thumbnail": true,
+      "height": 84,
+      "name": "Rust",
+      "reference_pixel_exact": true,
+      "width": 84
+    },
+    {
+      "gpu_sphere_thumbnail": true,
+      "height": 84,
+      "name": "Edge Wear",
+      "reference_pixel_exact": true,
+      "width": 84
+    },
+    {
+      "gpu_sphere_thumbnail": true,
+      "height": 84,
+      "name": "Crease Dirt",
+      "reference_pixel_exact": true,
+      "width": 84
+    },
+    {
+      "gpu_sphere_thumbnail": true,
+      "height": 84,
+      "name": "Moss",
+      "reference_pixel_exact": true,
+      "width": 84
+    },
+    {
+      "gpu_sphere_thumbnail": true,
+      "height": 84,
+      "name": "Ground Dirt",
+      "reference_pixel_exact": true,
+      "width": 84
+    },
+    {
+      "gpu_sphere_thumbnail": true,
+      "height": 84,
+      "name": "Scratches",
+      "reference_pixel_exact": true,
+      "width": 84
+    },
+    {
+      "gpu_sphere_thumbnail": true,
+      "height": 84,
+      "name": "Leaks & Stains",
+      "reference_pixel_exact": true,
+      "width": 84
+    },
+    {
+      "gpu_sphere_thumbnail": true,
+      "height": 84,
+      "name": "Surface Dust",
+      "reference_pixel_exact": true,
+      "width": 84
+    },
+    {
+      "gpu_sphere_thumbnail": true,
+      "height": 84,
+      "name": "Position height",
+      "reference_pixel_exact": true,
+      "width": 84
+    },
+    {
+      "gpu_sphere_thumbnail": true,
+      "height": 84,
+      "name": "Curvature edges",
+      "reference_pixel_exact": true,
+      "width": 84
+    }
+  ],
+  "appimage_gpu": [
+    {
+      "gpu_sphere_thumbnail": true,
+      "height": 84,
+      "name": "Rust",
+      "reference_pixel_exact": true,
+      "width": 84
+    },
+    {
+      "gpu_sphere_thumbnail": true,
+      "height": 84,
+      "name": "Edge Wear",
+      "reference_pixel_exact": true,
+      "width": 84
+    },
+    {
+      "gpu_sphere_thumbnail": true,
+      "height": 84,
+      "name": "Crease Dirt",
+      "reference_pixel_exact": true,
+      "width": 84
+    },
+    {
+      "gpu_sphere_thumbnail": true,
+      "height": 84,
+      "name": "Moss",
+      "reference_pixel_exact": true,
+      "width": 84
+    },
+    {
+      "gpu_sphere_thumbnail": true,
+      "height": 84,
+      "name": "Ground Dirt",
+      "reference_pixel_exact": true,
+      "width": 84
+    },
+    {
+      "gpu_sphere_thumbnail": true,
+      "height": 84,
+      "name": "Scratches",
+      "reference_pixel_exact": true,
+      "width": 84
+    },
+    {
+      "gpu_sphere_thumbnail": true,
+      "height": 84,
+      "name": "Leaks & Stains",
+      "reference_pixel_exact": true,
+      "width": 84
+    },
+    {
+      "gpu_sphere_thumbnail": true,
+      "height": 84,
+      "name": "Surface Dust",
+      "reference_pixel_exact": true,
+      "width": 84
+    },
+    {
+      "gpu_sphere_thumbnail": true,
+      "height": 84,
+      "name": "Position height",
+      "reference_pixel_exact": true,
+      "width": 84
+    },
+    {
+      "gpu_sphere_thumbnail": true,
+      "height": 84,
+      "name": "Curvature edges",
+      "reference_pixel_exact": true,
+      "width": 84
+    }
+  ],
+  "ui": {
+    "display": ":99",
+    "names": [
+      "Crease Dirt",
+      "Curvature edges",
+      "Edge Wear",
+      "Ground Dirt",
+      "Leaks & Stains",
+      "Moss",
+      "Position height",
+      "Rust",
+      "Scratches",
+      "Surface Dust"
+    ],
+    "actual_shelf_screenshot": "/mnt/mpainter-phase1/shots/masknames.png",
+    "exit_code": 0,
+    "command": [
+      "vglrun",
+      "-nodl",
+      "-d",
+      "egl",
+      "-c",
+      "proxy",
+      "/mnt/mpainter-phase1/dist/mPainter-0.9.0-alpha-linux-x86_64.AppImage",
+      "--no-splash",
+      "--new-mesh",
+      "/mnt/mpainter-phase1/mpainter/assets/meshes/sphere.obj"
+    ]
+  },
+  "appimage_sha256": "2f29b7ae0464f54565033634ea8d56daac50e503bbb2606e8af8768c0cce2450"
+}

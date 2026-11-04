@@ -1,3 +1,4 @@
+#include "BuiltinMaskNames.hh"
 #include "ResourceAvailability.hh"
 #include "ResourceStack.hh"
 #pragma once
@@ -111,7 +112,9 @@ inline std::vector<MaskEffect> read_mask_effects(const QJsonValue &value){requir
       const auto integer=[&](const char *key,int maximum){const auto v=o[key];if(!v.isDouble()||v.toDouble()!=v.toInt(-1)||v.toInt()<0||v.toInt()>maximum)fail();return v.toInt();};e.compare_channel=integer("channel",5);e.left=integer("left",3);e.right=integer("right",3);e.operation=integer("operation",2);const auto c=o["constant"];if(!c.isDouble()||!std::isfinite(c.toDouble())||std::abs(c.toDouble())>65504)fail();e.constant=float(c.toDouble());e.hardness=unit(o["hardness"]);e.tolerance=unit(o["tolerance"]);e.opacity=unit(o["opacity"]);if(!o["blending"].isString())fail();const auto name=o["blending"].toString();const auto mode=std::find_if(layer_blend_names.begin(),layer_blend_names.end(),[&](const char *label){return name==label;});if(mode==layer_blend_names.end())fail();e.blending=LayerBlend(mode-layer_blend_names.begin());}
     else if(o["type"]=="generator"){e.kind=MaskEffectKind::Generator;static_cast<MeshGeneratorSettings &>(e)=read_mesh_generator(o);e.opacity=unit(o["opacity"]);if(!o["blending"].isString())fail();const auto name=o["blending"].toString();const auto mode=std::find_if(layer_blend_names.begin(),layer_blend_names.end(),[&](const char *label){return name==label;});if(mode==layer_blend_names.end())fail();e.blending=LayerBlend(mode-layer_blend_names.begin());}
     else if(o["type"]=="levels"){e.kind=MaskEffectKind::Levels;const auto levels=read_effects(QJsonArray{o["levels"]});e.levels=levels.front();e.opacity=e.levels.opacity;e.blending=e.levels.blending;if(e.levels.id!=e.id||e.levels.channel!=2)fail();}
-    else fail();result.push_back(std::move(e));
+    else fail();
+    if(e.kind==MaskEffectKind::Generator)e.name=std::string(restored_builtin_mask_name(e.name,e.generator));
+    result.push_back(std::move(e));
   }return result;
 }
 }

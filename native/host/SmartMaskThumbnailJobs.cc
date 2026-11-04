@@ -35,9 +35,10 @@ QImage display_packet(const ThumbnailMetadata &packet){
  constexpr int out_side=84;
  constexpr int pkt_side=ThumbnailMetadata::side;
  QImage image(out_side,out_side,QImage::Format_RGB32);
- image.fill(QColor(bts::theme::Surface));
+ // Fixed reference raster background, part of the thumbnail pixels, not UI chrome.
+ image.fill(qRgb(41,41,41));
  if(!packet.valid||packet.pixels.size()<std::size_t(pkt_side*pkt_side))return image;
- const auto &gb=detail::sphere_preview_gbuffer();
+ const auto &gb=detail::shaderball_jl01_gbuffer();
  const auto encode=[](double v){return v<=.0031308?12.92*v:1.055*std::pow(v,1.0/2.4)-.055;};
  const auto sample_mask=[&](double u,double v)->double{
   const double fx=std::clamp(u*double(pkt_side)-0.5,0.0,double(pkt_side-1));
@@ -94,7 +95,7 @@ struct SmartMaskThumbnailJobs::Impl {
   void initialize(){using namespace blender;using namespace gpu::shader;
    if(mask)return;
    for(auto *image:{&mask,&shaded})image->reset(GPU_texture_create_2d("Own smart-mask sphere",side,side,1,gpu::TextureFormat::SFLOAT_32_32_32_32,GPU_TEXTURE_USAGE_GENERAL,nullptr));
-   const auto &gb=detail::sphere_preview_gbuffer();
+   const auto &gb=detail::shaderball_jl01_gbuffer();
    std::vector<float> gb_data(std::size_t(side)*side*4,0.f);
    for(int y=0;y<side;++y)for(int x=0;x<side;++x){
     const auto sp=gb.sample((x+.5)/double(side),(y+.5)/double(side));const std::size_t idx=(std::size_t(y)*side+x)*4;

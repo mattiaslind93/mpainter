@@ -1,0 +1,12 @@
+<RCC>
+  <qresource prefix="/builtin-grunges">
+    <file>grunge_crease_dirt.png</file>
+    <file>grunge_edge_wear.png</file>
+    <file>grunge_fine_dust.png</file>
+    <file>grunge_ground_mud.png</file>
+    <file>grunge_leaks_streaks.png</file>
+    <file>grunge_moss_organic.png</file>
+    <file>grunge_rust_spots.png</file>
+    <file>grunge_scratches.png</file>
+  </qresource>
+</RCC>
