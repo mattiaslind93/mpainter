@@ -5,7 +5,13 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 endif()
 
 # Independent worker-side library; no external vendor SDK, Qt, Blender or graph runtime.
-find_package(HDF5 1.12 REQUIRED COMPONENTS C)
+# HDF5's config package accepts only its own minor series for versioned
+# requests. Discover first, then enforce our minimum so 1.14 is not rejected
+# in favor of a host h5cc while cross-compiling a 1.12-or-newer consumer.
+find_package(HDF5 REQUIRED COMPONENTS C)
+if(HDF5_VERSION VERSION_LESS 1.12)
+  message(FATAL_ERROR "The SPSM reader requires HDF5 1.12 or newer")
+endif()
 find_package(Threads REQUIRED)
 add_library(bts-spsm-reader STATIC SpsmReader.cc)
 target_compile_features(bts-spsm-reader PUBLIC cxx_std_20)
