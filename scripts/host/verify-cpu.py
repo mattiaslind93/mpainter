@@ -2,7 +2,7 @@
 import argparse,json,os,subprocess,sys
 from pathlib import Path
 from cpu_test_plan import cpu_test_binaries
-p=argparse.ArgumentParser();p.add_argument('--build-dir',type=Path,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--export-only',action='store_true');p.add_argument('--config');p.add_argument('--plan-only',action='store_true');a=p.parse_args();a.build_dir=a.build_dir.resolve();a.output.mkdir(parents=True,exist_ok=True)
+p=argparse.ArgumentParser();p.add_argument('--build-dir',type=Path,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--export-only',action='store_true');p.add_argument('--config');p.add_argument('--plan-only',action='store_true');a=p.parse_args();a.build_dir=a.build_dir.resolve();a.output=a.output.resolve();a.output.mkdir(parents=True,exist_ok=True)
 (a.output/'tmp').mkdir(exist_ok=True)
 env=dict(os.environ,TMPDIR=str(a.output.resolve()/'tmp'),XDG_CACHE_HOME=str(a.output.resolve()/'cache'),QT_QPA_PLATFORM='offscreen',QT_QPA_OFFSCREEN_NO_GLX='1',BTS_NO_BACKGROUND_GPU='1',XDG_CONFIG_HOME=str(a.output.resolve()/'config'),XDG_DATA_HOME=str(a.output.resolve()/'data'),BTS_RECOVERY_DIR=str(a.output.resolve()/'recovery'),BTS_RESOURCE_CACHE=str(a.output.resolve()/'resource-cache'))
 env.pop('WAYLAND_DISPLAY',None)
