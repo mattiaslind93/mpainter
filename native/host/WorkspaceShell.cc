@@ -2475,7 +2475,7 @@ int capture_ac_panels(const QString &directory){
   auto *display=shell.findChild<QDialog *>("displaySettings");
   display->show();
   QApplication::processEvents();
-  auto *opacity=display->findChild<QDoubleSpinBox *>("environmentOpacity");
+  auto *opacity=display->findChild<QDoubleSpinBox *>("environmentRotation");
   auto *exposure=display->findChild<QDoubleSpinBox *>("environmentExposure");
   opacity->setValue(40.5);
   exposure->setValue(1.5);

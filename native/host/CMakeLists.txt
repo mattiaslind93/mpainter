@@ -1675,3 +1675,14 @@ target_compile_features(bts-theme-tests PRIVATE cxx_std_20)
 target_compile_options(bts-theme-tests PRIVATE "$<IF:$<CXX_COMPILER_ID:MSVC>,/UNDEBUG,-UNDEBUG>")
 target_link_libraries(bts-theme-tests PRIVATE Qt6::Widgets)
 add_dependencies(bts-release-check bts-theme-tests)
+
+# Keep the product environment available in both direct Linux builds and installs.
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  set(BTS_STUDIO_ASSETS
+    ${BTS_HOST_SOURCE_DIR}/../../assets/environments/default-studio.hdr
+    ${BTS_HOST_SOURCE_DIR}/../../assets/environments/default-studio.txt)
+  add_custom_command(TARGET bts-host POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:bts-host>/5.2/datafiles/studiolights/world
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BTS_STUDIO_ASSETS} $<TARGET_FILE_DIR:bts-host>/5.2/datafiles/studiolights/world)
+  install(FILES ${BTS_STUDIO_ASSETS} DESTINATION 5.2/datafiles/studiolights/world)
+endif()

@@ -19,11 +19,12 @@ When redistributing a binary, provide the matching mPainter source, Blender sour
 
 ## Default Studio HDRI
 
-New projects use Blender's bundled `5.2/datafiles/studiolights/world/studio.exr`
-with the environment visible. Its adjacent `license.txt` explicitly licenses all
-world HDRIs as **CC0**, credited to Greg Zaal / Poly Haven. Upstream identifies the
-original Studio asset as *probably* `studio_small_01`; that uncertainty concerns
-the original asset name, not the explicit CC0 grant for the bundled file.
-Poly Haven permits commercial redistribution: https://polyhaven.com/license.
-The file and notice are required by both Linux packaging steps; SHA-256:
-`c36c7fd390b2cdf8693360cf3662cb1d710c95fa799d9f822f42997167839b56`.
+New projects use `default-studio.hdr`, a Radiance environment made in Blender
+by Mattias Lind and supplied by him for bundling in mPainter on 2026-11-04.
+It illuminates the scene and reflections; the camera background uses the UI theme.
+The asset and provenance notice are in `assets/environments/` and are checked by
+both Linux packaging steps. SHA-256:
+`48505ffc80c0ca026775c77621b5a85a4c44b0fb7819ddadfa9e7bc6f5732031`.
+
+Blender's optional world HDRIs retain their adjacent CC0 notice and attribution
+to Greg Zaal / Poly Haven. They are not the default environment.

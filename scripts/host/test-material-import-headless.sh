@@ -26,7 +26,7 @@ distrobox enter bts-build -- env -u WAYLAND_DISPLAY -u LD_LIBRARY_PATH \
  "${material_extra[@]}" BTS_NATIVE_THUMBNAIL_TEST=1 BTS_NATIVE_MATERIAL_HOST_QUEUE_TEST=1 \
  "BTS_MATERIAL_IMPORT_CASES=$material_fixtures/cases.json" "BTS_MATERIAL_IMPORT_MESH=$material_fixtures/sphere.obj" \
  "BTS_NATIVE_THUMBNAIL_OUTPUT=$material_output" \
- "BTS_ENVIRONMENT=$material_root/build/runtime/5.2/datafiles/studiolights/world/studio.exr" \
+ "BTS_ENVIRONMENT=$material_root/build/runtime/5.2/datafiles/studiolights/world/default-studio.hdr" \
  xvfb-run -a "$material_wrapper" bash -c \
  'source "$1"; unset WAYLAND_DISPLAY; export VGL_EGLLIB=/usr/lib64/libEGL.so.1; exec vglrun -nodl -d egl -c proxy "$2" --headless-viewport-test "$3"' \
  bash "$material_root/mpainter/scripts/host/gpu-env.sh" "$material_launcher" "$material_output"

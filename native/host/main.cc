@@ -999,7 +999,7 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
     bts::performance::Scope full_frame_timing("viewport_full_frame");
     bts::property_paint_begin();
     if(headless_surface_&&!headless_gpu_ready_)return;
-    if(empty_project){if(host_.texture_updates_pending())timer_.start(16);else timer_.stop();if(empty_project_view){const int panel_width=std::min(460,width()-24);empty_project_view->setGeometry((width()-panel_width)/2,(height()-110)/2,panel_width,110);empty_project_view->raise();}auto *functions=context()->functions();const QColor backdrop(bts::theme::Canvas);functions->glClearColor(backdrop.redF(),backdrop.greenF(),backdrop.blueF(),1);functions->glClear(GL_COLOR_BUFFER_BIT);++frame_count;if(frame_done)frame_done(0);return;}
+    if(empty_project){if(host_.texture_updates_pending())timer_.start(16);else timer_.stop();if(empty_project_view){const int panel_width=std::min(460,width()-24);empty_project_view->setGeometry((width()-panel_width)/2,(height()-110)/2,panel_width,110);empty_project_view->raise();}auto *functions=context()->functions();const QColor backdrop(bts::theme::ViewportEdge);functions->glClearColor(backdrop.redF(),backdrop.greenF(),backdrop.blueF(),1);functions->glClear(GL_COLOR_BUFFER_BIT);++frame_count;if(frame_done)frame_done(0);return;}
     if(shader_failed)return;
     if(prepare_frame)prepare_frame();
     position_camera_controls();position_paths_panel();
@@ -2081,7 +2081,7 @@ int main(int argc, char **argv)
   parser.addOption({"demo-dir", "Capture the host acceptance sequence and exit", "directory"});
   parser.addOption({"layout-demo-dir", "Capture viewport layout key events and exit", "directory"});
   parser.addOption({"navigation-demo-dir", "Capture camera navigation events and exit", "directory"});
-  parser.addOption({"environment", "New-project Studio Light HDR/EXR path", "file", qEnvironmentVariable("BTS_ENVIRONMENT",QCoreApplication::applicationDirPath()+"/5.2/datafiles/studiolights/world/studio.exr")});
+  parser.addOption({"environment", "New-project Studio Light HDR/EXR path", "file", qEnvironmentVariable("BTS_ENVIRONMENT",QCoreApplication::applicationDirPath()+"/5.2/datafiles/studiolights/world/default-studio.hdr")});
   parser.addOption({"new-mesh", "Create a native project from this OBJ after startup", "file"});
   parser.addOption({"new-demo-dir", "Capture native New and invalid-import preservation, then exit", "directory"});
   parser.addOption({"texture-sets-demo", "Verify material-specific UV selection and edits after New"});
@@ -2270,7 +2270,7 @@ int main(int argc, char **argv)
     bts::InspectionMode id_picker_previous_mode=bts::InspectionMode::Material;std::function<void(bool)> change_id_picker;
     bts::SymmetrySettings symmetry,fill_display_symmetry;
     bts::AssetCatalog assets(parser.isSet("library-dir")?QFileInfo(parser.value("library-dir")).absoluteFilePath():QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).filePath("shelf"));
-    if(!parser.value("environment").isEmpty()){const auto source=bts::read_image_resource(QFileInfo(parser.value("environment")).absoluteFilePath(),false);bts::StudioAsset environment;environment.name="Studio Environment";environment.filename=source.filename;environment.path=source.path;environment.scope=bts::AssetScope::Builtin;environment.usages={"environment"};environment.bytes=source.bytes;assets.add(std::move(environment));}
+    if(!parser.value("environment").isEmpty()){const auto source=bts::read_image_resource(QFileInfo(parser.value("environment")).absoluteFilePath(),false);bts::StudioAsset environment;environment.name="Studio";environment.filename=source.filename;environment.path=source.path;environment.scope=bts::AssetScope::Builtin;environment.usages={"environment"};environment.bytes=source.bytes;assets.add(std::move(environment));}
     QString library_error;try{assets.load_user_library();}catch(const std::exception &error){library_error=QString::fromUtf8(error.what());}
     bool quick_enabled=false,quick_editing=false;
     std::map<std::uint32_t,bts::QuickMaskField> quick_masks;

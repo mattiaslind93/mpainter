@@ -1,2 +1,5 @@
 # Stored unified diffs retain their original context-line whitespace.
 docs/parity/baseline.diff -whitespace
+
+# Radiance RGBE payloads must retain their exact bytes.
+assets/environments/*.hdr binary

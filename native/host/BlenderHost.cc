@@ -1,3 +1,4 @@
+#include "Theme.hh"
 #include "MaskEffectContext.hh"
 #include "NativeMaterialGraph.hh"
 #include "NativeFragmentGeometry.hh"
@@ -348,6 +349,18 @@ struct BlenderHost::Impl {
   }
   if (!s.view || !s.region) {
     throw std::runtime_error("Blender startup has no usable View3D region");
+  }
+  // The environment supplies illumination/reflections only, including reopened projects.
+  s.view->shading.studiolight_background = 0;
+  const QColor backdrop(bts::theme::Viewport), edge(bts::theme::ViewportEdge);
+  for (bTheme &theme : U.themes) {
+    theme.space_view3d.background_type = TH_BACKGROUND_GRADIENT_RADIAL;
+    const unsigned char color[4] = {static_cast<unsigned char>(backdrop.red()),
+      static_cast<unsigned char>(backdrop.green()), static_cast<unsigned char>(backdrop.blue()), 255};
+    std::copy_n(color, 4, theme.space_view3d.back);
+    const unsigned char edge_color[4] = {static_cast<unsigned char>(edge.red()),
+      static_cast<unsigned char>(edge.green()), static_cast<unsigned char>(edge.blue()), 255};
+    std::copy_n(edge_color, 4, theme.space_view3d.back_grad);
   }
   s.main = CTX_data_main(s.context);
   s.scene = CTX_data_scene(s.context);
@@ -1037,7 +1050,7 @@ void BlenderHost::set_environment_appearance(const std::string &field,double val
   if(s.drawing||s.phase!=Impl::Phase::GpuReady)throw std::logic_error("Environment change requires an idle viewport");
   if(!std::isfinite(value))throw std::invalid_argument("Nonfinite environment value");
   if(field=="exposure"&&value>=-10&&value<=10)s.view->shading.studiolight_intensity=float(std::exp2(value));
-  else if(field=="opacity"&&value>=0&&value<=100)s.view->shading.studiolight_background=float(value/100);
+  else if(field=="opacity"&&value>=0&&value<=100)s.view->shading.studiolight_background=0; // Camera background is always the UI theme.
   else if(field=="blur"&&value>=0&&value<=100)s.view->shading.studiolight_blur=float(value/100);
   else throw std::invalid_argument("Unsupported environment control or value");
   s.tag_preview();
@@ -1168,6 +1181,7 @@ double BlenderHost::draw(std::span<const ViewFrame> frames, int width, int heigh
   {
     throw std::logic_error("Invalid or reentrant native draw");
   }
+  s.view->shading.studiolight_background = 0;
   // BKE_scene_graph_update_tagged clears these flags. Latch before any
   // residency snapshot can ensure evaluation and clear the same notification.
   bool native_owner_revision=DEG_id_type_updated(s.depsgraph,ID_OB)||DEG_id_type_updated(s.depsgraph,ID_ME);

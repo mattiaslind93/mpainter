@@ -49,7 +49,7 @@ inline int verify_many_udim_project(BlenderHost &host,QOpenGLContext &context,QO
   }
  }
  NewProjectOptions options;options.absolute_mesh_path=mesh.toStdString();options.resolution=DocumentResolution::Pixels128;options.uv_workflow=UvWorkflow::PreserveTiles;
- const auto environment=qEnvironmentVariable("BTS_ENVIRONMENT",QCoreApplication::applicationDirPath()+"/5.2/datafiles/studiolights/world/studio.exr");
+ const auto environment=qEnvironmentVariable("BTS_ENVIRONMENT",QCoreApplication::applicationDirPath()+"/5.2/datafiles/studiolights/world/default-studio.hdr");
  const auto imported=host.new_project(mesh.toStdString(),environment.toStdString(),&options);
  require(imported.materials.size()==1&&imported.materials[0].tiles==tiles&&imported.materials[0].udim_valid,"Native New lost one of the eighteen UDIM tiles");
  auto scene=host.scene_snapshot();TextureDocument document(options,imported,scene);auto &set=document.set(imported.materials[0].session_uid);

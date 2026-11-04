@@ -1,4 +1,5 @@
 #include "Theme.hh"
+#include "SliderHitArea.hh"
 #pragma once
 #include "LayerEffect.hh"
 #include <QLabel>
@@ -15,7 +16,7 @@ namespace bts {
 // Numeric fields remain the precision/HDR route; handles edit the visible 0..1 range.
 class HandleRamp final:public QWidget {
  public:
-  explicit HandleRamp(QWidget *parent=nullptr):QWidget(parent){setMinimumHeight(48);setFocusPolicy(Qt::StrongFocus);setCursor(Qt::PointingHandCursor);}
+  explicit HandleRamp(QWidget *parent=nullptr):QWidget(parent){new SliderHandleGeometry(this,[this]{QList<QRectF> result;for(int i=0;i<int(positions.size());++i)result.append(QRectF(handle_position(i)-QPointF(7,7),QSizeF(14,14)));return result;});setMinimumHeight(48);setFocusPolicy(Qt::StrongFocus);setCursor(Qt::PointingHandCursor);}
   std::vector<float> positions{0,1};
   std::vector<QString> labels;
   std::function<void(int,float)> moved;

@@ -1,4 +1,5 @@
 #include "Theme.hh"
+#include "SliderHitArea.hh"
 #include "NativeMaterialPanel.hh"
 #include "ColorPicker.hh"
 #include "NativeMaterialColor.hh"
@@ -28,7 +29,7 @@ class NativeRamp final:public QWidget {
  std::function<PickerColor(const PickerColor &)> to_canonical;
  std::function<void(int)> selected_changed;
  std::function<void()> started,finished;std::function<void(const QJsonObject &)> changed;
- explicit NativeRamp(QWidget *parent):QWidget(parent){setMinimumHeight(58);setMinimumWidth(140);setCursor(Qt::PointingHandCursor);setObjectName("nativeColorRamp");}
+ explicit NativeRamp(QWidget *parent):QWidget(parent){new SliderHandleGeometry(this,[this]{QList<QRectF> result;for(const auto &stop:value["stops"].toArray()){const double x=8+stop.toObject()["position"].toDouble()*(width()-16);result.append(QRectF(x-6.5,31.5,13,14));}return result;});setMinimumHeight(58);setMinimumWidth(140);setCursor(Qt::PointingHandCursor);setObjectName("nativeColorRamp");}
  void paintEvent(QPaintEvent *)override{
   QPainter p(this);p.setRenderHint(QPainter::Antialiasing);const QRect rectangle(8,5,std::max(1,width()-16),28);const int samples=std::max(1,qRound(rectangle.width()*devicePixelRatioF()));QImage strip(samples,1,QImage::Format_ARGB32);const auto band=native_material_ramp(value);
   // The GPU lookup builder calls this same native evaluator. Interpolate in

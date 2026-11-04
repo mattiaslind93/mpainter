@@ -33,7 +33,7 @@ class LightingDemo final:public QObject {
   void advance(){switch(stage_++){
     case 0:{capture("startup");QAction *action=nullptr;for(auto *candidate:workspace_->findChildren<QAction *>())if(candidate->text()=="&New…")action=candidate;if(!action)qFatal("Lighting GUI New missing");action->trigger();break;}
     case 1:{QDialog *dialog=nullptr;for(auto *candidate:workspace_->findChildren<QDialog *>())if(candidate->findChild<QLineEdit *>("meshPath"))dialog=candidate;if(!dialog)qFatal("Lighting New dialog missing");dialog->findChild<QLineEdit *>("meshPath")->setText(mesh_);auto *size=dialog->findChild<QComboBox *>("documentResolution");size->setCurrentIndex(size->findData(resolution_));dialog->findChild<QPushButton *>("createProject")->click();break;}
-    case 2:{capture("created");workspace_->findChild<QDialog *>("displaySettings")->show();workspace_->findChild<QToolButton *>("addFillLayer")->click();workspace_->findChild<QDoubleSpinBox *>("metallicControl")->setValue(1);workspace_->findChild<QDoubleSpinBox *>("roughnessControl")->setValue(.1);workspace_->findChild<QDoubleSpinBox *>("environmentOpacity")->setValue(100);workspace_->findChild<QDoubleSpinBox *>("environmentBlur")->setValue(0);rotation(0);break;}
+    case 2:{capture("created");workspace_->findChild<QDialog *>("displaySettings")->show();workspace_->findChild<QToolButton *>("addFillLayer")->click();workspace_->findChild<QDoubleSpinBox *>("metallicControl")->setValue(1);workspace_->findChild<QDoubleSpinBox *>("roughnessControl")->setValue(.1);rotation(0);break;}
     case 3:capture("follow0");orbit(90);break;
     case 4:capture("follow-orbit90");rotation(45);break;
     case 5:capture("follow-rotation45");rotation(0);follows(false);orbit(-90);break;

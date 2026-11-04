@@ -40,7 +40,7 @@ int main(int argc,char **argv){
   require(QString::fromStdString(host.renderer()).contains("NVIDIA",Qt::CaseInsensitive),"Hardware native GPU renderer required");
   const auto mesh=directory+"/quad.obj";{QFile file(mesh);require(file.open(QIODevice::WriteOnly),"Cannot write private mesh");file.write("o OpenFixture\nv 0 0 0\nv 1 0 0\nv 1 1 0\nv 0 1 0\nvt 0 0\nvt 1 0\nvt 1 1\nvt 0 1\nf 1/1 2/2 3/3 4/4\n");}
   NewProjectOptions options;options.resolution=DocumentResolution::Pixels128;options.uv_workflow=UvWorkflow::PreserveTiles;options.absolute_mesh_path=mesh.toStdString();
-  const auto environment=qEnvironmentVariable("BTS_ENVIRONMENT",QCoreApplication::applicationDirPath()+"/5.2/datafiles/studiolights/world/studio.exr");
+  const auto environment=qEnvironmentVariable("BTS_ENVIRONMENT",QCoreApplication::applicationDirPath()+"/5.2/datafiles/studiolights/world/default-studio.hdr");
   const auto create=[&]{auto summary=host.new_project(mesh.toStdString(),environment.toStdString(),&options);return TextureDocument(options,summary,host.scene_snapshot());};
   auto document=create();
   ViewFrame frame;frame.pane={ViewKind::Scene,0,0,256,256};QMatrix4x4 view,projection;view.translate(-.5f,-.5f,-5);projection.ortho(-.6f,.6f,-.6f,.6f,.01f,100.f);std::copy_n(view.constData(),16,frame.view.begin());std::copy_n(projection.constData(),16,frame.projection.begin());frame.uv_center={.5,.5};frame.uv_extent=1.2;

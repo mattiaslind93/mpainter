@@ -1,4 +1,5 @@
 #include "Theme.hh"
+#include "SliderHitArea.hh"
 #pragma once
 #include <QWidget>
 #include <QPainter>
@@ -11,12 +12,12 @@ namespace bts {
 // Five fixed abscissae avoid duplicate/crossing knots while permitting arbitrary ramps.
 class CompareRampEditor final : public QWidget {
  public:
-  explicit CompareRampEditor(QWidget *parent=nullptr):QWidget(parent){setMinimumHeight(100);setAccessibleName("Compare Mask curve ramp");setToolTip("Drag a curve point vertically. Double click to reset the linear ramp.");}
+  explicit CompareRampEditor(QWidget *parent=nullptr):QWidget(parent){new SliderHandleGeometry(this,[this]{QList<QRectF> result;for(int i=0;i<5;++i)result.append(QRectF(point(i)-QPointF(5,5),QSizeF(10,10)));return result;});setMinimumHeight(100);setAccessibleName("Compare Mask curve ramp");setToolTip("Drag a curve point vertically. Double click to reset the linear ramp.");}
   std::array<float,5> points{0,.25f,.5f,.75f,1};
   std::function<void(const std::array<float,5> &)> changed;
  protected:
   void paintEvent(QPaintEvent *)override{
-    QPainter p(this);p.fillRect(rect(),QColor(bts::theme::Canvas));p.setRenderHint(QPainter::Antialiasing);
+    QPainter p(this);p.fillRect(rect(),QColor(bts::theme::Curve));p.setRenderHint(QPainter::Antialiasing);
     QLinearGradient gradient(8,0,width()-8,0);for(int i=0;i<5;++i)gradient.setColorAt(i/4.,QColor::fromRgbF(points[i],points[i],points[i]));
     p.fillRect(QRectF(8,height()-17,width()-16,10),gradient);
     p.setPen(QPen(QColor(bts::theme::Accent),2));for(int i=1;i<5;++i)p.drawLine(point(i-1),point(i));

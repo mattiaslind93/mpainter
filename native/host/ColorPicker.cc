@@ -1,4 +1,5 @@
 #include "Theme.hh"
+#include "SliderHitArea.hh"
 #include "NumericLocale.hh"
 #include "ColorPicker.hh"
 #include "PropertyLatency.hh"
@@ -201,7 +202,7 @@ class ColorWheel final:public QWidget {
   QColor color{Qt::black};
   std::function<void()> started,finished;
   std::function<void(const QColor &)> changed;
-  explicit ColorWheel(QWidget *parent):QWidget(parent){setObjectName("colorWheel");setFixedSize(220,220);setAttribute(Qt::WA_TabletTracking);}
+  explicit ColorWheel(QWidget *parent):QWidget(parent){new SliderHandleGeometry(this,[this]{const double angle=hue_*2*3.14159265358979323846;const QPointF hue(110+98*std::cos(angle),110-98*std::sin(angle)),sv(50+120*color.hsvSaturationF(),170-120*color.valueF());return QList<QRectF>{QRectF(hue-QPointF(8.5,8.5),QSizeF(17,17)),QRectF(sv-QPointF(6.5,6.5),QSizeF(13,13))};});setObjectName("colorWheel");setFixedSize(220,220);setAttribute(Qt::WA_TabletTracking);}
   void set_color(QColor value){color=value;if(value.hsvHueF()>=0)hue_=value.hsvHueF();update();}
  protected:
   void paintEvent(QPaintEvent *)override {
@@ -218,7 +219,7 @@ class ColorWheel final:public QWidget {
  private:
   double hue_=0;
   int drag_=0;
-  void press(QPointF point){const double distance=QLineF(point,{110,110}).length();drag_=distance>=86&&distance<=110?1:QRectF(50,50,120,120).contains(point)?2:0;if(drag_){if(started)started();move(point);}}
+  void press(QPointF point){const double distance=QLineF(point,{110,110}).length();const auto handles=slider_handles(this);drag_=doubled_handle(handles[0]).contains(point)?1:doubled_handle(handles[1]).contains(point)?2:distance>=86&&distance<=110?1:QRectF(50,50,120,120).contains(point)?2:0;if(drag_){if(started)started();move(point);}}
   void move(QPointF point){double saturation=color.hsvSaturationF(),value=color.valueF();if(drag_==1){hue_=std::atan2(110-point.y(),point.x()-110)/(2*3.14159265358979323846);if(hue_<0)hue_+=1;}else {saturation=std::clamp((point.x()-50)/120.,0.,1.);value=std::clamp((170-point.y())/120.,0.,1.);}color=QColor::fromHsvF(hue_,saturation,value);if(changed)changed(color);update();}
 };
 

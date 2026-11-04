@@ -1,13 +1,83 @@
 #include "Theme.hh"
+#include "SliderHitArea.hh"
 #include <QApplication>
+#include <QMouseEvent>
+#include <QTabletEvent>
+#include <QPointer>
+#include <limits>
 
 namespace bts::theme {
+namespace {
+// Catch the small halo outside a widget too, without growing its painted handle.
+// Forward a centered press and retain the pointer offset throughout the gesture:
+// grabbing the halo must never jump the value or change native undo/signals.
+class SliderHitFilter final : public QObject {
+  QPointer<QWidget> active_;
+  QPointF offset_;
+  bool forwarding_ = false;
+ public:
+  explicit SliderHitFilter(QObject *parent) : QObject(parent) {}
+  bool eventFilter(QObject *object, QEvent *event) override {
+    if (forwarding_) return false;
+    const auto type = event->type();
+    const bool tablet = type == QEvent::TabletPress || type == QEvent::TabletMove || type == QEvent::TabletRelease;
+    const bool mouse = type == QEvent::MouseButtonPress || type == QEvent::MouseMove || type == QEvent::MouseButtonRelease;
+    if (!mouse && !tablet) return false;
+    auto *receiver = qobject_cast<QWidget *>(object);
+    if (!receiver) return false;
+    auto *pointer = static_cast<QSinglePointEvent *>(event);
+    const bool press = type == QEvent::MouseButtonPress || type == QEvent::TabletPress;
+    const bool release = type == QEvent::MouseButtonRelease || type == QEvent::TabletRelease;
+    if (release && pointer->button() != Qt::LeftButton) return false;
+    if (press) {
+      if (pointer->button() != Qt::LeftButton || active_) return false;
+      QWidget *best = nullptr;
+      QPointF center;
+      double distance = std::numeric_limits<double>::max();
+      auto *window = receiver->window();
+      auto candidates = window->findChildren<QWidget *>();
+      candidates.prepend(window);
+      for (auto *widget : candidates) {
+        if (widget->window() != window || !widget->isVisible() || !widget->isEnabled()) continue;
+        const auto local = widget->mapFromGlobal(pointer->globalPosition());
+        for (const auto &visual : slider_handles(widget)) {
+          if (!doubled_handle(visual).contains(local) || !widget->visibleRegion().contains(visual.center().toPoint())) continue;
+          const auto delta = local - visual.center();
+          const double d = delta.x()*delta.x() + delta.y()*delta.y();
+          if (d < distance) { best = widget; center = visual.center(); distance = d; }
+        }
+      }
+      if (!best) return false; // Track clicks, keyboard and wheel retain their existing behavior.
+      active_ = best;
+      offset_ = best->mapFromGlobal(pointer->globalPosition()) - center;
+      best->grabMouse();
+    }
+    if (!active_) return false;
+    auto target = active_;
+    const auto position = target->mapFromGlobal(pointer->globalPosition()) - offset_;
+    const auto mapped = press ? QEvent::MouseButtonPress : release ? QEvent::MouseButtonRelease : QEvent::MouseMove;
+    QMouseEvent forwarded(mapped, position, target->mapToGlobal(position),
+                          press || release ? Qt::LeftButton : Qt::NoButton,
+                          release ? Qt::NoButton : Qt::LeftButton, pointer->modifiers());
+    forwarding_ = true;
+    QCoreApplication::sendEvent(target, &forwarded);
+    forwarding_ = false;
+    if (release) {
+      active_.clear();
+      if (target && QWidget::mouseGrabber() == target) target->releaseMouse();
+    }
+    event->accept();
+    return true;
+  }
+};
+}
+
 QPalette palette()
 {
   QPalette p;
   const auto set = [&](QPalette::ColorRole role, const char *token) { p.setColor(role, QColor(token)); };
   set(QPalette::Window, Surface); set(QPalette::WindowText, Text);
-  set(QPalette::Base, Canvas); set(QPalette::AlternateBase, Surface);
+  set(QPalette::Base, Canvas); set(QPalette::AlternateBase, ListAlternate);
   set(QPalette::Text, Text); set(QPalette::Button, Raised); set(QPalette::ButtonText, ButtonText);
   set(QPalette::BrightText, Heading); set(QPalette::Highlight, Selection);
   set(QPalette::HighlightedText, Heading); set(QPalette::Link, Accent);
@@ -24,6 +94,7 @@ QPalette palette()
 }
 void apply(QApplication &app)
 {
+  app.installEventFilter(new SliderHitFilter(&app));
   app.setStyle("Fusion");
   app.setPalette(palette());
   app.setStyleSheet(qss(QString::fromLatin1(R"(
@@ -44,7 +115,7 @@ void apply(QApplication &app)
   QPushButton:pressed, QPushButton:checked { background: @Selection@; color: @Heading@; }
   QPushButton:default, QPushButton:focus { border-color: @Accent@; }
   QPushButton:disabled { background: @Surface@; color: @Disabled@; }
-  QAbstractItemView { background: @Canvas@; alternate-background-color: @Surface@;
+  QAbstractItemView { background: @Canvas@; alternate-background-color: @ListAlternate@;
     color: @Text@; border: 1px solid @Border@; selection-background-color: @Selection@;
     selection-color: @Heading@; outline: none; }
   QAbstractItemView::item:hover { background: @Hover@; }
@@ -70,7 +141,7 @@ void apply(QApplication &app)
 
   QMainWindow, QWidget#workspaceRoot, QWidget#toolRail, QWidget#utilityRail,
   QWidget#materialProperties, QScrollArea#propertiesScroll {
-    background: @Canvas@; color: @Heading@;
+    background: @Surface@; color: @Heading@;
   }
   QWidget#materialProperties, QScrollArea#propertiesScroll { background: @Surface@; }
   QWidget#contextToolbar, QWidget#shelfFilter { background: @Header@; }
@@ -81,7 +152,7 @@ void apply(QApplication &app)
   QLabel:disabled { color: @Muted@; }
   QSplitter::handle { background: @Separator@; }
   QSplitter::handle:hover { background: @Accent@; }
-  QToolButton { background: @ToolbarItem@; border: 1px solid transparent; border-radius: 0; color: @Text@; }
+  QToolButton { background: @Tool@; border: 1px solid transparent; border-radius: 0; color: @Text@; }
   QToolButton:hover { background: @Hover@; border-color: @Hover@; }
   QToolButton:checked { background: @Selection@; color: @Heading@; border-color: @Accent@; }
   QWidget#assetShelf, QWidget#textureSetPanel { background: @Canvas@; }
@@ -155,7 +226,9 @@ void apply(QApplication &app)
   }
   QLineEdit, QTextEdit, QPlainTextEdit { background: @Input@; }
   QAbstractSpinBox, QDoubleSpinBox { background: @Number@; }
-  QComboBox { background: @Menu@; }
+  QComboBox { background: @MenuButton@; }
+  QWidget#toolRail QToolButton, QWidget#utilityRail QToolButton { background: @ToolbarItem@; }
+  QWidget#toolRail QToolButton:checked, QWidget#utilityRail QToolButton:checked { background: @Selection@; }
   QScrollBar::handle:hover { background: @ScrollHover@; }
 )")));
 }

@@ -35,7 +35,7 @@ export LD_LIBRARY_PATH="$qt_sdk/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 # Resolve this Linux installation's approved resource; the native core validates its hash.
 # Installations with a different layout can supply BTS_ENVIRONMENT or --environment.
 if [[ -z "${BTS_ENVIRONMENT:-}" ]]; then
-  export BTS_ENVIRONMENT="$workspace_dir/build/runtime/5.2/datafiles/studiolights/world/studio.exr"
+  export BTS_ENVIRONMENT="$workspace_dir/build/runtime/5.2/datafiles/studiolights/world/default-studio.hdr"
 fi
 if ! "$bts_test_run"; then
   export BTS_PERFORMANCE_PROFILE=1 BTS_SESSION_PROFILE=1

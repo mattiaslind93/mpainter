@@ -1,4 +1,5 @@
 #include "Theme.hh"
+#include "SliderHitArea.hh"
 #pragma once
 #include <QWidget>
 #include <QSlider>
@@ -25,6 +26,13 @@ class FillGradient final : public QWidget {
   }
  public:
   FillGradient(QSlider *slider, QDoubleSpinBox *value, QWidget *parent) : QWidget(parent), slider_(slider), value_(value) {
+    new SliderHandleGeometry(this, [this] {
+      if (!slider_->isEnabled()) return QList<QRectF>{};
+      QFont font; font.setPixelSize(11); const QFontMetrics metrics(font);
+      const double t = double(slider_->value()-slider_->minimum()) / std::max(1,slider_->maximum()-slider_->minimum());
+      const QPointF center(7+t*std::max(1,width()-14), metrics.height()+10);
+      return QList<QRectF>{QRectF(center-QPointF(7.75,7.75),QSizeF(15.5,15.5))};
+    });
     setProperty("fillOnly", true);
     setMinimumHeight(36);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);

@@ -38,7 +38,8 @@ class EnvironmentPanel final : public QDialog {
         const QSignalBlocker blocker(slider);slider->setValue(qRound(value*10));if(changed)changed(key,value);
       });
     };
-    control("opacity","environmentOpacity","Environment Opacity",0,100," %");
+    auto *background=new QLabel("Environment lights the scene and reflections. Background uses the UI theme.",this);
+    background->setWordWrap(true);layout->addWidget(background);
     control("exposure","environmentExposure","Environment Exposure",-10,10," EV");
     control("rotation","environmentRotation","Environment Rotation",-180,180,"°");
     auto *alignment_row=new QHBoxLayout;follows_view_=new QCheckBox("Lighting follows view",this);follows_view_->setObjectName("lightingFollowsView");follows_view_->setToolTip("Enabled: camera-relative Studio Light. Disabled: light remains fixed in world space. Rotation works in both modes.");alignment_row->addWidget(follows_view_);
@@ -46,14 +47,14 @@ class EnvironmentPanel final : public QDialog {
     alignment_->addItems({"World","Local"});alignment_->hide();layout->addLayout(alignment_row);
     connect(follows_view_,&QCheckBox::toggled,this,[this](bool follows){alignment_->setCurrentIndex(follows?1:0);});
     connect(alignment_,&QComboBox::currentIndexChanged,this,[this](int index){const QSignalBlocker block(follows_view_);follows_view_->setChecked(index==1);if(changed)changed("alignment",index);});
-    control("blur","environmentBlur","Environment Blur",0,100," %");
+
     post_=new DisplayPostPanel(content);layout->addWidget(post_);post_->changed=[this](const QString &key,double value){if(changed)changed("post."+key,value);};
     sss_enabled_=new QCheckBox("Activate Subsurface Scattering",content);sss_enabled_->setObjectName("subsurfacePreviewEnabled");layout->addWidget(sss_enabled_);auto *sss_row=new QHBoxLayout;sss_row->addWidget(new QLabel("Sample Count",content));sss_samples_=new QSpinBox(content);sss_samples_->setObjectName("subsurfacePreviewSamples");sss_samples_->setRange(1,64);sss_samples_->setKeyboardTracking(false);sss_samples_->setToolTip("EEVEE diffusion kernel samples. Cycles uses its rendering sample limit.");sss_row->addWidget(sss_samples_);layout->addLayout(sss_row);auto *sss_reset=new QPushButton("Restore subsurface defaults",content);sss_reset->setObjectName("subsurfacePreviewRestore");layout->addWidget(sss_reset);connect(sss_enabled_,&QCheckBox::toggled,this,[this](bool on){sss_samples_->setEnabled(on);if(changed)changed("subsurface.enabled",on);});connect(sss_samples_,&QSpinBox::valueChanged,this,[this](int value){if(changed)changed("subsurface.samples",value);});connect(sss_reset,&QPushButton::clicked,this,[this]{if(changed)changed("subsurface.reset",1);});
     layout->addStretch();
   }
   void set_state(const QJsonObject &state) {
     const auto subsurface=state["subsurface"].toObject();{const QSignalBlocker a(sss_enabled_),b(sss_samples_);sss_enabled_->setChecked(subsurface["enabled"].toBool());sss_samples_->setValue(subsurface["samples"].toInt(16));sss_samples_->setEnabled(sss_enabled_->isChecked()&&!sss_samples_->property("renderUnavailable").toBool());}
-    resource_->setText(state["resource"].toString());
+    resource_->setText(state["resource"].toString()=="default-studio.hdr"?"Studio":state["resource"].toString());
     post_->synchronize(state["post_effects"].toObject());
     const QSignalBlocker alignment_blocker(alignment_);alignment_->setCurrentIndex(state["alignment"].toString()=="Local"?1:0);
     const QSignalBlocker follow_blocker(follows_view_);follows_view_->setChecked(state.contains("lighting_follows_view")?state["lighting_follows_view"].toBool():state["alignment"]=="Local");

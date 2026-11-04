@@ -6,14 +6,14 @@ import sys
 
 def check(root):
     world = pathlib.Path(root) / '5.2/datafiles/studiolights/world'
-    image = world / 'studio.exr'
-    license_file = world / 'license.txt'
-    expected = 'c36c7fd390b2cdf8693360cf3662cb1d710c95fa799d9f822f42997167839b56'
+    image = world / 'default-studio.hdr'
+    license_file = world / 'default-studio.txt'
+    expected = '48505ffc80c0ca026775c77621b5a85a4c44b0fb7819ddadfa9e7bc6f5732031'
     if not image.is_file() or hashlib.sha256(image.read_bytes()).hexdigest() != expected:
         raise SystemExit('Missing or unexpected Studio HDRI: ' + str(image))
-    if not license_file.is_file() or not all(term in license_file.read_text() for term in ('CC0', 'Greg Zaal', 'Poly Haven', 'Studio:')):
-        raise SystemExit('Missing Studio HDRI license: ' + str(license_file))
-    print('Studio HDRI and CC0 notice verified: ' + expected)
+    if not license_file.is_file() or not all(term in license_file.read_text() for term in ('Mattias Lind', 'Blender', 'default-studio.hdr')):
+        raise SystemExit('Missing Studio HDRI provenance: ' + str(license_file))
+    print('Mattias Studio HDRI and provenance verified: ' + expected)
 
 if __name__ == '__main__':
     check(sys.argv[1])

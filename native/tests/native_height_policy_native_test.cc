@@ -51,7 +51,7 @@ struct Harness {
  bool stopped=false;
  explicit Harness(QString output):directory(std::move(output)),host(QCoreApplication::applicationFilePath().toStdString(),""){
   QDir().mkpath(directory);context.setFormat(QSurfaceFormat::defaultFormat());require(context.create(),"Height owner GL context failed");surface.setFormat(context.format());surface.create();require(surface.isValid()&&context.makeCurrent(&surface),"Height owner GL activation failed");framebuffer=std::make_unique<QOpenGLFramebufferObject>(256,256,QOpenGLFramebufferObject::CombinedDepthStencil);require(framebuffer->isValid(),"Height owner framebuffer failed");host.initialize_gpu(context,surface,framebuffer->handle());
-  environment=qEnvironmentVariable("BTS_ENVIRONMENT",QCoreApplication::applicationDirPath()+"/5.2/datafiles/studiolights/world/studio.exr");options.resolution=DocumentResolution::Pixels128;options.uv_workflow=UvWorkflow::PreserveTiles;
+  environment=qEnvironmentVariable("BTS_ENVIRONMENT",QCoreApplication::applicationDirPath()+"/5.2/datafiles/studiolights/world/default-studio.hdr");options.resolution=DocumentResolution::Pixels128;options.uv_workflow=UvWorkflow::PreserveTiles;
   frame.pane={ViewKind::Scene,0,0,256,256};QMatrix4x4 view,projection;view.translate(-2.5f,-.5f,-8);projection.ortho(-3.f,3.f,-1.5f,1.5f,.01f,100.f);std::copy_n(view.constData(),16,frame.view.begin());std::copy_n(projection.constData(),16,frame.projection.begin());frame.uv_center={1,.5};frame.uv_extent=2.2;
  }
  ~Harness(){shutdown();}

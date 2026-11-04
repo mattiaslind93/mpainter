@@ -30,11 +30,17 @@ inline constexpr auto AxisZ = "#2890FF";
 inline constexpr auto PlotPurple = "#9B80FF";
 inline constexpr auto Black = "#000000";
 inline constexpr auto White = "#FFFFFF";
+inline constexpr auto Viewport = "#727272";
+inline constexpr auto ViewportEdge = "#404147";
+inline constexpr auto Tool = "#585858";
+inline constexpr auto MenuButton = "#2C2C2C";
 inline constexpr auto Panel = "#3D3D3D";
 inline constexpr auto Header = "#424242";
 inline constexpr auto Input = "#1F1F1F";
 inline constexpr auto Number = "#595959";
 inline constexpr auto ButtonText = "#D9D9D9";
+inline constexpr auto ListAlternate = "#2D2D2D";
+inline constexpr auto Curve = "#545454";
 inline constexpr auto ListSelection = "#33524B";
 inline constexpr auto ListActive = "#186858";
 inline constexpr auto ScrollHandle = "#676767";
@@ -47,6 +53,10 @@ inline constexpr auto TabText = "#989898";
 inline constexpr auto ToolbarItem = "#313131";
 inline QColor alpha(const char *token, int opacity) { QColor result(token); result.setAlpha(opacity); return result; }
 inline QString qss(QString source) {
+  source.replace("@Viewport@", QLatin1String(Viewport));
+  source.replace("@ViewportEdge@", QLatin1String(ViewportEdge));
+  source.replace("@Tool@", QLatin1String(Tool));
+  source.replace("@MenuButton@", QLatin1String(MenuButton));
   source.replace("@Canvas@", QLatin1String(Canvas));
   source.replace("@Surface@", QLatin1String(Surface));
   source.replace("@Raised@", QLatin1String(Raised));
@@ -75,6 +85,8 @@ inline QString qss(QString source) {
   source.replace("@Input@", QLatin1String(Input));
   source.replace("@Number@", QLatin1String(Number));
   source.replace("@ButtonText@", QLatin1String(ButtonText));
+  source.replace("@ListAlternate@", QLatin1String(ListAlternate));
+  source.replace("@Curve@", QLatin1String(Curve));
   source.replace("@ListSelection@", QLatin1String(ListSelection));
   source.replace("@ListActive@", QLatin1String(ListActive));
   source.replace("@ScrollHandle@", QLatin1String(ScrollHandle));

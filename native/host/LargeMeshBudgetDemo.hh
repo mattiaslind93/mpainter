@@ -9,7 +9,7 @@
 namespace bts {
 inline int verify_large_mesh_budget(BlenderHost &host,QOpenGLContext &context,QOffscreenSurface &surface,QOpenGLFramebufferObject &target,const QString &directory){
  QElapsedTimer clock;clock.start();NewProjectOptions options;options.resolution=DocumentResolution::Pixels128;
- const auto source=qEnvironmentVariable("BTS_LARGE_MESH_TEST");const auto environment=qEnvironmentVariable("BTS_ENVIRONMENT",QCoreApplication::applicationDirPath()+"/5.2/datafiles/studiolights/world/studio.exr");
+ const auto source=qEnvironmentVariable("BTS_LARGE_MESH_TEST");const auto environment=qEnvironmentVariable("BTS_ENVIRONMENT",QCoreApplication::applicationDirPath()+"/5.2/datafiles/studiolights/world/default-studio.hdr");
  const auto imported=host.new_project(source.toStdString(),environment.toStdString(),&options);const double import_ms=clock.nsecsElapsed()/1e6;std::printf("BTS_LARGE_MESH_STAGE stage=new_project ms=%.3f\n",import_ms);clock.restart();
  auto scene=host.scene_snapshot();TextureDocument document(options,imported,scene);const double document_ms=clock.nsecsElapsed()/1e6;std::printf("BTS_LARGE_MESH_STAGE stage=snapshot_document ms=%.3f\n",document_ms);
  if(scene.uv_triangles.size()<5000000||scene.materials.empty())throw std::runtime_error("Large mesh did not reach New project/UV snapshot");

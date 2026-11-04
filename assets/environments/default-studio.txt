@@ -1,0 +1,5 @@
+Default Studio — Mattias Lind
+
+default-studio.hdr is a Radiance HDR environment created in Blender by Mattias Lind.
+Supplied by the author on 2026-11-04 for bundling as the default environment in mPainter.
+SHA-256: 48505ffc80c0ca026775c77621b5a85a4c44b0fb7819ddadfa9e7bc6f5732031
