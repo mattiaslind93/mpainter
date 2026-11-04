@@ -2054,7 +2054,13 @@ int main(int argc, char **argv)
     return 0;
   }
   if(!bts::prepare_test_session(argc,argv))return 77;
-  std::setvbuf(stdout,nullptr,_IOLBF,0);std::setvbuf(stderr,nullptr,_IOLBF,0);
+#ifdef _WIN32
+  // The Microsoft CRT rejects zero-sized buffered streams and treats _IOLBF
+  // as full buffering. Keep diagnostic output immediate on Windows.
+  std::setvbuf(stdout,nullptr,_IONBF,0);std::setvbuf(stderr,nullptr,_IONBF,0);
+#else
+  std::setvbuf(stdout,nullptr,_IOLBF,BUFSIZ);std::setvbuf(stderr,nullptr,_IOLBF,BUFSIZ);
+#endif
   const bool cpu_only_test=bts::cpu_test_arguments(argc,argv);
   if(!cpu_only_test)QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
   QCoreApplication::setAttribute(Qt::AA_CompressHighFrequencyEvents);
