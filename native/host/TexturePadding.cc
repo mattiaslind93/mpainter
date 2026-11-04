@@ -9,6 +9,8 @@
 #include <tuple>
 #include "FragmentTangents.hh"
 #include "SkewCorrection.hh"
+#include "SurfaceCurvature.hh"
+#include "BLI_kdopbvh.hh"
 #include <algorithm>
 #include <map>
 #include <stdexcept>
@@ -83,112 +85,22 @@ const std::map<std::uint32_t,std::string> &TexturePadding::mesh_names() const{re
 std::shared_ptr<const GeometryOwnershipTile> TexturePadding::mesh_ownership(int width,int tile,int height){if(!height)height=width;if(width<1||height<1)throw std::invalid_argument("Invalid geometry ownership dimensions");const auto required=std::uint64_t(width)*height*32,budget=texture_available_ram_bytes();if(const auto found=impl_->ownership.find(tile);found!=impl_->ownership.end()&&found->second->width==width&&found->second->height==height)return found->second;auto atlas=std::make_shared<GeometryOwnershipTile>();atlas->width=width;atlas->height=height;atlas->owners.resize(std::size_t(width)*height,0);if(impl_->mesh){const auto pixels=impl_->rasterize(tile,width,height);const auto triangles=impl_->mesh->corner_tris();const auto vertices=impl_->mesh->corner_verts();for(std::size_t i=0;i<atlas->owners.size();++i){const auto primitive=pixels[i].primitive_id;if(primitive>=0&&primitive<triangles.size())atlas->owners[i]=std::uint32_t(impl_->vertex_sources[vertices[triangles[primitive][0]]]>>32);}}impl_->ownership[tile]=atlas;return atlas;}
 namespace {
 void populate_mesh_curvature(const Mesh &mesh,double extent,const std::set<int> &tiles,FillSurfaceAtlas &atlas){
-  const auto polygons=mesh.faces();const auto vertices=mesh.corner_verts();const auto positions=mesh.vert_positions();const auto face_normals=mesh.face_normals();
-  if(polygons.is_empty()||positions.is_empty())return;
-  const double weld_eps=std::max(extent*1e-5,1e-7);
-  struct QuantKey{long long x,y,z;bool operator<(const QuantKey &o)const{return std::tie(x,y,z)<std::tie(o.x,o.y,o.z);}};
-  std::map<QuantKey,int> welded_map;std::vector<int> weld_id(positions.size(),0);
-  float min_b[3]{positions[0].x,positions[0].y,positions[0].z},max_b[3]{positions[0].x,positions[0].y,positions[0].z};
-  for(int v=0;v<int(positions.size());++v){
-    const auto &pt=positions[v];
-    for(int a=0;a<3;++a){min_b[a]=std::min(min_b[a],(&pt.x)[a]);max_b[a]=std::max(max_b[a],(&pt.x)[a]);}
-    const QuantKey key{std::llround(pt.x/weld_eps),std::llround(pt.y/weld_eps),std::llround(pt.z/weld_eps)};
-    const auto [it,inserted]=welded_map.emplace(key,v);weld_id[v]=it->second;
+  const auto positions=mesh.vert_positions(),normals=mesh.vert_normals();const auto corners=mesh.corner_verts();
+  SceneSnapshot source;source.minimum.fill(std::numeric_limits<float>::max());source.maximum.fill(std::numeric_limits<float>::lowest());
+  for(const auto &indices:mesh.corner_tris()){
+    UvFaceTriangle tri;tri.has_normals=true;
+    for(int k=0;k<3;++k){const int v=corners[indices[k]];tri.vertex_ids[k]=v;std::copy_n(&positions[v].x,3,tri.positions[k].begin());std::copy_n(&normals[v].x,3,tri.normals[k].begin());for(int a=0;a<3;++a){source.minimum[a]=std::min(source.minimum[a],tri.positions[k][a]);source.maximum[a]=std::max(source.maximum[a],tri.positions[k][a]);}}
+    source.uv_triangles.push_back(tri);
   }
-  const float min_area2=float(extent*extent*1e-9);
-  std::vector<bool> valid_face(polygons.size(),false);
-  struct HalfEdgeRef{int face,v0,v1;};
-  std::map<std::pair<int,int>,std::vector<HalfEdgeRef>> edge_map;
-  for(int f=0;f<int(polygons.size());++f){
-    const auto poly=polygons[f];if(poly.size()<3)continue;
-    const auto &p0=positions[vertices[poly.start()]],&p1=positions[vertices[poly.start()+1]],&p2=positions[vertices[poly.start()+2]];
-    float e1[3],e2[3],cr[3];sub_v3_v3v3(e1,p1,p0);sub_v3_v3v3(e2,p2,p0);cross_v3_v3v3(cr,e1,e2);
-    if(len_squared_v3(cr)<=min_area2)continue;
-    valid_face[f]=true;
-    for(int i=0;i<int(poly.size());++i){
-      const int c0=poly.start()+i,c1=poly.start()+(i+1)%int(poly.size());
-      const int v0=vertices[c0],v1=vertices[c1],w0=weld_id[v0],w1=weld_id[v1];
-      if(w0==w1)continue;
-      edge_map[std::minmax(w0,w1)].push_back({f,v0,v1});
-    }
-  }
-  struct WeldedEdge{float p0[3],dir[3],na[3],nb[3],len,angle;};
-  std::vector<WeldedEdge> active_edges;active_edges.reserve(edge_map.size());
-  for(const auto &[key,refs]:edge_map){
-    if(refs.size()!=2)continue;
-    const auto &ra=refs[0],&rb=refs[1];
-    if(!valid_face[ra.face]||!valid_face[rb.face])continue;
-    const auto &na=face_normals[ra.face],&nb=face_normals[rb.face];
-    const float d_dot=std::clamp(dot_v3v3(na,nb),-1.f,1.f);
-    if(d_dot<-0.96f)continue;
-    float dir[3];sub_v3_v3v3(dir,positions[ra.v1],positions[ra.v0]);
-    const float len=normalize_v3(dir);if(len<=1e-8f)continue;
-    float cr[3];cross_v3_v3v3(cr,na,nb);
-    const float raw_angle=std::atan2(dot_v3v3(cr,dir),d_dot);
-    if(std::abs(raw_angle)<=1e-3f)continue;
-    WeldedEdge we{};
-    copy_v3_v3(we.p0,positions[ra.v0]);copy_v3_v3(we.dir,dir);
-    copy_v3_v3(we.na,na);copy_v3_v3(we.nb,nb);
-    we.len=len;we.angle=std::clamp(raw_angle/(std::numbers::pi_v<float>*.5f),-1.f,1.f);
-    active_edges.push_back(we);
-  }
-  constexpr int G=32;
-  const float pad=float(std::max(extent*0.03,1e-4)),max_r=float(std::max(extent*0.018,1e-4));
-  float g_min[3],g_step[3];
-  for(int a=0;a<3;++a){g_min[a]=min_b[a]-pad;g_step[a]=std::max((max_b[a]-min_b[a]+2.f*pad)/G,1e-5f);}
-  std::vector<std::vector<int>> grid(G*G*G);
-  for(int ei=0;ei<int(active_edges.size());++ei){
-    const auto &e=active_edges[ei];
-    int lo[3],hi[3];
-    for(int a=0;a<3;++a){
-      const float p1=e.p0[a]+e.dir[a]*e.len;
-      const float emin=std::min(e.p0[a],p1)-max_r,emax=std::max(e.p0[a],p1)+max_r;
-      lo[a]=std::clamp(int(std::floor((emin-g_min[a])/g_step[a])),0,G-1);
-      hi[a]=std::clamp(int(std::floor((emax-g_min[a])/g_step[a])),0,G-1);
-    }
-    for(int gz=lo[2];gz<=hi[2];++gz)for(int gy=lo[1];gy<=hi[1];++gy)for(int gx=lo[0];gx<=hi[0];++gx)
-      grid[(gz*G+gy)*G+gx].push_back(ei);
-  }
-  const auto smooth=[](float t){t=std::clamp(1.f-t,0.f,1.f);return t*t*(3.f-2.f*t);};
+  if(source.uv_triangles.empty())return;
+  SurfaceCurvature field(source,false);field.calculate(float(std::max(extent*.03,1e-8)));
+  using Tree=std::unique_ptr<BVHTree,decltype(&BLI_bvhtree_free)>;
+  Tree tree(BLI_bvhtree_new(int(source.uv_triangles.size()),0,4,6),BLI_bvhtree_free);if(!tree)throw std::runtime_error("Cannot build curvature BVH");
+  for(int i=0;i<int(source.uv_triangles.size());++i)BLI_bvhtree_insert(tree.get(),i,source.uv_triangles[i].positions[0].data(),3);BLI_bvhtree_balance(tree.get());
+  const auto nearest=[](void *data,int index,const float p[3],BVHTreeNearest *hit){const auto &tri=static_cast<const SceneSnapshot *>(data)->uv_triangles[index];float co[3];closest_on_tri_to_point_v3(co,p,tri.positions[0].data(),tri.positions[1].data(),tri.positions[2].data());const float distance=len_squared_v3v3(co,p);if(distance<hit->dist_sq){hit->dist_sq=distance;hit->index=index;copy_v3_v3(hit->co,co);}};
   for(int tile:tiles)if(!atlas.curvature.contains(tile)&&atlas.tiles.contains(tile)){
-    const auto &points=atlas.tiles.at(tile);
-    std::vector<float> data(points.size(),0.f);
-    threading::parallel_for(IndexRange(points.size()),256,[&](const IndexRange range){
-      for(const std::size_t i:range){
-        const auto &point=points[i];if(!point.valid)continue;
-        const int gx=std::clamp(int(std::floor((point.position[0]-g_min[0])/g_step[0])),0,G-1);
-        const int gy=std::clamp(int(std::floor((point.position[1]-g_min[1])/g_step[1])),0,G-1);
-        const int gz=std::clamp(int(std::floor((point.position[2]-g_min[2])/g_step[2])),0,G-1);
-        const auto &cell=grid[(gz*G+gy)*G+gx];if(cell.empty())continue;
-        const float fp=std::clamp(point.footprint,float(extent*0.0012),float(extent*0.0045));
-        const float r1=1.6f*fp,r2=3.2f*fp,r3=std::min(5.2f*fp,max_r);
-        float max_pos=0.f,max_neg=0.f,sum_pos=0.f,sum_neg=0.f;
-        for(int ei:cell){
-          const auto &e=active_edges[ei];
-          if(dot_v3v3(point.normal.data(),e.na)<-0.25f&&dot_v3v3(point.normal.data(),e.nb)<-0.25f)continue;
-          float rel[3];sub_v3_v3v3(rel,point.position.data(),e.p0);
-          const float s=dot_v3v3(rel,e.dir);
-          const float t_clamped=std::clamp(s,0.f,e.len);
-          const float dx=rel[0]-e.dir[0]*t_clamped,dy=rel[1]-e.dir[1]*t_clamped,dz=rel[2]-e.dir[2]*t_clamped;
-          const float d=std::sqrt(dx*dx+dy*dy+dz*dz);
-          if(d>=r3)continue;
-          const float w=0.52f*smooth(d/r1)+0.32f*smooth(d/r2)+0.16f*smooth(d/r3);
-          if(e.angle>0.f){
-            const float c=w*e.angle;
-            max_pos=std::max(max_pos,c);
-            if(s>=0.f&&s<e.len)sum_pos+=0.65f*c;
-          }else{
-            const float c=w*(-e.angle);
-            max_neg=std::max(max_neg,c);
-            if(s>=0.f&&s<e.len)sum_neg+=0.65f*c;
-          }
-        }
-        const float pos=std::min(1.f,std::max(max_pos,sum_pos));
-        const float neg=std::min(1.f,std::max(max_neg,sum_neg));
-        data[i]=pos-neg;
-      }
-    });
-    atlas.curvature.emplace(tile,std::move(data));
+    const auto &points=atlas.tiles.at(tile);auto &values=atlas.curvature[tile];values.resize(points.size());
+    threading::parallel_for(IndexRange(points.size()),256,[&](const IndexRange range){for(std::size_t i:range)if(points[i].valid){BVHTreeNearest hit{};hit.index=-1;hit.dist_sq=std::numeric_limits<float>::max();BLI_bvhtree_find_nearest(tree.get(),points[i].position.data(),&hit,nearest,&source);if(hit.index<0)continue;const auto &tri=source.uv_triangles[hit.index];float weights[3];interp_weights_tri_v3(weights,tri.positions[0].data(),tri.positions[1].data(),tri.positions[2].data(),hit.co);for(int k=0;k<3;++k)values[i]+=weights[k]*field.vertices[field.corners[hit.index][k]].curvature;}});
   }
 }
 }
@@ -216,11 +128,6 @@ BakeMesh source_mesh(const SceneSnapshot &source){
   for(const auto &triangle:source.uv_triangles)for(int i=0;i<3;++i)if(!vertices.contains(triangle.vertex_ids[i])){vertices.emplace(triangle.vertex_ids[i],int(positions.size()));positions.emplace_back(triangle.positions[i].data());}
   BakeMesh mesh(BKE_mesh_new_nomain(int(positions.size()),0,int(source.uv_triangles.size()),int(source.uv_triangles.size()*3)));
   if(!mesh)throw std::runtime_error("Cannot allocate native high-poly bake mesh");std::copy(positions.begin(),positions.end(),mesh->vert_positions_for_write().begin());auto offsets=mesh->face_offsets_for_write();for(int i=0;i<=int(source.uv_triangles.size());++i)offsets[i]=i*3;auto corners=mesh->corner_verts_for_write();for(int face=0;face<int(source.uv_triangles.size());++face)for(int i=0;i<3;++i)corners[face*3+i]=vertices.at(source.uv_triangles[face].vertex_ids[i]);mesh->tag_topology_changed();bke::mesh_calc_edges(*mesh,false,false);std::vector<float3> normals(source.uv_triangles.size()*3,float3(0));bool have=false;for(std::size_t f=0;f<source.uv_triangles.size();++f)if(source.uv_triangles[f].has_normals){have=true;for(int c=0;c<3;++c)normals[f*3+c]=float3(source.uv_triangles[f].normals[c].data());}if(have)bke::mesh_set_custom_normals(*mesh,MutableSpan<float3>(normals.data(),normals.size()));return mesh;
-}
-std::vector<float> vertex_curvature(Mesh &mesh){
-  const auto edges=mesh.edges();const auto corner_edges=mesh.corner_edges();const auto polygons=mesh.faces();const auto vertices=mesh.corner_verts();const auto positions=mesh.vert_positions();const auto normals=mesh.face_normals();Array<int> offsets,indices;const auto edge_faces=bke::mesh::build_edge_to_face_map(polygons,corner_edges,mesh.edges_num,offsets,indices);std::vector<float> values(mesh.verts_num,0),counts(mesh.verts_num,0);
-  for(int edge=0;edge<edges.size();++edge)if(edge_faces[edge].size()==2){const int a=edge_faces[edge][0],b=edge_faces[edge][1];float direction[3]{},cross[3];for(int corner:polygons[a])if(corner_edges[corner]==edge){const int next=corner+1==polygons[a].one_after_last()?polygons[a].start():corner+1;sub_v3_v3v3(direction,positions[vertices[next]],positions[vertices[corner]]);normalize_v3(direction);break;}cross_v3_v3v3(cross,normals[a],normals[b]);const float angle=std::atan2(dot_v3v3(cross,direction),std::clamp(dot_v3v3(normals[a],normals[b]),-1.f,1.f));for(int vertex:{edges[edge][0],edges[edge][1]}){values[vertex]+=angle;counts[vertex]+=1;}}
-  for(std::size_t i=0;i<values.size();++i)if(counts[i])values[i]/=counts[i];return values;
 }
 using ObjectVertices=std::map<std::uint32_t,std::map<std::uint32_t,std::array<float,3>>>;
 ObjectVertices object_vertices(const SceneSnapshot &scene){ObjectVertices objects;for(const auto &triangle:scene.uv_triangles)for(int i=0;i<3;++i)objects[std::uint32_t(triangle.vertex_ids[i]>>32)][std::uint32_t(triangle.vertex_ids[i])]=triangle.positions[i];return objects;}

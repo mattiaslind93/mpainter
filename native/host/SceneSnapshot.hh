@@ -59,6 +59,7 @@ struct SceneSnapshot {
   bool has_bounds = false;
   // Runtime preview density for displacement-aware baking, not source geometry.
   std::map<std::uint32_t,int> preview_subdivision_levels;
+  bool evaluated_subdivision=false;
 };
 
 // Native owner-thread helpers share the same supported shader/input checks for read and write.

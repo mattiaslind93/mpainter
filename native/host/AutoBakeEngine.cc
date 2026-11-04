@@ -80,7 +80,7 @@ MeshMaps AutoBakeEngine::bake(std::uint32_t material,const std::string &name,con
     if(bake_ignores_backfaces(label,options.ray.ignore_marker))settings.ignore_backface_objects.insert(uid);
   auto &set=s.prepare(material,options);
   if(set.parts.size()==1&&settings.use_project_mesh&&!options.ray.use_cage){
-    TexturePadding geometry(*s.low,material);auto atlas=geometry.projection_geometry(width,tiles,settings.enabled[4],height);
+    TexturePadding geometry(*s.low,material);auto atlas=geometry.projection_geometry(width,tiles,false,height);
     MeshBakeJob job(source,{{material,name,base,std::move(atlas)}},settings);
     while(!job.finished.load(std::memory_order_acquire)){job.process_gpu();if(cancel.load())job.cancel();std::this_thread::sleep_for(std::chrono::milliseconds(2));}
     if(cancel.load())return {};if(!job.error.empty())throw std::runtime_error(job.error);return job.result.empty()?MeshMaps{}:std::move(job.result.front().maps);
@@ -94,8 +94,8 @@ MeshMaps AutoBakeEngine::bake(std::uint32_t material,const std::string &name,con
     if(!settings.use_project_mesh&&!ray.use_cage&&ray.average_normals)
       ray.skew_weight_at=[&](int tile,double u,double v,const std::array<float,3> &p,std::uint32_t object){return s.edges->weight(field,tile,u,v,p,object);};
     const auto atlas=settings.external_source?
-      part.geometry->project_source(*s.low,settings.use_project_mesh?*s.low:*part.high,s.cage.get(),ray,width,height,tiles,settings.enabled[4]):
-      part.geometry->projection_geometry(width,tiles,settings.enabled[4],height);
+      part.geometry->project_source(*s.low,settings.use_project_mesh?*s.low:*part.high,s.cage.get(),ray,width,height,tiles,false):
+      part.geometry->projection_geometry(width,tiles,false,height);
     if(!atlas)continue;
     std::uint32_t object=0;
     if(options.ray.match_names&&!settings.use_project_mesh&&!part.low->uv_triangles.empty()) {

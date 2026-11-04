@@ -487,11 +487,11 @@ void TextureDocument::set_bake_configuration(const QJsonObject &data){
  const auto fail=[] {throw std::invalid_argument("Invalid saved mesh bake settings");};
 
  if(data.contains("map_options"))validate_map_bake_options(data["map_options"]);
- for(auto key:{"project_mesh","locked","diffusion","relative","average","ignore_backface","use_cage","match_names"})if(data.contains(key)&&!data[key].isBool())fail();
+ for(auto key:{"project_mesh","locked","diffusion","denoise","relative","average","ignore_backface","use_cage","match_names"})if(data.contains(key)&&!data[key].isBool())fail();
  const auto integer=[&](const char *key,int low,int high){if(!data.contains(key))return;const auto v=data[key];const double n=v.toDouble(-1);if(!v.isDouble()||n<low||n>high||n!=std::floor(n))fail();};
  integer("ui_mode",0,2);integer("auto_role",-1,6);integer("resolution",32,sparse_texture_max_side);integer("height",32,sparse_texture_max_side);integer("dilation",0,64);integer("rays",1,512);integer("sampling",1,8);
  for(auto key:{"resolution","height","sampling"})if(data.contains(key)){const int n=data[key].toInt();if(n&(n-1))fail();}
- for(auto key:{"frontal","rear"})if(data.contains(key)&&(!data[key].isDouble()||!std::isfinite(data[key].toDouble())||data[key].toDouble()<0||data[key].toDouble()>10000))fail();
+ for(auto key:{"frontal","rear","curvature_radius","curvature_scale","ao_distance","thickness_distance","ray_offset","normal_detail"})if(data.contains(key)&&(!data[key].isDouble()||!std::isfinite(data[key].toDouble())||data[key].toDouble()<0||data[key].toDouble()>10000))fail();
  if(data.contains("enabled")){const auto list=data["enabled"].toArray();if(!data["enabled"].isArray()||list.size()!=7)fail();for(auto v:list)if(!v.isBool())fail();}
  for(auto key:{"cage_file","low_marker","high_marker","ignore_marker"})if(data.contains(key)&&(!data[key].isString()||data[key].toString().contains(QChar::Null)))fail();
  if(data.contains("high_files")){if(!data["high_files"].isArray())fail();for(auto v:data["high_files"].toArray())if(!v.isString()||v.toString().contains(QChar::Null))fail();}

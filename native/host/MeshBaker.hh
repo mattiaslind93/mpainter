@@ -11,8 +11,13 @@
 #include <set>
 namespace bts {
 struct MeshBakeSettings {
-  int resolution=512,height=0,dilation=32,rays=64,sampling=1;
+  int resolution=512,height=0,dilation=32,rays=256,sampling=1;
   bool dimensions_locked=true,diffusion=false;
+  // World-space distances. Zero selects a scene-relative default once, never per tile.
+  float curvature_radius=0,curvature_scale=2,ao_distance=0,thickness_distance=0,ray_offset=0,normal_detail=0;
+  bool denoise=true;
+  struct NormalField {int width=0,height=0;std::map<int,std::vector<std::array<float,3>>> tiles;};
+  std::map<std::uint32_t,NormalField> normal_maps;
   int rows() const { return height?height:resolution; }
   bool use_project_mesh=false,external_source=false;
   std::map<std::uint32_t,std::set<std::uint32_t>> matched_objects;
@@ -29,6 +34,8 @@ struct MeshBakeInput {
   std::shared_ptr<const FillSurfaceAtlas> atlas;
 };
 struct MeshBakeResult {std::uint32_t material_uid=0;MeshMaps maps;};
+// Also used by the headless comparison to export the exact traced geometry.
+SceneSnapshot prepare_bake_surface(const SceneSnapshot &,const MeshBakeSettings &);
 class MeshBakeJob {
  public:
   MeshBakeJob(SceneSnapshot,std::vector<MeshBakeInput>,MeshBakeSettings);

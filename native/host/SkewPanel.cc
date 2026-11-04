@@ -95,9 +95,9 @@ void SkewPanel::synchronize(const QJsonObject &recipe,const SkewSettings &s,bool
  QString reason;if(project_->isChecked())reason="Skew painting requires a separate high-poly scene.";else if(paths.isEmpty())reason="Choose a high-poly mesh scene.";else if(cage_->isChecked())reason="Skew painting requires a distance-based cage.";else if(!average_->isChecked())reason="Enable Average normals to paint skew correction.";else for(const auto &path:paths)if(!QFileInfo(path).isFile()){reason="High-poly scene file is missing: "+path;break;}if(reason.isEmpty()&&front_->value()+rear_->value()<=0)reason="Frontal/rear distances must span a nonzero interval.";paint_->setEnabled(reason.isEmpty());paint_->setToolTip(reason.isEmpty()?QString("Paint in the viewport. Ctrl+Shift+B returns to baking settings."):reason);rebake_->setEnabled(general.isEmpty());reason_->setText(reason.isEmpty()?"Brush, Eraser and Polygon Fill edit a separate per-Texture Set skew field.":reason);updating_=false;refresh_quality();
 }
 void SkewPanel::refresh_quality(){
- const bool prior=updating_;updating_=true;const auto q=set_.isNull()?QJsonObject{{"dilation",32},{"rays",64},{"sampling",1},{"diffusion",false}}:bake_quality(recipe_,set_,quality_role_->currentIndex());
+ const bool prior=updating_;updating_=true;const auto q=set_.isNull()?QJsonObject{{"dilation",32},{"rays",256},{"sampling",1},{"diffusion",false}}:bake_quality(recipe_,set_,quality_role_->currentIndex());
  dilation_->setValue(q["dilation"].toInt());rays_->setValue(q["rays"].toInt());samples_->setCurrentIndex(samples_->findData(q["sampling"].toInt()));diffusion_->setChecked(q["diffusion"].toBool());rays_->setEnabled(true);
- const int common_rays_val=recipe_.contains("rays")?recipe_["rays"].toInt(64):q["rays"].toInt(64);common_rays_->setValue(common_rays_val);
+ const int common_rays_val=recipe_.contains("rays")?recipe_["rays"].toInt(256):q["rays"].toInt(256);common_rays_->setValue(common_rays_val);
  const int preset_idx=common_rays_preset_->findData(common_rays_val);common_rays_preset_->setCurrentIndex(preset_idx>=0?preset_idx:common_rays_preset_->findData(-1));
  const int common_sampling_val=recipe_.contains("sampling")?recipe_["sampling"].toInt(1):q["sampling"].toInt(1);common_samples_->setCurrentIndex(std::max(0,common_samples_->findData(common_sampling_val)));
  updating_=prior;

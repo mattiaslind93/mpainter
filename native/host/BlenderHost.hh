@@ -86,7 +86,7 @@ class BlenderHost {
   std::optional<std::uint32_t> selected_material() const;
   UvPreviewSummary uv_preview_summary() const;
   void set_roughness(float roughness);
-  SceneSnapshot scene_snapshot();
+  SceneSnapshot scene_snapshot(bool evaluated_subdivision=false);
   QJsonObject overlay_profile() const;
   bool mesh_export_displacement_available(const TextureDocument &)const;
   std::shared_ptr<NativeMeshExport> prepare_mesh_export(const TextureDocument &,bool displaced=false,bool recompute_normals=true);

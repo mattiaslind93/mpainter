@@ -16,7 +16,7 @@ namespace bts {
 struct GpuBakeRayStats {std::uint64_t batches=0,dispatches=0,peak_batch_rays=0;};
 // Geometry is uploaded once. Each reusable batch preserves the previous CPU
 // cosine samples and accumulation order, while the GPU traverses a balanced BVH.
-inline std::vector<float> gpu_bake_cosine_occlusion(const std::vector<bake_bvh::Triangle> &triangles,std::span<const FillSurfacePoint> points,int rays,float maximum,bool inward=false,GpuBakeRayStats *statistics=nullptr,const ResourceAvailability *availability=nullptr,float origin_epsilon=0){
+inline std::vector<float> gpu_bake_cosine_occlusion(const std::vector<bake_bvh::Triangle> &triangles,std::span<const FillSurfacePoint> points,int rays,float maximum,bool inward=false,GpuBakeRayStats *statistics=nullptr,const ResourceAvailability *availability=nullptr,float origin_epsilon=0,bool visibility=false,std::span<const std::array<float,3>> geometric={}){
  using namespace blender;
  if(!GPU_context_active_get())throw std::logic_error("Bake rays require the active GPU context");
  if(triangles.empty()||points.empty()||rays<1||rays>512||!std::isfinite(maximum)||maximum<=0)throw std::invalid_argument("Invalid GPU bake rays");
@@ -41,8 +41,8 @@ bool bounds_hit(BakeNode node,vec3 origin,vec3 direction,float distance){
 void triangle_hit(uint triangle,vec3 origin,vec3 direction,inout float distance){
  uint i=triangle*3u;
  vec3 a=tris[i].xyz,e1=tris[i+1u].xyz-a,e2=tris[i+2u].xyz-a,p=cross(direction,e2);
- float det=dot(e1,p);if(abs(det)<1e-8)return;float inv=1.0/det,u=dot(origin-a,p)*inv;if(u<0.0||u>1.0)return;
- vec3 q=cross(origin-a,e1);float v=dot(direction,q)*inv;if(v<0.0||u+v>1.0)return;float t=dot(e2,q)*inv;if(t>1e-7&&t<distance)distance=t;
+ float det=dot(e1,p);if(det==0.0||abs(det)<1e-8*sqrt(dot(e1,e1)*dot(e2,e2)))return;float inv=1.0/det,u=dot(origin-a,p)*inv;if(u<0.0||u>1.0)return;
+ vec3 q=cross(origin-a,e1);float v=dot(direction,q)*inv;if(v<0.0||u+v>1.0)return;float t=dot(e2,q)*inv;if(t>0.0&&t<distance)distance=t;
 }
 void main(){
  uint id=gl_GlobalInvocationID.x;if(id>=uint(ray_count))return;
@@ -81,7 +81,7 @@ void main(){
    const auto index=point++;const auto &value=points[index];bake_bvh::Frame frame;
    if(!value.valid||!bake_bvh::frame(frame,value.position,value.normal,std::uint32_t(index),maximum,inward))continue;
    const auto offset=owners.size()*std::size_t(rays);
-   for(int sample=0;sample<rays;++sample){auto &origin=ray_data[(offset+sample)*2];bake_bvh::ray(frame,sample,rays,origin,ray_data[(offset+sample)*2+1]);if(origin_epsilon>0)for(int axis=0;axis<3;++axis)origin[axis]=frame.position[axis]+frame.n[axis]*origin_epsilon;}
+   for(int sample=0;sample<rays;++sample){auto &origin=ray_data[(offset+sample)*2];auto &direction=ray_data[(offset+sample)*2+1];if(!geometric.empty())bake_bvh::surface_ray(frame,sample,rays,geometric[index],inward,origin_epsilon,origin,direction);else{bake_bvh::ray(frame,sample,rays,origin,direction);if(origin_epsilon>0)for(int axis=0;axis<3;++axis)origin[axis]=frame.position[axis]+frame.n[axis]*origin_epsilon;}}
    owners.push_back(index);
   }
   if(owners.empty())continue;
@@ -102,7 +102,7 @@ void main(){
   }while(unfinished[0]);
   GPU_storagebuf_sync_to_host(hit_buf.get());
   GPU_storagebuf_read(hit_buf.get(),hits.data());
-  for(std::size_t owner=0;owner<owners.size();++owner){float sum=0;for(int sample=0;sample<rays;++sample)sum+=hits[owner*std::size_t(rays)+sample];occlusion[owners[owner]]=sum/rays;}
+  for(std::size_t owner=0;owner<owners.size();++owner){float sum=0;for(int sample=0;sample<rays;++sample){const float value=hits[owner*std::size_t(rays)+sample];sum+=visibility?(value>=1?1.f:0.f):value;}occlusion[owners[owner]]=sum/rays;}
  }
  return occlusion;
 }

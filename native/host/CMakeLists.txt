@@ -276,6 +276,7 @@ endif()
 
 
 target_link_libraries(bts-host PRIVATE ${LIB} bf_io_wavefront_obj bf_io_alembic bf::imbuf bf::dependencies::epoxy Qt6::Widgets Qt6::OpenGLWidgets Qt6::GuiPrivate)
+target_link_libraries(bts-host PRIVATE bf::dependencies::optional::openimagedenoise)
 if(WITH_IO_FBX)
   target_link_libraries(bts-host PRIVATE bf_io_fbx)
   set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/MeshImport.cc APPEND PROPERTY COMPILE_DEFINITIONS BTS_WITH_FBX)
@@ -1704,3 +1705,10 @@ target_compile_options(bts-texture-set-residency-tests PRIVATE "$<IF:$<CXX_COMPI
 target_link_libraries(bts-texture-set-residency-tests PRIVATE bts-export-config)
 add_test(NAME bts-texture-set-residency COMMAND bts-texture-set-residency-tests)
 add_dependencies(bts-release-check bts-texture-set-residency-tests)
+
+add_executable(bts-surface-curvature-tests ${BTS_HOST_SOURCE_DIR}/../tests/surface_curvature_test.cc)
+target_include_directories(bts-surface-curvature-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
+target_compile_features(bts-surface-curvature-tests PRIVATE cxx_std_20)
+target_compile_options(bts-surface-curvature-tests PRIVATE "$<IF:$<CXX_COMPILER_ID:MSVC>,/UNDEBUG,-UNDEBUG>")
+add_test(NAME bts-surface-curvature COMMAND bts-surface-curvature-tests)
+add_dependencies(bts-cpu-tests bts-surface-curvature-tests)

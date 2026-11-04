@@ -1577,7 +1577,7 @@ std::shared_ptr<NativeMeshExport> BlenderHost::prepare_mesh_export(const Texture
 
 QJsonObject BlenderHost::overlay_profile()const{auto &s=*impl_;s.require_owner();auto result=s.uv_overlay.stats();const auto triangle=s.triangle_overlay.stats();for(auto i=triangle.begin();i!=triangle.end();++i)result[i.key()]=i.value();result["native_wire_vbos"]=qint64(s.wire_vbos.size());result["native_wire_cache_changes"]=qint64(s.wire_cache_changes);result["uv_contour_edges"]=qint64(s.uv_summary.contours?s.uv_summary.contours->size():0);result["uv_wire_edges"]=qint64(s.uv_summary.wireframe?s.uv_summary.wireframe->size():0);result["uv_triangles"]=qint64(s.uv_summary.uv_triangles);return result;}
 
-SceneSnapshot BlenderHost::scene_snapshot()
+SceneSnapshot BlenderHost::scene_snapshot(bool evaluated_subdivision)
 {
   auto &s = *impl_;
   s.require_owner();
@@ -1589,7 +1589,8 @@ SceneSnapshot BlenderHost::scene_snapshot()
     s.enter_gpu();
   }
   try {
-    SceneSnapshot snapshot = s.source_snapshot();
+    SceneSnapshot snapshot = evaluated_subdivision?read_scene_snapshot(s.context,s.view):s.source_snapshot();
+    snapshot.evaluated_subdivision=evaluated_subdivision;
     snapshot.preview_subdivision_levels=s.displacement_preview.material_levels();
     if (gpu_ready) {
       DRW_gpu_context_disable_ex(false);

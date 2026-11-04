@@ -1,0 +1,242 @@
+{
+  "baseline_commit": "41d2be917148face173b09805509a4e4d4e1dfb2",
+  "blender": "5.2.0 LTS fbe6228777e7 (reference build, read only)",
+  "settings": {
+    "resolution": 256,
+    "rays": 256,
+    "curvature_radius": "0.03 * displaced world extent",
+    "curvature_strength": 2,
+    "ao_distance": "displaced world extent",
+    "thickness_distance": "0.25 * displaced world extent",
+    "ray_offset": "1e-6 * displaced world extent, geometric normal + nextafter",
+    "denoise": "OIDN RT CPU, normal + white albedo, float HDR",
+    "reference": "Cycles Geometry Pointiness / AO / AO inside, emitted and baked to RGBA32F"
+  },
+  "comparisons": [
+    {
+      "mesh": "displaced",
+      "map": "curvature",
+      "variant": "before",
+      "mae": 0.053590692579746246,
+      "rmse": 0.06400028616189957,
+      "minimum": 0.4949533939361572,
+      "maximum": 0.6900497674942017,
+      "unique_float_values": 62972,
+      "texels": 65408
+    },
+    {
+      "mesh": "displaced",
+      "map": "curvature",
+      "variant": "after",
+      "mae": 0.008364127017557621,
+      "rmse": 0.00957718025892973,
+      "minimum": 0.4821150600910187,
+      "maximum": 0.5398768782615662,
+      "unique_float_values": 60412,
+      "texels": 65408
+    },
+    {
+      "mesh": "shaderball",
+      "map": "curvature",
+      "variant": "before",
+      "mae": 0.10914939641952515,
+      "rmse": 0.16299574077129364,
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "unique_float_values": 53819,
+      "texels": 64410
+    },
+    {
+      "mesh": "shaderball",
+      "map": "curvature",
+      "variant": "after",
+      "mae": 0.06451401114463806,
+      "rmse": 0.1068493202328682,
+      "minimum": 4.26173210144043e-05,
+      "maximum": 0.9999998807907104,
+      "unique_float_values": 56893,
+      "texels": 64410
+    },
+    {
+      "mesh": "displaced",
+      "map": "ao",
+      "variant": "before",
+      "mae": 0.4087311327457428,
+      "rmse": 0.6357739567756653,
+      "minimum": 1.0332206556995516e-07,
+      "maximum": 1.0,
+      "unique_float_values": 29795,
+      "texels": 65408
+    },
+    {
+      "mesh": "displaced",
+      "map": "ao",
+      "variant": "after",
+      "mae": 0.0008284157374873757,
+      "rmse": 0.0018896344117820263,
+      "minimum": 0.9657440185546875,
+      "maximum": 1.009419560432434,
+      "unique_float_values": 31278,
+      "texels": 65408
+    },
+    {
+      "mesh": "shaderball",
+      "map": "ao",
+      "variant": "before",
+      "mae": 0.07396890223026276,
+      "rmse": 0.1247580498456955,
+      "minimum": 0.002392513444647193,
+      "maximum": 1.0,
+      "unique_float_values": 53306,
+      "texels": 64410
+    },
+    {
+      "mesh": "shaderball",
+      "map": "ao",
+      "variant": "after",
+      "mae": 0.022250305861234665,
+      "rmse": 0.06497277319431305,
+      "minimum": 0.0,
+      "maximum": 1.2727397680282593,
+      "unique_float_values": 56356,
+      "texels": 64410
+    },
+    {
+      "mesh": "displaced",
+      "map": "thickness",
+      "variant": "before",
+      "mae": 0.4250902235507965,
+      "rmse": 0.5894336700439453,
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "unique_float_values": 56662,
+      "texels": 65408
+    },
+    {
+      "mesh": "displaced",
+      "map": "thickness",
+      "variant": "after",
+      "mae": 0.002011629054322839,
+      "rmse": 0.002770655322819948,
+      "minimum": 0.8094646334648132,
+      "maximum": 0.9948127865791321,
+      "unique_float_values": 62323,
+      "texels": 65408
+    },
+    {
+      "mesh": "shaderball",
+      "map": "thickness",
+      "variant": "before",
+      "mae": 0.45183566212654114,
+      "rmse": 0.5168822407722473,
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "unique_float_values": 59961,
+      "texels": 64410
+    },
+    {
+      "mesh": "shaderball",
+      "map": "thickness",
+      "variant": "after",
+      "mae": 0.044604524970054626,
+      "rmse": 0.13017073273658752,
+      "minimum": 0.0,
+      "maximum": 1.1029173135757446,
+      "unique_float_values": 60627,
+      "texels": 64410
+    }
+  ],
+  "gpu_cpu": [
+    {
+      "mesh": "displaced",
+      "role": 3,
+      "max_error": 0.0,
+      "mae": 0.0
+    },
+    {
+      "mesh": "displaced",
+      "role": 6,
+      "max_error": 0.0014071464538574219,
+      "mae": 1.081802338376292e-06
+    },
+    {
+      "mesh": "shaderball",
+      "role": 3,
+      "max_error": 0.0059354305267333984,
+      "mae": 1.5112508663150948e-05
+    },
+    {
+      "mesh": "shaderball",
+      "role": 6,
+      "max_error": 0.0038741081953048706,
+      "mae": 2.3072743715601973e-07
+    }
+  ],
+  "fixtures": {
+    "fixtures/displaced-evaluated.obj": "d00a48075d7e922c7433d34738fd4b69756e38230fafb2536c11e24ad933e4ac",
+    "fixtures/displaced.obj": "d40c026f2281bd1ea803a6a7fbd272b61e5a6c7528c23f7772e63b1dea77fca6",
+    "fixtures/shaderball-evaluated.obj": "1eb85da99d3b50475ca7328ae9d871c83932aad7a72d8a9479c73e95e74cedc9",
+    "fixtures/shaderball.obj": "b052e4f955428eb05d536109ff5d5941f85adb43141feb49c534ac82c4211d25"
+  },
+  "screenshots": {
+    "curvature-compare.png": "32048fcded62a59116036c6a5f7ab589d78bf6dc18bc62fd65063f8f9482b206",
+    "ao-compare.png": "0db714880a47c11b1a43bcd008dd70abadd3a032483ab32ee343cdc043504922",
+    "thickness-compare.png": "1589dde1262cbec146661d142100e462de07b5728753628144cd0a8ef7cebba6"
+  },
+  "checks": [
+    "analytic sphere curvature/sign/scale and UV duplicates",
+    "world-scale triangle hits and inward/outward geometric ray offset",
+    "saved bake parameters and capture of active negative displacement",
+    "evaluated subdivision is not applied twice; disabled sets excluded",
+    "production plane has AO=1, thickness=1, curvature=0.5",
+    "normal detail adds signed curvature; disable restores exact original",
+    "negative displacement and immutable source snapshot",
+    "residency unload/reload/undo with maximum 128x128 textures",
+    "CPU and GPU production bake of displaced sphere and Shader_Ball_JL_01"
+  ],
+  "appimage": {
+    "path": "../dist/mPainter-0.9.0-alpha-linux-x86_64.AppImage",
+    "sha256": "a9a603060cdadd1fd16ba71a844b14e2ffb2fea2ec617ad8b05b91e4d37e6a95",
+    "bytes": 437254648,
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "production_comparisons_to_cpu": [
+      {
+        "mesh": "displaced",
+        "role": 3,
+        "max_error": 0.0,
+        "mae": 0.0
+      },
+      {
+        "mesh": "displaced",
+        "role": 4,
+        "max_error": 0.0,
+        "mae": 0.0
+      },
+      {
+        "mesh": "displaced",
+        "role": 6,
+        "max_error": 0.0014071464538574219,
+        "mae": 1.081802338376292e-06
+      },
+      {
+        "mesh": "shaderball",
+        "role": 3,
+        "max_error": 0.0059354305267333984,
+        "mae": 1.5112508663150948e-05
+      },
+      {
+        "mesh": "shaderball",
+        "role": 4,
+        "max_error": 0.0,
+        "mae": 0.0
+      },
+      {
+        "mesh": "shaderball",
+        "role": 6,
+        "max_error": 0.0038741081953048706,
+        "mae": 2.3072743715601973e-07
+      }
+    ],
+    "clean_shutdown": true
+  }
+}

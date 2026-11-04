@@ -1,6 +1,7 @@
 #include "Theme.hh"
 #include "ResourceAvailability.hh"
 #include "SkewController.hh"
+#include "SurfaceBakeSettings.hh"
 #include "TextureMemory.hh"
 #include "SkewPanel.hh"
 #include "SkewJSON.hh"
@@ -93,11 +94,13 @@ std::set<int> SkewController::tiles(std::uint32_t uid)const{
 QString SkewController::token(std::uint32_t uid,int role)const{
  if(!uid)uid=hooks_.material();if(role<0)role=std::max(0,auto_role());auto *doc=hooks_.document();if(!doc||!uid)return {};
  EditStateScope identity;const auto &set=doc->set(uid);auto o=skew_field_json(set.skew);o["set"]=set.id.toString();o["role"]=role;o["options"]=options(uid,role);
+ if(role==3||role==4||role==6){QJsonArray channels;for(const auto &source:doc->texture_sets())if(!source.disabled&&(source.displacement.channel||o["options"].toObject()["normal_detail"].toDouble()>0)){auto metadata=QJsonDocument::fromJson(TextureDocument::mask_dependency_signature(source)).object();metadata.remove("mesh_maps");metadata.remove("skew_correction");metadata.remove("selected_layer");metadata.remove("selected_effect");metadata.remove("selected_mask");channels.append(metadata);}o["surface_channels"]=channels;}
  if(role==2){QJsonArray color;for(float c:set.base_values.base_color)color.append(c);o["base"]=color;}
  for(auto key:{"vectors","vector_length","vector_density","vector_opacity"})o.remove(key);return QString::fromUtf8(QJsonDocument(o).toJson(QJsonDocument::Compact));
 }
 QString SkewController::source_key()const{
  auto *doc=hooks_.document();if(!doc)return {};const auto r=doc->bake_configuration();QJsonObject key{{"source_scale",r.value("source_scale").toDouble(1)},{"source_frame_enabled",r.value("source_frame_enabled").toBool()},{"source_frame",r.value("source_frame").toDouble(1)},{"document",doc->id().toString()},{"mesh",QString::number(quintptr(hooks_.scene().uv_triangles.data()),16)},{"project_mesh",r["project_mesh"].toBool(true)},{"use_cage",r["use_cage"].toBool()}};
+ QJsonArray displacement;for(const auto &set:doc->texture_sets())displacement.append(QJsonObject{{"id",set.id.toString()},{"disabled",set.disabled},{"settings",displacement_json(set.displacement)}});key["displacement"]=displacement;
  const auto file=[](const QString &path){QFileInfo f(path);return QJsonObject{{"path",f.absoluteFilePath()},{"size",double(f.size())},{"mtime",QString::number(f.lastModified().toMSecsSinceEpoch())}};};
  if(!r["project_mesh"].toBool(true)){QJsonArray files;for(const auto &path:r["high_files"].toArray())files.append(file(path.toString()));key["high"]=files;}
  if(r["use_cage"].toBool())key["cage"]=file(r["cage_file"].toString());return QString::fromUtf8(QJsonDocument(key).toJson(QJsonDocument::Compact));
@@ -154,7 +157,7 @@ void SkewController::start_job(){performance::Scope timing("bake_submit");
  const auto [uid,role]=chosen->first;const auto pending=chosen->second;const auto recipe=options(uid,role);const auto source=source_key();
  try{
   if(source_key_!=source){
-   engine_.reset();general_.reset();geometry_.reset();low_=std::make_shared<const SceneSnapshot>(hooks_.scene());
+   engine_.reset();general_.reset();geometry_.reset();low_=std::make_shared<const SceneSnapshot>(hooks_.bake_scene&&recipe["project_mesh"].toBool(true)?hooks_.bake_scene():hooks_.scene());
    if(recipe["project_mesh"].toBool(true))high_=low_;
    else{auto high=std::make_shared<SceneSnapshot>();for(const auto &path:recipe["high_files"].toArray()){append(*high,hooks_.load_source(path.toString().toStdString(),bake_source_options(recipe)));setProperty("sourceLoads",property("sourceLoads").toInt()+1);}high_=high;}
    cage_.reset();if(recipe["use_cage"].toBool()){cage_=std::make_shared<const SceneSnapshot>(hooks_.load_source(recipe["cage_file"].toString().toStdString(),bake_source_options(recipe)));setProperty("sourceLoads",property("sourceLoads").toInt()+1);}
@@ -162,7 +165,7 @@ void SkewController::start_job(){performance::Scope timing("bake_submit");
   }
   const auto selected=tiles(uid);if(selected.empty())throw std::invalid_argument("Select at least one UV tile for this Texture Set.");
   const auto opts=skew_options(recipe);const bool skew_normal=role==0&&!recipe["project_mesh"].toBool(true)&&!opts.ray.use_cage&&opts.ray.average_normals;
-  AutoBakeOptions automatic;automatic.ray=opts.ray;auto &maps=automatic.maps;maps.resolution=opts.resolution;maps.height=opts.height;maps.sampling=opts.sampling;maps.dilation=opts.dilation;maps.diffusion=opts.diffusion;maps.rays=recipe["rays"].toInt(64);maps.use_project_mesh=recipe["project_mesh"].toBool(true);maps.enabled.fill(false);maps.enabled[role]=true;
+  AutoBakeOptions automatic;automatic.ray=opts.ray;auto &maps=automatic.maps;maps.resolution=opts.resolution;maps.height=opts.height;maps.sampling=opts.sampling;maps.dilation=opts.dilation;maps.diffusion=opts.diffusion;maps.rays=recipe["rays"].toInt(256);maps.use_project_mesh=recipe["project_mesh"].toBool(true);maps.enabled.fill(false);maps.enabled[role]=true;read_surface_bake_settings(maps,recipe);capture_bake_channels(maps,*doc,*low_);
   const auto &set=doc->set(uid);const auto field=set.skew;const auto name=set.name;const auto base=set.base_values;
   const auto area=pending.full?std::map<int,PaintPixels::Bounds>{}:regions_[uid];const auto wanted=token(uid,role);const auto id=doc->id();
   auto engine=engine_;auto general=general_;auto low=low_,high=high_,cage=cage_;cancel_=std::make_shared<std::atomic<bool>>(false);auto cancel=cancel_;requests_.erase(chosen);
@@ -203,9 +206,10 @@ bool SkewController::flush(){
 }
 QJsonObject SkewController::reference(){
  if(!flush()||!low_||!high_)return {{"exact",false}};auto *doc=hooks_.document();const auto uid=hooks_.material();const int role=auto_role()>=0?auto_role():hooks_.preview_role?std::max(0,hooks_.preview_role()):0;const auto recipe=options(uid,role);const auto opts=skew_options(recipe);const auto field=doc->set(uid).skew;const auto selected=tiles(uid);const auto name=doc->set(uid).name;const auto base=doc->set(uid).base_values;auto low=low_,high=high_,cage=cage_;
+ MeshBakeSettings channels;channels.use_project_mesh=recipe["project_mesh"].toBool(true);read_surface_bake_settings(channels,recipe);capture_bake_channels(channels,*doc,*low);
  auto task=std::async(std::launch::async,[=]{
   std::atomic<bool> cancel=false;if(role==0&&!recipe["project_mesh"].toBool(true)&&!opts.ray.use_cage&&opts.ray.average_normals){SkewBakeEngine engine(low,high);return engine.bake(uid,field,selected,opts,{},cancel);}
-  AutoBakeOptions o;o.ray=opts.ray;o.maps.resolution=opts.resolution;o.maps.height=opts.height;o.maps.sampling=opts.sampling;o.maps.dilation=opts.dilation;o.maps.diffusion=opts.diffusion;o.maps.rays=recipe["rays"].toInt(64);o.maps.use_project_mesh=recipe["project_mesh"].toBool(true);o.maps.enabled.fill(false);o.maps.enabled[role]=true;AutoBakeEngine engine(low,high,cage);auto maps=engine.bake(uid,name,base,selected,field,o,cancel);return maps[role]?std::move(*maps[role]):MeshMap{};
+  AutoBakeOptions o;o.ray=opts.ray;o.maps.resolution=opts.resolution;o.maps.height=opts.height;o.maps.sampling=opts.sampling;o.maps.dilation=opts.dilation;o.maps.diffusion=opts.diffusion;o.maps.rays=recipe["rays"].toInt(256);o.maps.use_project_mesh=recipe["project_mesh"].toBool(true);o.maps.enabled.fill(false);o.maps.enabled[role]=true;read_surface_bake_settings(o.maps,recipe);o.maps.displacement=channels.displacement;o.maps.normal_maps=channels.normal_maps;AutoBakeEngine engine(low,high,cage);auto maps=engine.bake(uid,name,base,selected,field,o,cancel);return maps[role]?std::move(*maps[role]):MeshMap{};
  });
  while(task.wait_for(std::chrono::seconds(0))!=std::future_status::ready){QCoreApplication::processEvents(QEventLoop::AllEvents,20);QThread::msleep(1);}
  const auto expected=task.get();const auto &current=doc->set(uid).mesh_maps[role];bool exact=current&&!expected.tiles.empty();for(const auto &[tile,plane]:expected.tiles)exact&=current&&current->tiles.contains(tile)&&current->tiles.at(tile).hash==plane.hash;

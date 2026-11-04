@@ -13,6 +13,7 @@ class SkewPanel;
 struct SkewHooks {
  std::function<TextureDocument *()> document;
  std::function<const SceneSnapshot &()> scene;
+ std::function<SceneSnapshot()> bake_scene;
  std::function<std::uint32_t()> material;
  BakeSourceLoader load_source;
  std::function<void(std::unique_ptr<TextureDocument>,const QString &,std::uint32_t)> history;

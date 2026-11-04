@@ -34,7 +34,7 @@ inline void validate_map_bake_options(const QJsonValue &value) {
 }
 inline QJsonObject bake_quality(const QJsonObject &recipe,const QUuid &set,int role) {
   if(set.isNull()||role<0||role>6)throw std::invalid_argument("Invalid bake quality selection");
-  QJsonObject result{{"dilation",recipe["dilation"].toInt(32)},{"rays",recipe["rays"].toInt(64)},
+  QJsonObject result{{"dilation",recipe["dilation"].toInt(32)},{"rays",recipe["rays"].toInt(256)},
                      {"sampling",recipe["sampling"].toInt(1)},{"diffusion",recipe["diffusion"].toBool(false)}};
   const auto overrides=recipe["map_options"].toObject()[set.toString()].toObject()[QString::number(role)].toObject();
   for(auto it=overrides.begin();it!=overrides.end();++it)result[it.key()]=it.value();

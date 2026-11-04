@@ -2240,6 +2240,7 @@ int main(int argc, char **argv)
   parser.addOption({"cpu-workspace-shutdown-test", "Verify pending nested editor retirement without initializing Blender or a viewport"});
   parser.addOption({"cpu-native-material-test", "Inspect detached Blender material groups without a GPU", "directory"});
   parser.addOption({"cpu-bake-source-test", "Verify native OBJ/ABC/USD high-poly and cage import", "directory"});
+  parser.addOption({"headless-surface-bake-test", "Verify displaced surface maps on an offscreen GPU", "directory"});
   parser.addOption({"cpu-skew-test", "Run native high-to-low skew ray projection without a GPU", "directory"});
   parser.addOption({"cpu-texture-import-test", "Verify native image formats, raw/color UDIM decode and per-tile packing", "directory"});
   parser.addOption({"cpu-export-test", "Run headless native image export regression without a GPU", "directory"});
@@ -2261,6 +2262,7 @@ int main(int argc, char **argv)
     if(parser.isSet("headless-viewport-test"))return bts::run_viewport_headless_demo(host,parser.value("headless-viewport-test"),parser.value("open-document"));
     if(parser.isSet("cpu-native-material-test"))return bts::run_native_material_inspection_demo(host,parser.value("cpu-native-material-test"));
     if(parser.isSet("cpu-bake-source-test"))return bts::run_bake_source_cpu_demo(host,parser.value("cpu-bake-source-test"));
+    if(parser.isSet("headless-surface-bake-test"))return bts::run_bake_source_cpu_demo(host,parser.value("headless-surface-bake-test"));
     if(parser.isSet("cpu-skew-test"))return bts::run_skew_bake_cpu_demo(parser.value("cpu-skew-test"));
     if(parser.isSet("cpu-texture-import-test"))return bts::run_texture_import_cpu_demo(parser.value("cpu-texture-import-test"));
     if(parser.isSet("cpu-export-test"))return bts::run_export_cpu_demo(parser.value("cpu-export-test"));
@@ -2982,7 +2984,7 @@ int main(int argc, char **argv)
           const auto previous_updates=viewport->updatesEnabled();viewport->setProperty("bakeRenderingSuspended",true);viewport->setUpdatesEnabled(false);
           const auto resume_bake_view=qScopeGuard([&]{viewport->setProperty("bakeRenderingSuspended",false);viewport->setUpdatesEnabled(previous_updates);viewport->update();});
           host.release_bake_scratch();
-          const auto baked=bts::choose_mesh_bake(workspace,*document,snapshot,[&](const std::string &path,const bts::BakeSourceOptions &options){return host.load_bake_source(path,options);},[&](const std::function<void()> &fn){host.with_gpu(fn);});
+          const auto baked=bts::choose_mesh_bake(workspace,*document,host.scene_snapshot(true),[&](const std::string &path,const bts::BakeSourceOptions &options){return host.load_bake_source(path,options);},[&](const std::function<void()> &fn){host.with_gpu(fn);});
           auto recipe=bts::mesh_bake_template(document->id());
           // Compare dialog choices before restoring document-only mode/quality keys.
           if(!baked&&old_choice==effective_choice(recipe))return;
@@ -3782,7 +3784,7 @@ bts::FileDialog::prepare_directory_thread();workspace->set_fill_color_spaces(bts
       }
 
       {
-        bts::SkewHooks hooks;hooks.document=[&]{return document.get();};hooks.scene=[&]() -> const bts::SceneSnapshot &{return snapshot;};hooks.material=[&]{return document&&selected_material>=0?snapshot.materials[selected_material].session_id:0;};hooks.load_source=[&](const std::string &path,const bts::BakeSourceOptions &options){return host.load_bake_source(path,options);};hooks.log=[&](const QString &text){workspace->append_console("Skew: "+text);};hooks.end_input=[&]{viewport->end_paint(false);if(uniform_before&&finish_uniform_edit)finish_uniform_edit(false);if(viewport->path_active&&leave_path)leave_path();};hooks.refresh=[&]{refresh_document_ui(false);};hooks.configure=[&]{workspace->findChild<QAction *>("bakeMeshMapsAction")->trigger();};
+        bts::SkewHooks hooks;hooks.document=[&]{return document.get();};hooks.scene=[&]() -> const bts::SceneSnapshot &{return snapshot;};hooks.bake_scene=[&]{return host.scene_snapshot(true);};hooks.material=[&]{return document&&selected_material>=0?snapshot.materials[selected_material].session_id:0;};hooks.load_source=[&](const std::string &path,const bts::BakeSourceOptions &options){return host.load_bake_source(path,options);};hooks.log=[&](const QString &text){workspace->append_console("Skew: "+text);};hooks.end_input=[&]{viewport->end_paint(false);if(uniform_before&&finish_uniform_edit)finish_uniform_edit(false);if(viewport->path_active&&leave_path)leave_path();};hooks.refresh=[&]{refresh_document_ui(false);};hooks.configure=[&]{workspace->findChild<QAction *>("bakeMeshMapsAction")->trigger();};
         hooks.history=[&](std::unique_ptr<bts::TextureDocument> before,const QString &label,std::uint32_t uid){if(!document||!uid)return;if(before&&before->edit_state()!=document->edit_state()){undo_history.push_back({std::move(before),uid,label});if(undo_history.size()>128)undo_history.erase(undo_history.begin());redo_history.clear();}refresh_document_ui(false,uid);};
         hooks.install=[&](std::uint32_t uid,int role,bts::MeshMap map){if(!document)return;auto &set=document->set(uid);set.mesh_maps[role]=std::move(map);bts::CompositeChannels channels=role==0?bts::CompositeChannels{}:bts::complete_composite_channels;if(role==0)channels[3]=channels[6]=true;if(!host.preview_layer_edit(set,channels))host.apply_texture_set(set,set.texture_resolution);refresh_document_ui(false,uid);};
         hooks.preview_role=[&]{return inspected_map;};hooks.preview=[&](int role){if(role<0){inspected_map=-1;viewport->mesh_map_active=-1;update_inspection(bts::InspectionMode::Material);}else if(document&&selected_material>=0&&document->set(snapshot.materials[selected_material].session_id).mesh_maps[role])viewport->mesh_map_requested(role);else workspace->append_console("Bake this mesh map before previewing it.");};

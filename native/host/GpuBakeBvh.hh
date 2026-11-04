@@ -10,6 +10,18 @@
 #include <vector>
 namespace bts::bake_bvh {
 using Triangle=std::array<std::array<float,3>,3>;
+// Dimensionless parallelism tolerance: tiny subdivided triangles must not
+// disappear merely because the mesh is expressed in meters instead of mm.
+inline bool surface_hit(const Triangle &tri,const float *origin,const float *direction,float &distance){
+ const auto sub=[](const auto &a,const auto &b){return std::array<float,3>{a[0]-b[0],a[1]-b[1],a[2]-b[2]};};
+ const auto cross=[](const auto &a,const auto &b){return std::array<float,3>{a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]};};
+ const auto dot=[](const auto &a,const auto &b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];};
+ const auto e1=sub(tri[1],tri[0]),e2=sub(tri[2],tri[0]),p=cross(direction,e2);const float det=dot(e1,p);
+ if(det==0||std::abs(det)<1e-8f*std::sqrt(dot(e1,e1)*dot(e2,e2)))return false;
+ const float inv=1/det;const auto s=sub(origin,tri[0]);const float u=dot(s,p)*inv;if(u<0||u>1)return false;
+ const auto q=cross(s,e1);const float v=dot(direction,q)*inv;if(v<0||u+v>1)return false;
+ distance=dot(e2,q)*inv;return distance>0;
+}
 // std430: vec3 + uint, vec3 + uint. Preorder children are consecutive;
 // escape skips a complete subtree, so traversal never needs a fixed stack.
 struct alignas(16) Node {
@@ -76,5 +88,17 @@ inline bool frame(Frame &frame,const std::array<float,3> &position,std::array<fl
 inline void ray(const Frame &frame,int index,int rays,std::array<float,4> &origin,std::array<float,4> &direction){
  const double z=std::sqrt((index+.5)/rays),radius=std::sqrt(1-z*z),angle=index*2.399963229728653+frame.phase;
  for(int a=0;a<3;++a){direction[a]=float(frame.n[a]*z+frame.tangent[a]*radius*std::cos(angle)+frame.bitangent[a]*radius*std::sin(angle));origin[a]=frame.position[a]+frame.n[a]*float(frame.maximum*1e-5f);}origin[3]=frame.maximum;direction[3]=0;
+}
+// Offset along the actual triangle normal, not the interpolated shading normal.
+// Reflect samples below the geometric hemisphere to avoid the shadow terminator.
+inline void surface_ray(const Frame &frame,int index,int rays,std::array<float,3> geometric,bool inward,float epsilon,std::array<float,4> &origin,std::array<float,4> &direction){
+ ray(frame,index,rays,origin,direction);
+ if(inward)for(float &v:geometric)v=-v;
+ float below=0;for(int a=0;a<3;++a)below+=direction[a]*geometric[a];
+ for(int a=0;a<3;++a){
+   if(below<0)direction[a]-=2*below*geometric[a];
+   const float p=frame.position[a];origin[a]=p+geometric[a]*epsilon;
+   if(geometric[a]!=0)origin[a]=std::nextafter(origin[a],geometric[a]>0?std::numeric_limits<float>::infinity():-std::numeric_limits<float>::infinity());
+ }
 }
 }
