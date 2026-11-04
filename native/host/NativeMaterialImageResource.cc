@@ -12,6 +12,7 @@
 #  include <sys/stat.h>
 #endif
 #include "NativeMaterialImageResource.hh"
+#include "ColdImBuf.hh"
 #include "NativeMaterialImageSource.hh"
 #include "NativeMaterialDecodedImage.hh"
 #include "BKE_image.hh"
@@ -104,6 +105,8 @@ SourceIdentity source_identity(const Main &main,const Image &image,int tile,cons
 }
 NativeMaterialImageResource::NativeMaterialImageResource(ImBuf *buffer,QString key,QString digest):buffer_(buffer),key_(std::move(key)),encoded_sha256_(std::move(digest)){}
 NativeMaterialImageResource::~NativeMaterialImageResource(){IMB_freeImBuf(buffer_);}
+blender::ImBuf *NativeMaterialImageResource::buffer()const{if(cold_)cold_->restore(*buffer_);return buffer_;}
+void NativeMaterialImageResource::spill(){if(buffer_->refcounter!=0)return;if(!cold_)cold_=std::make_unique<ColdImBuf>();cold_->spill(*buffer_);}
 NativeMaterialImagePoolStatistics native_material_image_pool_statistics(){std::lock_guard lock(pool_mutex);NativeMaterialImagePoolStatistics result;result.decodes=decodes.load();for(const auto &[key,entry]:pool)result.live_resources+=!entry.ready.expired();return result;}
 static std::shared_ptr<NativeMaterialImageResource> prepare_resource(
     const Main &main,const Image &image,int tile,const std::atomic_bool &cancel,bool &reused)

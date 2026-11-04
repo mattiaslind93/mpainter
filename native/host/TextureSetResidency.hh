@@ -26,7 +26,7 @@ inline void visit_set_textures(const TextureSet &set,const std::function<void(co
   if(layer.mask)for(const auto &effect:mask_effects_recursive(layer.mask->effects))projection(effect.mapping.projection);
  }
 }
-inline void spill_unloaded_textures(const TextureDocument &document){
+inline void spill_unloaded_textures(const TextureDocument &document,bool spill_history=true){
  std::set<const void *> protected_pixels;
  std::vector<const FillTexture *> candidates;
  for(const auto &set:document.texture_sets())visit_set_textures(set,[&](const FillTexture &texture){
@@ -41,6 +41,7 @@ inline void spill_unloaded_textures(const TextureDocument &document){
   for(auto i=set.geometry_ownership.begin();i!=set.geometry_ownership.end();)if(!set.tile_loaded(i->first))i=set.geometry_ownership.erase(i);else ++i;
   if(set.loaded_tiles().empty())set.projection_geometry.reset();
  }
+ if(!spill_history)return;
  if(history_spill_pending())wait_history_spill();
  request_history_spill(0);
  if(const auto result=wait_history_spill();result&&!result->error.empty())throw std::runtime_error(result->error);

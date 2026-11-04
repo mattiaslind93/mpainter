@@ -50,7 +50,8 @@ class OptionStyle final : public QProxyStyle {
     const QRectF box = QRectF(option->rect).adjusted(1, 1, -1, -1);
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing);
-    painter->setPen(QPen(QColor(hovered ? Accent : OptionOutline), hovered ? 2 : 1));
+    const bool texture_row=widget && widget->objectName()=="textureSetLoaded";
+    painter->setPen(QPen(QColor(hovered ? Accent : texture_row ? Muted : OptionOutline), hovered ? 2 : 1));
     painter->setBrush(QColor(enabled ? OptionInner : Raised));
     if (radio) painter->drawEllipse(box);
     else painter->drawRoundedRect(box, 2, 2);

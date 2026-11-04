@@ -93,6 +93,7 @@ class MaterialInspection {
   bool update(blender::Main &, InspectionMode, std::span<const InspectionMaterial>);
   void reset(bool terminal=false);
   bool set_geometry_visibility(blender::Main &,const TextureSet *,bool preserve_others=false);
+  void evict_unloaded_resources(const TextureDocument &);
   void change_residency(blender::Main &,const TextureSet &);
   bool geometry_visibility_enabled(std::uint32_t) const;
   void collect_retired_visibility_images(blender::Main &);

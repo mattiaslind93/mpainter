@@ -1,3 +1,4 @@
+#include "TextureSetResidency.hh"
 #include "LayerSourceChannels.hh"
 #include "NativeMaterialPreparationQueue.hh"
 #include "GPU_host_texture_memory.hh"
@@ -850,9 +851,14 @@ std::uint64_t GpuLayerPreview::release_bake_scratch(){
  for(auto i=s.inputs.begin();i!=s.inputs.end();)if(!i->second.retained()&&!s.adjustment_input_pins.contains(i->first)){bytes=resource_sum(bytes,i->second.bytes());s.used_bytes-=i->second.bytes();i=s.inputs.erase(i);}else ++i;
  texture_memory_refresh_needed=true;std::printf("BTS_BAKE_RELEASE reusable_bytes=%llu\n",(unsigned long long)bytes);return bytes;
 }
-void GpuLayerPreview::evict_residency(){
+void GpuLayerPreview::evict_residency(const std::vector<TextureSet> &resident){
  release_bake_scratch();auto &s=*impl_;
- for(int c=0;c<5;++c)s.authoring_pages.retire_unused(c,{});
+ s.authoring_pages.evict();s.adjustment_pages.evict();
+ std::set<std::string> resources;std::set<QUuid> live_sets;
+ for(const auto &set:resident)if(!set.loaded_tiles().empty()){live_sets.insert(set.id);for(const auto &layer:evaluation_layers(set))if(layer.fill.native_material)resources.insert(layer.fill.material_resource);}
+ for(const auto &[id,entry]:s.adjustment_sources)if(auto token=entry.source.lock();token&&live_sets.contains(token->set))resources.insert(entry.native_aliases.begin(),entry.native_aliases.end());
+ for(const auto &[id,entry]:s.adjustment_sources)if(auto token=entry.source.lock();token&&!live_sets.contains(token->set))visit_set_textures(entry.set,[](const FillTexture &texture){if(texture.tiles){for(const auto &[tile,image]:*texture.tiles)image->pixels.spill();}else texture.pixels.spill();});
+ s.native_materials.evict_except(resources);
  s.geometry.clear();s.effect_parameters.clear();s.layer_parameters.clear();
  texture_memory_refresh_needed=true;
 }

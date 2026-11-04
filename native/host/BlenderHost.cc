@@ -2,6 +2,7 @@
 #include "Theme.hh"
 #include "MaskEffectContext.hh"
 #include "NativeMaterialGraph.hh"
+#include "ImportedShaderCache.hh"
 #include "NativeFragmentGeometry.hh"
 #include "NativeMaterialDependencies.hh"
 #include "NativeMaterialPreviewImages.hh"
@@ -231,6 +232,7 @@ struct BlenderHost::Impl {
   struct MaterialPrepareJob{std::shared_ptr<std::atomic_bool> cancel;std::shared_future<std::shared_ptr<NativeMaterialGraph>> result;};
   std::vector<MaterialPrepareJob> material_prepare_jobs;
   std::unique_ptr<NativeMaterialPreview> native_preview;
+  std::map<std::uint32_t,ImportedShaderCache> imported_shader_cache;
   struct AssetScanJob{std::shared_ptr<std::stop_source> cancel;std::shared_future<BlendAssetLibrary> result;};
   std::vector<AssetScanJob> asset_scan_jobs;
   std::optional<std::pair<std::array<float,16>,std::array<float,16>>> native_view_matrices;
@@ -636,7 +638,7 @@ ImportSummary BlenderHost::new_project(const std::string &mesh_path, const std::
   s.enter_gpu();
   try {
     s.free_targets();
-    s.inspection.reset();s.displacement_preview.reset(*s.main);s.last_tangent_shader_state={};
+    s.imported_shader_cache.clear();s.inspection.reset();s.displacement_preview.reset(*s.main);s.last_tangent_shader_state={};
     s.inspection_mode = InspectionMode::Material;
     Scene *previous = s.scene;
     s.scene = &pending->merge_into(*s.main);
@@ -714,6 +716,7 @@ void BlenderHost::begin_save_project(const TextureDocument &document,const std::
  auto &s=*impl_;s.require_owner();performance::Scope timing("save_snapshot_request");
  if(s.phase!=Impl::Phase::GpuReady||s.drawing||save_project_pending())throw std::logic_error("Another project save is in progress");
  if(s.inspection.updates_pending())throw std::logic_error("Project GPU changes are still being published");
+ for(auto &material:s.main->materials)if(auto found=s.imported_shader_cache.find(material.id.session_uid);found!=s.imported_shader_cache.end())found->second.restore(*s.main,material);
  auto snapshot=std::make_unique<ProjectSaveSnapshot>(*s.main,*s.scene,*s.view,document,resources);
  s.enter_gpu();try{
   auto readback=std::make_unique<GpuProjectReadback>();s.inspection.capture_project_images(*readback);
@@ -919,7 +922,7 @@ TextureDocument BlenderHost::adopt_project(std::unique_ptr<PendingProject> pendi
   pending->activate_environment(); // Global StudioLight registration is owner-only.
   s.enter_gpu();
   try {
-    s.free_targets();s.inspection.reset();s.displacement_preview.reset(*s.main);s.last_tangent_shader_state={};s.selected_material.reset();s.inspection_mode=InspectionMode::Material;
+    s.free_targets();s.imported_shader_cache.clear();s.inspection.reset();s.displacement_preview.reset(*s.main);s.last_tangent_shader_state={};s.selected_material.reset();s.inspection_mode=InspectionMode::Material;
     // reset joins old readers; drain retired GPU owners while their original
     // Main is still alive. No queue/reference-bound preparation is moved.
     if(staged)GpuLayerPreview::collect_retired();
@@ -1641,9 +1644,15 @@ void BlenderHost::prepare_warp_projections(const TextureSet &set)
  if(set.instance_layers){auto instances=std::make_shared<std::vector<TextureLayer>>(*set.instance_layers);for(const auto &layer:*instances)prepare_layer(layer);set.instance_layers=std::move(instances);}
 }
 
+void BlenderHost::evict_unloaded_resources(const TextureDocument &document){auto &s=*impl_;s.require_owner();s.enter_gpu();try{s.inspection.evict_unloaded_resources(document);DRW_gpu_context_disable_ex(false);}catch(...){DRW_gpu_context_disable_ex(false);throw;}}
 void BlenderHost::change_texture_residency(const TextureSet &set){
  auto &s=*impl_;s.require_owner();if(s.drawing)throw std::logic_error("Residency requires an idle viewport");
- s.enter_gpu();try{s.inspection.change_residency(*s.main,set);s.uv_dirty=true;s.texture_dirty=true;s.uv_preview.tag_images_updated();DRW_gpu_context_disable_ex(false);}catch(...){DRW_gpu_context_disable_ex(false);throw;}
+ s.enter_gpu();try{if(!set.uniform_editable){
+   auto *material=static_cast<Material *>(nullptr);for(auto &m:s.main->materials)if(m.id.session_uid==set.material_session_uid)material=&m;
+   if(!material||!material->nodetree)throw std::runtime_error("Imported material is unavailable");
+   s.free_targets();s.imported_shader_cache[set.material_session_uid].change(*s.main,*material,set);
+   DEG_id_tag_update_ex(s.main,&material->id,ID_RECALC_SHADING|ID_RECALC_SYNC_TO_EVAL);DEG_id_tag_update_ex(s.main,&material->nodetree->id,ID_RECALC_NTREE_OUTPUT);BKE_scene_graph_evaluated_ensure(s.depsgraph,s.main);
+  }else s.inspection.change_residency(*s.main,set);s.uv_dirty=true;s.texture_dirty=true;s.uv_preview.tag_images_updated();DRW_gpu_context_disable_ex(false);}catch(...){DRW_gpu_context_disable_ex(false);throw;}
 }
 void BlenderHost::apply_texture_set(const TextureSet &set,int resolution,PaintPixels::Bounds bounds,bool interactive)
 {

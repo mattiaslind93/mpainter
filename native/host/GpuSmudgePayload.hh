@@ -117,6 +117,7 @@ void main(){ivec2 p=ivec2(gl_GlobalInvocationID.xy),size=imageSize(result_img);i
   }
   return entry;
  }
+ void evict(){raster_.evict();std::erase_if(entries_,[](const auto &p){return p.second.use_count()==1;});}
  void retire_unused(){std::erase_if(entries_,[](const auto &p){return p.second.use_count()==1&&p.second->source.use_count()==1;});}
  std::uint64_t staged_pages()const{return staged_pages_;}
  std::uint64_t captures()const{return captures_;}

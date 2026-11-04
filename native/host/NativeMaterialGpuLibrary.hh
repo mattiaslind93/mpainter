@@ -7,6 +7,9 @@
 #include "NativeFragmentImageReadiness.hh"
 #include "NativeMaterialTiledStorage.hh"
 #include <map>
+#include <set>
+#include "ShaderTreeCache.hh"
+#include "ColdImageCache.hh"
 #include <string>
 namespace bts {
 class NativeMaterialImageUpload;
@@ -35,6 +38,7 @@ class NativeMaterialGpuLibrary {
  void register_content_alias(const std::string &resource,const std::string &hash);
  void erase(const std::string &resource);
  void clear();
+ void evict_except(const std::set<std::string> &resident);
  bool contains(const std::string &)const;
  bool uses_object(const std::string &)const;
  bool uses_ao(const std::string &)const;
@@ -95,8 +99,8 @@ class NativeMaterialGpuLibrary {
  struct Statistics{std::size_t resources=0,sources=0,programs=0,world_programs=0;std::uint64_t dispatches=0,texels=0,world_dispatches=0;};
  Statistics statistics()const;
  private:
- struct HeightState{explicit HeightState(NativeMaterialHeightResource value):resource(std::move(value)){std::array<blender::bNodeTree *,1> roots{resource.prepared.tree};image_requests=native_material_image_upload_requests(*resource.prepared.source,roots,false);}NativeMaterialHeightResource resource;std::vector<NativeImageUploadRequest> image_requests;std::unique_ptr<NativeMaterialGpuProgram> program;};
- struct Entry{std::shared_ptr<NativeMaterialGraph> graph;std::string content_hash,cache_identity;std::map<int,std::unique_ptr<NativeMaterialGpuProgram>> programs;std::map<int,NativeMaterialDependencies> dependencies;std::unique_ptr<HeightState> height;std::vector<NativeImageUploadRequest> image_requests;NativeFragmentImageReadiness source_image_readiness;std::unique_ptr<NativeMaterialImageUpload> source_upload,height_upload;QString source_image_error;std::map<std::string,std::unique_ptr<NativeMaterialFragmentGpuProgram>> world_programs;NativeMaterialDependencies world_dependencies;NativeFragmentLayout world_layout;std::string world_image_signature;bool world_image_required=false;NativeFragmentImageReadiness world_image_readiness;std::unique_ptr<NativeMaterialImageUpload> world_upload;QString world_error;bool world_prepared=false;std::uint64_t revision=0,dispatches=0,texels=0,world_dispatches=0;};
+ struct HeightState{mutable ShaderTreeCache cold;mutable ColdImageCache pixels;explicit HeightState(NativeMaterialHeightResource value):resource(std::move(value)){std::array<blender::bNodeTree *,1> roots{resource.prepared.tree};image_requests=native_material_image_upload_requests(*resource.prepared.source,roots,false);}NativeMaterialHeightResource resource;std::vector<NativeImageUploadRequest> image_requests;std::unique_ptr<NativeMaterialGpuProgram> program;};
+ struct Entry{mutable ShaderTreeCache cold;mutable ColdImageCache pixels;std::shared_ptr<NativeMaterialGraph> graph;std::string content_hash,cache_identity;std::map<int,std::unique_ptr<NativeMaterialGpuProgram>> programs;std::map<int,NativeMaterialDependencies> dependencies;std::unique_ptr<HeightState> height;std::vector<NativeImageUploadRequest> image_requests;NativeFragmentImageReadiness source_image_readiness;std::unique_ptr<NativeMaterialImageUpload> source_upload,height_upload;QString source_image_error;std::map<std::string,std::unique_ptr<NativeMaterialFragmentGpuProgram>> world_programs;NativeMaterialDependencies world_dependencies;NativeFragmentLayout world_layout;std::string world_image_signature;bool world_image_required=false;NativeFragmentImageReadiness world_image_readiness;std::unique_ptr<NativeMaterialImageUpload> world_upload;QString world_error;bool world_prepared=false;std::uint64_t revision=0,dispatches=0,texels=0,world_dispatches=0;};
  std::map<std::string,std::shared_ptr<Entry>> resources_;
  std::map<std::string,std::weak_ptr<Entry>> content_;
  std::uint64_t clock_=0;

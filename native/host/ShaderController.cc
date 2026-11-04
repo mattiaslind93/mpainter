@@ -127,6 +127,9 @@ void ShaderController::rows(){
    }
   };
   row->findChild<QPushButton *>("textureSetShader")->setText(instance.name);
+  // QListWidget does not derive item height from its persistent row widget.
+  // Include the themed button/checkbox minimums (also at non-default DPI).
+  row->ensurePolished();item->setSizeHint(QSize(0,row->sizeHint().expandedTo(row->minimumSizeHint()).height()+2));
   item->setData(Qt::UserRole+30,instance.name);item->setData(Qt::UserRole+31,ShaderInstances::key(instance.id));
  }
 }

@@ -2417,7 +2417,7 @@ int main(int argc, char **argv)
       if(mode!=bts::InspectionMode::Roughness){inspected_map=-1;viewport->mesh_map_active=-1;}
       std::vector<bts::InspectionMaterial> materials;
       for (const auto &set : document->texture_sets()) {
-        if(set.disabled||(changed_uid&&*changed_uid!=set.material_session_uid))continue;
+        if(set.disabled||!set.uniform_editable||(changed_uid&&*changed_uid!=set.material_session_uid))continue;
         // Native channel images are composed on the GPU. Inspection routing
         // needs the document base and selected view, not a CPU layer summary.
         bts::InspectionMaterial material{set.material_session_uid,set.base_values,{},selected_material>=0&&set.material_session_uid==snapshot.materials[selected_material].session_id&&set.selected_mask?&set:nullptr,set.texture_resolution};if(inspected_map>=0){material.mesh_inspection=true;material.mask_set=&set;material.mesh_map=set.mesh_maps[inspected_map]?&*set.mesh_maps[inspected_map]:nullptr;}materials.push_back(material);
@@ -2455,7 +2455,7 @@ int main(int argc, char **argv)
         if(!document||document->id()!=project_id){poll->stop();poll->deleteLater();return;}
         if(QApplication::activeModalWidget()||host.texture_updates_pending()||host.save_project_pending()||(texture_loader&&texture_loader->pending())||(native_material_loader&&native_material_loader->pending()))return;
         poll->stop();poll->deleteLater();
-        try{bts::spill_unloaded_textures(*document);}catch(const std::exception &error){workspace->set_error_status(QString("Texture cache: ")+QString::fromUtf8(error.what()));}
+        try{for(const auto &set:document->texture_sets())if(!set.disabled&&!set.uniform_editable&&!set.fully_loaded())host.change_texture_residency(set);host.evict_unloaded_resources(*document);for(auto *history:{&undo_history,&redo_history})for(auto &entry:*history)if(entry.state)bts::spill_unloaded_textures(*entry.state,false);bts::spill_unloaded_textures(*document);}catch(const std::exception &error){workspace->set_error_status(QString("Texture cache: ")+QString::fromUtf8(error.what()));}
       });poll->start();
     };
     // History/dirty state is immediate. Broad panel synchronization follows the
@@ -2947,10 +2947,9 @@ int main(int argc, char **argv)
       callbacks.residency_changed=[&](std::uint32_t uid,int tile,bool loaded){
         if(!document||!uid)return;
         const auto serial=++residency_requests[{uid,tile}];
-        auto &set=document->set(uid);
-        if((tile?set.tile_loaded(tile):set.loaded)==loaded)return;
+        if((tile?document->set(uid).tile_loaded(tile):document->set(uid).loaded)==loaded)return;
         try{
-          viewport->end_paint(false);if(uniform_before)finish_uniform_edit(false);
+          viewport->end_paint(false);if(uniform_before)finish_uniform_edit(false);if(shader)shader->finish();
           if(host.texture_updates_pending()||host.save_project_pending()||(texture_loader&&texture_loader->pending())||(native_material_loader&&native_material_loader->pending())){
             auto *pending=new QTimer(workspace);pending->setInterval(100);const auto project_id=document->id();
             QObject::connect(pending,&QTimer::timeout,workspace,[&,pending,project_id,uid,tile,loaded,serial]{
@@ -2959,6 +2958,8 @@ int main(int argc, char **argv)
               pending->stop();pending->deleteLater();workspace->request_texture_residency(uid,tile,loaded);
             });pending->start();return;
           }
+          // Finishing a gesture may replace the document; resolve the set afterward.
+          auto &set=document->set(uid);
           const bool old_loaded=set.loaded;const auto old_tiles=set.unloaded_tiles;
           if(tile){if(!set.tiles.contains(tile))throw std::invalid_argument("Unknown UV tile");if(loaded)set.unloaded_tiles.erase(tile);else set.unloaded_tiles.insert(tile);}else set.loaded=loaded;
           try{host.change_texture_residency(set);}catch(...){set.loaded=old_loaded;set.unloaded_tiles=old_tiles;throw;}

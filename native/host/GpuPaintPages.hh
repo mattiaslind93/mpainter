@@ -162,6 +162,7 @@ class GpuPaintPages {
  public:
  GpuPolygonRaster &polygon_raster(){return polygons_;}
  void adjustment_resolver(GpuSmudgePayload::AdjustmentResolver resolver){payloads_.adjustment_resolver=std::move(resolver);}
+ void evict(){if(!pinned_.empty())throw std::logic_error("Cannot evict active authoring pages");pages_.clear();lru_.clear();coverage_.clear();coverage_bytes_=0;payloads_.evict();raster_.evict();polygons_.evict();filled_paths_.evict();ribbon_paths_.evict();}
  void retire_payloads(){payloads_.retire_unused();}
  explicit GpuPaintPages(std::uint64_t maximum_cache_bytes=0):budget_override_(maximum_cache_bytes){}
  void prepare(){

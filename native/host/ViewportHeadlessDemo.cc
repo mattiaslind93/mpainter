@@ -38,6 +38,7 @@
 #include "GpuBakeRayDemo.hh"
 #include "GpuNeighborhoodFilterTest.hh"
 #include "GpuAdjustmentPaintTest.hh"
+#include "UnloadResidencyTest.hh"
 #include "AdjustmentPaintColdProof.hh"
 #include "../tests/HostedShaderWorkersTest.hh"
 #include "../tests/HostedGpuPassReadinessTest.hh"
@@ -80,6 +81,7 @@ QJsonObject check_mips(){
 int run_viewport_headless_demo(BlenderHost &host,const QString &directory,const QString &project){
  QDir().mkpath(directory);QOpenGLContext context;context.setFormat(QSurfaceFormat::defaultFormat());require(context.create(),"Cannot create offscreen OpenGL context");QOffscreenSurface surface;surface.setFormat(context.format());surface.create();require(surface.isValid()&&context.makeCurrent(&surface),"Cannot activate offscreen OpenGL surface");QOpenGLFramebufferObject target(1000,700,QOpenGLFramebufferObject::CombinedDepthStencil);require(target.isValid(),"Cannot allocate offscreen Qt framebuffer");
  struct Close{BlenderHost &host;~Close(){host.shutdown();}} close{host};host.initialize_gpu(context,surface,target.handle());
+ if(qEnvironmentVariableIsSet("BTS_UNLOAD_REGRESSION")){QJsonObject proof;host.with_gpu([&]{proof=unload_test::run();});QFile file(directory+"/unload-regression.json");if(!file.open(QIODevice::WriteOnly))throw std::runtime_error("Cannot write unload proof");file.write(QJsonDocument(proof).toJson());return 0;}
  if(qEnvironmentVariableIsSet("BTS_NATIVE_FRAGMENT_NORMAL_TEST")){
   // The prepared graph is created on its worker before entering GPU ownership.
   const auto fixtures=prepare_native_fragment_gpu_fixtures();QJsonObject proof;std::string failure;

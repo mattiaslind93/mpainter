@@ -14,6 +14,7 @@
       });
       add("checkboxProbe",[&]{
         const auto resident=bts::history_mapping_rss();
+        QFile process("/proc/self/status");qint64 rss=0;if(process.open(QIODevice::ReadOnly))for(const auto &line:process.readAll().split('\n'))if(line.startsWith("VmRSS:"))rss=line.simplified().split(' ')[1].toLongLong()*1024;
         QJsonArray hashes,samples,loaded;
         for(const auto &set:document->texture_sets()){
           QJsonArray tiles;for(int tile:set.tiles){tiles.append(QJsonArray{tile,set.tile_loaded(tile)});for(const auto &layer:set.layers)hashes.append(QString::number(layer.pixels.tile(tile).hash(0),16));
@@ -22,7 +23,7 @@
           loaded.append(QJsonObject{{"loaded",set.loaded},{"tiles",tiles}});
         }
         std::uint64_t composites=0;for(const auto &[name,group]:blender::gpu::host_texture_memory::snapshot())if(name.starts_with("BTS Composite "))composites+=group.bytes;
-        workspace->setProperty("checkboxProbe",QJsonObject{{"hashes",hashes},{"samples",samples},{"loaded",loaded},{"gpu_bytes",qint64(composites)},{"gpu_total_bytes",qint64(blender::gpu::host_texture_memory::live_bytes())},{"cpu_paint_bytes",qint64(resident)}});
+        workspace->setProperty("checkboxProbe",QJsonObject{{"hashes",hashes},{"samples",samples},{"loaded",loaded},{"gpu_bytes",qint64(composites)},{"gpu_total_bytes",qint64(blender::gpu::host_texture_memory::live_bytes())},{"cpu_paint_bytes",qint64(resident)},{"process_rss_bytes",rss}});
       });
       add("checkboxSave",[&]{save_document(parser.value("gui-fix-demo")+"/checkbox.blend");});
       add("checkboxOpen",[&]{open_document(parser.value("gui-fix-demo")+"/checkbox.blend");});

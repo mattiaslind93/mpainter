@@ -199,6 +199,7 @@ void main(){
   GPU_texture_image_unbind(target);GPU_shader_unbind();
  }
  public:
+ void evict(){parameters_.reset();triangles_.reset();empty_alpha_.reset();alphas_.clear();}
  std::uint64_t alpha_allocations()const{return alpha_allocations_;}
  std::uint64_t metadata_allocations()const{return metadata_allocations_;}
  bool prepare(){if(!stamp_shader_)stamp_shader_=compile(false);if(!over_shader_)over_shader_=compile(true);if(!contact_shader_)contact_shader_=compile(2);return bool(stamp_shader_)&&bool(over_shader_)&&bool(contact_shader_);}

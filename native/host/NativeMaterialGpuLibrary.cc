@@ -14,6 +14,10 @@
 #include "DNA_node_types.h"
 #include "BLI_listbase.h"
 #include "BKE_image.hh"
+#include "BKE_main.hh"
+#include "BKE_image_hosted.hh"
+#include "NativeMaterialImageResource.hh"
+#include "DNA_material_types.h"
 #include <bit>
 #include <cstring>
 #include <type_traits>
@@ -41,7 +45,33 @@ bool NativeMaterialGpuLibrary::uses_object(const std::string &key)const{for(cons
 bool NativeMaterialGpuLibrary::uses_ao(const std::string &key)const{for(const auto &[channel,dependencies]:entry(key).dependencies)if(dependencies.ao)return true;return false;}
 std::vector<int> NativeMaterialGpuLibrary::view_channels(const std::string &key)const{std::vector<int> result;for(const auto &[channel,dependencies]:entry(key).dependencies)if(dependencies.view)result.push_back(channel);return result;}
 std::vector<int> NativeMaterialGpuLibrary::view_channels(const std::string &key,const NativeMaterialDescription &instance)const{std::vector<int> result;for(int channel:effective_channels(key,instance))if(dependencies(key,channel,instance).view)result.push_back(channel);return result;}
-const NativeMaterialGpuLibrary::Entry &NativeMaterialGpuLibrary::entry(const std::string &key)const{const auto found=resources_.find(key);if(found==resources_.end())throw std::runtime_error("Native material source is not prepared yet");return *found->second;}
+const NativeMaterialGpuLibrary::Entry &NativeMaterialGpuLibrary::entry(const std::string &key)const{const auto found=resources_.find(key);if(found==resources_.end())throw std::runtime_error("Native material source is not prepared yet");auto &value=*found->second;
+ if(value.cold.cold()){
+  value.pixels.restore();value.cold.restore();
+  for(const auto &[image,resource]:value.graph->image_resources)if(!BKE_image_assign_hosted_file_buffer(image,resource->buffer()))throw std::runtime_error("Cannot restore native image buffer");
+ }
+ if(value.height&&value.height->cold.cold()){
+  value.height->pixels.restore();value.height->cold.restore();
+  for(const auto &[image,resource]:value.height->resource.prepared.source->image_resources)if(!BKE_image_assign_hosted_file_buffer(image,resource->buffer()))throw std::runtime_error("Cannot restore native Height buffer");
+ }
+ return value;}
+void NativeMaterialGpuLibrary::evict_except(const std::set<std::string> &resident){
+ std::set<Entry *> keep,visited;for(const auto &key:resident)if(auto it=resources_.find(key);it!=resources_.end())keep.insert(it->second.get());
+ for(auto &[key,owner]:resources_){auto &e=*owner;if(keep.contains(&e)||!visited.insert(&e).second||e.cold.cold())continue;
+  e.programs.clear();e.world_programs.clear();e.source_upload.reset();e.world_upload.reset();e.height_upload.reset();
+  const auto spill_graph=[](NativeMaterialGraph &graph,ShaderTreeCache &cold,ColdImageCache &pixels){
+  std::vector<blender::bNodeTree *> trees;for(auto &m:graph.main->materials)if(m.nodetree)trees.push_back(m.nodetree);for(auto &t:graph.main->nodetrees)trees.push_back(&t);
+  std::vector<blender::Image *> images;for(auto &image:graph.main->images)images.push_back(&image);
+  cold.spill(*graph.main,trees,images);
+  for(auto &image:graph.main->images){const bool shared=std::any_of(graph.image_resources.begin(),graph.image_resources.end(),[&](const auto &v){return v.first==&image;})||std::any_of(graph.tiled_image_resources.begin(),graph.tiled_image_resources.end(),[&](const auto &v){return v.first==&image;});if(shared)BKE_image_free_buffers(&image);else pixels.spill(image);}
+  for(const auto &[image,resource]:graph.image_resources)resource->spill();
+  for(const auto &[image,tiles]:graph.tiled_image_resources)for(const auto &[tile,resource]:tiles->tiles())resource->spill();
+  };
+  if(e.height){e.height->program.reset();if(e.height->resource.prepared.source!=e.graph)spill_graph(*e.height->resource.prepared.source,e.height->cold,e.height->pixels);}
+  spill_graph(*e.graph,e.cold,e.pixels);
+  e.source_image_readiness={};e.world_image_readiness={};e.world_prepared=false;
+ }
+}
 std::uint64_t NativeMaterialGpuLibrary::revision(const std::string &key)const{return entry(key).revision;}
 const NativeMaterialGraph &NativeMaterialGpuLibrary::source_graph(const std::string &key)const{return *entry(key).graph;}
 const NativeMaterialDescription &NativeMaterialGpuLibrary::description(const std::string &key)const{return entry(key).graph->description;}
@@ -229,7 +259,7 @@ void NativeMaterialGpuLibrary::render(const std::string &resource,int channel,co
  std::vector<std::array<float,4>> parameters;parameters.reserve(instance.parameters.size());std::vector<NativeMaterialMapping> mappings;mappings.reserve(instance.parameters.size());
  for(std::size_t i=0;i<instance.parameters.size();++i){const auto &value=instance.parameters[i];std::array<float,4> encoded{0,0,0,1};if(value.type==NativeParameterType::Scalar)encoded={float(value.value[0]),float(value.value[0]),float(value.value[0]),1};else for(int c=0;c<value.components();++c)encoded[c]=float(value.value[c]);parameters.push_back(encoded);mappings.push_back(value.mapping_transform);}
  NativeMaterialGpuProgram *program=nullptr;
- if(channel==4&&instance.height_policy==NativeHeightPolicy::RawAuthoredFloatV1)program=source.height->program.get();
+ if(channel==4&&instance.height_policy==NativeHeightPolicy::RawAuthoredFloatV1){if(!source.height->program)source.height->program=std::make_unique<NativeMaterialGpuProgram>(*source.height->resource.prepared.tree,source.graph->parameters.size(),4,source.height->resource.prepared.source);program=source.height->program.get();}
  else {prepare(resource,channel);program=source.programs.at(channel).get();}
  program->update_ramps(instance);program->dispatch(target,parameters,context,region,mappings);++source.dispatches;source.texels+=std::uint64_t(region[2])*region[3];
 }

@@ -104,6 +104,7 @@ void main(){
   if(!shader_)throw std::runtime_error("Filled-path GPU shader compilation failed");
  }
  public:
+ void evict(){geometry_.clear();grids_.clear();}
  void warm_up(){prepare();}
  void render(blender::gpu::Texture *target,const FilledPathSource &source,int channel,std::uint32_t page,blender::gpu::Texture *mask){
   using namespace blender;performance::Scope timing("gpu_filled_path_page");prepare();

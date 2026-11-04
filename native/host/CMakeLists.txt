@@ -126,6 +126,7 @@ add_executable(bts-host ${SRC}
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialGpuProgramTest.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialStackTest.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialGpuLibrary.cc
+  ${BTS_HOST_SOURCE_DIR}/ShaderTreeCache.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialGpuProgram.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialGpuCompiler.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialFragmentBumpTest.cc

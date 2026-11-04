@@ -837,6 +837,7 @@ bool MaterialInspection::set_geometry_visibility(Main &main,const TextureSet *se
   }
   scalar(tree,input(enabled,1),1);binding.geometry_visibility_on=true;BKE_ntree_update_after_single_tree_change(main,tree);DEG_id_tag_update_ex(&main,&binding.material->id,ID_RECALC_SHADING);DEG_id_tag_update_ex(&main,&tree.id,ID_RECALC_NTREE_OUTPUT);return true;
 }
+void MaterialInspection::evict_unloaded_resources(const TextureDocument &document){impl_->cycles.reset();impl_->gpu_preview.evict_residency(document.texture_sets());}
 void MaterialInspection::change_residency(Main &main,const TextureSet &source){
  const auto set=resident_texture_view(source);
  impl_->cycles.reset();
@@ -846,7 +847,8 @@ void MaterialInspection::change_residency(Main &main,const TextureSet &source){
  binding.world_set.reset();binding.world_geometry.reset();binding.world_ao_lease.reset();binding.world_ao={};
  binding.projection_cache.clear();binding.ownership_cache.clear();
  impl_->histogram_job.reset();impl_->thumbnail_job.reset();impl_->layer_capture_job.reset();impl_->material_sample_job.reset();
- impl_->gpu_preview.evict_residency();
+ std::vector<TextureSet> resident;for(const auto &[uid,other]:impl_->bindings)if(other.mask_snapshot)resident.push_back(*other.mask_snapshot);
+ impl_->gpu_preview.evict_residency(resident);
  if(!queue_layer_edit(set,complete_composite_channels,true))throw std::runtime_error("Cannot restore resident texture targets");
  auto visibility=source;visibility.layers={TextureLayer{}};visibility.instance_layers.reset();visibility.selected_layer=visibility.layers.front().id;
  set_geometry_visibility(main,&visibility,true);

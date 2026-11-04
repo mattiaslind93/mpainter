@@ -9,16 +9,19 @@ namespace blender {struct Image;struct Main;struct ImBuf;}
 namespace bts {
 // An immutable graph-space ImBuf, independent of the material Main that first
 // decoded it. Image caches retain references, not copies of its pixel storage.
+class ColdImBuf;
 class NativeMaterialImageResource {
  public:
   explicit NativeMaterialImageResource(blender::ImBuf *,QString key,QString encoded_sha256={});
   ~NativeMaterialImageResource();
   NativeMaterialImageResource(const NativeMaterialImageResource &)=delete;
-  blender::ImBuf *buffer() const {return buffer_;}
+  blender::ImBuf *buffer() const;
+  void spill();
   const QString &key() const {return key_;}
   const QString &encoded_sha256()const{return encoded_sha256_;}
  private:
   blender::ImBuf *buffer_;
+  mutable std::unique_ptr<ColdImBuf> cold_;
   QString key_;
   QString encoded_sha256_;
 };

@@ -58,6 +58,7 @@ class GpuRibbonPath {
   if(!shader_)throw std::runtime_error("Ribbon GPU shader compilation failed");
  }
  public:
+ void evict(){geometry_.clear();grids_.clear();images_.clear();}
  void warm_up(){prepare();}
  std::uint64_t image_allocations()const{return image_allocations_;}
  void render(blender::gpu::Texture *target,const RibbonPathSource &source,int channel,std::uint32_t page,blender::gpu::Texture *mask){

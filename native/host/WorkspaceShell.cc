@@ -112,6 +112,11 @@ namespace {
 class TextureSetNameDelegate final:public InlineNameDelegate {
  QListWidget *list_;
  public:explicit TextureSetNameDelegate(QListWidget *list):InlineNameDelegate(list),list_(list){}
+ QSize sizeHint(const QStyleOptionViewItem &option,const QModelIndex &index)const override{
+  auto size=InlineNameDelegate::sizeHint(option,index);
+  if(auto *row=list_->indexWidget(index)){row->ensurePolished();size.setHeight(std::max(size.height(),row->sizeHint().expandedTo(row->minimumSizeHint()).height()+2));}
+  return size;
+ }
  protected:void initStyleOption(QStyleOptionViewItem *option,const QModelIndex &index)const override{
   InlineNameDelegate::initStyleOption(option,index);
   // Custom rows own a real checkbox; orphan rows use the native indicator.
