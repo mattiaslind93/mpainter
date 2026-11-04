@@ -1,0 +1,169 @@
+{
+  "cause": "The original wool_boucle diffuse contains the yellow/black checker weave; no missing texture or fallback was involved.",
+  "old_source": {
+    "maps": {
+      "AO": {
+        "file": "wool_boucle_ao_1k.jpg",
+        "format": "jpg",
+        "md5": "4d039283875624cf58fc2f97d84e7ca1",
+        "sha256": "f7d3d024686e099451f14ff5878b3e137b9295d3e4e8bb011bcc868331508a4a",
+        "size": 909614,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wool_boucle/wool_boucle_ao_1k.jpg"
+      },
+      "Diffuse": {
+        "file": "wool_boucle_diff_1k.jpg",
+        "format": "jpg",
+        "md5": "e3d4b30b5f36d4763f9bd2f2e8d92f8e",
+        "sha256": "fee39653b3c78efe89636508f2c10ceb38ecb10c0d735ae8dd4e9935cf26540e",
+        "size": 1284379,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wool_boucle/wool_boucle_diff_1k.jpg"
+      },
+      "Displacement": {
+        "file": "wool_boucle_disp_1k.png",
+        "format": "png",
+        "md5": "660e2f160f17cdc20a3c49a8bed672ba",
+        "sha256": "1ef68bd40b53516bbcbdcc30375089207a48551a6a369b26105919423b9f77eb",
+        "size": 2344600,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/wool_boucle/wool_boucle_disp_1k.png"
+      },
+      "Metal": {
+        "file": "wool_boucle_metal_1k.jpg",
+        "format": "jpg",
+        "md5": "ccb91897ade9a6ded738ade2f6d14247",
+        "sha256": "8813bb6ea7fa2465d51f68673d8f0c1d09465bc8bc8ddbfb667292fe6e979854",
+        "size": 1056552,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wool_boucle/wool_boucle_metal_1k.jpg"
+      },
+      "Rough": {
+        "file": "wool_boucle_rough_1k.jpg",
+        "format": "jpg",
+        "md5": "48bfe3aac53735ada81add2f1054a3f5",
+        "sha256": "f09f24bd26378b03bb798d4b75010ac8cc0fd1e4b858959e97e6d8d74fa3f6d8",
+        "size": 1272361,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wool_boucle/wool_boucle_rough_1k.jpg"
+      },
+      "nor_gl": {
+        "file": "wool_boucle_nor_gl_1k.png",
+        "format": "png",
+        "md5": "f4d1062f8cc151b43a237212a7e7064c",
+        "sha256": "3c65b2c4b2bb2e01cfcb1b604891ecb8951ba0e58d02aa9453061df8b3eeafd1",
+        "size": 6997708,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/wool_boucle/wool_boucle_nor_gl_1k.png"
+      }
+    },
+    "name": "Wool",
+    "native_archive": "native/wool.btsnative.blend",
+    "native_metadata": "native/wool.json",
+    "original_slug": "curly_teddy_natural",
+    "polyhaven_slug": "wool_boucle",
+    "resolution": "1k",
+    "review": "Actual looped wool instead of teddy plush.",
+    "slug": "wool",
+    "source_blend": "wool.blend",
+    "url": "https://polyhaven.com/a/wool_boucle"
+  },
+  "new_source": {
+    "maps": {
+      "Diffuse": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/polar_fleece/polar_fleece_diff_1k.jpg",
+        "md5": "92d8dbc261c2ff09bb028a68bb7ad01b",
+        "size": 673341,
+        "format": "jpg",
+        "file": "polar_fleece_diff_1k.jpg",
+        "sha256": "d3053dad0f9ea77c347a92ddd675d5d138bcace6f57e49beb4aedbd972381ea9"
+      },
+      "nor_gl": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/polar_fleece/polar_fleece_nor_gl_1k.png",
+        "md5": "26db35ae01e9e7d5253e5b5cd13e0e1d",
+        "size": 4926151,
+        "format": "png",
+        "file": "polar_fleece_nor_gl_1k.png",
+        "sha256": "05ef26c3e07e76208b0e1074d2344cf37f33d7c4b6a8f0d8d6ec7c547c735f08"
+      },
+      "Rough": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/polar_fleece/polar_fleece_rough_1k.jpg",
+        "md5": "1922fd67082de2f465a4ad8442cc714d",
+        "size": 991619,
+        "format": "jpg",
+        "file": "polar_fleece_rough_1k.jpg",
+        "sha256": "5693b1956ae4ccfce64720a846091d61973cb7a10a2396b50fa4168cc2b0bc3c"
+      },
+      "AO": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/polar_fleece/polar_fleece_ao_1k.jpg",
+        "md5": "42cece531d41c94757a1f8f11006e840",
+        "size": 396513,
+        "format": "jpg",
+        "file": "polar_fleece_ao_1k.jpg",
+        "sha256": "2c79e01fd5f5cf14f6fc11e698a1c005daa62ebe6161a48862cde929c2255d46"
+      },
+      "Displacement": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/polar_fleece/polar_fleece_disp_1k.png",
+        "md5": "3230dd2263fe442d4546d23216d0adc2",
+        "size": 1745684,
+        "format": "png",
+        "file": "polar_fleece_disp_1k.png",
+        "sha256": "0f05f0e2d9d42876cfbd5335464431879c51423a342845682c0c4d3a80fd7efc"
+      }
+    },
+    "name": "Wool",
+    "native_archive": "native/wool.btsnative.blend",
+    "native_metadata": "native/wool.json",
+    "original_slug": "curly_teddy_natural",
+    "polyhaven_slug": "polar_fleece",
+    "resolution": "1k",
+    "review": "Plain cream napped fleece: wool-like surface approximation, without the checker weave of wool_boucle.",
+    "slug": "wool",
+    "source_blend": "wool.blend",
+    "url": "https://polyhaven.com/a/polar_fleece"
+  },
+  "api_tags": {
+    "wool_boucle": [
+      "checker",
+      "blanket",
+      "boucle",
+      "wool",
+      "textile ",
+      "woven",
+      "upholstery",
+      "wool boucle",
+      "looped",
+      "looped fibers"
+    ],
+    "polar_fleece": [
+      "beige",
+      "fluffy",
+      "soft",
+      "cream",
+      "fleece",
+      "cozy",
+      "gauzy",
+      "fuzzy",
+      "napped",
+      "plush",
+      "shaggy",
+      "woven"
+    ]
+  },
+  "api_evidence": {
+    "wool_boucle": [
+      {
+        "url": "https://api.polyhaven.com/info/wool_boucle",
+        "response_sha256": "e319051e9e313a953bd0cb06e84a75b5a9fa245073f18e9871122817b3650045"
+      },
+      {
+        "url": "https://api.polyhaven.com/files/wool_boucle",
+        "response_sha256": "586b969dc23245d67f46b6284f171d2587e4b1acb1007840446fc52addcfce11"
+      }
+    ],
+    "polar_fleece": [
+      {
+        "url": "https://api.polyhaven.com/info/polar_fleece",
+        "response_sha256": "6622ea42224727888ec636db7e826f3c48ca1d529963f2411e53baa88455ddbf"
+      },
+      {
+        "url": "https://api.polyhaven.com/files/polar_fleece",
+        "response_sha256": "b0d204253b0ba290475d73ed5d1e6b242566d3e7d4e39b1f7592e3f24f6a112a"
+      }
+    ]
+  }
+}

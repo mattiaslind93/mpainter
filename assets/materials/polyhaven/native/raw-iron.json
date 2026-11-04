@@ -33,7 +33,7 @@
     ],
     "material": {
         "filename": "material.btsnative.blend",
-        "id": "955df27f-9ba3-4de9-9da7-d436d923ddae",
+        "id": "d305299b-074e-4181-87d7-16bd60e77309",
         "material": {
             "ao": 1,
             "base_color": [
@@ -108,21 +108,21 @@
                         "stops": [
                             {
                                 "color": [
-                                    0.4473299980163574,
-                                    0.4551999866962433,
-                                    0.47654998302459717,
+                                    0.04016000032424927,
+                                    0.046310000121593475,
+                                    0.05631999671459198,
                                     1
                                 ],
-                                "position": 0
+                                "position": 0.3799999952316284
                             },
                             {
                                 "color": [
-                                    0.587119996547699,
-                                    0.5974499583244324,
-                                    0.625469982624054,
+                                    0.3886899948120117,
+                                    0.39886999130249023,
+                                    0.41697999835014343,
                                     1
                                 ],
-                                "position": 1
+                                "position": 0.6399999856948853
                             }
                         ]
                     },
@@ -160,9 +160,32 @@
                     "min": 0,
                     "name": "Roughness",
                     "ramp": {
+                        "color_mode": 0,
+                        "hue_interpolation": 0,
+                        "interpolation": 0,
+                        "stops": [
+                            {
+                                "color": [
+                                    0.7799999713897705,
+                                    0.7799999713897705,
+                                    0.7799999713897705,
+                                    1
+                                ],
+                                "position": 0
+                            },
+                            {
+                                "color": [
+                                    0.29999998211860657,
+                                    0.29999998211860657,
+                                    0.29999998211860657,
+                                    1
+                                ],
+                                "position": 1
+                            }
+                        ]
                     },
-                    "source_node": "",
-                    "source_socket": "",
+                    "source_node": "ShaderNodeValToRGB",
+                    "source_socket": "Color",
                     "type": 0,
                     "value": [
                         0.5199999809265137
@@ -614,7 +637,7 @@
         },
         "path": "",
         "physical_size_cm": null,
-        "sha256": "9a81552c897022196b147b1f6147c76b714e02f0fb2f77895bae595ee46cacab",
+        "sha256": "3b257437337d3b0998f33b5d2d533e1a271a761caec7cd1f5bfe1617a3b6a5c1",
         "tags": [
             "blender-native",
             "native-channel:0",
@@ -630,7 +653,7 @@
         ]
     },
     "preview": {
-        "image_sha256": "4f9fb70f79642ae452900638ee68f288756d6e9b0bdb8cddc35d54bcb6af82bf",
+        "image_sha256": "58fe569bca8384894fef2e2956a8a8b84311afb4ab351c568c82530fc16d4084",
         "mesh": "Shader_Ball_JL_01",
         "renderer": "Blender Cycles CPU"
     },

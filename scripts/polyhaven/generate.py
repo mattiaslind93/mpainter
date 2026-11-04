@@ -31,6 +31,12 @@ if row['maps']:
  color=maps['Diffuse']
  if 'AO' in maps:
   mix=node('MixRGB','Diffuse × AO');mix.blend_type='MULTIPLY';mix.inputs[0].default_value=1;link(color,mix.inputs[1]);link(maps['AO'],mix.inputs[2]);color=mix.outputs[0]
+ if row['name']=='Worn Leather':
+  grey=node('RGBToBW','Faded hide');link(color,grey.inputs[0])
+  fade=node('MixRGB','Weathered leather colour');fade.inputs[0].default_value=.8;link(color,fade.inputs[1]);link(grey.outputs[0],fade.inputs[2]);color=fade.outputs[0]
+ tints={'Walnut Wood':(.60,.48,.38,1),'Calf Hide':(.75,.43,.22,1),'Worn Leather':(.65,.72,.8,1)}
+ if row['name'] in tints:
+  tint=node('MixRGB','Surface finish');tint.blend_type='MULTIPLY';tint.inputs[0].default_value=1;tint.inputs[2].default_value=tints[row['name']];link(color,tint.inputs[1]);color=tint.outputs[0]
  link(color,shader.inputs['Base Color']);link(maps['Rough'],shader.inputs['Roughness'])
  if 'Metal' in maps:link(maps['Metal'],shader.inputs['Metallic'])
  elif row['name']=='Galvanized Steel':shader.inputs['Metallic'].default_value=1.0
@@ -46,8 +52,30 @@ else:
  shader.inputs['Roughness'].default_value=rough
  noise=node('TexNoise','Microstructure');link(uv,noise.inputs['Vector']);noise.inputs['Scale'].default_value=140;noise.inputs['Detail'].default_value=2
  height=noise.outputs['Fac'];strength=.14;distance=.008
- if name in ['Aluminium Ribbed','Striped Plastic','Brushed Iron']:
-  wave=node('TexWave','Linear grain');wave.bands_direction='X';wave.inputs['Scale'].default_value=100 if name=='Brushed Iron' else 16;link(uv,wave.inputs['Vector']);height=wave.outputs['Fac'];strength=.23;distance=.001 if name=='Brushed Iron' else .018
+ if name in ['Raw Iron','Rough Iron','Rough Steel','Brushed Iron']:
+  # Distinct manufacturing surfaces, rather than four copies of fine grey noise.
+  macro=node('TexNoise','Mill scale / wear');macro.inputs['Scale'].default_value=7;macro.inputs['Detail'].default_value=3;link(uv,macro.inputs['Vector'])
+  if name=='Rough Iron':
+   noise.inputs['Scale'].default_value=65
+   link(ramp(macro.outputs['Fac'],(.055,.042,.032),(.22,.18,.14)),shader.inputs['Base Color'])
+   link(ramp(noise.outputs['Fac'],(.68,)*3,(.92,)*3),shader.inputs['Roughness']);strength=.65;distance=.032
+  elif name=='Raw Iron':
+   # Dark blue-black mill scale, interrupted by broad exposed iron patches.
+   wear=node('ValToRGB','Exposed iron');link(macro.outputs['Fac'],wear.inputs[0])
+   wear.color_ramp.elements[0].position=.38;wear.color_ramp.elements[0].color=(.035,.047,.058,1)
+   wear.color_ramp.elements[1].position=.64;wear.color_ramp.elements[1].color=(.38,.40,.42,1)
+   link(wear.outputs[0],shader.inputs['Base Color']);link(ramp(macro.outputs['Fac'],(.78,)*3,(.30,)*3),shader.inputs['Roughness']);strength=.32;distance=.014
+  else:
+   grain=node('VectorMath','Directional abrasion');grain.operation='MULTIPLY';grain.inputs[1].default_value=(1,18 if name=='Rough Steel' else 45,1);link(uv,grain.inputs[0]);link(grain.outputs[0],noise.inputs['Vector'])
+   noise.inputs['Scale'].default_value=28 if name=='Rough Steel' else 65
+   low_color,high_color=((.42,.45,.48),(.53,.57,.61)) if name=='Rough Steel' else ((.28,.32,.36),(.62,.67,.72))
+   link(ramp(noise.outputs['Fac'],low_color,high_color),shader.inputs['Base Color'])
+   low,high=(.38,.66) if name=='Rough Steel' else (.19,.36)
+   link(ramp(noise.outputs['Fac'],(low,)*3,(high,)*3),shader.inputs['Roughness']);strength=.25 if name=='Rough Steel' else .22;distance=.001 if name=='Rough Steel' else .003
+ elif name=='Grainy Plastic':
+  link(ramp(noise.outputs['Fac'],(.07,.17,.11),(.18,.36,.24)),shader.inputs['Base Color']);shader.inputs['Roughness'].default_value=.58;strength=.5;distance=.018
+ elif name in ['Aluminium Ribbed','Striped Plastic']:
+  wave=node('TexWave','Linear grain');wave.bands_direction='X';wave.inputs['Scale'].default_value=16;link(uv,wave.inputs['Vector']);height=wave.outputs['Fac'];strength=.23;distance=.018
  elif name=='Hammered Metal':
   vor=node('TexVoronoi','Hammer dents');vor.inputs['Scale'].default_value=38;link(uv,vor.inputs['Vector']);height=vor.outputs['Distance'];strength=.4;distance=.025
  elif name=='Carbon Fibre':

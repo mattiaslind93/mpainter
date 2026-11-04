@@ -33,7 +33,7 @@
     ],
     "material": {
         "filename": "material.btsnative.blend",
-        "id": "ace913ae-f6f2-4df5-99bd-e866bc21e1cb",
+        "id": "989512b2-77cc-4ffb-9456-de3f878c8caf",
         "material": {
             "ao": 1,
             "base_color": [
@@ -91,7 +91,8 @@
                 "ShaderNodeOutputMaterial",
                 "ShaderNodeTexCoord",
                 "ShaderNodeTexNoise",
-                "ShaderNodeValToRGB"
+                "ShaderNodeValToRGB",
+                "ShaderNodeVectorMath"
             ],
             "parameters": [
                 {
@@ -108,18 +109,18 @@
                         "stops": [
                             {
                                 "color": [
-                                    0.4473299980163574,
-                                    0.4551999866962433,
-                                    0.47654998302459717,
+                                    0.43302997946739197,
+                                    0.44829997420310974,
+                                    0.47547999024391174,
                                     1
                                 ],
                                 "position": 0
                             },
                             {
                                 "color": [
-                                    0.587119996547699,
-                                    0.5974499583244324,
-                                    0.625469982624054,
+                                    0.5473699569702148,
+                                    0.5677300095558167,
+                                    0.6039699912071228,
                                     1
                                 ],
                                 "position": 1
@@ -160,9 +161,32 @@
                     "min": 0,
                     "name": "Roughness",
                     "ramp": {
+                        "color_mode": 0,
+                        "hue_interpolation": 0,
+                        "interpolation": 0,
+                        "stops": [
+                            {
+                                "color": [
+                                    0.3799999952316284,
+                                    0.3799999952316284,
+                                    0.3799999952316284,
+                                    1
+                                ],
+                                "position": 0
+                            },
+                            {
+                                "color": [
+                                    0.6599999666213989,
+                                    0.6599999666213989,
+                                    0.6599999666213989,
+                                    1
+                                ],
+                                "position": 1
+                            }
+                        ]
                     },
-                    "source_node": "",
-                    "source_socket": "",
+                    "source_node": "ShaderNodeValToRGB",
+                    "source_socket": "Color",
                     "type": 0,
                     "value": [
                         0.6800000071525574
@@ -614,7 +638,7 @@
         },
         "path": "",
         "physical_size_cm": null,
-        "sha256": "5dee75b65719aad526aec6b5790344331dfeb7520f755dd82f5e3f829c00e7c3",
+        "sha256": "504f4117175640f8ab8b30ee4b183ace562b5905a4da3437028e027106259e70",
         "tags": [
             "blender-native",
             "native-channel:0",
@@ -630,7 +654,7 @@
         ]
     },
     "preview": {
-        "image_sha256": "2bf73bb461675ed609d15d35e86406d8fd4c8c93b234b0e6b610ad3a4eaf3fd9",
+        "image_sha256": "d9098345184faac5667c2f30ec6eb93778098b3b56fffde2238f8843373c1b07",
         "mesh": "Shader_Ball_JL_01",
         "renderer": "Blender Cycles CPU"
     },

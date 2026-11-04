@@ -1,0 +1,284 @@
+[
+  {
+    "name": "Aluminium Ribbed",
+    "decision": "retained",
+    "source": "procedural",
+    "review": "Regular broad metallic ribs; unlike fine brushed grain and hammered dents."
+  },
+  {
+    "name": "Calf Hide",
+    "decision": "changed",
+    "source": "leather_white",
+    "review": "Warm tan smooth hide, distinct from grey Dusty Concrete."
+  },
+  {
+    "name": "Carbon Fibre",
+    "decision": "retained",
+    "source": "procedural",
+    "review": "Dark alternating woven fibre cells."
+  },
+  {
+    "name": "Coated Metal",
+    "decision": "retained",
+    "source": "blue_metal_plate",
+    "review": "Distressed blue coated sheet; unlike uniform blue Powder Coat."
+  },
+  {
+    "name": "Bare Concrete",
+    "decision": "retained",
+    "source": "concrete_floor_worn_001",
+    "review": "Dark smooth cement with sparse mottling."
+  },
+  {
+    "name": "Clean Concrete",
+    "decision": "retained",
+    "source": "concrete",
+    "review": "Pale panel joints and localized pits distinguish it from Plain Concrete."
+  },
+  {
+    "name": "Dusty Concrete",
+    "decision": "retained",
+    "source": "concrete_wall_008",
+    "review": "Grey-beige fine dusty cement; Calf Hide was warmed to separate this pair."
+  },
+  {
+    "name": "Plain Concrete",
+    "decision": "retained",
+    "source": "rough_concrete",
+    "review": "Dense coarse speckled cement; distinguishable from Clean Concrete panels."
+  },
+  {
+    "name": "Denim",
+    "decision": "retained",
+    "source": "denim_fabric_03",
+    "review": "Blue twill weave; fabric grain and roughness differ from Powder Coat."
+  },
+  {
+    "name": "Knit Wool",
+    "decision": "retained",
+    "source": "knitted_fleece",
+    "review": "Dark knitted loops, distinct from cream napped Wool and open Hessian weave."
+  },
+  {
+    "name": "Rough Fabric",
+    "decision": "retained",
+    "source": "hessian_230",
+    "review": "Large open tan Hessian weave."
+  },
+  {
+    "name": "Suit Tweed",
+    "decision": "retained",
+    "source": "poly_wool_herringbone",
+    "review": "Fine grey herringbone weave."
+  },
+  {
+    "name": "Gravel Ground",
+    "decision": "retained",
+    "source": "gravel_floor",
+    "review": "Dense small sandy gravel; Pebbles has large smooth rounded stones."
+  },
+  {
+    "name": "Brushed Iron",
+    "decision": "changed",
+    "source": "procedural",
+    "review": "Fine directional brushed iron; distinct from smooth Polished Iron."
+  },
+  {
+    "name": "Galvanized Steel",
+    "decision": "retained",
+    "source": "corrugated_iron_03",
+    "review": "Dark oxidized corrugated zinc sheet; Painted Steel has pale striped coating."
+  },
+  {
+    "name": "Hammered Metal",
+    "decision": "retained",
+    "source": "procedural",
+    "review": "Large rounded hammer dents."
+  },
+  {
+    "name": "Powder Coat",
+    "decision": "retained",
+    "source": "procedural",
+    "review": "Even blue rough coating; Grainy Plastic moved to green."
+  },
+  {
+    "name": "Raw Iron",
+    "decision": "changed",
+    "source": "procedural",
+    "review": "Blue-black mill scale with broad worn exposed iron patches."
+  },
+  {
+    "name": "Rough Iron",
+    "decision": "changed",
+    "source": "procedural",
+    "review": "Warm dark cast iron with coarse granular relief and high roughness."
+  },
+  {
+    "name": "Polished Iron",
+    "decision": "retained",
+    "source": "procedural",
+    "review": "Smooth dark mirror highlights; no brushed abrasion or mill scale."
+  },
+  {
+    "name": "Coarse Leather",
+    "decision": "retained",
+    "source": "brown_leather",
+    "review": "Dark brown coarse pores; distinct from reddish soft and faded worn hide."
+  },
+  {
+    "name": "Soft Leather",
+    "decision": "retained",
+    "source": "leather_red_02",
+    "review": "Reddish brown soft wrinkles; Worn Leather was faded/desaturated to separate it."
+  },
+  {
+    "name": "Worn Leather",
+    "decision": "changed",
+    "source": "fabric_leather_01",
+    "review": "Faded cool grey-brown worn hide, distinct from reddish Soft Leather and dark Coarse Leather."
+  },
+  {
+    "name": "Mortar Brick Wall",
+    "decision": "retained",
+    "source": "red_brick",
+    "review": "Large orange brickwork with mortar joints."
+  },
+  {
+    "name": "Pebbles",
+    "decision": "retained",
+    "source": "ganges_river_pebbles",
+    "review": "Large grey rounded river pebbles."
+  },
+  {
+    "name": "Grainy Plastic",
+    "decision": "changed",
+    "source": "procedural",
+    "review": "Sage green granular polymer, distinct from blue Powder Coat and beige materials."
+  },
+  {
+    "name": "Striped Plastic",
+    "decision": "retained",
+    "source": "procedural",
+    "review": "Orange molded broad ribs; unlike silicone smooth reddish matte surface."
+  },
+  {
+    "name": "Diamond Plate Plastic",
+    "decision": "retained",
+    "source": "procedural",
+    "review": "Dark embossed diagonal plastic pattern."
+  },
+  {
+    "name": "Coarse Rust",
+    "decision": "retained",
+    "source": "rust_coarse_01",
+    "review": "Even fine-scale orange-brown corrosion."
+  },
+  {
+    "name": "Fine Rust",
+    "decision": "retained",
+    "source": "rusty_metal_04",
+    "review": "Irregular bare pale metal amid red corrosion; unlike even Coarse Rust."
+  },
+  {
+    "name": "Silicone",
+    "decision": "retained",
+    "source": "procedural",
+    "review": "Muted warm red soft smooth dielectric."
+  },
+  {
+    "name": "Painted Steel",
+    "decision": "retained",
+    "source": "painted_metal_shutter",
+    "review": "Pale painted corrugation, distinct from dark galvanized finish."
+  },
+  {
+    "name": "Rough Steel",
+    "decision": "changed",
+    "source": "procedural",
+    "review": "Cool steel with directional abrasion and varying satin roughness."
+  },
+  {
+    "name": "Worn Rusty Steel",
+    "decision": "retained",
+    "source": "metal_plate_02",
+    "review": "Dark flaking and mottled damaged steel with broad wear patches."
+  },
+  {
+    "name": "Cherry Wood",
+    "decision": "retained",
+    "source": "cherry_veneer",
+    "review": "Pale cherry veneer grain; visible at 1K. Walnut was darkened."
+  },
+  {
+    "name": "Rough Wood",
+    "decision": "retained",
+    "source": "rough_wood",
+    "review": "Weathered directional timber grain and cracks."
+  },
+  {
+    "name": "Walnut Wood",
+    "decision": "changed",
+    "source": "walnut_veneer",
+    "review": "Oiled dark walnut tint preserves original veneer grain; distinct from pale Cherry Wood."
+  },
+  {
+    "name": "Wool",
+    "decision": "changed",
+    "source": "polar_fleece",
+    "review": "Plain cream napped fleece: wool-like surface approximation, without the checker weave of wool_boucle."
+  },
+  {
+    "name": "Reptile Scales",
+    "decision": "retained",
+    "source": "procedural",
+    "review": "Large green polygonal scales."
+  },
+  {
+    "name": "Leaf Litter",
+    "decision": "retained",
+    "source": "brown_mud_leaves_01",
+    "review": "Recognizable green/brown leaves on soil."
+  },
+  {
+    "name": "Lichen Rock",
+    "decision": "retained",
+    "source": "lichen_rock",
+    "review": "Crusted rocky mottling; unlike leafy ground."
+  },
+  {
+    "name": "Rubber",
+    "decision": "retained",
+    "source": "procedural",
+    "review": "Very dark rough matte dielectric."
+  },
+  {
+    "name": "Gold",
+    "decision": "retained",
+    "source": "procedural",
+    "review": "Smooth yellow reflective metal."
+  },
+  {
+    "name": "Copper",
+    "decision": "retained",
+    "source": "procedural",
+    "review": "Smooth red-orange reflective metal."
+  },
+  {
+    "name": "Marble",
+    "decision": "retained",
+    "source": "marble_01",
+    "review": "Pale stone veining; grain differs from hides/fleece/plastic."
+  },
+  {
+    "name": "Stone Wall",
+    "decision": "retained",
+    "source": "rustic_stone_wall",
+    "review": "Coarse blocks and mortar in irregular masonry."
+  },
+  {
+    "name": "Ceramic Tiles",
+    "decision": "retained",
+    "source": "floor_tiles_06",
+    "review": "Grey-brown tile seams and glaze."
+  }
+]

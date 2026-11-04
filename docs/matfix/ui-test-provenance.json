@@ -1,0 +1,16 @@
+{
+  "tested_appimage_sha256": "28ac5c07d93f7562971575f31bab433ca819de732915fece6da629b177b713d6",
+  "tested_executable_sha256": "59214b89f26536e640249fb95901fc0b3271f678d21691f65236fd21ebb0dec4",
+  "unchanged_materials": {
+    "wool": "474e8e88d4e0510d0fede1cb6d3230238c7f6f7209880785985d9dadc0803eb8",
+    "rough-iron": "b7c2aa939f54e285fa066db1df009fc760ed5d7b5d9d80e113575fe707185333",
+    "raw-iron": "3b257437337d3b0998f33b5d2d533e1a271a761caec7cd1f5bfe1617a3b6a5c1"
+  },
+  "final_appimage_sha256": "516e0a1e16ceff6f08ed039c72ed5dd64a7a5751aca00df099b8e3fe1bfa602b",
+  "final_executable_identical": true,
+  "final_archive_bytes_identical": true,
+  "rerun_after_rough_steel_refinement": [
+    "Rough Steel",
+    "Cherry Wood"
+  ]
+}

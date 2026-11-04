@@ -1,0 +1,206 @@
+{
+  "metric": "RGB RMS over same central JL01 crop (75,65,175,170); diagnostic only, not a perceptual equivalence test",
+  "closest_pairs": [
+    {
+      "rms": 7.73726501040709,
+      "materials": [
+        "Cherry Wood",
+        "Wool"
+      ]
+    },
+    {
+      "rms": 9.274410946938808,
+      "materials": [
+        "Knit Wool",
+        "Rough Iron"
+      ]
+    },
+    {
+      "rms": 11.410333662330576,
+      "materials": [
+        "Calf Hide",
+        "Walnut Wood"
+      ]
+    },
+    {
+      "rms": 11.565367019066636,
+      "materials": [
+        "Rough Iron",
+        "Worn Leather"
+      ]
+    },
+    {
+      "rms": 11.729465000857848,
+      "materials": [
+        "Coarse Leather",
+        "Soft Leather"
+      ]
+    },
+    {
+      "rms": 11.796453596751757,
+      "materials": [
+        "Rough Iron",
+        "Soft Leather"
+      ]
+    },
+    {
+      "rms": 12.236478121804362,
+      "materials": [
+        "Rough Iron",
+        "Coarse Leather"
+      ]
+    },
+    {
+      "rms": 12.244987312599156,
+      "materials": [
+        "Knit Wool",
+        "Soft Leather"
+      ]
+    },
+    {
+      "rms": 13.080154603231739,
+      "materials": [
+        "Denim",
+        "Powder Coat"
+      ]
+    },
+    {
+      "rms": 13.110082149561611,
+      "materials": [
+        "Knit Wool",
+        "Worn Leather"
+      ]
+    },
+    {
+      "rms": 13.768822614533029,
+      "materials": [
+        "Bare Concrete",
+        "Suit Tweed"
+      ]
+    },
+    {
+      "rms": 15.328347015324981,
+      "materials": [
+        "Gold",
+        "Copper"
+      ]
+    },
+    {
+      "rms": 15.40460248684716,
+      "materials": [
+        "Wool",
+        "Marble"
+      ]
+    },
+    {
+      "rms": 15.628602187950346,
+      "materials": [
+        "Clean Concrete",
+        "Suit Tweed"
+      ]
+    },
+    {
+      "rms": 15.776203699705553,
+      "materials": [
+        "Worn Leather",
+        "Rubber"
+      ]
+    },
+    {
+      "rms": 15.80160530321936,
+      "materials": [
+        "Coarse Rust",
+        "Walnut Wood"
+      ]
+    },
+    {
+      "rms": 16.028228075432892,
+      "materials": [
+        "Coarse Leather",
+        "Worn Rusty Steel"
+      ]
+    },
+    {
+      "rms": 16.051488582504916,
+      "materials": [
+        "Soft Leather",
+        "Worn Leather"
+      ]
+    },
+    {
+      "rms": 16.084106322406484,
+      "materials": [
+        "Knit Wool",
+        "Coarse Leather"
+      ]
+    },
+    {
+      "rms": 16.155456103272414,
+      "materials": [
+        "Plain Concrete",
+        "Marble"
+      ]
+    },
+    {
+      "rms": 16.26779465253797,
+      "materials": [
+        "Aluminium Ribbed",
+        "Hammered Metal"
+      ]
+    },
+    {
+      "rms": 16.389064298227296,
+      "materials": [
+        "Rough Iron",
+        "Rubber"
+      ]
+    },
+    {
+      "rms": 16.46194264221436,
+      "materials": [
+        "Suit Tweed",
+        "Ceramic Tiles"
+      ]
+    },
+    {
+      "rms": 16.550590072442485,
+      "materials": [
+        "Rough Iron",
+        "Worn Rusty Steel"
+      ]
+    },
+    {
+      "rms": 16.81836298018726,
+      "materials": [
+        "Soft Leather",
+        "Worn Rusty Steel"
+      ]
+    }
+  ],
+  "metals_before_after": [
+    {
+      "materials": [
+        "Raw Iron",
+        "Rough Iron"
+      ],
+      "before_rms": 51.23369643890289,
+      "after_rms": 59.80583079287
+    },
+    {
+      "materials": [
+        "Raw Iron",
+        "Rough Steel"
+      ],
+      "before_rms": 12.476868756553223,
+      "after_rms": 49.49072159313828
+    },
+    {
+      "materials": [
+        "Rough Iron",
+        "Rough Steel"
+      ],
+      "before_rms": 47.44825251436207,
+      "after_rms": 96.20373371627726
+    }
+  ]
+}

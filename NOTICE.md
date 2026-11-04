@@ -14,7 +14,7 @@ Copyright Mattias Lind. Original mPainter code and artwork are distributed under
 - **OpenPBR reference graph**: Academy Software Foundation, OpenPBR 1.1.1, Apache-2.0. The graph and license are in `native/host/openpbr`; the accompanying README records revision and hashes. This is a shader model implementation, not a bundled material preset.
 - **Native libraries**: Assimp (BSD-3-Clause), HDF5 (BSD-style), OpenColorIO (BSD-3-Clause), OpenImageIO (Apache-2.0), OpenEXR/Imath (BSD-3-Clause), OpenSubdiv (Apache-2.0), OpenVDB (MPL-2.0), oneTBB (Apache-2.0), Embree (Apache-2.0), Python (PSF), zlib (Zlib), libpng (libpng), FreeType (FTL/GPL), and other Blender dependencies retain their respective upstream licenses. Blender's precompiled library `deps.md` records component versions and source URLs. Binary packages must retain the accompanying upstream copyright/license texts.
 
-Poly Haven is an external source of CC0 materials: https://polyhaven.com/license . No materials from that service are bundled. Imported user content remains subject to the user's own rights and licenses.
+The bundled Poly Haven CC0 starter library is credited below. Imported user content remains subject to the user's own rights and licenses.
 
 When redistributing a binary, provide the matching mPainter source, Blender source and patch, build scripts, and corresponding dependency source/license information as required by their licenses. The local phase-one package is for review; do not interpret this notice as evidence that an unpublished source URL exists.
 

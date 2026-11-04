@@ -31,17 +31,21 @@ for r in rows:
 assert len(list((a.library/'native/images').iterdir()))==len(source_hashes)
 proof=dict(materials=47,textured=30,procedural=17,maps=maps,texture_bytes=source_bytes,native_archive_bytes=archives,library_bytes=sum(f.stat().st_size for f in a.library.rglob('*') if f.is_file()),unique_texture_sources=len(source_hashes),original_inputs_preserved=True,world_normal_graphs_supported=True,all_source_checksums_verified=True,embedded_previews_256px=True,warnings=warnings)
 if a.ui:
- ui=json.loads((a.ui/'validation.json').read_text());assert ui['material_count']==47 and ui['resolution']==128
- checks=ui['checks'];assert len(checks)==8
+ ui=json.loads((a.ui/'validation.json').read_text());assert ui['material_count']==47
+ detail=ui['resolution']==1024
+ assert detail or ui['resolution']==128
+ checks=ui['checks'];assert len(checks)==(3 if detail else 8)
  for check in checks:
   mode=1 if check['stage'].endswith('-triplanar') else 0
   assert check['native'] and check['authored_layer']['fill_projection']['mode']==mode,check['stage']
+  assert check['dimensions']==[[1001,ui['resolution'],ui['resolution']]],check['stage']
   for packet in check['gpu']:
    for point in packet['points']:
     assert all(math.isfinite(x) for x in point['rgba']),check['stage']
  # Real textured/procedural materials must change evaluated samples with projection.
- for name in ['denim','carbon','cherry']:
+ for name in (['detail'] if detail else ['denim','carbon','cherry']):
   before=next(c for c in checks if c['stage']==name+'-uv')['gpu'];after=next(c for c in checks if c['stage']==name+'-triplanar')['gpu'];assert before!=after,name
  assert ui['packed_open'], 'No independent packed source / mapping comparison'
- proof['ui']=dict(materials_tested=['Gold','Denim','Carbon Fibre','Cherry Wood'],uv_and_triplanar=True,projection_changes_gpu_samples=True,packed_open=ui['packed_open'],resolution=128)
+ if detail:assert ui['default_resolution']
+ proof['ui']=dict(materials_tested=[ui['material']] if detail else ['Gold','Denim','Carbon Fibre','Cherry Wood'],uv_and_triplanar=True,projection_changes_gpu_samples=True,packed_open=ui['packed_open'],resolution=ui['resolution'])
 a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(proof,indent=2)+'\n');print(json.dumps({k:v for k,v in proof.items() if k!='warnings'},indent=2))

@@ -1,0 +1,14 @@
+# Blender 5.2.0, Unknown revision
+
+# backtrace
+/mnt/mpainter-phase1/build/linux-native/bin/mpainter() [0x22b8ddd]
+/mnt/mpainter-phase1/build/linux-native/bin/mpainter() [0x8d994b]
+/lib64/libc.so.6(+0x19d10) [0x7fd7513afd10]
+/lib64/libc.so.6(+0x1460a4) [0x7fd7514dc0a4]
+/mnt/mpainter-phase1/build/linux-native/bin/mpainter() [0x22bbdc0]
+/mnt/mpainter-phase1/build/runtime/lib/libtbb.so.12(+0x3370a) [0x7fd76b92e70a]
+/mnt/mpainter-phase1/build/runtime/lib/libtbb.so.12(+0x2658c) [0x7fd76b92158c]
+/lib64/libc.so.6(+0x71a64) [0x7fd751407a64]
+/lib64/libc.so.6(+0xf466c) [0x7fd75148a66c]
+
+# Python backtrace

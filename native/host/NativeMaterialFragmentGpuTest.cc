@@ -185,6 +185,7 @@ QJsonObject verify_resident_geometry(const NativeFragmentGpuFixtures &fixtures){
  NativeMaterialFragmentGpuProgram program(f.named,named),render_program(f.render,render),bump(f.bump,named);const auto compiled=GPU_pass_global_compilation_count();
  GPU_apply_state();const HeldState caller;const auto restore_caller=qScopeGuard([&]{caller.restore();});GPU_viewport(7,11,29,31);GPU_scissor(3,5,17,19);GPU_front_facing(false);GPU_scissor_test(false);GPU_apply_state();HeldState upload_state;upload_state.front=GL_CW;upload_state.scissor_on=true;std::array<int,3> upload_bindings{};glGetIntegerv(GL_VERTEX_ARRAY_BINDING,&upload_bindings[0]);glGetIntegerv(GL_ARRAY_BUFFER_BINDING,&upload_bindings[1]);glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING,&upload_bindings[2]);GPU_front_facing(true);GPU_scissor_test(true);
  NativeMaterialFragmentGpuGeometry resident(f.original);GPU_apply_state();std::array<int,3> after_upload{};glGetIntegerv(GL_VERTEX_ARRAY_BINDING,&after_upload[0]);glGetIntegerv(GL_ARRAY_BUFFER_BINDING,&after_upload[1]);glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING,&after_upload[2]);require(HeldState{}==upload_state&&after_upload==upload_bindings,"Resident creation lost held/pending state or caller VAO/buffers");
+ require(resident.diagnostics().indices==f.original->indices().size(),"Resident GPU IBO contains extra indices (primitive/index count mismatch)");
  require(resident.diagnostics().objects==2&&resident.diagnostics().streams==4&&resident.diagnostics().vertex_uploads==4&&resident.diagnostics().index_uploads==1,"Resident upload did not use exact two-owner/four-stream/shared-IBO contract");
  using Target=std::unique_ptr<gpu::Texture,decltype(&GPU_texture_free)>;std::array<Target,3> targets{Target(nullptr,GPU_texture_free),Target(nullptr,GPU_texture_free),Target(nullptr,GPU_texture_free)};constexpr int size=128;int reads=0;double maximum=0;QJsonArray checks;
  for(auto &t:targets){t.reset(GPU_texture_create_2d("Resident raw-world diagnostic",size,size,1,gpu::TextureFormat::SFLOAT_32_32_32_32,GPU_TEXTURE_USAGE_ATTACHMENT|GPU_TEXTURE_USAGE_HOST_READ|GPU_TEXTURE_USAGE_SHADER_READ,nullptr));require(bool(t),"Resident diagnostic target allocation failed");}
@@ -206,7 +207,7 @@ QJsonObject verify_resident_geometry(const NativeFragmentGpuFixtures &fixtures){
  NativeMaterialFragmentGpuGeometry revised(f.revised);const auto changed=evaluate(program,revised,targets[1].get(),1002,rows);compare(changed,*f.revised,1002,"NamedUV",.65f);require(changed!=original[1]&&revised.diagnostics().revision==42,"Actual authored geometry revision made no causal output change");
  const auto retained=evaluate(program,resident,targets[1].get(),1002,rows);require(retained==original[1],"Cancelled/refused/replaced geometry changed retained original");
  require(resident.diagnostics().vertex_uploads==uploads.vertex_uploads&&resident.diagnostics().index_uploads==uploads.index_uploads&&resident.diagnostics().object_uploads==uploads.object_uploads,"Resident parameters/tile edits re-uploaded immutable geometry");require(GPU_pass_global_compilation_count()==compiled,"Resident physical/tile/parameter changes recompiled programs");require(reads==13,"Resident actual readback count changed");
- return {{"complete",true},{"checks",checks},{"readbacks",reads},{"maximum_error",maximum},{"tolerance",3e-5},{"objects",2},{"streams",4},{"vertex_uploads",double(uploads.vertex_uploads)},{"index_uploads",double(uploads.index_uploads)},{"object_uploads",double(uploads.object_uploads)},{"source_main_destroyed",true},{"source_and_target_UV_separate",true},{"retained_after_cancel_budget_replacement",true},{"cached_fresh_edit_and_Undo_exact",true},{"unrelated_tiles_unchanged",true},{"creation_VAO_buffers_held_pending_state_and_validation_restored",true},{"no_geometry_upload_per_edit",true},{"dynamic_no_recompile",true},{"production_admission",false}};
+ return {{"complete",true},{"checks",checks},{"readbacks",reads},{"maximum_error",maximum},{"tolerance",3e-5},{"objects",2},{"streams",4},{"vertex_uploads",double(uploads.vertex_uploads)},{"index_uploads",double(uploads.index_uploads)},{"gpu_index_count",double(uploads.indices)},{"expected_index_count",double(f.original->indices().size())},{"object_uploads",double(uploads.object_uploads)},{"source_main_destroyed",true},{"source_and_target_UV_separate",true},{"retained_after_cancel_budget_replacement",true},{"cached_fresh_edit_and_Undo_exact",true},{"unrelated_tiles_unchanged",true},{"creation_VAO_buffers_held_pending_state_and_validation_restored",true},{"no_geometry_upload_per_edit",true},{"dynamic_no_recompile",true},{"production_admission",false}};
 }
 
 QJsonObject verify_projected_native_normal_gpu(const NativeFragmentGpuFixtures &fixtures){
@@ -263,6 +264,13 @@ QJsonObject verify_native_normal_stack_gpu(const NativeFragmentGpuFixtures &fixt
 
 }
 QJsonObject verify_native_fragment_normal_gpu(const NativeFragmentGpuFixtures &fixtures){
+ // A focused, small-texture entry point for resident geometry regressions.
+ // The broader shader admission suite remains available without this selector.
+ if(qEnvironmentVariableIsSet("BTS_NATIVE_FRAGMENT_RESIDENT_ONLY")){
+  auto proof=verify_resident_geometry(fixtures);
+  proof["scope"]="Resident indexed geometry: actual IBO count, pixels, cache, Undo and GPU state";
+  return proof;
+ }
  require(fixtures.image_normals.size()==2,"Image-backed NormalMap/Bump GPU fixtures missing");
  for(const auto &source:fixtures.image_normals){NativeMaterialFragmentGpuProgram program(source,native_world_normal_source_request(source));require(program.diagnostics().image_context,"NormalMap/Bump GPU regression did not compile its image sampler");}
  using namespace blender;require(fixtures.bumps.size()==3,"Prepared fragment source cohort missing");const std::array frames={Frame{"ordinary",{1,0,0},{0,1,0}},Frame{"mirrored",{-1,0,0},{0,1,0}},Frame{"rotated",{0,1,0},{-1,0,0}}};

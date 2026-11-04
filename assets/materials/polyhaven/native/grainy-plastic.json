@@ -33,7 +33,7 @@
     ],
     "material": {
         "filename": "material.btsnative.blend",
-        "id": "a808599f-05f4-4bf2-9dd3-676955758c0e",
+        "id": "c4309172-4bb1-41a0-92b1-0a60c4f40935",
         "material": {
             "ao": 1,
             "base_color": [
@@ -108,18 +108,18 @@
                         "stops": [
                             {
                                 "color": [
-                                    0.14327000081539154,
-                                    0.17990998923778534,
-                                    0.24514000117778778,
+                                    0.10584999620914459,
+                                    0.16216999292373657,
+                                    0.11574999988079071,
                                     1
                                 ],
                                 "position": 0
                             },
                             {
                                 "color": [
-                                    0.18803998827934265,
-                                    0.23613999783992767,
-                                    0.3217499852180481,
+                                    0.24395999312400818,
+                                    0.34575000405311584,
+                                    0.251910001039505,
                                     1
                                 ],
                                 "position": 1
@@ -165,7 +165,7 @@
                     "source_socket": "",
                     "type": 0,
                     "value": [
-                        0.3499999940395355
+                        0.5799999833106995
                     ]
                 },
                 {
@@ -614,7 +614,7 @@
         },
         "path": "",
         "physical_size_cm": null,
-        "sha256": "c78e24397e81daffb11c0094f51cf6dd29dac2ee51f580860bedf5416d991903",
+        "sha256": "0484ae74fb88e3855ba7d82a42536cb3f76645bb6c17c4dbaa7f68336c3d2c8c",
         "tags": [
             "blender-native",
             "native-channel:0",
@@ -630,7 +630,7 @@
         ]
     },
     "preview": {
-        "image_sha256": "db1b1aae8f8195e73c459197e605061cbd21a71a1bb99088b2cc0dff4387dfde",
+        "image_sha256": "1f13d281dbdf3942bac4f6b5190cbe3aa1d08243e793068924940de586a1a090",
         "mesh": "Shader_Ball_JL_01",
         "renderer": "Blender Cycles CPU"
     },

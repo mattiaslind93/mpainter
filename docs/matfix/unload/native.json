@@ -1,0 +1,28 @@
+{
+    "adjustment_roundtrip_bit_exact": true,
+    "before": {
+        "driver_device_total_bytes": 25769803776,
+        "driver_device_used_bytes": 1114308608,
+        "gpu_texture_bytes": 2270556,
+        "process_rss_bytes": 483352576
+    },
+    "failed_write_preserves_source": true,
+    "imported_network_bits": true,
+    "native_pixel_bits": true,
+    "passed": true,
+    "reloaded": {
+        "driver_device_total_bytes": 25769803776,
+        "driver_device_used_bytes": 1114308608,
+        "gpu_texture_bytes": 2807452,
+        "process_rss_bytes": 489185280
+    },
+    "resolution": 128,
+    "shared_source_protected": true,
+    "undo_states": 3,
+    "unloaded": {
+        "driver_device_total_bytes": 25769803776,
+        "driver_device_used_bytes": 1114308608,
+        "gpu_texture_bytes": 720948,
+        "process_rss_bytes": 485175296
+    }
+}

@@ -1,0 +1,328 @@
+Thread 18 "mpainter" received signal SIGSEGV, Segmentation fault.
+[Switching to Thread 0x7fff9732e680 (LWP 213541)]
+0x00007fffddadbe0d in __memmove_avx_unaligned_erms () from /lib64/libc.so.6
+
+Thread 171 (Thread 0x7fff5d1f9680 (LWP 214709) "Thread (pooled)"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda048ac in __futex_abstimed_wait_common () from /lib64/libc.so.6
+#3  0x00007fffdda07188 in pthread_cond_timedwait@@GLIBC_2.3.2 () from /lib64/libc.so.6
+#4  0x00007fffde0ad257 in QWaitCondition::wait(QMutex*, QDeadlineTimer) () from /mnt/mpainter-phase1/toolchains/qt/lib/libQt6Core.so.6
+#5  0x00007fffde0a9fc8 in QThreadPoolThread::run() () from /mnt/mpainter-phase1/toolchains/qt/lib/libQt6Core.so.6
+
+Thread 162 (Thread 0x7ffefd043680 (LWP 214700) "Thread (pooled)"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda048ac in __futex_abstimed_wait_common () from /lib64/libc.so.6
+#3  0x00007fffdda07188 in pthread_cond_timedwait@@GLIBC_2.3.2 () from /lib64/libc.so.6
+#4  0x00007fffde0ad257 in QWaitCondition::wait(QMutex*, QDeadlineTimer) () from /mnt/mpainter-phase1/toolchains/qt/lib/libQt6Core.so.6
+#5  0x00007fffde0a9fc8 in QThreadPoolThread::run() () from /mnt/mpainter-phase1/toolchains/qt/lib/libQt6Core.so.6
+
+Thread 161 (Thread 0x7fff875f4680 (LWP 214699) "Thread (pooled)"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda048ac in __futex_abstimed_wait_common () from /lib64/libc.so.6
+#3  0x00007fffdda07188 in pthread_cond_timedwait@@GLIBC_2.3.2 () from /lib64/libc.so.6
+#4  0x00007fffde0ad257 in QWaitCondition::wait(QMutex*, QDeadlineTimer) () from /mnt/mpainter-phase1/toolchains/qt/lib/libQt6Core.so.6
+#5  0x00007fffde0a9fc8 in QThreadPoolThread::run() () from /mnt/mpainter-phase1/toolchains/qt/lib/libQt6Core.so.6
+
+Thread 47 (Thread 0x7fff1e962680 (LWP 214201) "Thread (pooled)"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda048ac in __futex_abstimed_wait_common () from /lib64/libc.so.6
+#3  0x00007fffdda07188 in pthread_cond_timedwait@@GLIBC_2.3.2 () from /lib64/libc.so.6
+#4  0x00007fffde0ad257 in QWaitCondition::wait(QMutex*, QDeadlineTimer) () from /mnt/mpainter-phase1/toolchains/qt/lib/libQt6Core.so.6
+#5  0x00007fffde0a9fc8 in QThreadPoolThread::run() () from /mnt/mpainter-phase1/toolchains/qt/lib/libQt6Core.so.6
+
+Thread 44 (Thread 0x7fff62bf8680 (LWP 213958) "mpainter"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda048ac in __futex_abstimed_wait_common () from /lib64/libc.so.6
+#3  0x00007fffdda06f7e in pthread_cond_wait@@GLIBC_2.3.2 () from /lib64/libc.so.6
+#4  0x00007fffddba4b57 in std::condition_variable::wait(std::unique_lock<std::mutex>&) () from /lib64/libstdc++.so.6
+#5  0x00007fffe895d82e in OpenImageIO::v3_1::thread_pool::Impl::set_thread(int)::{lambda()#1}::operator()() const () from /mnt/mpainter-phase1/build/runtime/lib/libOpenImageIO_Util.so.3.1
+
+Thread 43 (Thread 0x7fff633f9680 (LWP 213957) "mpainter"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda048ac in __futex_abstimed_wait_common () from /lib64/libc.so.6
+#3  0x00007fffdda06f7e in pthread_cond_wait@@GLIBC_2.3.2 () from /lib64/libc.so.6
+#4  0x00007fffddba4b57 in std::condition_variable::wait(std::unique_lock<std::mutex>&) () from /lib64/libstdc++.so.6
+#5  0x00007fffe895d82e in OpenImageIO::v3_1::thread_pool::Impl::set_thread(int)::{lambda()#1}::operator()() const () from /mnt/mpainter-phase1/build/runtime/lib/libOpenImageIO_Util.so.3.1
+
+Thread 42 (Thread 0x7fff63bfa680 (LWP 213956) "mpainter"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda048ac in __futex_abstimed_wait_common () from /lib64/libc.so.6
+#3  0x00007fffdda06f7e in pthread_cond_wait@@GLIBC_2.3.2 () from /lib64/libc.so.6
+#4  0x00007fffddba4b57 in std::condition_variable::wait(std::unique_lock<std::mutex>&) () from /lib64/libstdc++.so.6
+#5  0x00007fffe895d82e in OpenImageIO::v3_1::thread_pool::Impl::set_thread(int)::{lambda()#1}::operator()() const () from /mnt/mpainter-phase1/build/runtime/lib/libOpenImageIO_Util.so.3.1
+
+Thread 41 (Thread 0x7fff643fb680 (LWP 213955) "mpainter"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda048ac in __futex_abstimed_wait_common () from /lib64/libc.so.6
+#3  0x00007fffdda06f7e in pthread_cond_wait@@GLIBC_2.3.2 () from /lib64/libc.so.6
+#4  0x00007fffddba4b57 in std::condition_variable::wait(std::unique_lock<std::mutex>&) () from /lib64/libstdc++.so.6
+#5  0x00007fffe895d82e in OpenImageIO::v3_1::thread_pool::Impl::set_thread(int)::{lambda()#1}::operator()() const () from /mnt/mpainter-phase1/build/runtime/lib/libOpenImageIO_Util.so.3.1
+
+Thread 40 (Thread 0x7fff64bfc680 (LWP 213954) "mpainter"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda048ac in __futex_abstimed_wait_common () from /lib64/libc.so.6
+#3  0x00007fffdda06f7e in pthread_cond_wait@@GLIBC_2.3.2 () from /lib64/libc.so.6
+#4  0x00007fffddba4b57 in std::condition_variable::wait(std::unique_lock<std::mutex>&) () from /lib64/libstdc++.so.6
+#5  0x00007fffe895d82e in OpenImageIO::v3_1::thread_pool::Impl::set_thread(int)::{lambda()#1}::operator()() const () from /mnt/mpainter-phase1/build/runtime/lib/libOpenImageIO_Util.so.3.1
+
+Thread 39 (Thread 0x7fff653fd680 (LWP 213953) "mpainter"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda048ac in __futex_abstimed_wait_common () from /lib64/libc.so.6
+#3  0x00007fffdda06f7e in pthread_cond_wait@@GLIBC_2.3.2 () from /lib64/libc.so.6
+#4  0x00007fffddba4b57 in std::condition_variable::wait(std::unique_lock<std::mutex>&) () from /lib64/libstdc++.so.6
+#5  0x00007fffe895d82e in OpenImageIO::v3_1::thread_pool::Impl::set_thread(int)::{lambda()#1}::operator()() const () from /mnt/mpainter-phase1/build/runtime/lib/libOpenImageIO_Util.so.3.1
+
+Thread 38 (Thread 0x7fff6cfb7680 (LWP 213952) "mpainter"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda048ac in __futex_abstimed_wait_common () from /lib64/libc.so.6
+#3  0x00007fffdda06f7e in pthread_cond_wait@@GLIBC_2.3.2 () from /lib64/libc.so.6
+#4  0x00007fffddba4b57 in std::condition_variable::wait(std::unique_lock<std::mutex>&) () from /lib64/libstdc++.so.6
+#5  0x00007fffe895d82e in OpenImageIO::v3_1::thread_pool::Impl::set_thread(int)::{lambda()#1}::operator()() const () from /mnt/mpainter-phase1/build/runtime/lib/libOpenImageIO_Util.so.3.1
+
+Thread 34 (Thread 0x7fff899fa680 (LWP 213945) "Thread (pooled)"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda048ac in __futex_abstimed_wait_common () from /lib64/libc.so.6
+#3  0x00007fffdda07188 in pthread_cond_timedwait@@GLIBC_2.3.2 () from /lib64/libc.so.6
+#4  0x00007fffde0ad257 in QWaitCondition::wait(QMutex*, QDeadlineTimer) () from /mnt/mpainter-phase1/toolchains/qt/lib/libQt6Core.so.6
+#5  0x00007fffde0a9fc8 in QThreadPoolThread::run() () from /mnt/mpainter-phase1/toolchains/qt/lib/libQt6Core.so.6
+
+Thread 33 (Thread 0x7fff885f7680 (LWP 213944) "Thread (pooled)"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda048ac in __futex_abstimed_wait_common () from /lib64/libc.so.6
+#3  0x00007fffdda07188 in pthread_cond_timedwait@@GLIBC_2.3.2 () from /lib64/libc.so.6
+#4  0x00007fffde0ad257 in QWaitCondition::wait(QMutex*, QDeadlineTimer) () from /mnt/mpainter-phase1/toolchains/qt/lib/libQt6Core.so.6
+#5  0x00007fffde0a9fc8 in QThreadPoolThread::run() () from /mnt/mpainter-phase1/toolchains/qt/lib/libQt6Core.so.6
+
+Thread 32 (Thread 0x7fff891f9680 (LWP 213943) "Thread (pooled)"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda048ac in __futex_abstimed_wait_common () from /lib64/libc.so.6
+#3  0x00007fffdda07188 in pthread_cond_timedwait@@GLIBC_2.3.2 () from /lib64/libc.so.6
+#4  0x00007fffde0ad257 in QWaitCondition::wait(QMutex*, QDeadlineTimer) () from /mnt/mpainter-phase1/toolchains/qt/lib/libQt6Core.so.6
+#5  0x00007fffde0a9fc8 in QThreadPoolThread::run() () from /mnt/mpainter-phase1/toolchains/qt/lib/libQt6Core.so.6
+
+Thread 31 (Thread 0x7fff8a1fb680 (LWP 213942) "Thread (pooled)"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda048ac in __futex_abstimed_wait_common () from /lib64/libc.so.6
+#3  0x00007fffdda07188 in pthread_cond_timedwait@@GLIBC_2.3.2 () from /lib64/libc.so.6
+#4  0x00007fffde0ad257 in QWaitCondition::wait(QMutex*, QDeadlineTimer) () from /mnt/mpainter-phase1/toolchains/qt/lib/libQt6Core.so.6
+#5  0x00007fffde0a9fc8 in QThreadPoolThread::run() () from /mnt/mpainter-phase1/toolchains/qt/lib/libQt6Core.so.6
+
+Thread 22 (Thread 0x7fff8bbfd680 (LWP 213545) "mpainter"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda048ac in __futex_abstimed_wait_common () from /lib64/libc.so.6
+#3  0x00007fffdda06f7e in pthread_cond_wait@@GLIBC_2.3.2 () from /lib64/libc.so.6
+#4  0x00007fffddbccb60 in std::condition_variable::wait(std::unique_lock<std::mutex>&) () from /lib64/libstdc++.so.6
+#5  0x00000000018085fb in std::_Function_handler<std::unique_ptr<std::__future_base::_Result_base, std::__future_base::_Result_base::_Deleter> (), std::__future_base::_Task_setter<std::unique_ptr<std::__future_base::_Result<void>, std::__future_base::_Result_base::_Deleter>, std::thread::_Invoker<std::tuple<bts::OpenPbrMaterialImporter::OpenPbrMaterialImporter(QObject*, bts::OpenPbrMaterialImportHooks)::{lambda()#2}> >, void> >::_M_invoke(std::_Any_data const&) ()
+
+Thread 21 (Thread 0x7fff8c3fe680 (LWP 213544) "mpainter"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda048ac in __futex_abstimed_wait_common () from /lib64/libc.so.6
+#3  0x00007fffdda06f7e in pthread_cond_wait@@GLIBC_2.3.2 () from /lib64/libc.so.6
+#4  0x00007fffddbccb60 in std::condition_variable::wait(std::unique_lock<std::mutex>&) () from /lib64/libstdc++.so.6
+#5  0x0000000001123f23 in std::thread::_State_impl<std::thread::_Invoker<std::tuple<bts::NativeMaterialImageJobs::NativeMaterialImageJobs(QObject*, bts::NativeImageJobHooks)::{lambda()#2}> > >::_M_run() ()
+
+Thread 20 (Thread 0x7fff8cbff680 (LWP 213543) "mpainter"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda048ac in __futex_abstimed_wait_common () from /lib64/libc.so.6
+#3  0x00007fffdda06f7e in pthread_cond_wait@@GLIBC_2.3.2 () from /lib64/libc.so.6
+#4  0x00007fffddbccb60 in std::condition_variable::wait(std::unique_lock<std::mutex>&) () from /lib64/libstdc++.so.6
+#5  0x00000000009c6b03 in std::_Function_handler<std::unique_ptr<std::__future_base::_Result_base, std::__future_base::_Result_base::_Deleter> (), std::__future_base::_Task_setter<std::unique_ptr<std::__future_base::_Result<void>, std::__future_base::_Result_base::_Deleter>, std::thread::_Invoker<std::tuple<bts::TextureLoadController::TextureLoadController(QObject*, bts::TextureLoadHooks)::{lambda()#2}> >, void> >::_M_invoke(std::_Any_data const&) ()
+
+Thread 19 (Thread 0x7fff96f2d680 (LWP 213542) "mpainter"):
+#0  0x00007fffddadbe0d in __memmove_avx_unaligned_erms () from /lib64/libc.so.6
+#1  0x00000000022bbcdc in tbb::detail::d1::start_for<tbb::detail::d1::blocked_range<long>, blender::threading::detail::parallel_for_impl_static_size(blender::IndexRange, long, blender::FunctionRef<void (blender::IndexRange)>)::{lambda(tbb::detail::d1::blocked_range<long> const&)#1}, tbb::detail::d1::auto_partitioner const>::execute(tbb::detail::d1::execution_data&) ()
+#2  0x00007ffff7f8b70a in ?? () from /mnt/mpainter-phase1/build/runtime/lib/libtbb.so.12
+#3  0x00007ffff7f7e58c in ?? () from /mnt/mpainter-phase1/build/runtime/lib/libtbb.so.12
+#4  0x00007fffdda07a64 in start_thread () from /lib64/libc.so.6
+#5  0x00007fffdda8a66c in __clone3 () from /lib64/libc.so.6
+
+Thread 18 (Thread 0x7fff9732e680 (LWP 213541) "mpainter"):
+#0  0x00007fffddadbe0d in __memmove_avx_unaligned_erms () from /lib64/libc.so.6
+#1  0x00000000022bbcdc in tbb::detail::d1::start_for<tbb::detail::d1::blocked_range<long>, blender::threading::detail::parallel_for_impl_static_size(blender::IndexRange, long, blender::FunctionRef<void (blender::IndexRange)>)::{lambda(tbb::detail::d1::blocked_range<long> const&)#1}, tbb::detail::d1::auto_partitioner const>::execute(tbb::detail::d1::execution_data&) ()
+#2  0x00007ffff7f8b70a in ?? () from /mnt/mpainter-phase1/build/runtime/lib/libtbb.so.12
+#3  0x00007ffff7f7e58c in ?? () from /mnt/mpainter-phase1/build/runtime/lib/libtbb.so.12
+#4  0x00007fffdda07a64 in start_thread () from /lib64/libc.so.6
+#5  0x00007fffdda8a66c in __clone3 () from /lib64/libc.so.6
+
+Thread 17 (Thread 0x7fff9772f680 (LWP 213540) "mpainter"):
+#0  0x00007fffddadbe0d in __memmove_avx_unaligned_erms () from /lib64/libc.so.6
+#1  0x00000000022bbdc0 in tbb::detail::d1::start_for<tbb::detail::d1::blocked_range<long>, blender::threading::detail::parallel_for_impl_static_size(blender::IndexRange, long, blender::FunctionRef<void (blender::IndexRange)>)::{lambda(tbb::detail::d1::blocked_range<long> const&)#1}, tbb::detail::d1::auto_partitioner const>::execute(tbb::detail::d1::execution_data&) ()
+#2  0x00007ffff7f8b70a in ?? () from /mnt/mpainter-phase1/build/runtime/lib/libtbb.so.12
+#3  0x00007ffff7f7e58c in ?? () from /mnt/mpainter-phase1/build/runtime/lib/libtbb.so.12
+#4  0x00007fffdda07a64 in start_thread () from /lib64/libc.so.6
+#5  0x00007fffdda8a66c in __clone3 () from /lib64/libc.so.6
+
+Thread 16 (Thread 0x7fff97b30680 (LWP 213539) "mpainter"):
+#0  0x00007fffddadbe0d in __memmove_avx_unaligned_erms () from /lib64/libc.so.6
+#1  0x00000000022bbdc0 in tbb::detail::d1::start_for<tbb::detail::d1::blocked_range<long>, blender::threading::detail::parallel_for_impl_static_size(blender::IndexRange, long, blender::FunctionRef<void (blender::IndexRange)>)::{lambda(tbb::detail::d1::blocked_range<long> const&)#1}, tbb::detail::d1::auto_partitioner const>::execute(tbb::detail::d1::execution_data&) ()
+#2  0x00007ffff7f8b70a in ?? () from /mnt/mpainter-phase1/build/runtime/lib/libtbb.so.12
+#3  0x00007ffff7f7e58c in ?? () from /mnt/mpainter-phase1/build/runtime/lib/libtbb.so.12
+#4  0x00007fffdda07a64 in start_thread () from /lib64/libc.so.6
+#5  0x00007fffdda8a66c in __clone3 () from /lib64/libc.so.6
+
+Thread 15 (Thread 0x7fff97f31680 (LWP 213538) "mpainter"):
+#0  0x00007fffddadc107 in __memmove_avx_unaligned_erms () from /lib64/libc.so.6
+#1  0x00000000022bbdc0 in tbb::detail::d1::start_for<tbb::detail::d1::blocked_range<long>, blender::threading::detail::parallel_for_impl_static_size(blender::IndexRange, long, blender::FunctionRef<void (blender::IndexRange)>)::{lambda(tbb::detail::d1::blocked_range<long> const&)#1}, tbb::detail::d1::auto_partitioner const>::execute(tbb::detail::d1::execution_data&) ()
+#2  0x00007ffff7f8b70a in ?? () from /mnt/mpainter-phase1/build/runtime/lib/libtbb.so.12
+#3  0x00007ffff7f7e58c in ?? () from /mnt/mpainter-phase1/build/runtime/lib/libtbb.so.12
+#4  0x00007fffdda07a64 in start_thread () from /lib64/libc.so.6
+#5  0x00007fffdda8a66c in __clone3 () from /lib64/libc.so.6
+
+Thread 14 (Thread 0x7fff98332680 (LWP 213537) "mpainter"):
+#0  0x00007fffddadbe0d in __memmove_avx_unaligned_erms () from /lib64/libc.so.6
+#1  0x00000000022bbdc0 in tbb::detail::d1::start_for<tbb::detail::d1::blocked_range<long>, blender::threading::detail::parallel_for_impl_static_size(blender::IndexRange, long, blender::FunctionRef<void (blender::IndexRange)>)::{lambda(tbb::detail::d1::blocked_range<long> const&)#1}, tbb::detail::d1::auto_partitioner const>::execute(tbb::detail::d1::execution_data&) ()
+#2  0x00007ffff7f8b70a in ?? () from /mnt/mpainter-phase1/build/runtime/lib/libtbb.so.12
+#3  0x00007ffff7f7e58c in ?? () from /mnt/mpainter-phase1/build/runtime/lib/libtbb.so.12
+#4  0x00007fffdda07a64 in start_thread () from /lib64/libc.so.6
+#5  0x00007fffdda8a66c in __clone3 () from /lib64/libc.so.6
+
+Thread 13 (Thread 0x7fff98733680 (LWP 213536) "mpainter"):
+#0  0x00007fffddadbe0d in __memmove_avx_unaligned_erms () from /lib64/libc.so.6
+#1  0x00000000022bbdc0 in tbb::detail::d1::start_for<tbb::detail::d1::blocked_range<long>, blender::threading::detail::parallel_for_impl_static_size(blender::IndexRange, long, blender::FunctionRef<void (blender::IndexRange)>)::{lambda(tbb::detail::d1::blocked_range<long> const&)#1}, tbb::detail::d1::auto_partitioner const>::execute(tbb::detail::d1::execution_data&) ()
+#2  0x00007ffff7f8b70a in ?? () from /mnt/mpainter-phase1/build/runtime/lib/libtbb.so.12
+#3  0x00007ffff7f7e58c in ?? () from /mnt/mpainter-phase1/build/runtime/lib/libtbb.so.12
+#4  0x00007fffdda07a64 in start_thread () from /lib64/libc.so.6
+#5  0x00007fffdda8a66c in __clone3 () from /lib64/libc.so.6
+
+Thread 12 (Thread 0x7fff9c6ce680 (LWP 213535) "threaded-ml"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda04284 in __syscall_cancel () from /lib64/libc.so.6
+#3  0x00007fffdda7d29e in poll () from /lib64/libc.so.6
+#4  0x00007fff9ca55f88 in poll_func () from /lib64/libpulse.so.0
+#5  0x00007fff9ca3f741 in pa_mainloop_poll () from /lib64/libpulse.so.0
+
+Thread 11 (Thread 0x7fff9d27d680 (LWP 213534) "mpainter"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda048ac in __futex_abstimed_wait_common () from /lib64/libc.so.6
+#3  0x00007fffdda0fe88 in __new_sem_wait_slow64.constprop.0 () from /lib64/libc.so.6
+#4  0x00007ffff665d22d in IlmThread_3_4::Semaphore::wait() () from /mnt/mpainter-phase1/build/runtime/lib/libIlmThread.so.33
+#5  0x00007ffff665af45 in ?? () from /mnt/mpainter-phase1/build/runtime/lib/libIlmThread.so.33
+
+Thread 10 (Thread 0x7fff9da7e680 (LWP 213533) "mpainter"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda048ac in __futex_abstimed_wait_common () from /lib64/libc.so.6
+#3  0x00007fffdda0fe88 in __new_sem_wait_slow64.constprop.0 () from /lib64/libc.so.6
+#4  0x00007ffff665d22d in IlmThread_3_4::Semaphore::wait() () from /mnt/mpainter-phase1/build/runtime/lib/libIlmThread.so.33
+#5  0x00007ffff665af45 in ?? () from /mnt/mpainter-phase1/build/runtime/lib/libIlmThread.so.33
+
+Thread 9 (Thread 0x7fff9e27f680 (LWP 213532) "mpainter"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda048ac in __futex_abstimed_wait_common () from /lib64/libc.so.6
+#3  0x00007fffdda0fe88 in __new_sem_wait_slow64.constprop.0 () from /lib64/libc.so.6
+#4  0x00007ffff665d22d in IlmThread_3_4::Semaphore::wait() () from /mnt/mpainter-phase1/build/runtime/lib/libIlmThread.so.33
+#5  0x00007ffff665af45 in ?? () from /mnt/mpainter-phase1/build/runtime/lib/libIlmThread.so.33
+
+Thread 8 (Thread 0x7fff9ea80680 (LWP 213531) "mpainter"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda048ac in __futex_abstimed_wait_common () from /lib64/libc.so.6
+#3  0x00007fffdda0fe88 in __new_sem_wait_slow64.constprop.0 () from /lib64/libc.so.6
+#4  0x00007ffff665d22d in IlmThread_3_4::Semaphore::wait() () from /mnt/mpainter-phase1/build/runtime/lib/libIlmThread.so.33
+#5  0x00007ffff665af45 in ?? () from /mnt/mpainter-phase1/build/runtime/lib/libIlmThread.so.33
+
+Thread 7 (Thread 0x7fff9f281680 (LWP 213530) "mpainter"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda048ac in __futex_abstimed_wait_common () from /lib64/libc.so.6
+#3  0x00007fffdda0fe88 in __new_sem_wait_slow64.constprop.0 () from /lib64/libc.so.6
+#4  0x00007ffff665d22d in IlmThread_3_4::Semaphore::wait() () from /mnt/mpainter-phase1/build/runtime/lib/libIlmThread.so.33
+#5  0x00007ffff665af45 in ?? () from /mnt/mpainter-phase1/build/runtime/lib/libIlmThread.so.33
+
+Thread 6 (Thread 0x7fff9fa82680 (LWP 213529) "mpainter"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda048ac in __futex_abstimed_wait_common () from /lib64/libc.so.6
+#3  0x00007fffdda0fe88 in __new_sem_wait_slow64.constprop.0 () from /lib64/libc.so.6
+#4  0x00007ffff665d22d in IlmThread_3_4::Semaphore::wait() () from /mnt/mpainter-phase1/build/runtime/lib/libIlmThread.so.33
+#5  0x00007ffff665af45 in ?? () from /mnt/mpainter-phase1/build/runtime/lib/libIlmThread.so.33
+
+Thread 5 (Thread 0x7fffa0283680 (LWP 213528) "mpainter"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda048ac in __futex_abstimed_wait_common () from /lib64/libc.so.6
+#3  0x00007fffdda0fe88 in __new_sem_wait_slow64.constprop.0 () from /lib64/libc.so.6
+#4  0x00007ffff665d22d in IlmThread_3_4::Semaphore::wait() () from /mnt/mpainter-phase1/build/runtime/lib/libIlmThread.so.33
+#5  0x00007ffff665af45 in ?? () from /mnt/mpainter-phase1/build/runtime/lib/libIlmThread.so.33
+
+Thread 4 (Thread 0x7fffa0a84680 (LWP 213527) "mpainter"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda048ac in __futex_abstimed_wait_common () from /lib64/libc.so.6
+#3  0x00007fffdda0fe88 in __new_sem_wait_slow64.constprop.0 () from /lib64/libc.so.6
+#4  0x00007ffff665d22d in IlmThread_3_4::Semaphore::wait() () from /mnt/mpainter-phase1/build/runtime/lib/libIlmThread.so.33
+#5  0x00007ffff665af45 in ?? () from /mnt/mpainter-phase1/build/runtime/lib/libIlmThread.so.33
+
+Thread 3 (Thread 0x7fffa198e680 (LWP 213525) "QXcbEventQueue"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda04284 in __syscall_cancel () from /lib64/libc.so.6
+#3  0x00007fffdda7d29e in poll () from /lib64/libc.so.6
+#4  0x00007fffe7fd8616 in _xcb_conn_wait.part.0 () from /lib64/libxcb.so.1
+#5  0x00007fffe7fda18c in xcb_wait_for_event () from /lib64/libxcb.so.1
+
+Thread 2 (Thread 0x7fffa218f680 (LWP 213524) "QDBusConnection"):
+#0  0x00007fffdda0ff82 in __syscall_cancel_arch () from /lib64/libc.so.6
+#1  0x00007fffdda0423c in __internal_syscall_cancel () from /lib64/libc.so.6
+#2  0x00007fffdda04284 in __syscall_cancel () from /lib64/libc.so.6
+#3  0x00007fffdda7d7c6 in ppoll () from /lib64/libc.so.6
+#4  0x00007fffd96ca3a0 in g_main_context_iterate_unlocked.isra () from /lib64/libglib-2.0.so.0
+#5  0x00007fffd96ca463 in g_main_context_iteration () from /lib64/libglib-2.0.so.0
+
+Thread 1 (Thread 0x7fffd6d41780 (LWP 213506) "mpainter"):
+#0  0x00007fffddadbe0d in __memmove_avx_unaligned_erms () from /lib64/libc.so.6
+#1  0x00000000022bbcdc in tbb::detail::d1::start_for<tbb::detail::d1::blocked_range<long>, blender::threading::detail::parallel_for_impl_static_size(blender::IndexRange, long, blender::FunctionRef<void (blender::IndexRange)>)::{lambda(tbb::detail::d1::blocked_range<long> const&)#1}, tbb::detail::d1::auto_partitioner const>::execute(tbb::detail::d1::execution_data&) ()
+#2  0x00007ffff7f82c43 in ?? () from /mnt/mpainter-phase1/build/runtime/lib/libtbb.so.12
+#3  0x00000000022bbadf in blender::threading::detail::parallel_for_impl(blender::IndexRange, long, blender::FunctionRef<void (blender::IndexRange)>, blender::threading::TaskSizeHints const&) ()
+#4  0x00000000024b1be9 in blender::GPU_indexbuf_build_from_memory(blender::GPUPrimType, unsigned int const*, int, int, int, bool) ()
+#5  0x00000000010d92c7 in bts::NativeMaterialFragmentGpuGeometry::NativeMaterialFragmentGpuGeometry(std::shared_ptr<bts::NativeFragmentGeometry const>) ()
+#0  0x00007fffddadbe0d in __memmove_avx_unaligned_erms () from /lib64/libc.so.6
+#1  0x00000000022bbcdc in tbb::detail::d1::start_for<tbb::detail::d1::blocked_range<long>, blender::threading::detail::parallel_for_impl_static_size(blender::IndexRange, long, blender::FunctionRef<void (blender::IndexRange)>)::{lambda(tbb::detail::d1::blocked_range<long> const&)#1}, tbb::detail::d1::auto_partitioner const>::execute(tbb::detail::d1::execution_data&) ()
+#2  0x00007ffff7f8b70a in ?? () from /mnt/mpainter-phase1/build/runtime/lib/libtbb.so.12
+#3  0x00007ffff7f7e58c in ?? () from /mnt/mpainter-phase1/build/runtime/lib/libtbb.so.12
+#4  0x00007fffdda07a64 in start_thread () from /lib64/libc.so.6
+#5  0x00007fffdda8a66c in __clone3 () from /lib64/libc.so.6
+	Command being timed: "bash /mnt/mpainter-phase1/mpainter/scripts/polyhaven/run-headless.sh test-mapping"
+	User time (seconds): 125.56
+	System time (seconds): 12.45
+	Percent of CPU this job got: 104%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:12.23
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 1918008
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 71
+	Minor (reclaiming a frame) page faults: 1134391
+	Voluntary context switches: 16647
+	Involuntary context switches: 85601
+	Swaps: 0
+	File system inputs: 28592
+	File system outputs: 229872
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

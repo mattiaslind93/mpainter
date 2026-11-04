@@ -62,7 +62,7 @@
         "original_slug": "leather_red_02",
         "polyhaven_slug": "leather_white",
         "resolution": "1k",
-        "review": "Smooth animal hide; species is an approximation, not certified calf.",
+        "review": "Warm tan smooth hide, distinct from grey Dusty Concrete.",
         "slug": "calf-hide",
         "source_blend": "calf-hide.blend",
         "url": "https://polyhaven.com/a/leather_white"
@@ -662,7 +662,7 @@
         "original_slug": "procedural",
         "polyhaven_slug": "procedural",
         "resolution": null,
-        "review": "Original procedural shader.",
+        "review": "Fine directional brushed iron; distinct from smooth Polished Iron.",
         "slug": "brushed-iron",
         "source_blend": "brushed-iron.blend",
         "url": "procedural"
@@ -758,7 +758,7 @@
         "original_slug": "metal_plate",
         "polyhaven_slug": "procedural",
         "resolution": null,
-        "review": "Original patterned painted rusty plate is unsuitable; original bare-metal shader.",
+        "review": "Blue-black mill scale with broad worn exposed iron patches.",
         "slug": "raw-iron",
         "source_blend": "raw-iron.blend",
         "url": "procedural"
@@ -772,7 +772,7 @@
         "original_slug": "rusty_metal",
         "polyhaven_slug": "procedural",
         "resolution": null,
-        "review": "API candidate render revealed yellow paint; use original rough bare-iron shader.",
+        "review": "Warm dark cast iron with coarse granular relief and high roughness.",
         "slug": "rough-iron",
         "source_blend": "rough-iron.blend",
         "url": "procedural"
@@ -948,7 +948,7 @@
         "original_slug": "leather_white",
         "polyhaven_slug": "fabric_leather_01",
         "resolution": "1k",
-        "review": "Aged wrinkled leather instead of smooth new white leather.",
+        "review": "Faded cool grey-brown worn hide, distinct from reddish Soft Leather and dark Coarse Leather.",
         "slug": "worn-leather",
         "source_blend": "worn-leather.blend",
         "url": "https://polyhaven.com/a/fabric_leather_01"
@@ -1070,7 +1070,7 @@
         "original_slug": "procedural",
         "polyhaven_slug": "procedural",
         "resolution": null,
-        "review": "Original procedural shader.",
+        "review": "Sage green granular polymer, distinct from blue Powder Coat and beige materials.",
         "slug": "grainy-plastic",
         "source_blend": "grainy-plastic.blend",
         "url": "procedural"
@@ -1296,7 +1296,7 @@
         "original_slug": "metal_plate_02",
         "polyhaven_slug": "procedural",
         "resolution": null,
-        "review": "Duplicate rusty plate replaced by original rough uncoated steel shader.",
+        "review": "Cool steel with directional abrasion and varying satin roughness.",
         "slug": "rough-steel",
         "source_blend": "rough-steel.blend",
         "url": "procedural"
@@ -1520,7 +1520,7 @@
         "original_slug": "dark_wood",
         "polyhaven_slug": "walnut_veneer",
         "resolution": "1k",
-        "review": "Actual walnut veneer instead of generic dark wood.",
+        "review": "Oiled dark walnut tint preserves original veneer grain; distinct from pale Cherry Wood.",
         "slug": "walnut-wood",
         "source_blend": "walnut-wood.blend",
         "url": "https://polyhaven.com/a/walnut_veneer"
@@ -1528,64 +1528,56 @@
     {
         "maps": {
             "AO": {
-                "file": "wool_boucle_ao_1k.jpg",
+                "file": "polar_fleece_ao_1k.jpg",
                 "format": "jpg",
-                "md5": "4d039283875624cf58fc2f97d84e7ca1",
-                "sha256": "f7d3d024686e099451f14ff5878b3e137b9295d3e4e8bb011bcc868331508a4a",
-                "size": 909614,
-                "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wool_boucle/wool_boucle_ao_1k.jpg"
+                "md5": "42cece531d41c94757a1f8f11006e840",
+                "sha256": "2c79e01fd5f5cf14f6fc11e698a1c005daa62ebe6161a48862cde929c2255d46",
+                "size": 396513,
+                "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/polar_fleece/polar_fleece_ao_1k.jpg"
             },
             "Diffuse": {
-                "file": "wool_boucle_diff_1k.jpg",
+                "file": "polar_fleece_diff_1k.jpg",
                 "format": "jpg",
-                "md5": "e3d4b30b5f36d4763f9bd2f2e8d92f8e",
-                "sha256": "fee39653b3c78efe89636508f2c10ceb38ecb10c0d735ae8dd4e9935cf26540e",
-                "size": 1284379,
-                "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wool_boucle/wool_boucle_diff_1k.jpg"
+                "md5": "92d8dbc261c2ff09bb028a68bb7ad01b",
+                "sha256": "d3053dad0f9ea77c347a92ddd675d5d138bcace6f57e49beb4aedbd972381ea9",
+                "size": 673341,
+                "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/polar_fleece/polar_fleece_diff_1k.jpg"
             },
             "Displacement": {
-                "file": "wool_boucle_disp_1k.png",
+                "file": "polar_fleece_disp_1k.png",
                 "format": "png",
-                "md5": "660e2f160f17cdc20a3c49a8bed672ba",
-                "sha256": "1ef68bd40b53516bbcbdcc30375089207a48551a6a369b26105919423b9f77eb",
-                "size": 2344600,
-                "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/wool_boucle/wool_boucle_disp_1k.png"
-            },
-            "Metal": {
-                "file": "wool_boucle_metal_1k.jpg",
-                "format": "jpg",
-                "md5": "ccb91897ade9a6ded738ade2f6d14247",
-                "sha256": "8813bb6ea7fa2465d51f68673d8f0c1d09465bc8bc8ddbfb667292fe6e979854",
-                "size": 1056552,
-                "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wool_boucle/wool_boucle_metal_1k.jpg"
+                "md5": "3230dd2263fe442d4546d23216d0adc2",
+                "sha256": "0f05f0e2d9d42876cfbd5335464431879c51423a342845682c0c4d3a80fd7efc",
+                "size": 1745684,
+                "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/polar_fleece/polar_fleece_disp_1k.png"
             },
             "Rough": {
-                "file": "wool_boucle_rough_1k.jpg",
+                "file": "polar_fleece_rough_1k.jpg",
                 "format": "jpg",
-                "md5": "48bfe3aac53735ada81add2f1054a3f5",
-                "sha256": "f09f24bd26378b03bb798d4b75010ac8cc0fd1e4b858959e97e6d8d74fa3f6d8",
-                "size": 1272361,
-                "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wool_boucle/wool_boucle_rough_1k.jpg"
+                "md5": "1922fd67082de2f465a4ad8442cc714d",
+                "sha256": "5693b1956ae4ccfce64720a846091d61973cb7a10a2396b50fa4168cc2b0bc3c",
+                "size": 991619,
+                "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/polar_fleece/polar_fleece_rough_1k.jpg"
             },
             "nor_gl": {
-                "file": "wool_boucle_nor_gl_1k.png",
+                "file": "polar_fleece_nor_gl_1k.png",
                 "format": "png",
-                "md5": "f4d1062f8cc151b43a237212a7e7064c",
-                "sha256": "3c65b2c4b2bb2e01cfcb1b604891ecb8951ba0e58d02aa9453061df8b3eeafd1",
-                "size": 6997708,
-                "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/wool_boucle/wool_boucle_nor_gl_1k.png"
+                "md5": "26db35ae01e9e7d5253e5b5cd13e0e1d",
+                "sha256": "05ef26c3e07e76208b0e1074d2344cf37f33d7c4b6a8f0d8d6ec7c547c735f08",
+                "size": 4926151,
+                "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/polar_fleece/polar_fleece_nor_gl_1k.png"
             }
         },
         "name": "Wool",
         "native_archive": "native/wool.btsnative.blend",
         "native_metadata": "native/wool.json",
         "original_slug": "curly_teddy_natural",
-        "polyhaven_slug": "wool_boucle",
+        "polyhaven_slug": "polar_fleece",
         "resolution": "1k",
-        "review": "Actual looped wool instead of teddy plush.",
+        "review": "Plain cream napped fleece: wool-like surface approximation, without the checker weave of wool_boucle.",
         "slug": "wool",
         "source_blend": "wool.blend",
-        "url": "https://polyhaven.com/a/wool_boucle"
+        "url": "https://polyhaven.com/a/polar_fleece"
     },
     {
         "maps": {

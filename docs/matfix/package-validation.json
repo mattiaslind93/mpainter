@@ -1,0 +1,12 @@
+{
+  "appimage_sha256": "516e0a1e16ceff6f08ed039c72ed5dd64a7a5751aca00df099b8e3fe1bfa602b",
+  "appimage_bytes": 691694072,
+  "verified_from_running_appimage": true,
+  "runtime_executable": "/mnt/mpainter-phase1/build/tmp/appimage_extracted_8c39f48cc8095f858c5b8e279146bf94/mpainter",
+  "library_files_byte_identical": 253,
+  "library_bytes": 255208098,
+  "shaderball_and_notice_identical": true,
+  "source_executable_sha256": "5e2f966a15540d87ed19337ecb4e169383481e1070e5809cff657af59e71b1d2",
+  "packaged_executable_sha256": "59214b89f26536e640249fb95901fc0b3271f678d21691f65236fd21ebb0dec4",
+  "packaged_executable_matches_stripped_staging": true
+}

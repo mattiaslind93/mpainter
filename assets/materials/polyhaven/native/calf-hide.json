@@ -33,7 +33,7 @@
     ],
     "material": {
         "filename": "material.btsnative.blend",
-        "id": "92c0e31e-d0b7-4173-95b4-bf02be9ff2a1",
+        "id": "39bf91aa-8dac-4369-a035-181e1e121bac",
         "material": {
             "ao": 1,
             "base_color": [
@@ -594,7 +594,7 @@
         },
         "path": "",
         "physical_size_cm": null,
-        "sha256": "fcde1d2e812a085deb5d0df52aaf0f5342854f06c395b944f4055925e571d525",
+        "sha256": "8d0ccd1d47825380b86b6c17638e75c4001b8368af6110fbce9869a4b208ff87",
         "tags": [
             "blender-native",
             "native-channel:0",
@@ -610,7 +610,7 @@
         ]
     },
     "preview": {
-        "image_sha256": "7800e4c0e71ac37ad5f7810618a9c7e317d3299bd4c2162c3f170b1f3cf85e3c",
+        "image_sha256": "5e2ef3e39ea03ee3c4d5fbf310ccd6deb6d9071785ef107b6d62ba250f9f1708",
         "mesh": "Shader_Ball_JL_01",
         "renderer": "Blender Cycles CPU"
     },
@@ -619,7 +619,7 @@
         {
             "metadata": {
                 "filename": "leather_white_ao_1k.jpg",
-                "id": "fe8eb817-c4ea-46ff-a095-6e5a4a01e601",
+                "id": "f459e6d2-dd66-4c58-b886-b2ce65737dcf",
                 "name": "leather_white_ao_1k.jpg",
                 "path": "native/images/0da0d90256b1970e11ceb4f9464b26702a7ed7028cb1365fe9993a71836a4f9d.jpg",
                 "physical_size_cm": null,
@@ -644,7 +644,7 @@
         {
             "metadata": {
                 "filename": "leather_white_diff_1k.jpg",
-                "id": "f12e0c25-029f-4a25-98d0-ac3ac19f1e9c",
+                "id": "36dcca68-9f98-45fe-84fb-adb577879767",
                 "name": "leather_white_diff_1k.jpg",
                 "path": "native/images/4d916dfe89c9d2b88bf52e0c70c6a9798a5c29c8c2fcb6ba1ab7b7ded9ef3ed5.jpg",
                 "physical_size_cm": null,
@@ -669,7 +669,7 @@
         {
             "metadata": {
                 "filename": "leather_white_nor_gl_1k.png",
-                "id": "397f6362-82eb-401c-894e-c4a9f99d1d75",
+                "id": "f9c1b9d1-899a-4ecb-ab7b-84d71ad55f35",
                 "name": "leather_white_nor_gl_1k.png",
                 "path": "native/images/b4a323a1249b2d68fc4098f16ac774b2beaec6868290b271143c44dea7890ee4.png",
                 "physical_size_cm": null,
@@ -694,7 +694,7 @@
         {
             "metadata": {
                 "filename": "leather_white_disp_1k.png",
-                "id": "d7e7504c-98f1-4f78-891e-f4831e77141a",
+                "id": "0a6d45a2-4ab0-44c8-abee-56563bd7eb73",
                 "name": "leather_white_disp_1k.png",
                 "path": "native/images/c2b07df1d7fc884a009b2e27388f67e13ca8a969a9d0116b0ef9018c175d52c3.png",
                 "physical_size_cm": null,
@@ -719,7 +719,7 @@
         {
             "metadata": {
                 "filename": "leather_white_rough_1k.jpg",
-                "id": "2272deee-276f-43d8-9350-9f7f5e359cee",
+                "id": "8fa51e3a-514e-4b06-92d2-107ea7e68232",
                 "name": "leather_white_rough_1k.jpg",
                 "path": "native/images/dbae1aeb5f9a2a46f7fe758f38811beb6a109021848462032d9a3cd63f187a66.jpg",
                 "physical_size_cm": null,

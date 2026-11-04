@@ -1,0 +1,81 @@
+{
+    "cached_fresh_edit_and_Undo_exact": true,
+    "checks": [
+        {
+            "bump": false,
+            "maximum_error": 3.0385281041267476e-08,
+            "samples": 948,
+            "source_uv": "NamedUV",
+            "tile": 1001
+        },
+        {
+            "bump": false,
+            "maximum_error": 3.0385281041267476e-08,
+            "samples": 1668,
+            "source_uv": "NamedUV",
+            "tile": 1002
+        },
+        {
+            "bump": false,
+            "maximum_error": 2.628874862242725e-08,
+            "samples": 3193,
+            "source_uv": "NamedUV",
+            "tile": 1003
+        },
+        {
+            "bump": false,
+            "maximum_error": 6.324119572465037e-08,
+            "samples": 1668,
+            "source_uv": "RenderUV",
+            "tile": 1002
+        },
+        {
+            "bump": true,
+            "maximum_error": 1.1354461516913106e-06,
+            "samples": 948,
+            "source_uv": "NamedUV",
+            "tile": 1001
+        },
+        {
+            "bump": true,
+            "maximum_error": 9.37462559549157e-07,
+            "samples": 1668,
+            "source_uv": "NamedUV",
+            "tile": 1002
+        },
+        {
+            "bump": false,
+            "maximum_error": 4.600966474477275e-08,
+            "samples": 1668,
+            "source_uv": "NamedUV",
+            "tile": 1002
+        },
+        {
+            "bump": false,
+            "maximum_error": 5.767076094453927e-08,
+            "samples": 1668,
+            "source_uv": "NamedUV",
+            "tile": 1002
+        }
+    ],
+    "complete": true,
+    "creation_VAO_buffers_held_pending_state_and_validation_restored": true,
+    "dynamic_no_recompile": true,
+    "expected_index_count": 36,
+    "gpu_index_count": 36,
+    "index_uploads": 1,
+    "maximum_error": 1.1354461516913106e-06,
+    "no_geometry_upload_per_edit": true,
+    "object_uploads": 2,
+    "objects": 2,
+    "production_admission": false,
+    "readbacks": 13,
+    "retained_after_cancel_budget_replacement": true,
+    "scope": "Resident indexed geometry: actual IBO count, pixels, cache, Undo and GPU state",
+    "source_and_target_UV_separate": true,
+    "source_main_destroyed": true,
+    "streams": 4,
+    "tolerance": 3e-05,
+    "unrelated_tiles_unchanged": true,
+    "vertex_uploads": 4
+}

@@ -1,0 +1,14 @@
+{
+  "matfix.png": {
+    "bytes": 798570,
+    "sha256": "310c397a9ce8ee8f0b88f8ac154ae3f66b4c85526ebf9096e282b4d7286bc1d4"
+  },
+  "matfix-contact-sheet.jpg": {
+    "bytes": 748890,
+    "sha256": "6ca2f2ba414fad7299deae50ece0c3016469d8466a863d85bd353b6f3682ea58"
+  },
+  "mPainter-0.9.0-alpha-linux-x86_64.AppImage": {
+    "bytes": 691694072,
+    "sha256": "516e0a1e16ceff6f08ed039c72ed5dd64a7a5751aca00df099b8e3fe1bfa602b"
+  }
+}

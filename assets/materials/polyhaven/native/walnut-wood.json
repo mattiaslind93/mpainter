@@ -33,7 +33,7 @@
     ],
     "material": {
         "filename": "material.btsnative.blend",
-        "id": "62defc9f-a271-4c91-a3c9-fa4974bf2755",
+        "id": "e3017f6c-fe73-4319-a8aa-e1e8cfa28bc1",
         "material": {
             "ao": 1,
             "base_color": [
@@ -594,7 +594,7 @@
         },
         "path": "",
         "physical_size_cm": null,
-        "sha256": "e0c9f67beed7becc8e7840db463b0085bfa8989a757039eed9b7663f26332529",
+        "sha256": "39f2a9c5c11ddce49275f9c085533f7f8bc21db7b310d8e37b0489e631906518",
         "tags": [
             "blender-native",
             "native-channel:0",
@@ -610,7 +610,7 @@
         ]
     },
     "preview": {
-        "image_sha256": "fa14770350ce1390931e73a0ecd1af8f16b82210d177ce1f23bbe06ed19302ec",
+        "image_sha256": "1b7ac623cf69e0ba9385c57a45b6c96c4a540e770a68d60727bbf1f4d7b2d4ad",
         "mesh": "Shader_Ball_JL_01",
         "renderer": "Blender Cycles CPU"
     },
@@ -619,7 +619,7 @@
         {
             "metadata": {
                 "filename": "walnut_veneer_nor_gl_1k.png",
-                "id": "f371418a-42b0-42fc-8c27-0163f96c9d3f",
+                "id": "ccd763f0-8b2d-4559-97c0-fa17a8f63c38",
                 "name": "walnut_veneer_nor_gl_1k.png",
                 "path": "native/images/2f61ecde017d66826b62b4b7cb0c92c7bafe287f754dad61dd975be2a4266073.png",
                 "physical_size_cm": null,
@@ -644,7 +644,7 @@
         {
             "metadata": {
                 "filename": "walnut_veneer_ao_1k.jpg",
-                "id": "c2b5eb84-3ef5-4d4c-bd0d-7005e319b3cb",
+                "id": "741ecf56-d222-4d09-9a10-008c3f60339f",
                 "name": "walnut_veneer_ao_1k.jpg",
                 "path": "native/images/355d1028bd45868906563b1b446acbc0216b78e24ecca6256808e67f64237a94.jpg",
                 "physical_size_cm": null,
@@ -669,7 +669,7 @@
         {
             "metadata": {
                 "filename": "walnut_veneer_rough_1k.jpg",
-                "id": "ac9f2c2b-e249-4b87-800a-7a73546d2608",
+                "id": "f07962c1-6d17-4e81-8b2b-8eb44f2a569d",
                 "name": "walnut_veneer_rough_1k.jpg",
                 "path": "native/images/5cb9d78ec685155d2b66a1db01abc61049d00953d783d0c78d829512de9ab0b4.jpg",
                 "physical_size_cm": null,
@@ -694,7 +694,7 @@
         {
             "metadata": {
                 "filename": "walnut_veneer_disp_1k.png",
-                "id": "3d774100-2a23-49fe-bcb7-ee93fc1c356f",
+                "id": "b94df224-dfb7-410e-a35e-d7460e1b61de",
                 "name": "walnut_veneer_disp_1k.png",
                 "path": "native/images/a38240955fc5a80d81cbf69b450042c2cbabe8abb69c7369b20b61962c88ad5f.png",
                 "physical_size_cm": null,
@@ -719,7 +719,7 @@
         {
             "metadata": {
                 "filename": "walnut_veneer_diff_1k.jpg",
-                "id": "0412114f-a5eb-42ba-839b-4e6a3295342b",
+                "id": "bbff7a90-2653-40ec-a9f1-de344cd55ae0",
                 "name": "walnut_veneer_diff_1k.jpg",
                 "path": "native/images/d8c971e403b185b5c350d1e6fa75c3e7fcc36130781c7686263f6bcd23ac4db1.jpg",
                 "physical_size_cm": null,

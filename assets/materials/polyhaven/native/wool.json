@@ -33,7 +33,7 @@
     ],
     "material": {
         "filename": "material.btsnative.blend",
-        "id": "b9845071-d98c-43d6-a1ed-fd30232fdaff",
+        "id": "f4b503bb-fced-4dd5-9558-43e00ee952fe",
         "material": {
             "ao": 1,
             "base_color": [
@@ -123,8 +123,8 @@
                     "name": "Metallic",
                     "ramp": {
                     },
-                    "source_node": "ShaderNodeTexImage",
-                    "source_socket": "Color",
+                    "source_node": "",
+                    "source_socket": "",
                     "type": 0,
                     "value": [
                         0
@@ -594,7 +594,7 @@
         },
         "path": "",
         "physical_size_cm": null,
-        "sha256": "a467fe70906c3d0e2562e31161680cab442c9a87d82e89333bd6e589a879f509",
+        "sha256": "474e8e88d4e0510d0fede1cb6d3230238c7f6f7209880785985d9dadc0803eb8",
         "tags": [
             "blender-native",
             "native-channel:0",
@@ -610,7 +610,7 @@
         ]
     },
     "preview": {
-        "image_sha256": "5a80c23befe5d8afdb3f253e864dc1a7cf71f77db95ce87694dce768c163137c",
+        "image_sha256": "9e7e35530fd92151d39f549970813839c11193c6f635f9e9e7fe9ffab247a6fe",
         "mesh": "Shader_Ball_JL_01",
         "renderer": "Blender Cycles CPU"
     },
@@ -618,21 +618,21 @@
     "textures": [
         {
             "metadata": {
-                "filename": "wool_boucle_disp_1k.png",
-                "id": "2e56a981-3aa0-40dc-bc83-204e4544a13b",
-                "name": "wool_boucle_disp_1k.png",
-                "path": "native/images/1ef68bd40b53516bbcbdcc30375089207a48551a6a369b26105919423b9f77eb.png",
+                "filename": "polar_fleece_nor_gl_1k.png",
+                "id": "876e4c57-c7b6-4488-9d5f-f200a2210135",
+                "name": "polar_fleece_nor_gl_1k.png",
+                "path": "native/images/05ef26c3e07e76208b0e1074d2344cf37f33d7c4b6a8f0d8d6ec7c547c735f08.png",
                 "physical_size_cm": null,
-                "sha256": "1ef68bd40b53516bbcbdcc30375089207a48551a6a369b26105919423b9f77eb",
+                "sha256": "05ef26c3e07e76208b0e1074d2344cf37f33d7c4b6a8f0d8d6ec7c547c735f08",
                 "tags": [
                     "blender-native-image"
                 ],
                 "texture_files": [
                     {
-                        "filename": "wool_boucle_disp_1k.png",
-                        "path": "native/images/1ef68bd40b53516bbcbdcc30375089207a48551a6a369b26105919423b9f77eb.png",
-                        "sha256": "1ef68bd40b53516bbcbdcc30375089207a48551a6a369b26105919423b9f77eb",
-                        "size": 2344600,
+                        "filename": "polar_fleece_nor_gl_1k.png",
+                        "path": "native/images/05ef26c3e07e76208b0e1074d2344cf37f33d7c4b6a8f0d8d6ec7c547c735f08.png",
+                        "sha256": "05ef26c3e07e76208b0e1074d2344cf37f33d7c4b6a8f0d8d6ec7c547c735f08",
+                        "size": 4926151,
                         "tile": 0
                     }
                 ],
@@ -643,21 +643,21 @@
         },
         {
             "metadata": {
-                "filename": "wool_boucle_nor_gl_1k.png",
-                "id": "fb79abbf-0214-45ec-9ae9-9fc1345604b9",
-                "name": "wool_boucle_nor_gl_1k.png",
-                "path": "native/images/3c65b2c4b2bb2e01cfcb1b604891ecb8951ba0e58d02aa9453061df8b3eeafd1.png",
+                "filename": "polar_fleece_disp_1k.png",
+                "id": "c6a59e79-65e2-47d1-a220-375d5a87ee82",
+                "name": "polar_fleece_disp_1k.png",
+                "path": "native/images/0f05f0e2d9d42876cfbd5335464431879c51423a342845682c0c4d3a80fd7efc.png",
                 "physical_size_cm": null,
-                "sha256": "3c65b2c4b2bb2e01cfcb1b604891ecb8951ba0e58d02aa9453061df8b3eeafd1",
+                "sha256": "0f05f0e2d9d42876cfbd5335464431879c51423a342845682c0c4d3a80fd7efc",
                 "tags": [
                     "blender-native-image"
                 ],
                 "texture_files": [
                     {
-                        "filename": "wool_boucle_nor_gl_1k.png",
-                        "path": "native/images/3c65b2c4b2bb2e01cfcb1b604891ecb8951ba0e58d02aa9453061df8b3eeafd1.png",
-                        "sha256": "3c65b2c4b2bb2e01cfcb1b604891ecb8951ba0e58d02aa9453061df8b3eeafd1",
-                        "size": 6997708,
+                        "filename": "polar_fleece_disp_1k.png",
+                        "path": "native/images/0f05f0e2d9d42876cfbd5335464431879c51423a342845682c0c4d3a80fd7efc.png",
+                        "sha256": "0f05f0e2d9d42876cfbd5335464431879c51423a342845682c0c4d3a80fd7efc",
+                        "size": 1745684,
                         "tile": 0
                     }
                 ],
@@ -668,21 +668,21 @@
         },
         {
             "metadata": {
-                "filename": "wool_boucle_metal_1k.jpg",
-                "id": "3e1c7e54-42cd-4825-b05d-f904d06c3609",
-                "name": "wool_boucle_metal_1k.jpg",
-                "path": "native/images/8813bb6ea7fa2465d51f68673d8f0c1d09465bc8bc8ddbfb667292fe6e979854.jpg",
+                "filename": "polar_fleece_ao_1k.jpg",
+                "id": "1d1377c5-3989-4300-86c7-51c48b529c3e",
+                "name": "polar_fleece_ao_1k.jpg",
+                "path": "native/images/2c79e01fd5f5cf14f6fc11e698a1c005daa62ebe6161a48862cde929c2255d46.jpg",
                 "physical_size_cm": null,
-                "sha256": "8813bb6ea7fa2465d51f68673d8f0c1d09465bc8bc8ddbfb667292fe6e979854",
+                "sha256": "2c79e01fd5f5cf14f6fc11e698a1c005daa62ebe6161a48862cde929c2255d46",
                 "tags": [
                     "blender-native-image"
                 ],
                 "texture_files": [
                     {
-                        "filename": "wool_boucle_metal_1k.jpg",
-                        "path": "native/images/8813bb6ea7fa2465d51f68673d8f0c1d09465bc8bc8ddbfb667292fe6e979854.jpg",
-                        "sha256": "8813bb6ea7fa2465d51f68673d8f0c1d09465bc8bc8ddbfb667292fe6e979854",
-                        "size": 1056552,
+                        "filename": "polar_fleece_ao_1k.jpg",
+                        "path": "native/images/2c79e01fd5f5cf14f6fc11e698a1c005daa62ebe6161a48862cde929c2255d46.jpg",
+                        "sha256": "2c79e01fd5f5cf14f6fc11e698a1c005daa62ebe6161a48862cde929c2255d46",
+                        "size": 396513,
                         "tile": 0
                     }
                 ],
@@ -693,21 +693,21 @@
         },
         {
             "metadata": {
-                "filename": "wool_boucle_rough_1k.jpg",
-                "id": "f1b84423-28a9-4676-9571-a14c217888c4",
-                "name": "wool_boucle_rough_1k.jpg",
-                "path": "native/images/f09f24bd26378b03bb798d4b75010ac8cc0fd1e4b858959e97e6d8d74fa3f6d8.jpg",
+                "filename": "polar_fleece_rough_1k.jpg",
+                "id": "d6e27d7e-3384-4728-9c33-d1625b5bdb4d",
+                "name": "polar_fleece_rough_1k.jpg",
+                "path": "native/images/5693b1956ae4ccfce64720a846091d61973cb7a10a2396b50fa4168cc2b0bc3c.jpg",
                 "physical_size_cm": null,
-                "sha256": "f09f24bd26378b03bb798d4b75010ac8cc0fd1e4b858959e97e6d8d74fa3f6d8",
+                "sha256": "5693b1956ae4ccfce64720a846091d61973cb7a10a2396b50fa4168cc2b0bc3c",
                 "tags": [
                     "blender-native-image"
                 ],
                 "texture_files": [
                     {
-                        "filename": "wool_boucle_rough_1k.jpg",
-                        "path": "native/images/f09f24bd26378b03bb798d4b75010ac8cc0fd1e4b858959e97e6d8d74fa3f6d8.jpg",
-                        "sha256": "f09f24bd26378b03bb798d4b75010ac8cc0fd1e4b858959e97e6d8d74fa3f6d8",
-                        "size": 1272361,
+                        "filename": "polar_fleece_rough_1k.jpg",
+                        "path": "native/images/5693b1956ae4ccfce64720a846091d61973cb7a10a2396b50fa4168cc2b0bc3c.jpg",
+                        "sha256": "5693b1956ae4ccfce64720a846091d61973cb7a10a2396b50fa4168cc2b0bc3c",
+                        "size": 991619,
                         "tile": 0
                     }
                 ],
@@ -718,46 +718,21 @@
         },
         {
             "metadata": {
-                "filename": "wool_boucle_ao_1k.jpg",
-                "id": "aa83eef5-1784-4f1e-a5f4-a919375fa987",
-                "name": "wool_boucle_ao_1k.jpg",
-                "path": "native/images/f7d3d024686e099451f14ff5878b3e137b9295d3e4e8bb011bcc868331508a4a.jpg",
+                "filename": "polar_fleece_diff_1k.jpg",
+                "id": "8b52bdfb-bc4b-4c70-ac52-63de252341fc",
+                "name": "polar_fleece_diff_1k.jpg",
+                "path": "native/images/d3053dad0f9ea77c347a92ddd675d5d138bcace6f57e49beb4aedbd972381ea9.jpg",
                 "physical_size_cm": null,
-                "sha256": "f7d3d024686e099451f14ff5878b3e137b9295d3e4e8bb011bcc868331508a4a",
+                "sha256": "d3053dad0f9ea77c347a92ddd675d5d138bcace6f57e49beb4aedbd972381ea9",
                 "tags": [
                     "blender-native-image"
                 ],
                 "texture_files": [
                     {
-                        "filename": "wool_boucle_ao_1k.jpg",
-                        "path": "native/images/f7d3d024686e099451f14ff5878b3e137b9295d3e4e8bb011bcc868331508a4a.jpg",
-                        "sha256": "f7d3d024686e099451f14ff5878b3e137b9295d3e4e8bb011bcc868331508a4a",
-                        "size": 909614,
-                        "tile": 0
-                    }
-                ],
-                "usages": [
-                    "texture"
-                ]
-            }
-        },
-        {
-            "metadata": {
-                "filename": "wool_boucle_diff_1k.jpg",
-                "id": "eafca000-6d7a-4222-acc3-3ad6f719f66a",
-                "name": "wool_boucle_diff_1k.jpg",
-                "path": "native/images/fee39653b3c78efe89636508f2c10ceb38ecb10c0d735ae8dd4e9935cf26540e.jpg",
-                "physical_size_cm": null,
-                "sha256": "fee39653b3c78efe89636508f2c10ceb38ecb10c0d735ae8dd4e9935cf26540e",
-                "tags": [
-                    "blender-native-image"
-                ],
-                "texture_files": [
-                    {
-                        "filename": "wool_boucle_diff_1k.jpg",
-                        "path": "native/images/fee39653b3c78efe89636508f2c10ceb38ecb10c0d735ae8dd4e9935cf26540e.jpg",
-                        "sha256": "fee39653b3c78efe89636508f2c10ceb38ecb10c0d735ae8dd4e9935cf26540e",
-                        "size": 1284379,
+                        "filename": "polar_fleece_diff_1k.jpg",
+                        "path": "native/images/d3053dad0f9ea77c347a92ddd675d5d138bcace6f57e49beb4aedbd972381ea9.jpg",
+                        "sha256": "d3053dad0f9ea77c347a92ddd675d5d138bcace6f57e49beb4aedbd972381ea9",
+                        "size": 673341,
                         "tile": 0
                     }
                 ],
