@@ -1,5 +1,6 @@
 #pragma once
 #include "ResourceAvailability.hh"
+#include "DiskPixelPayload.hh"
 #include <algorithm>
 #include <array>
 #include <cstdint>
@@ -23,9 +24,9 @@ struct FillTexture {
  // Decode-time statistics; shared with the pixels, never inferred from alpha.
  bool floating_point=false,data_units=false,range_valid=false;
  float minimum=0,maximum=0;
- std::shared_ptr<const std::vector<Pixel>> pixels;
+ DiskPixelPayload<Pixel> pixels;
  std::shared_ptr<const std::map<int,std::shared_ptr<const FillTexture>>> tiles; // Immutable UDIM members; first member is the ordinary-slot preview.
- void validate()const {if(std::any_of(source_space.begin(),source_space.end(),[](unsigned char c){return c<32||c==127;})||(raw&&!source_space.empty()))throw std::invalid_argument("Invalid input color-space override");if(asset.size()!=36||hash.size()!=64||name.empty()||width<1||height<1||std::uint64_t(width)*height>std::numeric_limits<std::size_t>::max()/sizeof(Pixel)||(pixels&&pixels->size()!=std::size_t(width)*height))throw std::invalid_argument("Invalid fill texture resource");if(tiles){if(tiles->empty())throw std::invalid_argument("Invalid texture sequence size");for(const auto &[tile,member]:*tiles){if(tile<1001||tile>9999||!member||member->tiles||member->asset!=asset||member->raw!=raw||member->source_space!=source_space)throw std::invalid_argument("Invalid texture sequence member");member->validate();}if(width!=tiles->begin()->second->width||height!=tiles->begin()->second->height)throw std::length_error("Texture sequence has an invalid preview");}}
+ void validate()const {if(std::any_of(source_space.begin(),source_space.end(),[](unsigned char c){return c<32||c==127;})||(raw&&!source_space.empty()))throw std::invalid_argument("Invalid input color-space override");if(asset.size()!=36||hash.size()!=64||name.empty()||width<1||height<1||std::uint64_t(width)*height>std::numeric_limits<std::size_t>::max()/sizeof(Pixel)||(pixels&&pixels.size()!=std::size_t(width)*height))throw std::invalid_argument("Invalid fill texture resource");if(tiles){if(tiles->empty())throw std::invalid_argument("Invalid texture sequence size");for(const auto &[tile,member]:*tiles){if(tile<1001||tile>9999||!member||member->tiles||member->asset!=asset||member->raw!=raw||member->source_space!=source_space)throw std::invalid_argument("Invalid texture sequence member");member->validate();}if(width!=tiles->begin()->second->width||height!=tiles->begin()->second->height)throw std::length_error("Texture sequence has an invalid preview");}}
  // Bitmap triplanar evaluation uses the native shader's Float32 coordinate
  // and texel-fraction contract. Ordinary UV sampling retains sample(double).
  Pixel sample_projected(float u,float v,bool repeat=true,bool use_alpha=true)const {

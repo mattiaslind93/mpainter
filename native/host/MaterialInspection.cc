@@ -1,3 +1,4 @@
+#include "TextureSetResidency.hh"
 #include "MaskEffectContext.hh"
 #include "NativeWorldNormalObjectContext.hh"
 #include "NativeMaterialBakedAoContext.hh"
@@ -130,7 +131,7 @@ struct Binding {
   MaterialLayerShader layered_shader;
   MaterialLayering material_layering;
   bool layering_directx=false;
-  std::string geometry_visibility_key;bool geometry_visibility_on=false;
+  std::string geometry_visibility_key;bool geometry_visibility_on=false;bool residency_hidden=false;
   std::array<Image *,5> images{};
   std::array<Image *,custom_channel_count> user_images{};
   std::array<bNode *,custom_channel_count> user_textures{},user_unpremultiply{};
@@ -801,16 +802,18 @@ bool MaterialInspection::geometry_visibility_enabled(std::uint32_t uid) const{co
 // collection only after releasing helper/engine caches and refreshing the source depsgraph.
 void MaterialInspection::collect_retired_visibility_images(Main &main){for(auto it=impl_->retired_visibility_images.begin();it!=impl_->retired_visibility_images.end();){if((*it)->id.us==0){BKE_id_free(&main,*it);it=impl_->retired_visibility_images.erase(it);}else ++it;}}
 std::size_t MaterialInspection::geometry_visibility_image_count() const{std::size_t count=impl_->retired_visibility_images.size();for(const auto &[uid,binding]:impl_->bindings){const auto *texture=bke::node_find_node_by_name(*binding.material->nodetree,"__BTS_GeometryVisibility");count+=texture&&texture->id;}return count;}
-bool MaterialInspection::set_geometry_visibility(Main &main,const TextureSet *set){
+bool MaterialInspection::set_geometry_visibility(Main &main,const TextureSet *set,bool preserve_others){
   bool changed=false;
   // One selected-layer presentation target at a time. Other Texture Sets remain visible.
-  for(auto &[uid,binding]:impl_->bindings)if(binding.geometry_visibility_on&&(!set||uid!=set->material_session_uid)){
+  for(auto &[uid,binding]:impl_->bindings)if(!preserve_others&&binding.geometry_visibility_on&&(!set||uid!=set->material_session_uid)){
+    if(binding.residency_hidden&&binding.mask_snapshot){auto proxy=*binding.mask_snapshot;proxy.residency_view=false;proxy.layers={TextureLayer{}};proxy.instance_layers.reset();proxy.selected_layer=proxy.layers.front().id;changed|=set_geometry_visibility(main,&proxy,true);continue;}
     auto &tree=*binding.material->nodetree;auto *enabled=bke::node_find_node_by_name(tree,"__BTS_GeometryEnabled");if(enabled)scalar(tree,input(*enabled,1),0);binding.geometry_visibility_on=false;BKE_ntree_update_after_single_tree_change(main,tree);DEG_id_tag_update_ex(&main,&binding.material->id,ID_RECALC_SHADING);DEG_id_tag_update_ex(&main,&tree.id,ID_RECALC_NTREE_OUTPUT);changed=true;
   }
   if(!set)return changed;const auto &layer=TextureDocument::layer(const_cast<TextureSet &>(*set),set->selected_layer);
   if(!impl_->bindings.contains(set->material_session_uid))impl_->bindings.emplace(set->material_session_uid,bind(main,set->material_session_uid));
   auto &binding=impl_->bindings.at(set->material_session_uid);auto &tree=*binding.material->nodetree;
   std::string key=QJsonDocument(geometry_mask_json(layer.geometry)).toJson(QJsonDocument::Compact).toStdString();for(int tile:set->tiles)key+=std::to_string(tile)+":"+std::to_string(set->width(tile))+":"+std::to_string(set->rows(tile))+";";
+  key+=set->loaded?"loaded":"unloaded";for(int tile:set->unloaded_tiles)key+="off:"+std::to_string(tile)+";";
   if(binding.geometry_visibility_on&&binding.geometry_visibility_key==key)return changed;
   auto &texture=node(tree,"ShaderNodeTexImage","__BTS_GeometryVisibility");auto *storage=static_cast<NodeTexImage *>(texture.storage);storage->interpolation=SHD_INTERP_CLOSEST;
   auto &enabled=node(tree,"ShaderNodeMath","__BTS_GeometryEnabled");enabled.custom1=NODE_MATH_MULTIPLY;
@@ -829,10 +832,24 @@ bool MaterialInspection::set_geometry_visibility(Main &main,const TextureSet *se
       // Transfer the generated image's initial user to this node.
       auto *old=texture.id;texture.id=&image->id;if(old){id_us_min(old);impl_->retired_visibility_images.push_back(reinterpret_cast<Image *>(old));}
     }
-    for(int tile:set->tiles){ImageUser user{};user.tile=tile;auto *buffer=BKE_image_acquire_ibuf(image,&user,nullptr);if(!buffer||!buffer->float_data()){if(buffer)BKE_image_release_ibuf(image,buffer,nullptr);throw std::runtime_error("Geometry visibility buffer unavailable");}auto *data=buffer->float_data_for_write();for(int y=0;y<height(tile);++y)for(int x=0;x<width(tile);++x){const float excluded=!TextureDocument::geometry_includes(*set,layer,x,y,tile);const auto offset=(std::size_t(y)*width(tile)+x)*4;data[offset]=data[offset+1]=data[offset+2]=excluded;data[offset+3]=1;}BKE_image_mark_dirty(image,buffer);BKE_image_update_gputexture_delayed(image,BKE_image_get_tile(image,tile),buffer,0,0,width(tile),height(tile));BKE_image_release_ibuf(image,buffer,nullptr);}
+    for(int tile:set->tiles){ImageUser user{};user.tile=tile;auto *buffer=BKE_image_acquire_ibuf(image,&user,nullptr);if(!buffer||!buffer->float_data()){if(buffer)BKE_image_release_ibuf(image,buffer,nullptr);throw std::runtime_error("Geometry visibility buffer unavailable");}auto *data=buffer->float_data_for_write();for(int y=0;y<height(tile);++y)for(int x=0;x<width(tile);++x){const float excluded=!set->tile_loaded(tile)||!TextureDocument::geometry_includes(*set,layer,x,y,tile);const auto offset=(std::size_t(y)*width(tile)+x)*4;data[offset]=data[offset+1]=data[offset+2]=excluded;data[offset+3]=1;}BKE_image_mark_dirty(image,buffer);BKE_image_update_gputexture_delayed(image,BKE_image_get_tile(image,tile),buffer,0,0,width(tile),height(tile));BKE_image_release_ibuf(image,buffer,nullptr);}
     DEG_id_tag_update_ex(&main,&image->id,ID_RECALC_SHADING);binding.geometry_visibility_key=key;
   }
   scalar(tree,input(enabled,1),1);binding.geometry_visibility_on=true;BKE_ntree_update_after_single_tree_change(main,tree);DEG_id_tag_update_ex(&main,&binding.material->id,ID_RECALC_SHADING);DEG_id_tag_update_ex(&main,&tree.id,ID_RECALC_NTREE_OUTPUT);return true;
+}
+void MaterialInspection::change_residency(Main &main,const TextureSet &source){
+ const auto set=resident_texture_view(source);
+ impl_->cycles.reset();
+ update_pixels(main,set,set.texture_resolution,{},true,true);
+ auto &binding=impl_->bindings.at(set.material_session_uid);
+ binding.residency_hidden=!source.fully_loaded();
+ binding.world_set.reset();binding.world_geometry.reset();binding.world_ao_lease.reset();binding.world_ao={};
+ binding.projection_cache.clear();binding.ownership_cache.clear();
+ impl_->histogram_job.reset();impl_->thumbnail_job.reset();impl_->layer_capture_job.reset();impl_->material_sample_job.reset();
+ impl_->gpu_preview.evict_residency();
+ if(!queue_layer_edit(set,complete_composite_channels,true))throw std::runtime_error("Cannot restore resident texture targets");
+ auto visibility=source;visibility.layers={TextureLayer{}};visibility.instance_layers.reset();visibility.selected_layer=visibility.layers.front().id;
+ set_geometry_visibility(main,&visibility,true);
 }
 void MaterialInspection::begin_project_source_capture(){impl_->gpu_preview.begin_frame();}
 bool MaterialInspection::capture_project_source(const std::string &key,const PaintPixels &pixels,int channel,int tile,int x,int y,int width,int height,GpuProjectReadback &readback){
@@ -847,12 +864,12 @@ void MaterialInspection::capture_project_images(GpuProjectReadback &readback)
   auto *image=composite_image(binding,channel);if(!image)continue;
   const auto overrides=BKE_image_gpu_override_texture(image);auto *texture=overrides.texture?*overrides.texture:nullptr;
   if(!texture)continue; // Unbound inspection caches are not presentation data.
-  for(ImageTile &tile:image->tiles){ImageGpuTileRegion region;
+  for(ImageTile &tile:image->tiles){if(tile.gen_x==1&&tile.gen_y==1)continue;ImageGpuTileRegion region;
    if(!BKE_image_gpu_override_tile_region(image,tile.tile_number,region))throw std::runtime_error("Cannot snapshot GPU project tile region");
    readback.submit_native(image->id.session_uid,tile.tile_number,texture,region.x,region.y,region.layer,region.width,region.height);
   }
  }
- for(auto &[uid,binding]:impl_->bindings)for(auto *image:binding.world_normal_images)if(image){const auto overrides=BKE_image_gpu_override_texture(image);auto *texture=overrides.texture?*overrides.texture:nullptr;if(!texture)continue;for(ImageTile &tile:image->tiles){ImageGpuTileRegion region;if(!BKE_image_gpu_override_tile_region(image,tile.tile_number,region))throw std::runtime_error("Cannot snapshot private world Normal tile");readback.submit_native(image->id.session_uid,tile.tile_number,texture,region.x,region.y,region.layer,region.width,region.height);}}
+ for(auto &[uid,binding]:impl_->bindings)for(auto *image:binding.world_normal_images)if(image){const auto overrides=BKE_image_gpu_override_texture(image);auto *texture=overrides.texture?*overrides.texture:nullptr;if(!texture)continue;for(ImageTile &tile:image->tiles){if(tile.gen_x==1&&tile.gen_y==1)continue;ImageGpuTileRegion region;if(!BKE_image_gpu_override_tile_region(image,tile.tile_number,region))throw std::runtime_error("Cannot snapshot private world Normal tile");readback.submit_native(image->id.session_uid,tile.tile_number,texture,region.x,region.y,region.layer,region.width,region.height);}}
 }
 std::vector<MaterialParameterMaskCapture> MaterialInspection::capture_material_layer_masks(const TextureSet &set,GpuProjectReadback &readback){
  require_material_parameter_main(set);validate_material_layering(set);
@@ -913,7 +930,7 @@ void MaterialInspection::pack_images()
 void MaterialInspection::restore(Main &main,const TextureDocument &document)
 {
   auto pending=std::make_unique<Impl>();pending->subsurface_enabled=impl_->subsurface_enabled;pending->world_geometry_provider=impl_->world_geometry_provider;pending->world_object_provider=impl_->world_object_provider;
-  for(const auto &set:document.texture_sets()) {
+  for(const auto &stored:document.texture_sets()) {const auto set=resident_texture_view(stored);
     // A read-only imported material retains its native graph, not BTS targets.
     if(!set.uniform_editable)continue;
     Material *material=nullptr;
@@ -1126,7 +1143,7 @@ for(const auto &layer:evaluation_layers(set))std::printf("BTS_GPU_ORACLE_LAYER k
 bool MaterialInspection::has_pixels(std::uint32_t uid) const {
   const auto it=impl_->bindings.find(uid);return it!=impl_->bindings.end() && it->second.resolution!=0;
 }
-bool MaterialInspection::update_pixels(Main &main,const TextureSet &set,int resolution,PaintPixels::Bounds bounds,bool interactive,bool allocate_only) {performance::Scope timing_all(allocate_only?"allocate_gpu_images":"update_pixels_cpu");
+bool MaterialInspection::update_pixels(Main &main,const TextureSet &source,int resolution,PaintPixels::Bounds bounds,bool interactive,bool allocate_only) {const auto set=resident_texture_view(source);performance::Scope timing_all(allocate_only?"allocate_gpu_images":"update_pixels_cpu");
   impl_->invalidate(set.material_session_uid);
   const int height=set.rows();
   require_gpu_texture_extent(resolution,height,"Native paint image");
@@ -1266,14 +1283,14 @@ bool MaterialInspection::shader_parameters(Main &main,const TextureSet &set){
 bool MaterialInspection::openpbr_reapply_is_stable(Main &main,std::uint32_t uid){const auto found=impl_->bindings.find(uid);if(found==impl_->bindings.end())return true;auto &b=found->second;return !apply_openpbr_shader(main,*b.material,b.shader_parameters.openpbr,impl_->subsurface_enabled);}
 bool MaterialInspection::set_subsurface_enabled(Main &main,bool enabled){if(impl_->subsurface_enabled==enabled)return false;impl_->subsurface_enabled=enabled;bool changed=false;for(auto &[uid,binding]:impl_->bindings)if(binding.shader_parameters.openpbr?apply_openpbr_shader(main,*binding.material,binding.shader_parameters.openpbr,enabled):subsurface_shader(binding,enabled)){auto &tree=*binding.material->nodetree;BKE_ntree_update_after_single_tree_change(main,tree);DEG_id_tag_update_ex(&main,&binding.material->id,ID_RECALC_SHADING);DEG_id_tag_update_ex(&main,&tree.id,ID_RECALC_NTREE_OUTPUT);changed=true;}return changed;}
 bool MaterialInspection::preview_displacement(Main &main,const TextureSet &set){const auto found=impl_->bindings.find(set.material_session_uid);if(found==impl_->bindings.end()||!found->second.displacement_image)return false;found->second.displacement_settings=set.displacement;const bool changed=displacement_shader(main,found->second);if(changed){impl_->gpu_displacement_changed=true;impl_->cycles.changed(*found->second.displacement_image,set.material_session_uid,16);}return changed;}
-void MaterialInspection::prepare_pixels(Main &main,const TextureSet &set){if(!has_pixels(set.material_session_uid)){update_pixels(main,set,set.texture_resolution,{},true,true);if(!queue_layer_edit(set,complete_composite_channels,true))throw std::runtime_error("GPU initial image queue failed");}}
+void MaterialInspection::prepare_pixels(Main &main,const TextureSet &source){const auto set=resident_texture_view(source);if(!has_pixels(set.material_session_uid)){update_pixels(main,set,set.texture_resolution,{},true,true);if(!queue_layer_edit(set,complete_composite_channels,true))throw std::runtime_error("GPU initial image queue failed");}}
 void MaterialInspection::queue_composite(const TextureSet &set){
  // Compatibility entry point: it must never schedule a CPU persistence or
  // interactive fallback. Unsupported input remains visible as an explicit error.
  if(!queue_layer_edit(set,complete_composite_channels,true))throw std::runtime_error("GPU layer stack target is unavailable");
 }
 
-bool MaterialInspection::queue_layer_edit(const TextureSet &set,CompositeChannels channels,bool finalize){PaintMetadataScope metadata;performance::Scope timing("queue_layer_edit");
+bool MaterialInspection::queue_layer_edit(const TextureSet &source,CompositeChannels channels,bool finalize){const auto set=resident_texture_view(source);PaintMetadataScope metadata;performance::Scope timing("queue_layer_edit");
   if(set.disabled||!set.uniform_editable)return true;
   impl_->gpu_preview.validate_native_mapping_instances(set);
   const auto invalidation_start=PropertyClock::now();
@@ -1614,7 +1631,7 @@ void MaterialInspection::upload_staging_images(bool allow_gpu_compute,bool input
       if(!texture&&c==6){if(binding.displayed_channel==int(InspectionMode::Normal)){pending=true;continue;}binding.gpu_stack_active[c]=true;binding.gpu_inspection_waiting=true;binding.edit_channels[c]=false;request.channels[c]=false;continue;}
       if(!texture){binding.gpu_unbound_waiting[c]=true;binding.gpu_stack_active[c]=true;binding.edit_channels[c]=false;request.channels[c]=false;std::printf("BTS_GPU_CHANNEL_DEFER channel=%d reason=not-shader-bound cpu_composite=0\n",c);continue;}
       auto result=GpuPreviewUpdate::Updated;if(c==16)impl_->gpu_preview.set_displacement_epoch(uid,binding.displacement_cpu_epoch);
-      if(texture){std::map<int,std::array<int,3>> regions;for(int tile:request.set.tiles){ImageGpuTileRegion region;if(!BKE_image_gpu_override_tile_region(composite_image(binding,c),tile,region)||region.width!=request.set.width(tile)||region.height!=request.set.rows(tile)){result=GpuPreviewUpdate::Unsupported;break;}regions[tile]={region.x,region.y,region.layer};}if(result!=GpuPreviewUpdate::Unsupported)result=impl_->gpu_preview.update_tiles(request.set,c,texture,regions);}
+      if(texture){std::map<int,std::array<int,3>> regions;for(int tile:request.set.tiles){ImageGpuTileRegion region;if(!BKE_image_gpu_override_tile_region(composite_image(binding,c),tile,region)||region.width!=request.set.width(tile)||region.height!=request.set.rows(tile)){result=GpuPreviewUpdate::Unsupported;break;}regions[tile]={region.x,region.y,region.layer};}if(result!=GpuPreviewUpdate::Unsupported){auto active=request.set;if(active.residency_view){active.tiles=active.loaded_tiles();std::erase_if(regions,[&](const auto &entry){return !active.tile_loaded(entry.first);});}if(!active.tiles.empty())result=impl_->gpu_preview.update_tiles(active,c,texture,regions);}}
       if(result==GpuPreviewUpdate::Pending){pending=true;continue;}request.channels[c]=false;if(result!=GpuPreviewUpdate::Updated){
         const auto native_error=impl_->gpu_preview.native_image_error();pending_composite_error=!native_error.empty()?native_error:pending_adjustment_failure?pending_adjustment_failure->message:"GPU layer target allocation failed; retaining the previous image (CPU fallback disabled)";
         impl_->failures[uid]=pending_composite_error;impl_->failed_channels[uid][c]=true;

@@ -101,6 +101,12 @@ struct TextureSet {
   std::uint32_t material_session_uid = 0; // Runtime binding only, not a persistent identity.
   std::string name;
   bool disabled=false;
+  bool loaded=true;
+  bool residency_view=false; // Runtime allocation view, never serialized.
+  std::set<int> unloaded_tiles;
+  bool tile_loaded(int tile) const { return loaded && !unloaded_tiles.contains(tile); }
+  bool fully_loaded() const { return loaded && unloaded_tiles.empty(); }
+  std::set<int> loaded_tiles() const { auto result=tiles; std::erase_if(result,[&](int tile){return !tile_loaded(tile);}); return result; }
   DisplacementSettings displacement;
   SkewField skew;
   mutable std::array<double,2> native_per_uv{1,1};
@@ -119,8 +125,8 @@ struct TextureSet {
   std::array<ChannelPrecision,6> precision=default_channel_precision;
   int texture_resolution=512,texture_height=0;
   bool size_linked=true;
-  int width(int tile=0) const {const auto found=tile_resolutions.find(tile);return found==tile_resolutions.end()?texture_resolution:found->second;}
-  int rows(int tile=0) const {const auto found=tile_resolutions.find(tile);return found==tile_resolutions.end()?(texture_height?texture_height:texture_resolution):found->second;}
+  int width(int tile=0) const {if(residency_view&&tile&&!tile_loaded(tile))return 1;const auto found=tile_resolutions.find(tile);return found==tile_resolutions.end()?texture_resolution:found->second;}
+  int rows(int tile=0) const {if(residency_view&&tile&&!tile_loaded(tile))return 1;const auto found=tile_resolutions.find(tile);return found==tile_resolutions.end()?(texture_height?texture_height:texture_resolution):found->second;}
   std::uint64_t evaluation_texels() const {std::uint64_t count=0;for(int tile:tiles)count+=std::uint64_t(width(tile))*rows(tile);return count;}
   // Private compatibility coordinate: old stacks retain their signed-zero data,
   // filter/blend arithmetic and history. Artist values and final maps always

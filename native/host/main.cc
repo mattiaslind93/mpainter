@@ -1,3 +1,6 @@
+#include "TextureResidencyMemory.hh"
+#include "GPU_host_texture_memory.hh"
+#include "TextureSetResidency.hh"
 #include "Theme.hh"
 #include "RenderStatusTest.hh"
 #include "AssetApplicationTarget.hh"
@@ -193,6 +196,7 @@
 #include "PathsPanel.hh"
 #include "PathCurvePanel.hh"
 #include "BrushPreview.hh"
+#include "EnvironmentRotationGesture.hh"
 
 #include <algorithm>
 #include <cmath>
@@ -259,6 +263,7 @@ namespace {
 class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
  public:
   std::function<void()> gpu_startup_ready;
+  std::function<void(double)> environment_rotation_changed;
   explicit Viewport(bts::BlenderHost &host, QWidget *parent = nullptr)
       : QOpenGLWidget(parent), host_(host)
   {
@@ -1119,6 +1124,13 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
     set_secondary_active(event->modifiers().testFlag(Qt::ControlModifier));
     if(!tablet_dispatch_){input_pressure_=1;input_tilt_={};pointer_name_="Mouse";}
     setFocus();
+    if(environment_rotation_.active()){event->accept();return;}
+    if(!empty_project&&!gesture_&&!painting_&&environment_rotation_changed&&event->button()==Qt::RightButton&&event->modifiers()==Qt::ShiftModifier){
+      const auto pane=pane_at(event->position());
+      if(environment_rotation_.begin(*event,pane&&pane->kind==bts::ViewKind::Scene,host_.environment_state()["rotation"].toDouble())){
+        event->accept();return;
+      }
+    }
     if (const auto ref_pane = pane_at(event->position()); ref_pane && ref_pane->kind == bts::ViewKind::Uv && reference_image_enabled) {
       if (gesture_ || event->buttons() != event->button()) { event->ignore(); return; }
       interaction_view_ = bts::ViewKind::Uv;
@@ -1269,6 +1281,10 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
   void mouseMoveEvent(QMouseEvent *event) override
   {
     bts::tablet::event(*event,tablet_contact_,tablet_dispatch_,input_pressure_);
+    if(environment_rotation_.active()){
+      if(const auto angle=environment_rotation_.move(*event))environment_rotation_changed(*angle);
+      event->accept();return;
+    }
     if(path_drag){try {auto &drag=*path_drag;const double distance=QLineF(drag.start,event->position()).length();if(distance>=2)drag.moved=true;if(drag.moved&&path_drag_update){auto path=std::make_shared<bts::SurfacePath>(*drag.before);if(distance<.01){path_drag_update(path);}else if(drag.handle<0){if(const auto point=pick_path_point(event->position())){bts::surface_path_move_vertex(*path,std::size_t(drag.vertex),*point);path_drag_update(path);}}else if(const auto position=path_plane_point(event->position(),drag.before->points[drag.vertex]);position&&drag.plane_start){const auto handles=bts::surface_path_handles(*drag.before,drag.vertex);auto value=handles[drag.handle];for(int c=0;c<3;++c)value[c]+=(*position)[c]-(*drag.plane_start)[c];bts::surface_path_move_handle(*path,std::size_t(drag.vertex),drag.handle,value,event->modifiers().testFlag(Qt::AltModifier),event->modifiers().testFlag(Qt::ControlModifier));path_drag_update(path);}}}catch(const std::exception &error){qWarning("BTS_PATH_DRAG_REJECTED: %s",error.what());}event->accept();update();return;}
     if(stencil_drag!=Qt::NoButton&&stencil_before&&stencil_changed){
       const auto delta=event->position()-stencil_start;auto settings=*stencil_before;
@@ -1360,6 +1376,10 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
   void mouseReleaseEvent(QMouseEvent *event) override
   {
     bts::tablet::event(*event,tablet_contact_,tablet_dispatch_,input_pressure_);
+    if(environment_rotation_.active()){
+      if(const auto angle=environment_rotation_.release(*event))environment_rotation_changed(*angle);
+      event->accept();return;
+    }
     if(fill_gizmo.release(event)){event->accept();update();return;}
     if(fill_projection&&warp_editor.release(event,*fill_projection,warp_view_context())){event->accept();update();return;}
     if(path_drag&&event->button()==Qt::LeftButton){finish_path_drag(false);event->accept();return;}
@@ -1510,6 +1530,7 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
   QComboBox *camera_selector_=nullptr;QPushButton *camera_back_=nullptr;QLabel *camera_notice_=nullptr;std::vector<bts::SceneCamera> scene_cameras_;std::optional<std::uint32_t> current_imported_camera_,last_imported_camera_;std::optional<bts::OrbitCamera> default_camera_;
 
   std::optional<NavigationGesture> gesture_;
+  bts::EnvironmentRotationGesture environment_rotation_;
   bts::ViewKind interaction_view_ = bts::ViewKind::Scene;
   QJsonObject last_framed_bounds_;
   std::optional<std::uint32_t> selected_material_;
@@ -1540,6 +1561,7 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
 
   void end_gesture()
   {
+    environment_rotation_.finish();
     if (gesture_ && gesture_->kind == GestureKind::SnapOrbit) {
       camera_.orbit({}, false);
     }
@@ -2337,6 +2359,7 @@ int main(int argc, char **argv)
     std::unique_ptr<bts::ResourceMonitor> resource_monitor;
     std::unique_ptr<bts::TextureLoadController> texture_loader;
     std::unique_ptr<bts::NativeMaterialSourceLoader> native_material_loader;
+    std::map<std::pair<std::uint32_t,int>,std::uint64_t> residency_requests;
     std::unique_ptr<bts::SmartMaskThumbnailJobs> smart_mask_thumbnails;
     std::unique_ptr<bts::BrushPresetThumbnailJobs> brush_thumbnails;
     bts::BrushPresetUi *brush_presets=nullptr;
@@ -2405,7 +2428,7 @@ int main(int argc, char **argv)
       catch (const std::exception &error) { if (workspace) workspace->append_console(QString::fromUtf8(error.what())); }
     };
     viewport->mesh_map_requested=[&](int role){if(!document||role<0||role>=7)return;inspected_map=role;viewport->mesh_map_active=viewport->last_mesh_map=role;update_inspection(bts::InspectionMode::Roughness);};
-    const auto refresh_texture_set_list=[&]{if(!workspace||!document)return;const QSignalBlocker block(workspace->texture_sets());QStringList names;for(const auto &material:snapshot.materials)names.append(QString::fromStdString(document->set(material.session_id).name));workspace->set_texture_sets(names,names.isEmpty()?-1:std::clamp(selected_material,0,int(names.size())-1));for(int row=0;row<int(snapshot.materials.size());++row)workspace->texture_sets()->item(row)->setData(Qt::UserRole,snapshot.materials[row].session_id);for(const auto &set:document->texture_sets())if(set.disabled){auto *item=new QListWidgetItem(QString::fromStdString(set.name),workspace->texture_sets());item->setFlags(Qt::NoItemFlags);item->setForeground(QColor(bts::theme::Muted));item->setToolTip("Unused Texture Set: use Settings → Reassign Texture Sets");}};
+    const auto refresh_texture_set_list=[&]{if(!workspace||!document)return;const QSignalBlocker block(workspace->texture_sets());QStringList names;for(const auto &material:snapshot.materials)names.append(QString::fromStdString(document->set(material.session_id).name));workspace->set_texture_sets(names,names.isEmpty()?-1:std::clamp(selected_material,0,int(names.size())-1));for(int row=0;row<int(snapshot.materials.size());++row){auto *item=workspace->texture_sets()->item(row);const auto &set=document->set(snapshot.materials[row].session_id);item->setData(Qt::UserRole,set.material_session_uid);item->setData(Qt::CheckStateRole,set.loaded?Qt::Checked:Qt::Unchecked);item->setForeground(QColor(set.loaded?bts::theme::Text:bts::theme::Disabled));}for(const auto &set:document->texture_sets())if(set.disabled){auto *item=new QListWidgetItem(QString::fromStdString(set.name),workspace->texture_sets());item->setFlags(Qt::ItemIsUserCheckable);item->setCheckState(set.loaded?Qt::Checked:Qt::Unchecked);item->setForeground(QColor(bts::theme::Muted));item->setToolTip("Unused Texture Set: use Settings → Reassign Texture Sets");}};
     const auto mark_document_commit = [&]()noexcept {
       dirty=true;++document_revision;last_document_edit=bts::performance::Clock::now();
     };
@@ -2422,6 +2445,16 @@ int main(int argc, char **argv)
       if(workspace){QString signature;if(document)for(const auto &set:document->texture_sets()){signature+=set.id.toString()+QString::fromStdString(set.name);for(int role=0;role<7;++role)if(set.mesh_maps[role])for(const auto &[tile,plane]:set.mesh_maps[role]->tiles)signature+=QString::number(role)+":"+QString::number(tile)+":"+QString::fromStdString(plane.hash);}if(workspace->property("bakedShelfSignature").toString()!=signature){workspace->setProperty("bakedShelfSignature",signature);if(!workspace->property("bakedShelfRefreshPending").toBool()){workspace->setProperty("bakedShelfRefreshPending",true);QTimer::singleShot(0,workspace,[workspace]{workspace->setProperty("bakedShelfRefreshPending",false);workspace->refresh_alpha_shelf();});}}}
       if(mark_changed)mark_document_changed();
       viewport->update();
+    };
+    const auto schedule_residency_spill=[&]{
+      if(!workspace||!document||std::all_of(document->texture_sets().begin(),document->texture_sets().end(),[](const auto &set){return set.fully_loaded();}))return;
+      auto *poll=new QTimer(workspace);poll->setInterval(100);const auto project_id=document->id();
+      QObject::connect(poll,&QTimer::timeout,workspace,[&,poll,project_id]{
+        if(!document||document->id()!=project_id){poll->stop();poll->deleteLater();return;}
+        if(QApplication::activeModalWidget()||host.texture_updates_pending()||host.save_project_pending()||(texture_loader&&texture_loader->pending())||(native_material_loader&&native_material_loader->pending()))return;
+        poll->stop();poll->deleteLater();
+        try{bts::spill_unloaded_textures(*document);}catch(const std::exception &error){workspace->set_error_status(QString("Texture cache: ")+QString::fromUtf8(error.what()));}
+      });poll->start();
     };
     // History/dirty state is immediate. Broad panel synchronization follows the
     // first newly composed frame and never closes a subsequent active drag.
@@ -2469,6 +2502,7 @@ int main(int argc, char **argv)
       if (!document) return;
       auto candidate = std::make_unique<bts::TextureDocument>(*document);
       try {
+        if(document->set(uid).loaded_tiles().empty()||(workspace&&workspace->active_tile()&&!document->set(uid).tile_loaded(workspace->active_tile())))throw std::invalid_argument("Load the Texture Set / UV tile before editing it");
         if(!precompose_control_edit)bts::require_uncached_layer(document->set(uid),document->set(uid).selected_layer);
         if(!material_layering_edit)bts::require_material_layering_edit_target(document->set(uid));
         edit(candidate->set(uid));
@@ -2628,9 +2662,9 @@ int main(int argc, char **argv)
           const auto &base_set=stroke_before->set(stroke_uid);const auto &base_layer=bts::TextureDocument::layer(stroke_before->set(stroke_uid),base_set.selected_layer);const auto *base_effect=bts::TextureDocument::paint_effect(base_set);
           const auto &base_pixels=base_effect?base_effect->pixels:stroke_mask?base_layer.mask->pixels:base_layer.pixels;
           if(!smudge_paint)smudge_paint=std::make_unique<bts::SmudgeStroke>(base_pixels,resolution,bts::adjustment_main_source(base_set,base_layer,stroke_adjustment));
-        for(std::size_t stamp_index=0;stamp_index<stamps.size();++stamp_index){std::optional<bts::performance::Scope> timing;if(viewport->measure_brush_dabs_)timing.emplace("stroke_raster_dab_cpu");auto stamp=stamps[stamp_index];writing_tail=stamp_index>=stable_count;stroke_spatial|=bool(stamp.surface);if(!stroke_mask)for(int c=0;c<5;++c)stamp.channels[c]&=set.channels[c]&&layer.channels[c];const float pickup=std::clamp(stamp.flow*brush.spacing/100,0.f,1.f);include(smudge_paint->dab(stamp,set.tiles,pickup));
-            if(!stroke_mask&&brush.ao&&set.ao_channel&&layer.ao_enabled){if(!smudge_ao)smudge_ao=std::make_unique<bts::SmudgeStroke>(base_effect?base_effect->ao:base_layer.ao_pixels,resolution,bts::adjustment_scalar_source(base_set,base_layer,5,stroke_adjustment));auto scalar=stamp;scalar.channels={false,false,true,false,false};include(smudge_ao->dab(scalar,set.tiles,pickup));}
-            if(!stroke_mask)for(int slot=0;slot<9;++slot)if(scalar_enabled(set,layer,bool(effect),slot)){auto &user=scalar_layer(layer,slot);const int size=effect?resolution:bts::custom_authoring_resolution(user,set.texture_resolution);if(!smudge_users[slot])smudge_users[slot]=std::make_unique<bts::SmudgeStroke>(base_effect?scalar_pixels(*base_effect,slot):scalar_layer(base_layer,slot).pixels,size,bts::adjustment_scalar_source(base_set,base_layer,slot==8?16:slot+7,stroke_adjustment));auto scalar=stamp;scalar.channels={false,false,true,false,false};include(remap(smudge_users[slot]->dab(scalar,set.tiles,pickup),size,resolution));}
+        for(std::size_t stamp_index=0;stamp_index<stamps.size();++stamp_index){std::optional<bts::performance::Scope> timing;if(viewport->measure_brush_dabs_)timing.emplace("stroke_raster_dab_cpu");auto stamp=stamps[stamp_index];writing_tail=stamp_index>=stable_count;stroke_spatial|=bool(stamp.surface);if(!stroke_mask)for(int c=0;c<5;++c)stamp.channels[c]&=set.channels[c]&&layer.channels[c];const float pickup=std::clamp(stamp.flow*brush.spacing/100,0.f,1.f);include(smudge_paint->dab(stamp,set.loaded_tiles(),pickup));
+            if(!stroke_mask&&brush.ao&&set.ao_channel&&layer.ao_enabled){if(!smudge_ao)smudge_ao=std::make_unique<bts::SmudgeStroke>(base_effect?base_effect->ao:base_layer.ao_pixels,resolution,bts::adjustment_scalar_source(base_set,base_layer,5,stroke_adjustment));auto scalar=stamp;scalar.channels={false,false,true,false,false};include(smudge_ao->dab(scalar,set.loaded_tiles(),pickup));}
+            if(!stroke_mask)for(int slot=0;slot<9;++slot)if(scalar_enabled(set,layer,bool(effect),slot)){auto &user=scalar_layer(layer,slot);const int size=effect?resolution:bts::custom_authoring_resolution(user,set.texture_resolution);if(!smudge_users[slot])smudge_users[slot]=std::make_unique<bts::SmudgeStroke>(base_effect?scalar_pixels(*base_effect,slot):scalar_layer(base_layer,slot).pixels,size,bts::adjustment_scalar_source(base_set,base_layer,slot==8?16:slot+7,stroke_adjustment));auto scalar=stamp;scalar.channels={false,false,true,false,false};include(remap(smudge_users[slot]->dab(scalar,set.loaded_tiles(),pickup),size,resolution));}
             if(stamp_index+1==stable_count)save_stroke_prefix(pending_stroke,pending_ao,pending_users);
           }
           writing_tail=false;stroke_tail_bounds=new_tail_bounds;
@@ -2648,7 +2682,7 @@ int main(int argc, char **argv)
           if(!stroke_mask&&brush.ao&&set.ao_channel&&layer.ao_enabled&&!clone_ao)clone_ao=std::make_unique<bts::CloneStroke>(source_effect?source_effect->ao:source_layer.ao_pixels,resolution,*viewport->clone_source,brush.clone_absolute,bts::adjustment_scalar_source(base,source_layer,5,stroke_adjustment));
           if(!stroke_mask)for(int slot=0;slot<9;++slot)if(scalar_enabled(set,layer,bool(effect),slot)&&!clone_users[slot])clone_users[slot]=std::make_unique<bts::CloneStroke>(source_effect?scalar_pixels(*source_effect,slot):scalar_layer(source_layer,slot).pixels,effect?resolution:bts::custom_authoring_resolution(scalar_layer(layer,slot),set.texture_resolution),*viewport->clone_source,brush.clone_absolute,bts::adjustment_scalar_source(base,source_layer,slot==8?16:slot+7,stroke_adjustment));
         }
-        for(std::size_t stamp_index=0;stamp_index<stamps.size();++stamp_index){std::optional<bts::performance::Scope> timing;if(viewport->measure_brush_dabs_)timing.emplace("stroke_raster_dab_cpu");auto stamp=stamps[stamp_index];writing_tail=stamp_index>=stable_count;stroke_spatial|=bool(stamp.surface);if(!stroke_mask)for(int channel=0;channel<5;++channel)stamp.channels[channel]&=set.channels[channel]&&layer.channels[channel];const auto input=stamp;if(stroke_clone){stamp=clone_paint->dab(stamp);viewport->clone_source_display=clone_paint->last_source();}include(pending_stroke.stamp_working(resolution,stamp,set.tiles));if(!stroke_mask){for(int slot=0;slot<9;++slot)if(scalar_enabled(set,layer,bool(effect),slot)){auto custom_stamp=stamp;custom_stamp.channels={false,false,true,false,false};custom_stamp.values.roughness=scalar_value(slot);if(stroke_clone){auto source=input;source.channels=custom_stamp.channels;custom_stamp=clone_users[slot]->dab(source);}if(custom_stamp.projected){auto projection=std::make_shared<bts::ProjectionMapping>(*custom_stamp.projected);projection->scalar_override=scalar_value(slot);custom_stamp.projected=std::move(projection);}auto &user=scalar_layer(layer,slot);const int size=effect?resolution:bts::custom_authoring_resolution(user,set.texture_resolution);const auto bounds=pending_users[slot].stamp_working(size,custom_stamp,set.tiles);if(!bounds.empty()){if(!effect)user.author_resolution=size;include(remap(bounds,size,resolution));}}}if(!stroke_mask&&brush.ao&&set.ao_channel&&layer.ao_enabled){stamp.channels={false,false,true,false,false};stamp.values.roughness=brush.values.ambient_occlusion;if(stroke_clone){auto source=input;source.channels=stamp.channels;stamp=clone_ao->dab(source);}if(stamp.projected){auto projection=std::make_shared<bts::ProjectionMapping>(*stamp.projected);projection->scalar_override=brush.values.ambient_occlusion;stamp.projected=std::move(projection);}include(pending_ao.stamp_working(resolution,stamp,set.tiles));}if(stamp_index+1==stable_count)save_stroke_prefix(pending_stroke,pending_ao,pending_users);}
+        for(std::size_t stamp_index=0;stamp_index<stamps.size();++stamp_index){std::optional<bts::performance::Scope> timing;if(viewport->measure_brush_dabs_)timing.emplace("stroke_raster_dab_cpu");auto stamp=stamps[stamp_index];writing_tail=stamp_index>=stable_count;stroke_spatial|=bool(stamp.surface);if(!stroke_mask)for(int channel=0;channel<5;++channel)stamp.channels[channel]&=set.channels[channel]&&layer.channels[channel];const auto input=stamp;if(stroke_clone){stamp=clone_paint->dab(stamp);viewport->clone_source_display=clone_paint->last_source();}include(pending_stroke.stamp_working(resolution,stamp,set.loaded_tiles()));if(!stroke_mask){for(int slot=0;slot<9;++slot)if(scalar_enabled(set,layer,bool(effect),slot)){auto custom_stamp=stamp;custom_stamp.channels={false,false,true,false,false};custom_stamp.values.roughness=scalar_value(slot);if(stroke_clone){auto source=input;source.channels=custom_stamp.channels;custom_stamp=clone_users[slot]->dab(source);}if(custom_stamp.projected){auto projection=std::make_shared<bts::ProjectionMapping>(*custom_stamp.projected);projection->scalar_override=scalar_value(slot);custom_stamp.projected=std::move(projection);}auto &user=scalar_layer(layer,slot);const int size=effect?resolution:bts::custom_authoring_resolution(user,set.texture_resolution);const auto bounds=pending_users[slot].stamp_working(size,custom_stamp,set.loaded_tiles());if(!bounds.empty()){if(!effect)user.author_resolution=size;include(remap(bounds,size,resolution));}}}if(!stroke_mask&&brush.ao&&set.ao_channel&&layer.ao_enabled){stamp.channels={false,false,true,false,false};stamp.values.roughness=brush.values.ambient_occlusion;if(stroke_clone){auto source=input;source.channels=stamp.channels;stamp=clone_ao->dab(source);}if(stamp.projected){auto projection=std::make_shared<bts::ProjectionMapping>(*stamp.projected);projection->scalar_override=brush.values.ambient_occlusion;stamp.projected=std::move(projection);}include(pending_ao.stamp_working(resolution,stamp,set.loaded_tiles()));}if(stamp_index+1==stable_count)save_stroke_prefix(pending_stroke,pending_ao,pending_users);}
         writing_tail=false;stroke_tail_bounds=new_tail_bounds;
         if(!effect&&!stroke_mask&&(!pending_stroke.empty()||!pending_ao.empty()))layer.author_resolution=resolution;
         if(dirty_rect.empty())return;
@@ -2801,13 +2835,17 @@ int main(int argc, char **argv)
         if(host.inspection_mode()==bts::InspectionMode::Mask)update_inspection(bts::InspectionMode::Mask);
         if(!(skew&&skew->painting())&&(!set||(!set->selected_effect.isNull()&&!bts::TextureDocument::paint_effect(*set))||(!set->selected_mask&&bts::TextureDocument::layer(document->set(set->material_session_uid),set->selected_layer).kind!=bts::LayerKind::Paint&&!bts::TextureDocument::paint_effect(*set))||!set->uniform_editable||workspace->layer_stack()->selectedItems().size()!=1)){viewport->polygon_active=false;workspace->set_polygon_fill(false,int(viewport->polygon_mode),viewport->polygon_value);}
         const bool can_hide=!(skew&&skew->mode()>0)&&set&&set->uniform_editable&&!set->selected_geometry&&bts::TextureDocument::layer(document->set(set->material_session_uid),set->selected_layer).geometry.active();if(!layer_selection_refresh||hide_excluded_geometry){bts::performance::Scope timing("select_geometry_visibility");host.set_geometry_visibility(hide_excluded_geometry&&can_hide?set:nullptr);}
-        viewport->hidden_uv_tiles.clear();if(hide_excluded_geometry&&can_hide){const auto &mask=bts::TextureDocument::layer(document->set(set->material_session_uid),set->selected_layer).geometry;if(mask.type==1)for(int tile:set->tiles)if(!mask.includes_tile(tile))viewport->hidden_uv_tiles.insert(tile);}
+        viewport->hidden_uv_tiles.clear();if(set)for(int tile:set->tiles)if(!set->tile_loaded(tile))viewport->hidden_uv_tiles.insert(tile);if(hide_excluded_geometry&&can_hide){const auto &mask=bts::TextureDocument::layer(document->set(set->material_session_uid),set->selected_layer).geometry;if(mask.type==1)for(int tile:set->tiles)if(!mask.includes_tile(tile))viewport->hidden_uv_tiles.insert(tile);}
         {auto *button=workspace->findChild<QToolButton *>("hideExcludedGeometry");const QSignalBlocker block(button);button->setChecked(hide_excluded_geometry);button->setEnabled(set&&set->uniform_editable);}
         viewport->geometry_tile_editing=false;viewport->geometry_excluded_tiles.clear();viewport->geometry_hatch_shapes.clear();
         if(set&&set->selected_geometry){const auto &layer=bts::TextureDocument::layer(document->set(set->material_session_uid),set->selected_layer);if(layer.geometry.type==1){viewport->geometry_tile_editing=true;for(int tile:set->tiles)if(!layer.geometry.includes_tile(tile))viewport->geometry_excluded_tiles.insert(tile);for(const auto &triangle:snapshot.uv_triangles)if(snapshot.materials[triangle.material].session_id==set->material_session_uid)for(int tile:viewport->geometry_excluded_tiles){auto shape=bts::geometry_tile_polygon(triangle,tile);if(shape.size()>=3)viewport->geometry_hatch_shapes.push_back(std::move(shape));}}}
         if(viewport->fill_projection&&set){viewport->fill_projection->cm_per_native=set->cm_per_native;viewport->fill_projection->native_per_uv=set->native_per_uv;}
         workspace->set_instance_clipboard_available(instance_clipboard&&document&&instance_clipboard_document==document->id());
         workspace->set_quick_mask_state(quick_enabled,quick_editing);workspace->set_path_active(viewport->path_active);
+        const bool residency_editable=set&&!set->loaded_tiles().empty()&&(!workspace->active_tile()||set->tile_loaded(workspace->active_tile()));
+        workspace->findChild<QTabWidget *>("layerSettingsTabs")->widget(0)->setEnabled(residency_editable);
+        workspace->findChild<QWidget *>("propertiesSlot")->setEnabled(residency_editable);
+        if(!residency_editable){viewport->paint_enabled=false;viewport->polygon_active=false;viewport->fill_projection.reset();}
         workspace->setProperty("materialEditabilityReason",selected_material>=0&&selected_material<int(snapshot.materials.size())?QString::fromStdString(snapshot.materials[selected_material].roughness_unavailable_reason):QString{});
         if(set&&!layer_selection_refresh){bts::performance::Scope timing("select_warp_projections");host.prepare_warp_projections(*set);}
         const auto next_paint_target=set?QString::number(set->material_session_uid)+set->selected_layer.toString()+set->selected_effect.toString()+(set->selected_mask?"mask":"material"):QString{};
@@ -2819,7 +2857,7 @@ int main(int argc, char **argv)
         viewport->sync_warp_projection();
         viewport->paint_mask=set&&(set->selected_mask||quick_editing);
         viewport->quick_mask_edit=quick_editing;viewport->quick_mask_gate.reset();if(quick_enabled&&!quick_editing&&set){const auto found=quick_masks.find(set->material_session_uid);if(found!=quick_masks.end())viewport->quick_mask_gate=std::make_shared<bts::QuickMaskField>(found->second);}
-        viewport->paint_enabled=set && !bts::layer_is_cached(*set,set->selected_layer) && !set->selected_geometry && !bts::TextureDocument::layer(document->set(set->material_session_uid),set->selected_layer).instance && (set->selected_effect.isNull()||bts::TextureDocument::paint_effect(*set)) && workspace->layer_stack()->selectedItems().size()==1 && set->uniform_editable && (bts::TextureDocument::paint_effect(*set)||viewport->paint_mask||bts::TextureDocument::layer(document->set(set->material_session_uid),set->selected_layer).kind==bts::LayerKind::Paint);
+        viewport->paint_enabled=set && !set->loaded_tiles().empty() && (!workspace->active_tile()||set->tile_loaded(workspace->active_tile())) && !bts::layer_is_cached(*set,set->selected_layer) && !set->selected_geometry && !bts::TextureDocument::layer(document->set(set->material_session_uid),set->selected_layer).instance && (set->selected_effect.isNull()||bts::TextureDocument::paint_effect(*set)) && workspace->layer_stack()->selectedItems().size()==1 && set->uniform_editable && (bts::TextureDocument::paint_effect(*set)||viewport->paint_mask||bts::TextureDocument::layer(document->set(set->material_session_uid),set->selected_layer).kind==bts::LayerKind::Paint);
         if(set&&bts::material_layering_main_readonly(*set)){viewport->paint_enabled=false;viewport->polygon_active=false;viewport->fill_projection.reset();workspace->set_polygon_fill(false,int(viewport->polygon_mode),viewport->polygon_value); }
         if(viewport->fill_projection){fill_display_symmetry=viewport->fill_projection->symmetry?viewport->fill_projection->symmetry->constraint:bts::FillSymmetry{}.constraint;if(!bts::fill_surface_projection(*viewport->fill_projection))fill_display_symmetry.enabled=false;viewport->symmetry=&fill_display_symmetry;workspace->set_symmetry(fill_display_symmetry);}else{viewport->symmetry=&symmetry;workspace->set_symmetry(symmetry);}
         const bool symmetry_available=set&&set->uniform_editable&&!set->disabled&&(viewport->fill_projection?bts::fill_surface_projection(*viewport->fill_projection):viewport->paint_enabled);
@@ -2903,6 +2941,29 @@ int main(int argc, char **argv)
         if (picker) picker->accept_sample(sampled);
         color_picker_pending = false;
         secondary_picker_pending = false;
+      };
+      callbacks.residency_changed=[&](std::uint32_t uid,int tile,bool loaded){
+        if(!document||!uid)return;
+        const auto serial=++residency_requests[{uid,tile}];
+        auto &set=document->set(uid);
+        if((tile?set.tile_loaded(tile):set.loaded)==loaded)return;
+        try{
+          viewport->end_paint(false);if(uniform_before)finish_uniform_edit(false);
+          if(host.texture_updates_pending()||host.save_project_pending()||(texture_loader&&texture_loader->pending())||(native_material_loader&&native_material_loader->pending())){
+            auto *pending=new QTimer(workspace);pending->setInterval(100);const auto project_id=document->id();
+            QObject::connect(pending,&QTimer::timeout,workspace,[&,pending,project_id,uid,tile,loaded,serial]{
+              if(!document||document->id()!=project_id||residency_requests[{uid,tile}]!=serial){pending->stop();pending->deleteLater();return;}
+              if(host.texture_updates_pending()||host.save_project_pending()||(texture_loader&&texture_loader->pending())||(native_material_loader&&native_material_loader->pending()))return;
+              pending->stop();pending->deleteLater();workspace->request_texture_residency(uid,tile,loaded);
+            });pending->start();return;
+          }
+          const bool old_loaded=set.loaded;const auto old_tiles=set.unloaded_tiles;
+          if(tile){if(!set.tiles.contains(tile))throw std::invalid_argument("Unknown UV tile");if(loaded)set.unloaded_tiles.erase(tile);else set.unloaded_tiles.insert(tile);}else set.loaded=loaded;
+          try{host.change_texture_residency(set);}catch(...){set.loaded=old_loaded;set.unloaded_tiles=old_tiles;throw;}
+          for(auto *history:{&undo_history,&redo_history})for(auto &entry:*history)if(entry.state)for(const auto &old:entry.state->texture_sets())if(old.id==set.id){auto &target=entry.state->set(old.material_session_uid);target.loaded=set.loaded;target.unloaded_tiles=set.unloaded_tiles;}
+          refresh_document_ui(false,uid);
+          schedule_residency_spill();
+        }catch(const std::exception &error){workspace->append_console(QString::fromUtf8(error.what()));refresh_texture_set_list();select_material(selected_material);}
       };
       callbacks.texture_set_selected = [&](int index, const QString &) { select_material(index); };
       callbacks.display_transform_changed = [&](const QString &name) {
@@ -3067,6 +3128,7 @@ int main(int argc, char **argv)
         try {
           const auto before=host.environment_state();
           if(key.startsWith("subsurface.")){host.edit_subsurface_preview(key.mid(11),value);workspace->set_environment(host.environment_state());}else if(key.startsWith("post.")){host.edit_display_post_effect(key.mid(5),value);workspace->set_environment(host.environment_state());}else if(key=="rotation")host.set_environment_rotation(value);else if(key=="alignment")host.set_environment_alignment(value==0);else host.set_environment_appearance(key.toStdString(),value);
+          workspace->set_environment(host.environment_state());
           if(before==host.environment_state())return;
           if(document){const QString label="Environment "+key;const bool merge=key!="alignment"&&environment_edit_clock.isValid()&&environment_edit_clock.elapsed()<250&&!undo_history.empty()&&!undo_history.back().environment.isEmpty()&&undo_history.back().label==label;if(!merge)undo_history.push_back({nullptr,selected_material>=0?snapshot.materials[selected_material].session_id:0,label,{},before});if(undo_history.size()>128)undo_history.erase(undo_history.begin());redo_history.clear();(++document_revision,last_document_edit=bts::performance::Clock::now());refresh_history_actions();}
           environment_edit_clock.restart();dirty=bool(document);viewport->update();
@@ -3074,6 +3136,7 @@ int main(int argc, char **argv)
         }
         catch(const std::exception &error){workspace->append_console(QString::fromUtf8(error.what()));}
       };
+      viewport->environment_rotation_changed=[change=callbacks.environment_changed](double value){change("rotation",value);};
       callbacks.layer_blend_changed=[&](QUuid id,int channel,bts::LayerBlend mode){edit_material([=](bts::TextureSet &set){auto &layer=bts::TextureDocument::layer(set,id);if(layer.instance)throw std::invalid_argument("Instance blend is inherited from its source");if(channel==14)layer.displacement.blending=mode;else if(channel>=6)layer.users.at(channel-6).blending=mode;else if(channel==5)layer.ao_blending=mode;else layer.blending.at(channel)=mode;});};
       callbacks.layer_opacity_changed=[&](QUuid id,int channel,double value) {
         bts::property_event("opacity");
@@ -3925,7 +3988,7 @@ bts::FileDialog::prepare_directory_thread();workspace->set_fill_color_spaces(bts
       try{
         if(active_save){
           if(!host.poll_save_project())return;
-          const auto completed=*active_save;active_save.reset();
+          const auto completed=*active_save;active_save.reset();schedule_residency_spill();
           if(completed.recovery){last_recovery_document=completed.project;last_recovery_revision=completed.revision;std::printf("BTS_RECOVERY_READY pid=%lld path=%s background=1\n",static_cast<long long>(QCoreApplication::applicationPid()),qPrintable(completed.path));}
           else if(!completed.copy&&document&&document->id()==completed.project){if(requested_save&&requested_save->path==completed.path&&requested_save->expected==document_disk_identity)requested_save->expected=host.saved_project_identity();document_path=completed.path;document_disk_identity=host.saved_project_identity();if(document_revision==completed.revision)dirty=false;window->setWindowTitle(QFileInfo(completed.path).completeBaseName()+" — mPainter");if(python_event)python_event("ProjectSaved",{{"project_id",completed.project.toString(QUuid::WithoutBraces)},{"file_path",completed.path}});}
           window->statusBar()->showMessage("Saved "+QTime::currentTime().toString("HH:mm:ss"),5000);
@@ -4049,7 +4112,7 @@ bts::FileDialog::prepare_directory_thread();workspace->set_fill_color_spaces(bts
           expected=bts::ProjectFileIdentity::read(path);
         }
       }
-      if(diagnostic_sync_save){host.save_project(*document,path.toStdString(),assets.project_assets(),false,expected);document_disk_identity=host.saved_project_identity();bts::FileDialog::remember_folder(QFileInfo(path).absolutePath());document_path=path;dirty=false;window->setWindowTitle(QFileInfo(path).completeBaseName()+" — mPainter");}
+      if(diagnostic_sync_save){host.save_project(*document,path.toStdString(),assets.project_assets(),false,expected);document_disk_identity=host.saved_project_identity();bts::FileDialog::remember_folder(QFileInfo(path).absolutePath());document_path=path;dirty=false;window->setWindowTitle(QFileInfo(path).completeBaseName()+" — mPainter");schedule_residency_spill();}
       else request_save({path,{},document->id(),document_revision,false,false,expected});
       return true;
     };
@@ -4150,12 +4213,14 @@ bts::FileDialog::prepare_directory_thread();workspace->set_fill_color_spaces(bts
       viewport->set_empty_project(false);viewport->reset_shader_failure();document=std::make_unique<bts::TextureDocument>(std::move(opened));bts::apply_mesh_bake_template(document->id(),document->bake_configuration());viewport->polygon_active=false;viewport->polygon_drag=false;workspace->set_polygon_fill(false,int(viewport->polygon_mode),viewport->polygon_value);viewport->picker_active=false;workspace->set_picker_active(false);viewport->stroke_anchor.reset();viewport->path_active=viewport->path_editing=false;viewport->selected_path.clear();viewport->selected_vertex=-1;viewport->pending_path_point.reset();viewport->paths.clear();viewport->path_draw.clear();quick_enabled=quick_editing=false;quick_masks.clear();quick_stroke_before.reset();quick_brush=bts::BrushSettings{};quick_brush.mask_value=0;viewport->quick_mask_gate.reset();viewport->quick_mask_edit=false;brush=paint_brush=eraser_brush=bts::BrushSettings{};smudge_brush=bts::default_smudge_brush();clone_brush=bts::BrushSettings{};clone_brush.clone=true;viewport->clone_source.reset();viewport->clone_source_display.reset();projection_brush=bts::BrushSettings{};projection_brush.projected.emplace();projection_brush.values=projection_brush.projected->values;symmetry=host.symmetry_settings();workspace->set_symmetry(symmetry);
       if(document->settings().uv_workflow==bts::UvWorkflow::PreserveTiles)brush.channels={true,false,false,false,false};
       undo_history.clear();redo_history.clear();refresh_history_actions();snapshot=host.scene_snapshot();viewport->set_scene_cameras(snapshot.cameras);
+      for(const auto &set:document->texture_sets())if(!set.disabled&&!set.fully_loaded())host.change_texture_residency(set);
+      schedule_residency_spill();
       QStringList names,displays;
       for(const auto &m:snapshot.materials)names.append(QString::fromStdString(m.name));
       for(const auto &name:host.display_transforms())displays.append(QString::fromStdString(name));
       workspace->set_display_transforms(displays,host.color_state()["view_transform"].toString());
       workspace->set_texture_sets(names,names.isEmpty()?-1:0);
-      for(int row=0;row<int(snapshot.materials.size());++row)workspace->texture_sets()->item(row)->setData(Qt::UserRole,snapshot.materials[row].session_id);
+      for(int row=0;row<int(snapshot.materials.size());++row){auto *item=workspace->texture_sets()->item(row);const auto &set=document->set(snapshot.materials[row].session_id);item->setData(Qt::UserRole,set.material_session_uid);item->setData(Qt::CheckStateRole,set.loaded?Qt::Checked:Qt::Unchecked);item->setForeground(QColor(set.loaded?bts::theme::Text:bts::theme::Disabled));}
       if (use_workspace && document) {
         const auto &ref_state = bts::document_reference_image(*document);
         const QString ref_path = QString::fromStdString(ref_state.path);
@@ -4361,7 +4426,7 @@ bts::FileDialog::prepare_directory_thread();workspace->set_fill_color_spaces(bts
     if(workspace){auto *menu=workspace->findChild<QMenu *>("projectFileMenu");auto *action=menu->addAction("Save As Template…");action->setObjectName("saveProjectTemplate");QObject::connect(action,&QAction::triggered,workspace,[&]{if(!document)return;viewport->end_paint(false);try{const auto env=host.environment_state();const auto uid=selected_material>=0?snapshot.materials[selected_material].session_id:document->texture_sets().front().material_session_uid;const auto data=bts::make_project_template(*document,uid,host.color_state(),env,bts::pack_environment_resource(env["resource"].toString()),bts::mesh_bake_template(document->id()));QDir().mkpath(bts::project_template_directory());bts::FileDialog picker(workspace,"Save template",bts::project_template_directory(),"BTS project templates (*.btst)");picker.setObjectName("saveTemplatePicker");picker.setAcceptMode(QFileDialog::AcceptSave);picker.setOption(QFileDialog::DontUseNativeDialog);picker.setDefaultSuffix("btst");if(picker.exec()==QDialog::Accepted&&!picker.selectedFiles().isEmpty()){bts::write_project_template(picker.selectedFiles().front(),data);workspace->append_console("Project template saved: "+picker.selectedFiles().front());}}catch(const std::exception &error){workspace->append_console(QString::fromUtf8(error.what()));QMessageBox::warning(workspace,"Template could not be saved",QString::fromUtf8(error.what()));}});}
     if(workspace){auto *settings=workspace->findChild<QToolButton *>("textureSetListSettings");auto *menu=new QMenu(settings);auto *action=menu->addAction("Reassign Texture Sets…");action->setObjectName("reassignTextureSets");settings->setMenu(menu);settings->setPopupMode(QToolButton::InstantPopup);QObject::connect(action,&QAction::triggered,workspace,[&]{if(!document)return;viewport->end_paint(false);try{const auto assigned=bts::choose_texture_set_assignment(workspace,*document,snapshot);if(!assigned)return;auto candidate=std::make_unique<bts::TextureDocument>(*document);candidate->stage_texture_sets(*assigned);if(candidate->to_json()==document->to_json())return;try{checkpoint(document_path,true);}catch(const std::exception &error){workspace->append_console("Pre-assignment checkpoint unavailable: "+QString::fromUtf8(error.what()));}try{host.rebind_texture_sets(*candidate);}catch(...){host.rebind_texture_sets(*document);throw;}document=std::move(candidate);undo_history.clear();redo_history.clear();viewport->stroke_anchor.reset();refresh_document_ui();}catch(const std::exception &error){workspace->append_console(QString::fromUtf8(error.what()));QMessageBox::warning(workspace,"Texture Set reassignment failed",QString::fromUtf8(error.what()));}});}
     if(workspace&&qEnvironmentVariableIsSet("BTS_BM_ADJUSTMENT_DEMO")){auto *refuse=new QAction(workspace);refuse->setObjectName("guiBmRefuseNextPage");QObject::connect(refuse,&QAction::triggered,workspace,[workspace]{workspace->setProperty("bmRefuseNextPage",true);workspace->setProperty("bmRefusal",QJsonObject{{"armed",true},{"fired",false},{"terminal",false},{"reason",QString()},{"needed_bytes",qint64(2*bts::adjustment_page_bytes)},{"available_bytes",0},{"stroke_cancelled",false},{"acknowledged",false}});});workspace->addAction(refuse);auto *ack=new QAction(workspace);ack->setObjectName("guiBmAcknowledgeRefusal");QObject::connect(ack,&QAction::triggered,workspace,[workspace]{auto refusal=workspace->property("bmRefusal").toJsonObject();if(!refusal["fired"].toBool()||!refusal["terminal"].toBool())return;const auto reason=refusal["reason"].toString();if(auto *label=workspace->findChild<QLabel *>("workspaceErrorText");label&&label->text()==reason)workspace->set_error_status({});if(QString::fromStdString(bts::pending_composite_error)==reason)bts::pending_composite_error.clear();refusal["acknowledged"]=true;workspace->setProperty("bmRefusal",refusal);});workspace->addAction(ack);}
-    if(workspace){auto *menu=workspace->findChild<QMenu *>("projectFileMenu");menu->addSeparator();auto *export_action=menu->addAction("Export textures…");export_action->setObjectName("exportTextures");export_action->setShortcut(QKeySequence(Qt::CTRL|Qt::SHIFT|Qt::Key_E));QObject::connect(export_action,&QAction::triggered,workspace,[&]{if(!document)return;viewport->end_paint(false);if(bts::choose_texture_export(workspace,*document,[&](const auto &ids){return host.export_source(*document,ids);},[&](bool displaced){return host.prepare_mesh_export(*document,displaced,true);},host.mesh_export_displacement_available(*document),[&](const bts::ExportRequest &request,std::shared_ptr<const std::atomic_bool> cancelled,std::function<void(std::vector<bts::ExportTile>)> complete,std::function<void(std::string)> failed){new bts::GpuTextureExportSource(workspace,host,[viewport]{viewport->update();},*document,request,std::move(cancelled),std::move(complete),std::move(failed));}))refresh_document_ui();update_inspection(host.inspection_mode());viewport->update();});}
+    if(workspace){auto *menu=workspace->findChild<QMenu *>("projectFileMenu");menu->addSeparator();auto *export_action=menu->addAction("Export textures…");export_action->setObjectName("exportTextures");export_action->setShortcut(QKeySequence(Qt::CTRL|Qt::SHIFT|Qt::Key_E));QObject::connect(export_action,&QAction::triggered,workspace,[&]{if(!document)return;viewport->end_paint(false);if(bts::choose_texture_export(workspace,*document,[&](const auto &ids){return host.export_source(*document,ids);},[&](bool displaced){return host.prepare_mesh_export(*document,displaced,true);},host.mesh_export_displacement_available(*document),[&](const bts::ExportRequest &request,std::shared_ptr<const std::atomic_bool> cancelled,std::function<void(std::vector<bts::ExportTile>)> complete,std::function<void(std::string)> failed){new bts::GpuTextureExportSource(workspace,host,[viewport]{viewport->update();},*document,request,std::move(cancelled),std::move(complete),std::move(failed));}))refresh_document_ui();schedule_residency_spill();update_inspection(host.inspection_mode());viewport->update();});}
     if(workspace){auto *menu=workspace->findChild<QMenu *>("projectFileMenu");auto *action=menu->addAction("Export Mesh…");action->setObjectName("exportMesh");QObject::connect(action,&QAction::triggered,workspace,[&]{if(!document){workspace->append_console("No project open");return;}viewport->end_paint(false);bts::choose_mesh_export(workspace,QString::fromStdString(document->settings().absolute_mesh_path),host.mesh_export_displacement_available(*document),[&](bool displaced,bool normals){return host.prepare_mesh_export(*document,displaced,normals);});});}
     std::unique_ptr<bts::AutomationJobs> automation_jobs;
     if(workspace)automation_jobs=std::make_unique<bts::AutomationJobs>(workspace,bts::AutomationJobHooks{
@@ -7708,6 +7773,7 @@ bts::FileDialog::prepare_directory_thread();workspace->set_fill_color_spaces(bts
     }
     if((parser.isSet("gui-fix-demo")||qEnvironmentVariableIsSet("BTS_WARP_GEOMETRY_DEMO"))&&workspace){auto *capture=new QAction(workspace);capture->setObjectName("guiCaptureViewport");QObject::connect(capture,&QAction::triggered,workspace,[&]{viewport->grabFramebuffer().save(workspace->property("guiCapturePath").toString());});}
     if(workspace&&qEnvironmentVariableIsSet("BTS_OPENPBR_IMAGES_DEMO")){auto *probe=new QAction(workspace);probe->setObjectName("guiOpenPbrImportSample");QObject::connect(probe,&QAction::triggered,workspace,[&]{if(!document||selected_material<0)return;const auto &set=document->set(snapshot.materials[selected_material].session_id);bts::MaterialSampleRequest request;request.tile=workspace->property("pbrSampleTile").toInt();request.x=request.y=64;const auto ticket=host.request_material_sample(set,request);workspace->setProperty("pbrSamplePending",true);auto *timer=new QTimer(workspace);QObject::connect(timer,&QTimer::timeout,workspace,[&,timer,ticket]{auto result=host.material_sample_result();if(!result||result->ticket!=ticket)return;const auto &v=result->material;workspace->setProperty("pbrSample",QJsonObject{{"valid",result->valid},{"color",QJsonArray{v.base_color[0],v.base_color[1],v.base_color[2]}},{"metallic",v.metallic},{"roughness",v.roughness},{"bump",v.bump}});workspace->setProperty("pbrSamplePending",false);timer->stop();timer->deleteLater();});timer->start(16);viewport->update();});}
+#include "CheckboxWitness.inc"
     if(parser.isSet("gui-fix-demo")&&workspace&&qEnvironmentVariableIsSet("BTS_TEXTURE_SET_SELECTION_DEMO")){
       auto *prepare=new QAction(workspace);prepare->setObjectName("guiTextureSetSelectionPrepare");
       QObject::connect(prepare,&QAction::triggered,workspace,[&]{
@@ -7830,6 +7896,8 @@ bts::FileDialog::prepare_directory_thread();workspace->set_fill_color_spaces(bts
         state["spsm_oracle_scope"]=workspace->property("spsmOracleScope").toJsonObject();        state["open_pending"]=project_opener.pending();state["open_error"]=workspace->property("projectOpenError").toString();state["save_pending"]=bool(active_save)||bool(requested_save)||host.save_project_pending();state["save_error"]=workspace->property("projectSaveError").toString();
         if(document){bts::EditStateScope metadata;state["document"]=document->edit_state();if(selected_material>=0){const auto &set=document->set(snapshot.materials[selected_material].session_id);const auto comparison=bts::spsm_comparison_state(set,[&](int channel,int x,int y,int tile){return host.diagnostic_gpu_pixel(set.material_session_uid,channel,x,y,tile);});for(auto item=comparison.begin();item!=comparison.end();++item)state[item.key()]=item.value();}QJsonArray resources;for(const auto &asset:assets.project_assets()){auto data=bts::asset_metadata(asset);data["bytes"]=qint64(asset.bytes.size());data["original_spsm"]=bts::is_spsm_asset(asset);resources.append(data);}state["resources"]=resources;}
         return state;
+      }if(qEnvironmentVariableIsSet("BTS_CHECKBOX_DEMO")){
+        state["open_pending"]=opening_project||project_opener.pending();state["save_pending"]=bool(active_save)||bool(requested_save)||host.save_project_pending();state["open_error"]=workspace->property("projectOpenError").toString();state["save_error"]=workspace->property("projectSaveError").toString();return state;
       }if(qEnvironmentVariableIsSet("BTS_TEXTURE_SET_SELECTION_DEMO")){
         state["selected_index"]=selected_material;state["native_selected_uid"]=qint64(host.selected_material().value_or(0));state["paint_target"]=viewport->paint_target;
         QJsonArray sets;if(document)for(const auto &set:document->texture_sets())sets.append(QJsonObject{{"layer_id",set.selected_layer.toString()},{"set_id",set.id.toString()}});state["sets"]=sets;return state;

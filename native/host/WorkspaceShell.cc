@@ -109,6 +109,15 @@
 
 namespace bts {
 namespace {
+class TextureSetNameDelegate final:public InlineNameDelegate {
+ QListWidget *list_;
+ public:explicit TextureSetNameDelegate(QListWidget *list):InlineNameDelegate(list),list_(list){}
+ protected:void initStyleOption(QStyleOptionViewItem *option,const QModelIndex &index)const override{
+  InlineNameDelegate::initStyleOption(option,index);
+  // Custom rows own a real checkbox; orphan rows use the native indicator.
+  if(list_->indexWidget(index))option->features&=~QStyleOptionViewItem::HasCheckIndicator;
+ }
+};
 constexpr int adjustment_editable_role=Qt::UserRole+25;
 constexpr int adjustment_checked_role=Qt::UserRole+26;
 }
@@ -857,16 +866,21 @@ WorkspaceShell::WorkspaceShell(QWidget *viewport, Callbacks callbacks, QWidget *
   inspector_splitter_->setMinimumWidth(280);
   workspace_splitter_->setStretchFactor(0, 1);
   workspace_splitter_->setStretchFactor(1, 0);
-  auto *texture_panel = new QWidget(inspector_splitter_);
-  inspector_splitter_->addWidget(texture_panel);
+  auto *texture_panel = new QWidget;
   texture_panel->setObjectName("textureSetPanel");
-  texture_panel->setMinimumHeight(105);
+  texture_panel->setMinimumHeight(195);
   auto *texture_layout = column(texture_panel);
   auto *set_header=header(texture_panel, "Texture sets");auto *set_settings=new QToolButton(set_header);set_settings->setObjectName("textureSetListSettings");set_settings->setText("Settings");set_settings->setToolTip("Texture Sets settings");set_header->layout()->addWidget(set_settings);texture_layout->addWidget(set_header);
   texture_sets_ = new EmptyList("No texture sets", texture_panel);
   texture_sets_->setObjectName("textureSets");
+  texture_sets_->setMinimumHeight(64);
+  texture_sets_->setToolTip("Uncheck a Texture Set to hide and unload it; check to reload");
+  connect(texture_sets_,&QListWidget::itemChanged,this,[this](QListWidgetItem *item){
+    if(item->data(Qt::CheckStateRole).isValid()&&callbacks_.residency_changed)
+      callbacks_.residency_changed(item->data(Qt::UserRole).toUInt(),0,item->checkState()==Qt::Checked);
+  });
   auto *rename_set=new QAction(this);rename_set->setObjectName("renameTextureSet");connect(rename_set,&QAction::triggered,this,[this,rename_set]{const auto values=rename_set->data().toMap();if(callbacks_.texture_set_renamed)callbacks_.texture_set_renamed(values["uid"].toUInt(),values["name"].toString());});
-  new NameListShortcuts(texture_sets_);auto *set_names=new InlineNameDelegate(texture_sets_);texture_sets_->setItemDelegate(set_names);texture_sets_->setEditTriggers(QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed);
+  new NameListShortcuts(texture_sets_);auto *set_names=new TextureSetNameDelegate(texture_sets_);texture_sets_->setItemDelegate(set_names);texture_sets_->setEditTriggers(QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed);
   set_names->renamed=[this](const QModelIndex &index,const QString &name){const auto uid=index.data(Qt::UserRole).toUInt();QTimer::singleShot(0,this,[this,uid,name]{if(callbacks_.texture_set_renamed)callbacks_.texture_set_renamed(uid,name);});};
   texture_sets_->setSelectionMode(QAbstractItemView::SingleSelection);
   texture_sets_->setAccessibleName("Texture set selection");
@@ -876,6 +890,11 @@ WorkspaceShell::WorkspaceShell(QWidget *viewport, Callbacks callbacks, QWidget *
   }
   texture_layout->addWidget(texture_sets_, 1);
   uv_tiles_=new QTreeWidget(texture_panel);uv_tiles_->setObjectName("uvTiles");uv_tiles_->setHeaderHidden(true);
+  connect(uv_tiles_,&QTreeWidget::itemChanged,this,[this](QTreeWidgetItem *item,int){
+    const int tile=item->data(0,Qt::UserRole).toInt();
+    if(tile&&texture_sets_->currentItem()&&callbacks_.residency_changed)
+      callbacks_.residency_changed(texture_sets_->currentItem()->data(Qt::UserRole).toUInt(),tile,item->checkState(0)==Qt::Checked);
+  });
   uv_tiles_->setMaximumHeight(100);uv_tiles_->hide();texture_layout->addWidget(uv_tiles_);
 
   layer_settings_tabs_ = new QTabWidget(inspector_splitter_);
@@ -1129,7 +1148,11 @@ WorkspaceShell::WorkspaceShell(QWidget *viewport, Callbacks callbacks, QWidget *
     menu->addAction(move_layer_down_);
     menu->popup(layers_->viewport()->mapToGlobal(point));
   });
-  layer_settings_tabs_->addTab(layers, "LAYERS");
+  layer_settings_tabs_->addTab(layers, "Layers");
+  auto *texture_page = new QSplitter(Qt::Vertical, layer_settings_tabs_);
+  texture_page->setObjectName("textureSetsPage");
+  texture_page->addWidget(texture_panel);
+  layer_settings_tabs_->addTab(texture_page, "Texture Sets");
   auto *settings_scroll=new QScrollArea(layer_settings_tabs_);settings_scroll->setObjectName("textureSetSettingsScroll");settings_scroll->setWidgetResizable(true);settings_scroll->setFrameShape(QFrame::NoFrame);
   auto *settings = new QWidget(settings_scroll);settings_general_=settings;
   auto *scope_root=new QWidget(settings_scroll);auto *scope_layout=column(scope_root);scope_layout->setContentsMargins(0,0,0,0);settings_tile_=new QWidget(scope_root);auto *tile_layout=column(settings_tile_);tile_layout->setContentsMargins(10,10,10,10);tile_layout->addWidget(new QLabel("Size",settings_tile_));tile_resolution_=new TextureExtentComboBox(128,settings_tile_);tile_resolution_->setObjectName("uvTileResolution");tile_resolution_->insertItem(0,"1024 (Default)",0);tile_resolution_->setCurrentIndex(0);tile_resolution_->insertSeparator(1);tile_layout->addWidget(tile_resolution_);scope_layout->addWidget(settings_tile_);scope_layout->addWidget(settings);scope_layout->addStretch();settings_tile_->hide();settings_scroll->setWidget(scope_root);connect(tile_resolution_,&QComboBox::currentIndexChanged,this,[this](int index){if(active_tile_&&index>=0&&tile_resolution_->itemData(index).isValid()&&callbacks_.tile_resolution_changed)callbacks_.tile_resolution_changed(active_tile_,tile_resolution_->itemData(index).toInt());});
@@ -1233,7 +1256,11 @@ WorkspaceShell::WorkspaceShell(QWidget *viewport, Callbacks callbacks, QWidget *
   padding_control_=new QComboBox(padding_row);padding_control_->setObjectName("uvPaddingMode");padding_control_->addItems({"2D Space Neighbor","3D Space Neighbor"});padding_control_->setCurrentIndex(1);padding_layout->addWidget(padding_control_);settings_layout->addWidget(padding_row);
   connect(padding_control_,&QComboBox::currentIndexChanged,this,[this](int index){if(callbacks_.padding_changed)callbacks_.padding_changed(index==1);});
   mesh_maps_panel_=new MeshMapsPanel(settings);settings_layout->addWidget(mesh_maps_panel_,1);mesh_maps_panel_->bake=[this]{if(callbacks_.bake_mesh_maps)callbacks_.bake_mesh_maps();};mesh_maps_panel_->remove=[this](int role){if(callbacks_.remove_mesh_map)callbacks_.remove_mesh_map(role);};mesh_maps_panel_->inspect=[this](int role){if(callbacks_.inspect_mesh_map)callbacks_.inspect_mesh_map(role);};auto *bake_action=new QAction("Bake Mesh Maps",this);bake_action->setObjectName("bakeMeshMapsAction");bake_action->setShortcut(QKeySequence(Qt::CTRL|Qt::SHIFT|Qt::Key_B));addAction(bake_action);connect(bake_action,&QAction::triggered,this,[this]{if(callbacks_.bake_mesh_maps)callbacks_.bake_mesh_maps();});
-  settings_layout->addStretch();layer_settings_tabs_->addTab(settings_scroll, "TEXTURE SET SETTINGS");
+  settings_layout->addStretch();
+  texture_page->addWidget(settings_scroll);
+  texture_page->setStretchFactor(0, 1);
+  texture_page->setStretchFactor(1, 1);
+  texture_page->setSizes({260, 240});
 
   properties_slot_=new QWidget(inspector_splitter_);
   properties_slot_->setObjectName("propertiesSlot");
@@ -1850,9 +1877,11 @@ void WorkspaceShell::show_texture_set(const TextureSet *set, const NewProjectOpt
     if(index>=0)layer_channel_=layer_context_->currentData().toInt();
     layer_context_->setEnabled(index>=0);
   }
-  {const QSignalBlocker block(uv_tiles_);if(!set||displayed_set_!=set->id||!set->tiles.contains(active_tile_))active_tile_=0;uv_tiles_->setVisible(set&&settings&&settings->uv_workflow==UvWorkflow::PreserveTiles);
+  {const QSignalBlocker block(uv_tiles_);if(!set||displayed_set_!=set->id||!set->tiles.contains(active_tile_))active_tile_=0;uv_tiles_->setVisible(set!=nullptr);
     bool rebuild=uv_tiles_->topLevelItemCount()!=1;if(set&&!rebuild){const auto *root=uv_tiles_->topLevelItem(0);rebuild=root->childCount()!=int(set->tiles.size());int index=0;for(int number:set->tiles)if(!rebuild&&root->child(index++)->data(0,Qt::UserRole).toInt()!=number)rebuild=true;}if(!set)rebuild=true;
-    if(rebuild){uv_tiles_->clear();if(set&&settings&&settings->uv_workflow==UvWorkflow::PreserveTiles){auto *root=new QTreeWidgetItem(uv_tiles_,{QString("UV Tiles (%1)").arg(set->tiles.size())});for(int number:set->tiles){auto *item=new QTreeWidgetItem(root,{QString::number(number)});item->setData(0,Qt::UserRole,number);if(number==active_tile_)uv_tiles_->setCurrentItem(item);}root->setExpanded(true);}}}
+    if(rebuild){uv_tiles_->clear();if(set){auto *root=new QTreeWidgetItem(uv_tiles_,{QString("UV Tiles (%1)").arg(set->tiles.size())});for(int number:set->tiles){auto *item=new QTreeWidgetItem(root,{QString::number(number)});item->setData(0,Qt::UserRole,number);if(number==active_tile_)uv_tiles_->setCurrentItem(item);}root->setExpanded(true);}}
+    if(set&&uv_tiles_->topLevelItemCount()){auto *root=uv_tiles_->topLevelItem(0);for(int i=0;i<root->childCount();++i){auto *item=root->child(i);const int tile=item->data(0,Qt::UserRole).toInt();item->setFlags(item->flags()|Qt::ItemIsUserCheckable);item->setCheckState(0,set->tile_loaded(tile)?Qt::Checked:Qt::Unchecked);item->setForeground(0,QColor(set->tile_loaded(tile)?theme::Text:theme::Disabled));item->setToolTip(0,set->tile_loaded(tile)?"Loaded — uncheck to hide and unload":"Unloaded — check to load from cache");item->setDisabled(!set->loaded);}}
+  }
   settings_tile_->setVisible(active_tile_>0);settings_general_->setVisible(!active_tile_);
   if(set){const QSignalBlocker block(tile_resolution_);tile_resolution_->setItemText(0,set->texture_resolution==set->rows()?QString("%1 (Default)").arg(set->texture_resolution):QString("%1 × %2 (Default)").arg(set->texture_resolution).arg(set->rows()));const int value=set->tile_resolutions.contains(active_tile_)?set->tile_resolutions.at(active_tile_):0;refresh_texture_extent_choices(*tile_resolution_,128,value);tile_resolution_->setEnabled(active_tile_>0&&set->uniform_editable);tile_resolution_->setToolTip(QString("Evaluation size for UV tile %1; original paint is retained").arg(active_tile_));}
   {const QSignalBlocker blocker(padding_control_);padding_control_->setEnabled(set&&set->uniform_editable);padding_control_->setCurrentIndex(!set||set->padding_3d?1:0);}
@@ -2119,12 +2148,11 @@ void WorkspaceShell::reset_reference_layout()
   const int shelf_height = std::max(shelf_minimum_height,
                                     qRound(centralWidget()->height() * 0.314017));
   viewport_shelf_splitter_->setSizes({292,std::max(350,viewport_shelf_splitter_->width()-292)});
-  const int height = std::max(600, inspector_splitter_->height() - 3 * handle_width);
-  const int textures = qRound(height * 0.154268);
-  const int layers = qRound(height * 0.38);
+  const int height = std::max(600, inspector_splitter_->height() - 2 * handle_width);
+  const int layers = qRound(height * 0.53);
   const int console_height = 0;
   inspector_splitter_->setSizes(
-      {textures, layers, height - textures - layers - console_height, console_height});
+      {layers, height - layers - console_height, console_height});
 }
 
 void WorkspaceShell::float_properties()
@@ -2167,7 +2195,7 @@ void WorkspaceShell::dock_properties()
 QByteArray WorkspaceShell::save_layout() const
 {
   return QJsonDocument(QJsonObject{
-      {"version", 1},
+      {"version", 2},
       {"workspace", QString::fromLatin1(workspace_splitter_->saveState().toBase64())},
       {"center", QString::fromLatin1(viewport_shelf_splitter_->saveState().toBase64())},
       {"inspector", QString::fromLatin1(inspector_splitter_->saveState().toBase64())},
@@ -2184,7 +2212,7 @@ bool WorkspaceShell::restore_layout(const QByteArray &state)
     return false;
   }
   const QJsonObject data = document.object();
-  if (data.value("version").toInt() != 1 || !data.value("shelfVisible").isBool() ||
+  if (data.value("version").toInt() != 2 || !data.value("shelfVisible").isBool() ||
       !data.value("consoleVisible").isBool() || !data.value("tab").isDouble()) {
     return false;
   }

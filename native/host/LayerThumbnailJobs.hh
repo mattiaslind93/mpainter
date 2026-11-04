@@ -45,6 +45,7 @@ class LayerThumbnailJobs {
  LayerThumbnailJobs(){pool().setMaxThreadCount(1);poll_.setInterval(16);QObject::connect(&poll_,&QTimer::timeout,&poll_,[this]{poll();});}
  ~LayerThumbnailJobs(){poll_.stop();retire();pool().waitForDone();}
  void request(const TextureSet &set,int channel){
+  if(!set.fully_loaded()){retire();poll_.stop();cache_.clear();return;}
   performance::Scope timing("thumbnail_revision_metadata");
   EditStateScope metadata;
   auto state=QJsonDocument::fromJson(TextureDocument::mask_dependency_signature(set)).object();

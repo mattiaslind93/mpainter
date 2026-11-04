@@ -538,9 +538,10 @@ QJsonObject TextureDocument::to_json() const
     }
     QJsonArray maps;for(const auto &map:set.mesh_maps){if(!map){maps.append(QJsonValue());continue;}QJsonArray planes;for(const auto &[tile,plane]:map->tiles)planes.append(QJsonObject{{"number",tile},{"resolution",plane.resolution},{"height",plane.rows()},{"hash",QString::fromStdString(plane.hash)}});maps.append(QJsonObject{{"name",QString::fromStdString(map->name)},{"tiles",planes}});}
     QJsonArray tiles;for(int number:set.tiles)tiles.append(number);
+    QJsonArray unloaded;for(int number:set.unloaded_tiles)unloaded.append(number);
     validate_material_substacks(set);
     sets.append(QJsonObject{{"bump_origin",set.bump_origin},{"material_layering",material_layering_json(set.material_layering)},{"skew_correction",skew_field_json(set.skew)},{"tile_resolutions",tile_resolutions},{"users",custom_channels_json(set.users)},{"displacement",displacement_json(set.displacement)},{"resolution",set.texture_resolution},{"height",set.rows()},{"size_linked",set.size_linked},{"precision",precision},{"id", set.id.toString(QUuid::WithoutBraces)},
-        {"name", QString::fromStdString(set.name)}, {"uniform_editable",set.uniform_editable}, {"disabled",set.disabled}, {"mesh_maps",maps},{"padding_3d",set.padding_3d},{"ao_channel",set.ao_channel},{"ao_mixing",int(set.ao_mixing)},{"normal_mixing",int(set.normal_mixing)},{"bump_method",int(set.bump_method)}, {"tiles",tiles}, {"channels", channels}, {"layers", layers},
+        {"name", QString::fromStdString(set.name)}, {"uniform_editable",set.uniform_editable}, {"disabled",set.disabled}, {"loaded",set.loaded}, {"unloaded_tiles",unloaded}, {"mesh_maps",maps},{"padding_3d",set.padding_3d},{"ao_channel",set.ao_channel},{"ao_mixing",int(set.ao_mixing)},{"normal_mixing",int(set.normal_mixing)},{"bump_method",int(set.bump_method)}, {"tiles",tiles}, {"channels", channels}, {"layers", layers},
         {"selected_geometry",set.selected_geometry},{"selected_layer",set.selected_layer.toString(QUuid::WithoutBraces)},{"selected_mask",set.selected_mask},{"selected_effect",set.selected_effect.isNull()?QString{}:set.selected_effect.toString(QUuid::WithoutBraces)},
         {"next_folder_number",set.next_folder_number},{"next_paint_number",set.next_paint_number}, {"next_fill_number",set.next_fill_number}, {"base_values",values_json(set.base_values)}});
   }
@@ -627,12 +628,15 @@ TextureDocument TextureDocument::from_json(const QJsonObject &root,std::span<con
     const auto binding=std::find_if(bindings.begin(),bindings.end(),[&](const auto &b){return b.set_id==set.id;});
     if(binding==bindings.end()||!binding->material_uid||std::find(bound.begin(),bound.end(),binding->material_uid)!=bound.end())fail();
     bound.push_back(binding->material_uid);set.material_session_uid=binding->material_uid;
+    if(o.contains("loaded"))set.loaded=boolean(o["loaded"]);
+    if(o.contains("unloaded_tiles")){if(!o["unloaded_tiles"].isArray())throw std::invalid_argument("Invalid unloaded tiles");for(const auto &v:o["unloaded_tiles"].toArray()){const int tile=v.toInt();if(!v.isDouble()||v.toDouble()!=tile||tile<1001||tile>2000||!set.unloaded_tiles.insert(tile).second)throw std::invalid_argument("Invalid unloaded tile");}}
     const auto stored_name=text(o["name"]);set.name=root["schema"].toInt()>=17?stored_name.toStdString():binding->name;set.disabled=root["schema"].toInt()>=17?boolean(o["disabled"]):false;set.uniform_editable=root["schema"].toInt()>=73?boolean(o["uniform_editable"]):true;
     if(root["schema"].toInt()>=2) {
       const auto tiles=o["tiles"].toArray();if(tiles.empty())fail();set.tiles.clear();
       for(const auto &tile:tiles)if(!set.tiles.insert(integer(tile,1001,2000)).second)fail();
       if(result.settings_.uv_workflow==UvWorkflow::SingleTile&&set.tiles!=std::set<int>{1001})fail();
     }
+    for(int tile:set.unloaded_tiles)if(!set.tiles.contains(tile))fail();
     set.skew.resolution=set.texture_resolution;if(root["schema"].toInt()>=57)set.skew=read_skew_field_json(o["skew_correction"],set.tiles);
     if(root["schema"].toInt()>=27){if(!o["tile_resolutions"].isObject())fail();const auto overrides=o["tile_resolutions"].toObject();if(overrides.size()>int(set.tiles.size()))fail();for(auto entry=overrides.begin();entry!=overrides.end();++entry){bool valid=false;const int tile=entry.key().toInt(&valid);if(!valid||QString::number(tile)!=entry.key()||!set.tiles.contains(tile))fail();const int size=integer(entry.value(),128,sparse_texture_max_side);if(size&(size-1))fail();set.tile_resolutions.emplace(tile,size);}}
     // Parsing logical metadata does not allocate channel images; GPU/CPU allocators

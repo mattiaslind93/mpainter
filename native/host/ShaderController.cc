@@ -107,6 +107,8 @@ void ShaderController::rows(){
   if(!row){
    row=new QWidget(list);row->setAutoFillBackground(true);
    auto *line=new QHBoxLayout(row);line->setContentsMargins(4,0,4,0);
+   auto *loaded=new QCheckBox(row);loaded->setObjectName("textureSetLoaded");loaded->setToolTip("Uncheck to hide and unload; check to reload");line->addWidget(loaded);
+   connect(loaded,&QCheckBox::toggled,this,[item](bool checked){item->setCheckState(checked?Qt::Checked:Qt::Unchecked);});
    auto *label=new InlineNameField(row);label->setObjectName("textureSetName");
    new TextureSetRowSelection(list,label);
    auto *shader=new QPushButton(row);shader->setObjectName("textureSetShader");shader->setFlat(true);
@@ -114,6 +116,8 @@ void ShaderController::rows(){
    connect(shader,&QPushButton::clicked,this,[this,item]{menu(shell_->texture_sets()->row(item));});
   }
   auto *label=static_cast<InlineNameField *>(row->findChild<QLineEdit *>("textureSetName"));
+  {auto *loaded=row->findChild<QCheckBox *>("textureSetLoaded");const QSignalBlocker block(loaded);loaded->setChecked(set->loaded);loaded->setEnabled(!set->disabled);}
+  label->setEnabled(set->loaded);row->findChild<QPushButton *>("textureSetShader")->setEnabled(set->loaded);
   label->synchronize(item->text());
   // Items/widgets survive a same-size project replacement. Bind the current
   // native identity every sync; queued name commits retain their original ID.

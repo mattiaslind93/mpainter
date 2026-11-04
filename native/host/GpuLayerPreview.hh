@@ -121,6 +121,7 @@ class GpuLayerPreview {
   void diagnose_pixel(const TextureSet &,int channel,int tile,int x,int y);
   // Ordinary reset preserves immutable adjustment histories; shutdown retires all GPU owners.
   void reset(bool terminal=false);
+  void evict_residency();
   std::uint64_t release_bake_scratch();
  private:
   static void self_test();

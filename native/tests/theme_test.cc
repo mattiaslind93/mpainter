@@ -13,11 +13,104 @@
 #include <QPushButton>
 #include <QScrollArea>
 #include <QTabWidget>
+#include <QTreeWidget>
+#include <QRadioButton>
+#include <QToolButton>
+#include <QGridLayout>
+#include <QActionGroup>
+#include <QStyleOptionButton>
+#include <QPainter>
+#include <QStyleOptionMenuItem>
 #include <cassert>
+static void indicator_pixels(QApplication &app)
+{
+ for(auto primitive:{QStyle::PE_IndicatorCheckBox,QStyle::PE_IndicatorItemViewItemCheck,QStyle::PE_IndicatorRadioButton})
+  for(bool enabled:{false,true})for(bool checked:{false,true})for(bool hover:{false,true}){
+   QImage image(20,20,QImage::Format_ARGB32);image.fill(QColor(bts::theme::Surface));QPainter painter(&image);
+   QStyleOptionButton option;option.rect={2,2,16,16};option.state=(enabled?QStyle::State_Enabled:QStyle::State_None)|(checked?QStyle::State_On:QStyle::State_Off)|(hover?QStyle::State_MouseOver:QStyle::State_None);
+   app.style()->drawPrimitive(primitive,&option,&painter);painter.end();
+   int changed=0,accent=0;for(int y=3;y<17;++y)for(int x=3;x<17;++x){const auto c=image.pixelColor(x,y);changed+=c!=QColor(bts::theme::Surface);if(x>=6&&x<14&&y>=6&&y<14)accent+=c.green()>c.red()+20&&c.blue()>c.red()+10;}
+   assert(changed>50);assert(checked?accent>=3:accent==0);
+  }
+ for(bool checked:{false,true}){
+  QImage image(160,26,QImage::Format_ARGB32);image.fill(QColor(bts::theme::Menu));QPainter painter(&image);QStyleOptionMenuItem option;option.rect=image.rect();option.state=QStyle::State_Enabled;option.menuItemType=QStyleOptionMenuItem::Normal;option.checkType=QStyleOptionMenuItem::NonExclusive;option.checked=checked;option.text="Menu choice";option.maxIconWidth=16;
+  app.style()->drawControl(QStyle::CE_MenuItem,&option,&painter);painter.end();int gray=0,accent=0;for(int y=6;y<19;++y)for(int x=8;x<22;++x){const auto c=image.pixelColor(x,y);gray+=c==QColor(bts::theme::OptionInner);accent+=c.green()>c.red()+20&&c.blue()>c.red()+10;}assert(gray>20);assert(checked?accent>3:accent==0);
+ }
+}
+static void indicator_gallery(QApplication &app)
+{
+  QDialog gallery;
+  gallery.setWindowTitle("Turquoise Dark · Checkbox states");
+  auto *layout = new QGridLayout(&gallery);
+  const QStringList states{"Off", "On", "Mixed", "Disabled off", "Disabled on", "Hover off", "Hover on"};
+  for (int column = 0; column < states.size(); ++column) {
+    layout->addWidget(new QLabel(states[column], &gallery), 0, column);
+    auto *check = new QCheckBox("Checkbox", &gallery);
+    check->setCheckState(column == 2 ? Qt::PartiallyChecked : column == 1 || column == 4 || column == 6 ? Qt::Checked : Qt::Unchecked);
+    check->setEnabled(column != 3 && column != 4);
+    check->setAttribute(Qt::WA_UnderMouse, column >= 5);
+    layout->addWidget(check, 1, column);
+    auto *radio = new QRadioButton("Radio", &gallery);
+    radio->setAutoExclusive(false);
+    radio->setChecked(column == 1 || column == 4 || column == 6);
+    radio->setEnabled(check->isEnabled());
+    radio->setAttribute(Qt::WA_UnderMouse, column >= 5);
+    layout->addWidget(radio, 2, column);
+    auto *toggle = new QToolButton(&gallery);
+    toggle->setText("Toggle"); toggle->setCheckable(true); toggle->setChecked(radio->isChecked());
+    toggle->setEnabled(check->isEnabled());
+    toggle->setAttribute(Qt::WA_UnderMouse, column >= 5);
+    layout->addWidget(toggle, 3, column);
+    auto *channel = new QCheckBox("Channel", &gallery);
+    channel->setProperty("fillChannelToggle", true); channel->setChecked(radio->isChecked());
+    channel->setEnabled(check->isEnabled());
+    layout->addWidget(channel, 4, column);
+  }
+  auto *tree = new QTreeWidget(&gallery);
+  tree->setHeaderLabel("Tree / outliner");
+  auto *list = new QListWidget(&gallery);
+  auto *menu = new QMenu(&gallery);
+  menu->setWindowFlags(Qt::Widget);
+  auto *radios = new QActionGroup(menu);
+  for (int row = 0; row < 5; ++row) {
+    auto *item = new QTreeWidgetItem(tree, {states[row]});
+    item->setCheckState(0, row == 2 ? Qt::PartiallyChecked : row == 1 || row == 4 ? Qt::Checked : Qt::Unchecked);
+    item->setDisabled(row >= 3);
+    auto *entry = new QListWidgetItem(states[row], list);
+    entry->setCheckState(item->checkState(0));
+    if (row >= 3) entry->setFlags(entry->flags() & ~Qt::ItemIsEnabled);
+    auto *action = menu->addAction("Menu " + states[row]);
+    action->setCheckable(true); action->setChecked(row == 1 || row == 4); action->setEnabled(row < 3);
+  }
+  for (bool checked : {false, true}) {
+    auto *action = menu->addAction(checked ? "Exclusive on" : "Exclusive off");
+    action->setCheckable(true); radios->addAction(action); action->setChecked(checked);
+  }
+  layout->addWidget(tree, 5, 0, 1, 3);
+  layout->addWidget(list, 5, 3, 1, 2);
+  layout->addWidget(menu, 5, 5, 1, 2);
+  auto *group = new QGroupBox("Checkable group", &gallery);
+  group->setCheckable(true);
+  layout->addWidget(group, 6, 0, 1, 3);
+  gallery.resize(1120, 440);
+  gallery.show();
+  menu->show();
+  app.processEvents();
+  const auto menu_image=menu->grab().toImage();
+  for(auto *action:menu->actions())if(action->isCheckable()){
+    const auto area=menu->actionGeometry(action);int box=0;
+    for(int y=area.center().y()-5;y<=area.center().y()+5;++y)for(int x=8;x<22;++x){const auto color=menu_image.pixelColor(x,y);box+=color==QColor(bts::theme::OptionInner)||color==QColor(bts::theme::Raised);}
+    assert(box>12); // Actual styled QMenu, including unchecked/exclusive/disabled rows.
+  }
+  const auto screenshot = qEnvironmentVariable("BTS_CHECKBOX_SCREENSHOT");
+  if (!screenshot.isEmpty()) assert(gallery.grab().save(screenshot));
+}
 int main(int argc, char **argv)
 {
   QApplication app(argc, argv);
   bts::theme::apply(app);
+  indicator_pixels(app);
+  indicator_gallery(app);
   assert(!app.styleSheet().contains('@'));
   assert(app.palette().color(QPalette::Accent) == QColor(bts::theme::Accent));
   assert(app.palette().color(QPalette::Disabled, QPalette::Text) == QColor(bts::theme::Disabled));

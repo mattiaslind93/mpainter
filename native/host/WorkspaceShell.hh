@@ -109,6 +109,7 @@ class WorkspaceShell final : public QMainWindow {
     std::function<void(int,double)> user_value_changed;
     std::function<void(int,int)> channel_precision_changed;
     std::function<void(int)> tile_selected;
+    std::function<void(std::uint32_t,int,bool)> residency_changed;
     std::function<void(int,int)> tile_resolution_changed;
     std::function<void(int)> texture_resolution_changed;
     std::function<void(int)> texture_height_changed;
@@ -267,6 +268,8 @@ class WorkspaceShell final : public QMainWindow {
   void cancel_warp_split();
   bool layer_thumbnails_pending() const;
   QListWidget *layer_stack() const { return layers_; }
+  int active_tile() const { return active_tile_; }
+  void request_texture_residency(std::uint32_t uid,int tile,bool loaded){if(callbacks_.residency_changed)callbacks_.residency_changed(uid,tile,loaded);}
   QListWidget *texture_sets() const { return texture_sets_; }
   QTabWidget *layer_settings_tabs() const { return layer_settings_tabs_; }
   QSplitter *workspace_splitter() const { return workspace_splitter_; }

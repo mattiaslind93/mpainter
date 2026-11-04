@@ -64,6 +64,15 @@ class MeshMapStorage {
  const float &operator[](std::size_t index)const{return data()[index];}
  std::size_t size()const{return size_;}
  bool empty()const{return size_==0;}
+ void spill()const {
+#if defined(Q_OS_UNIX)
+  if(!mapping_) { if(size_)throw std::runtime_error("Baked map has no disk snapshot"); return; }
+  const auto bytes=size_*sizeof(float);
+  if(msync(mapping_,bytes,MS_SYNC))throw std::runtime_error("Cannot sync baked map cache");
+  madvise(mapping_,bytes,MADV_DONTNEED);
+  posix_fadvise(file_.handle(),0,bytes,POSIX_FADV_DONTNEED);
+#endif
+ }
  bool disk_backed()const{return mapping_!=nullptr;}
  friend bool operator==(const MeshMapStorage &a,const std::vector<float> &b){return a.size()==b.size()&&std::equal(a.begin(),a.end(),b.begin());}
 };

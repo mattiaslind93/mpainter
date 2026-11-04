@@ -1,0 +1,4 @@
+newmtl Painted body
+Kd 0.3 0.6 0.5
+newmtl Isolated part
+Kd 0.6 0.3 0.2

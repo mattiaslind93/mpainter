@@ -104,6 +104,7 @@ class BlenderHost {
   std::optional<std::array<float,4>> diagnostic_gpu_pixel(std::uint32_t,int channel,int x,int y,int tile=1001) const;
   std::array<float,4> sample_texture(std::uint32_t,int channel,int x,int y,int tile=1001) const;
   void prepare_warp_projections(const TextureSet &);
+  void change_texture_residency(const TextureSet &);
   void apply_texture_set(const TextureSet &,int resolution,PaintPixels::Bounds bounds={},bool interactive=false);
   void preview_displacement(const TextureSet &);
   QJsonObject displacement_preview_state();

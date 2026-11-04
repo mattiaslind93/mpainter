@@ -42,6 +42,8 @@ class EnvironmentPanel final : public QDialog {
     background->setWordWrap(true);layout->addWidget(background);
     control("exposure","environmentExposure","Environment Exposure",-10,10," EV");
     control("rotation","environmentRotation","Environment Rotation",-180,180,"°");
+    controls_["rotation"].first->setToolTip("Shift + right-drag horizontally in the 3D viewport to rotate lighting and reflections.");
+    controls_["rotation"].second->setToolTip(controls_["rotation"].first->toolTip());
     auto *alignment_row=new QHBoxLayout;follows_view_=new QCheckBox("Lighting follows view",this);follows_view_->setObjectName("lightingFollowsView");follows_view_->setToolTip("Enabled: camera-relative Studio Light. Disabled: light remains fixed in world space. Rotation works in both modes.");alignment_row->addWidget(follows_view_);
     alignment_=new QComboBox(this);alignment_->setObjectName("environmentAlignment");alignment_->setAccessibleName("Environment alignment");
     alignment_->addItems({"World","Local"});alignment_->hide();layout->addLayout(alignment_row);

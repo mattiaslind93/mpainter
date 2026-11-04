@@ -850,6 +850,12 @@ std::uint64_t GpuLayerPreview::release_bake_scratch(){
  for(auto i=s.inputs.begin();i!=s.inputs.end();)if(!i->second.retained()&&!s.adjustment_input_pins.contains(i->first)){bytes=resource_sum(bytes,i->second.bytes());s.used_bytes-=i->second.bytes();i=s.inputs.erase(i);}else ++i;
  texture_memory_refresh_needed=true;std::printf("BTS_BAKE_RELEASE reusable_bytes=%llu\n",(unsigned long long)bytes);return bytes;
 }
+void GpuLayerPreview::evict_residency(){
+ release_bake_scratch();auto &s=*impl_;
+ for(int c=0;c<5;++c)s.authoring_pages.retire_unused(c,{});
+ s.geometry.clear();s.effect_parameters.clear();s.layer_parameters.clear();
+ texture_memory_refresh_needed=true;
+}
 void GpuLayerPreview::reset(bool terminal){auto previous=std::move(impl_);impl_=std::make_unique<Impl>();
  if(!terminal){impl_->adjustment_sources=std::move(previous->adjustment_sources);impl_->adjustment_pages=std::move(previous->adjustment_pages);impl_->native_context_provider=previous->native_context_provider;for(const auto &[id,entry]:impl_->adjustment_sources)for(const auto &key:entry.native_aliases)impl_->native_materials.retain_alias_from(previous->native_materials,key);}
  bind_adjustment_resolver();if(previous->has_gpu())retired().push_back(std::move(previous));}
@@ -1097,7 +1103,13 @@ std::uint64_t GpuLayerPreview::content_node_revision(const TextureSet &set,int c
  std::uint64_t revision=0;for(const auto &[chunk,page]:found->second)revision=std::max(revision,page.revision);return revision;
 }
 GpuPreviewUpdate GpuLayerPreview::update_tile(const TextureSet &source_set,int channel,gpu::Texture *target,int tile,std::array<int,3> target_offset,bool prefix_only,const QUuid *query_layer,bool query_source,const QUuid *query_effect,bool thumbnail,bool raw_anchor,bool authored_ao_output){
- const auto normal_set=channel==6?std::optional<TextureSet>(native_normal_stack(source_set)):std::nullopt;const auto &set=normal_set?*normal_set:source_set;
+
+ const auto normal_set=channel==6?std::optional<TextureSet>(native_normal_stack(source_set)):std::nullopt;auto view=normal_set?*normal_set:source_set;
+ if(view.residency_view&&!view.tile_loaded(tile)){
+  view.layers={TextureLayer{}};view.layers.front().channels.fill(false);view.layers.front().ao_enabled=false;
+  view.instance_layers.reset();view.mesh_maps={};view.projection_geometry.reset();view.projection_tiles.clear();view.geometry_ownership.clear();
+ }
+ const auto &set=view;
  PaintMetadataScope metadata;
  if(!supported(set,channel)||!set.tiles.contains(tile)||GPU_texture_dimensions(target)!=2||target_offset[0]<0||target_offset[1]<0||target_offset[2]<0||(!query_layer&&!prefix_only&&(GPU_texture_width(target)<target_offset[0]+set.width(tile)||GPU_texture_height(target)<target_offset[1]+set.rows(tile)))||target_offset[2]>=std::max(1,GPU_texture_layer_count(target)))return GpuPreviewUpdate::Unsupported;
  const auto format=GPU_texture_format(target);if(format!=gpu::TextureFormat::SFLOAT_16_16_16_16&&format!=gpu::TextureFormat::SFLOAT_32_32_32_32)return GpuPreviewUpdate::Unsupported;

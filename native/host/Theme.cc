@@ -4,10 +4,77 @@
 #include <QMouseEvent>
 #include <QTabletEvent>
 #include <QPointer>
+#include <QProxyStyle>
+#include <QStyleFactory>
+#include <QStyleOption>
+#include <QPainter>
+#include <QPainterPath>
 #include <limits>
 
 namespace bts::theme {
 namespace {
+class OptionStyle final : public QProxyStyle {
+ public:
+  OptionStyle() : QProxyStyle(QStyleFactory::create("Fusion")) {}
+  void drawControl(ControlElement element, const QStyleOption *option,
+                   QPainter *painter, const QWidget *widget = nullptr) const override {
+    const auto *menu = qstyleoption_cast<const QStyleOptionMenuItem *>(option);
+    if (element != CE_MenuItem || !menu || menu->checkType == QStyleOptionMenuItem::NotCheckable) {
+      QProxyStyle::drawControl(element, option, painter, widget); return;
+    }
+    auto text = *menu;
+    text.checked = false;
+    QProxyStyle::drawControl(element, &text, painter, widget);
+    QStyleOption indicator;
+    indicator.state = menu->state;
+    indicator.state &= ~(State_On | State_Off);
+    indicator.state |= menu->checked ? State_On : State_Off;
+    if(menu->state & State_Selected) indicator.state |= State_MouseOver;
+    const QRect logical(menu->rect.left()+7, menu->rect.center().y()-7, 16, 16);
+    indicator.rect = visualRect(menu->direction, menu->rect, logical);
+    drawPrimitive(menu->checkType == QStyleOptionMenuItem::Exclusive ? PE_IndicatorRadioButton : PE_IndicatorCheckBox,
+                  &indicator, painter, widget);
+  }
+  void drawPrimitive(PrimitiveElement element, const QStyleOption *option,
+                     QPainter *painter, const QWidget *widget = nullptr) const override {
+    if (element != PE_IndicatorCheckBox && element != PE_IndicatorItemViewItemCheck &&
+        element != PE_IndicatorRadioButton && element != PE_IndicatorMenuCheckMark) {
+      QProxyStyle::drawPrimitive(element, option, painter, widget);
+      return;
+    }
+    const bool enabled = option->state & State_Enabled;
+    const bool hovered = enabled && (option->state & (State_MouseOver | State_HasFocus));
+    const bool checked = option->state & State_On;
+    const bool mixed = option->state & State_NoChange;
+    const bool radio = element == PE_IndicatorRadioButton;
+    const QRectF box = QRectF(option->rect).adjusted(1, 1, -1, -1);
+    painter->save();
+    painter->setRenderHint(QPainter::Antialiasing);
+    painter->setPen(QPen(QColor(hovered ? Accent : OptionOutline), hovered ? 2 : 1));
+    painter->setBrush(QColor(enabled ? OptionInner : Raised));
+    if (radio) painter->drawEllipse(box);
+    else painter->drawRoundedRect(box, 2, 2);
+    if (checked || mixed || element == PE_IndicatorMenuCheckMark) {
+      // XML's item is white; Mattias requests the XML turquoise accent for the mark.
+      const QColor mark = enabled ? QColor(Accent) : QColor(Accent).lighter(125);
+      painter->setPen(QPen(mark, 2.5, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+      if (radio) {
+        painter->setPen(Qt::NoPen);
+        painter->setBrush(mark);
+        painter->drawEllipse(box.adjusted(3, 3, -3, -3));
+      } else if (mixed) {
+        painter->drawLine(QPointF(box.left() + 3, box.center().y()), QPointF(box.right() - 3, box.center().y()));
+      } else {
+        QPainterPath check;
+        check.moveTo(box.left() + box.width() * .22, box.top() + box.height() * .52);
+        check.lineTo(box.left() + box.width() * .43, box.top() + box.height() * .73);
+        check.lineTo(box.left() + box.width() * .80, box.top() + box.height() * .27);
+        painter->drawPath(check);
+      }
+    }
+    painter->restore();
+  }
+};
 // Catch the small halo outside a widget too, without growing its painted handle.
 // Forward a centered press and retain the pointer offset throughout the gesture:
 // grabbing the halo must never jump the value or change native undo/signals.
@@ -95,8 +162,10 @@ QPalette palette()
 void apply(QApplication &app)
 {
   app.installEventFilter(new SliderHitFilter(&app));
-  app.setStyle("Fusion");
+  app.setStyle(new OptionStyle);
   app.setPalette(palette());
+  auto menu_palette=palette();menu_palette.setColor(QPalette::Window,QColor(Menu));
+  app.setPalette(menu_palette,"QMenu");
   app.setStyleSheet(qss(QString::fromLatin1(R"(
   QWidget { color: @Text@; }
   QDialog, QMessageBox, QMainWindow, QDockWidget, QScrollArea, QStackedWidget {
@@ -131,7 +200,8 @@ void apply(QApplication &app)
   QComboBox QAbstractItemView { background: @Canvas@; color: @Text@;
     selection-background-color: @Selection@; selection-color: @Heading@; }
   QCheckBox, QRadioButton { spacing: 6px; background: transparent; }
-  /* Keep Fusion's check marks and radio dots; their colors inherit the palette. */
+  QCheckBox::indicator, QRadioButton::indicator, QGroupBox::indicator,
+  QAbstractItemView::indicator { width: 16px; height: 16px; }
   QProgressBar { background: @Canvas@; color: @Heading@; border: 1px solid @Border@; text-align: center; }
   QProgressBar::chunk { background: @Selection@; }
   QScrollBar::handle:hover { background: @ScrollHover@; }
@@ -161,6 +231,10 @@ void apply(QApplication &app)
   QListWidget#shelfAssets { background: @Canvas@; padding: 1px; }
   QListWidget#shelfAssets::item { padding: 0; border: 0; }
   QToolButton:disabled { color: @Muted@; background: transparent; border-color: transparent; }
+  QToolButton:checked:disabled, QPushButton:checked:disabled,
+  QCheckBox[fillChannelToggle="true"]:checked:disabled {
+    background: @ListSelection@; border-color: @Accent@; color: @Disabled@;
+  }
   QToolButton::menu-indicator { image: none; }
   QToolButton#shelfCategoryChip { background: @Canvas@; border: 1px solid @Hover@; padding: 2px 4px; }
   QLineEdit, QComboBox, QDoubleSpinBox {
@@ -200,10 +274,7 @@ void apply(QApplication &app)
   QScrollBar::add-page, QScrollBar::sub-page { background: transparent; }
   QStatusBar { background: @Status@; color: @Text@; border-top: 1px solid @Separator@; }
   QStatusBar::item { border: none; }
-  QMenu { background: @Menu@; color: @Heading@; border: 1px solid @Hover@; }
-  QMenu::item { padding: 6px 24px; }
-  QMenu::item:selected { background: @Selection@; }
-  QMenu::separator { height: 1px; background: @Hover@; margin: 4px; }
+  /* QMenu uses the palette and OptionStyle, including unchecked indicators. */
   QMenuBar { background: @MenuBar@; color: @Heading@; border-bottom: 1px solid @Separator@; }
   QMenuBar::item { padding: 4px 8px; background: transparent; }
   QMenuBar::item:selected { background: @Selection@; }
@@ -211,7 +282,7 @@ void apply(QApplication &app)
   QCheckBox[fillChannelToggle="true"] {
     spacing: 0; padding: 3px 6px; color: @Text@; background: @Hover@; border: 1px solid @Hover@;
   }
-  QCheckBox[fillChannelToggle="true"]::indicator { width: 0; height: 0; }
+  QCheckBox[fillChannelToggle="true"] { spacing: 5px; }
   QCheckBox[fillChannelToggle="true"]:checked { background: @Selection@; border-color: @Accent@; color: @Heading@; }
   QToolButton[artistChannelToggle="true"] { background: @Hover@; border: 1px solid @Hover@; color: @Text@; }
   QToolButton[artistChannelToggle="true"]:checked { background: @Selection@; border-color: @Accent@; color: @Heading@; }
