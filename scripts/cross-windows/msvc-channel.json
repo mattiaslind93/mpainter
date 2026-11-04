@@ -1,0 +1,17 @@
+{
+  "channelItems": [
+    {
+      "id": "Microsoft.VisualStudio.Manifests.VisualStudio",
+      "version": "17.14.37827.9",
+      "type": "Manifest",
+      "payloads": [
+        {
+          "fileName": "VisualStudio.vsman",
+          "sha256": "4cc372d79f02e331c999a926b833a49eb74b30357d30f41ba9cffa1dc0369379",
+          "size": 30443645,
+          "url": "https://download.visualstudio.microsoft.com/download/pr/6bd63d7f-1818-4e03-a552-9feb11496c19/4cc372d79f02e331c999a926b833a49eb74b30357d30f41ba9cffa1dc0369379/VisualStudio.vsman"
+        }
+      ]
+    }
+  ]
+}

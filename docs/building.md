@@ -57,6 +57,20 @@ Copy-Item "$env:VCPKG_INSTALLATION_ROOT/installed/x64-windows/bin/*.dll" ../buil
 
 The package includes the branded Windows executable/icon, Qt deployment and runtime DLLs. Windows compilation, DLL closure, graphics, tablet support and launch remain unverified locally. CI is a build recipe, not evidence of a successful Windows release.
 
+An experimental Linux-hosted Windows build is documented in
+[`scripts/cross-windows/README.md`](../scripts/cross-windows/README.md). It uses
+clang-cl/lld, an xwin-acquired Microsoft SDK/CRT, the exact Blender Windows library
+revision, Qt's MSVC package with matching Linux host tools, and separately built
+Assimp/HDF5/LZ4. Compiler and Qt widget probes have run headlessly under Wine/Xvfb;
+these probes do not establish a working mPainter Windows release. The scripts
+record the required case-sensitive filesystem and generator adaptations, resource
+limits, static DLL checks, and Microsoft redistribution terms. Keep all builds and
+tests sequential and inside a capped container; do not publish this experiment.
+The 4 November 2026 attempt stopped at ambiguous `QUuid = {}` assignments in
+Windows Qt headers; no application executable or Windows release archive was
+produced. The cross-build README records a minimal reproducer and the source
+changes needed before another complete build can succeed.
+
 ## macOS arm64: viewport port required
 
 The old `setup-macos.command` installed a Python prototype and PySide6. It did not build this native Blender/Qt host. The current host explicitly selects Blender's OpenGL backend and requests a Qt OpenGL 4.3 context. Blender 5.2 disables its OpenGL backend on Apple builds, and macOS does not supply OpenGL 4.3. Therefore a working native Mac package is **not currently feasible from this host code** without a Metal rendering/presentation integration port. No Mac machine was available in this session, and no Mac binary was built.
