@@ -1349,7 +1349,9 @@ set_source_files_properties(${BTS_HOST_SOURCE_DIR}/../tests/ordinary_color_sourc
 # Synthetic ordered RGB lowering is fixture-free and runs once in native CPU mode.
 target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/../tests/spsm_bitmap_color_test.cc)
 set_source_files_properties(${BTS_HOST_SOURCE_DIR}/../tests/spsm_bitmap_color_test.cc
-  PROPERTIES COMPILE_DEFINITIONS BTS_EMBED_SOURCE_REGRESSIONS=1)
+  PROPERTIES
+    COMPILE_DEFINITIONS "BTS_EMBED_SOURCE_REGRESSIONS=1;$<TARGET_PROPERTY:bts-hdf5,INTERFACE_COMPILE_DEFINITIONS>"
+    INCLUDE_DIRECTORIES "$<TARGET_PROPERTY:bts-hdf5,INTERFACE_INCLUDE_DIRECTORIES>")
 
 # Instance interpretation is explicit, strict and separate from source metadata.
 target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/NativeMaterialHeightResource.cc)
@@ -1537,7 +1539,7 @@ target_compile_options(bts-spmsk-embedded-bitmap-tests PRIVATE "$<IF:$<CXX_COMPI
 target_include_directories(bts-spmsk-embedded-bitmap-tests PRIVATE
   $<TARGET_PROPERTY:bts-spsm-reader,INCLUDE_DIRECTORIES>
   $<TARGET_PROPERTY:bts-spsm-bitmaps,INCLUDE_DIRECTORIES>)
-target_link_libraries(bts-spmsk-embedded-bitmap-tests PRIVATE bts-spsm-native-lowering-cpu bts-spsm-bitmaps)
+target_link_libraries(bts-spmsk-embedded-bitmap-tests PRIVATE bts-spsm-native-lowering-cpu bts-spsm-bitmaps bts-hdf5)
 add_dependencies(bts-cpu-tests bts-spmsk-embedded-bitmap-tests)
 add_test(NAME spmsk-embedded-image-boundary COMMAND bts-spmsk-embedded-bitmap-tests)
 

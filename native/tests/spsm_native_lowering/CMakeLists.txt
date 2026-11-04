@@ -55,5 +55,5 @@ add_executable(bts-spmsk-embedded-bitmap-tests ../spmsk_embedded_bitmap_test.cc)
 target_include_directories(bts-spmsk-embedded-bitmap-tests PRIVATE
   $<TARGET_PROPERTY:bts-spsm-reader,INCLUDE_DIRECTORIES>
   $<TARGET_PROPERTY:bts-spsm-bitmaps,INCLUDE_DIRECTORIES>)
-target_link_libraries(bts-spmsk-embedded-bitmap-tests PRIVATE bts-spsm-native-lowering bts-spsm-bitmaps)
+target_link_libraries(bts-spmsk-embedded-bitmap-tests PRIVATE bts-spsm-native-lowering bts-spsm-bitmaps bts-hdf5)
 add_test(NAME spmsk-embedded-image-boundary COMMAND bts-spmsk-embedded-bitmap-tests)
