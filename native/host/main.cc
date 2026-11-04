@@ -2704,7 +2704,7 @@ int main(int argc, char **argv)
     };
     const auto texture_error=[&](const QString &message){qWarning("BTS_TEXTURE_ERROR %s",qPrintable(message));if(!workspace)return;if(asset_progress)asset_progress->fail(message);workspace->append_console(message);workspace->statusBar()->showMessage(message,12000);QTimer::singleShot(16,workspace,[workspace,message]{auto *box=new QMessageBox(QMessageBox::Warning,"Texture could not be loaded",message,QMessageBox::Ok,workspace);box->setObjectName("textureLoadErrorDialog");box->setAttribute(Qt::WA_DeleteOnClose);box->setAttribute(Qt::WA_ShowWithoutActivating);box->setWindowFlag(Qt::WindowDoesNotAcceptFocus);box->setWindowModality(Qt::NonModal);box->show();});};
     const auto texture_target=[&](int channel,bool insert=false){
-      if(!document||selected_material<0)throw std::runtime_error("Inget projekt öppet — File → New / File → Open");
+      if(!document||selected_material<0)throw std::runtime_error("No project open — File → New / File → Open");
       const auto &set=document->set(snapshot.materials[selected_material].session_id);
       if(set.material_layering.enabled)throw std::runtime_error("File/Shelf textures are unavailable in uniform four-material mode");
       return bts::texture_load_target(document->id(),set,channel,insert,document_revision);
@@ -2839,7 +2839,7 @@ int main(int argc, char **argv)
         if (selected_material < 0) {
           viewport->select_material(std::nullopt);
           workspace->set_roughness(0);
-          workspace->set_roughness_editable(false, document?"No material selected.":"Inget projekt öppet");
+          workspace->set_roughness_editable(false, document?"No material selected.":"No project open");
           return;
         }
         const auto &material = snapshot.materials[selected_material];
@@ -3497,7 +3497,7 @@ if(material_importer)material_importer->cancel();
           return;
         }
         if (selected_material < 0 || selected_material >= int(snapshot.materials.size())) {
-          workspace->set_roughness_editable(false, document?"No material selected.":"Inget projekt öppet");
+          workspace->set_roughness_editable(false, document?"No material selected.":"No project open");
           return;
         }
         auto &material = snapshot.materials[selected_material];
@@ -3910,7 +3910,7 @@ bts::FileDialog::prepare_directory_thread();workspace->set_fill_color_spaces(bts
       if(schedule_material_import)schedule_material_import();
 #endif
 
-      for(const auto &material:snapshot.materials){const auto &set=document->set(material.session_id);const QString reason=set.uniform_editable?"Editable":QString::fromStdString(material.roughness_unavailable_reason).isEmpty()?"Kräver en Principled BSDF direkt till Surface med okopplade Base Color/Roughness/Metallic/Normal":QString::fromStdString(material.roughness_unavailable_reason);workspace->append_console("Texture Set "+QString::fromStdString(set.name)+": "+reason);const int row=workspace->texture_sets()->findItems(QString::fromStdString(set.name),Qt::MatchExactly).isEmpty()?-1:workspace->texture_sets()->row(workspace->texture_sets()->findItems(QString::fromStdString(set.name),Qt::MatchExactly).first());if(row>=0)workspace->texture_sets()->item(row)->setToolTip(reason);}
+      for(const auto &material:snapshot.materials){const auto &set=document->set(material.session_id);const QString reason=set.uniform_editable?"Editable":QString::fromStdString(material.roughness_unavailable_reason).isEmpty()?"Requires a Principled BSDF connected directly to Surface with unlinked Base Color/Roughness/Metallic/Normal inputs":QString::fromStdString(material.roughness_unavailable_reason);workspace->append_console("Texture Set "+QString::fromStdString(set.name)+": "+reason);const int row=workspace->texture_sets()->findItems(QString::fromStdString(set.name),Qt::MatchExactly).isEmpty()?-1:workspace->texture_sets()->row(workspace->texture_sets()->findItems(QString::fromStdString(set.name),Qt::MatchExactly).first());if(row>=0)workspace->texture_sets()->item(row)->setToolTip(reason);}
       viewport->update();
       if(python_event){if(!previous_project.isEmpty())python_event("ProjectEditionLeft",{{"project_id",previous_project}});python_event("ProjectCreated",{{"project_id",document->id().toString(QUuid::WithoutBraces)}});}
     };
@@ -3924,7 +3924,7 @@ bts::FileDialog::prepare_directory_thread();workspace->set_fill_color_spaces(bts
     const auto request_save=[&](SaveIntent intent){
       if(parameter_import)parameter_import->cancel();
       if(!requested_save||!intent.recovery)requested_save=std::move(intent);
-      workspace->setProperty("projectSaveError",QString());window->statusBar()->showMessage("Sparar…");save_poll_timer.start();
+      workspace->setProperty("projectSaveError",QString());window->statusBar()->showMessage("Saving…");save_poll_timer.start();
     };
     const auto poll_save=[&]{
       try{
@@ -3933,7 +3933,7 @@ bts::FileDialog::prepare_directory_thread();workspace->set_fill_color_spaces(bts
           const auto completed=*active_save;active_save.reset();
           if(completed.recovery){last_recovery_document=completed.project;last_recovery_revision=completed.revision;std::printf("BTS_RECOVERY_READY pid=%lld path=%s background=1\n",static_cast<long long>(QCoreApplication::applicationPid()),qPrintable(completed.path));}
           else if(!completed.copy&&document&&document->id()==completed.project){if(requested_save&&requested_save->path==completed.path&&requested_save->expected==document_disk_identity)requested_save->expected=host.saved_project_identity();document_path=completed.path;document_disk_identity=host.saved_project_identity();if(document_revision==completed.revision)dirty=false;window->setWindowTitle(QFileInfo(completed.path).completeBaseName()+" — mPainter");if(python_event)python_event("ProjectSaved",{{"project_id",completed.project.toString(QUuid::WithoutBraces)},{"file_path",completed.path}});}
-          window->statusBar()->showMessage("Sparat "+QTime::currentTime().toString("HH:mm:ss"),5000);
+          window->statusBar()->showMessage("Saved "+QTime::currentTime().toString("HH:mm:ss"),5000);
         }
         if(!requested_save){save_poll_timer.stop();return;}
         if(!document||document->id()!=requested_save->project)throw std::runtime_error("Project changed before its save snapshot could be captured");

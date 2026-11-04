@@ -26,8 +26,15 @@ metadata=a.appdir/'usr/share/metainfo';metadata.mkdir(parents=True,exist_ok=True
 shutil.copy2(a.appdir/'se.mattiaslind.mpainter.metainfo.xml',metadata/'se.mattiaslind.mpainter.appdata.xml')
 applications=a.appdir/'usr/share/applications';applications.mkdir(parents=True,exist_ok=True)
 shutil.copy2(a.appdir/'se.mattiaslind.mpainter.desktop',applications)
-icons=a.appdir/'usr/share/icons/hicolor/256x256/apps';icons.mkdir(parents=True,exist_ok=True)
-shutil.copy2(a.appdir/'se.mattiaslind.mpainter.png',icons)
+# Approved artwork may be read-only; replace generated copies when repackaging.
+def copy_icon(source,target):
+    target.unlink(missing_ok=True)
+    shutil.copy2(source,target)
+for size in (16,24,32,48,64,128,256,512,1024):
+    icons=a.appdir/f'usr/share/icons/hicolor/{size}x{size}/apps';icons.mkdir(parents=True,exist_ok=True)
+    copy_icon(a.appdir/f'branding/mpainter-icon-{size}.png',icons/'se.mattiaslind.mpainter.png')
+icons=a.appdir/'usr/share/icons/hicolor/scalable/apps';icons.mkdir(parents=True,exist_ok=True)
+copy_icon(a.appdir/'branding/mpainter.svg',icons/'se.mattiaslind.mpainter.svg')
 binary=a.appdir/'usr/bin/mpainter';binary.parent.mkdir(parents=True,exist_ok=True)
 if not binary.exists():binary.symlink_to('../../mpainter')
 env=dict(os.environ,ARCH='x86_64',TMPDIR=str(a.cache.absolute()),XDG_CACHE_HOME=str(a.cache.absolute()))

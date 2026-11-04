@@ -1,7 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-<title>mPainter brush and curl</title><rect width="512" height="512" rx="112" fill="#111315"/>
-<path d="M145 355C100 318 109 254 158 245C188 239 205 259 198 281C191 303 157 293 163 276" fill="none" stroke="#E5BC78" stroke-width="27" stroke-linecap="round"/>
-<path d="M182 345L327 142Q342 123 356 137Q369 150 353 168L211 366Z" fill="#C8D2DC"/>
-<path d="M176 336L215 365C215 408 175 427 119 409C155 396 141 358 176 336Z" fill="#F2F4F5"/>
-<path d="M185 325L224 354" stroke="#111315" stroke-width="12"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="mPainter application icon"><title>mPainter application icon</title><rect x="32" y="32" width="960" height="960" rx="216" fill="#111315"/><g transform="translate(11.84 101.15) scale(1.36)"><path d="M157.75 256.5 C157.75 189.35 200.75 140.5 262.75 140.5 C324.75 140.5 368.25 189.35 368.25 256.5 L368.25 360.5 M368.25 256.5 C368.25 189.35 411.25 140.5 473.25 140.5 C535.25 140.5 578.75 189.35 578.75 256.5 L578.75 464.5" fill="none" stroke="#62C7D4" stroke-width="103.5" stroke-linecap="round" stroke-linejoin="round"/></g></svg>

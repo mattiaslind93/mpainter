@@ -25,7 +25,7 @@
 #include <cstdio>
 namespace bts {
 QString product_version(){return QStringLiteral(BTS_PRODUCT_VERSION);}
-QIcon product_icon(){QIcon icon;for(int size:{32,64,128,256,512})icon.addFile(QString(":/branding/mpainter-icon-%1.png").arg(size));return icon;}
+QIcon product_icon(){QIcon icon;for(int size:{16,24,32,48,64,128,256,512,1024})icon.addFile(QString(":/branding/mpainter-icon-%1.png").arg(size));return icon;}
 QString splash_featured_path(){
  const auto override=qEnvironmentVariable("MPAINTER_SPLASH_IMAGE");if(!override.isEmpty())return override;
  QSettings settings("mPainter","Preferences");const auto saved=settings.value("Branding/featuredImage").toString();if(!saved.isEmpty())return saved;
@@ -37,20 +37,18 @@ QPointF splash_focus(const QString &featured){
  const auto values=QString::fromUtf8(file.read(256)).simplified().split(' ');if(values.size()!=2)return {.52,.23};bool x_ok=false,y_ok=false;const double x=values[0].toDouble(&x_ok),y=values[1].toDouble(&y_ok);
  return x_ok&&y_ok&&std::isfinite(x)&&std::isfinite(y)?QPointF(std::clamp(x,0.,1.),std::clamp(y,0.,1.)):QPointF(.52,.23);
 }
-QImage compose_splash(const QString &featured,QPointF focus,int scale){
+QImage compose_splash(const QString &featured,QPointF /*focus*/,int scale){
  scale=scale>=2?2:1;
  QImage canvas(940*scale,529*scale,QImage::Format_RGB32);canvas.fill(QColor("#111315"));
  QPainter painter(&canvas);painter.setRenderHint(QPainter::SmoothPixmapTransform);
  QImage artwork(featured);if(artwork.isNull())artwork.load(":/branding/splash-featured.png");
- // The portrait ends above the footer; never paint status text over the artwork.
- // Use the full-resolution source and crop at the waist without stretching it.
+ // The supplied artwork is already cropped. Fit the entire image above the
+ // footer, preserving its aspect ratio and every edge (including the brushes).
  const QRectF image_area(230,0,710,443);
- const double height=std::min(artwork.height()*.46,artwork.width()*image_area.height()/image_area.width());
- const double width=height*image_area.width()/image_area.height();
- const QRectF source(std::clamp(focus.x()*artwork.width()-width/2,0.,artwork.width()-width),
-                     std::clamp(focus.y()*artwork.height()-height/2,0.,artwork.height()-height),width,height);
+ const QSizeF fitted=QSizeF(artwork.size()).scaled(image_area.size(),Qt::KeepAspectRatio);
+ const QRectF target(image_area.center()-QPointF(fitted.width()/2,fitted.height()/2),fitted);
  painter.scale(scale,scale);
- painter.drawImage(image_area,artwork,source);
+ painter.drawImage(target,artwork);
  painter.setPen(QColor("#F2F4F5"));QFont title=QApplication::font();title.setPixelSize(34);title.setWeight(QFont::DemiBold);painter.setFont(title);painter.drawText(28,76,"mPainter");
  QFont detail=QApplication::font();detail.setPixelSize(14);painter.setFont(detail);painter.setPen(QColor("#B4BAC1"));painter.drawText(28,108,"3D texture painting");
  painter.setPen(QPen(QColor("#C8D2DC"),1));painter.drawLine(28,130,202,130);
@@ -106,6 +104,6 @@ void add_product_about(QMainWindow *window){
  auto *download=menu->addAction("Download free materials");download->setObjectName("downloadFreeMaterialsHelp");
  QObject::connect(download,&QAction::triggered,window,[]{QDesktopServices::openUrl(QUrl("https://polyhaven.com/textures"));});
  auto *action=menu->addAction("About mPainter");action->setObjectName("aboutMPainter");
- QObject::connect(action,&QAction::triggered,window,[window]{QMessageBox dialog(window);dialog.setWindowTitle("About mPainter");dialog.setIconPixmap(product_icon().pixmap(96,96));dialog.setText("mPainter "+product_version());dialog.setInformativeText("Copyright Mattias Lind\nGPL-3.0-or-later\nBuilt with Blender and Qt.\n\nNot affiliated with or endorsed by Adobe. Substance 3D is a trademark of Adobe Inc.");dialog.setStandardButtons(QMessageBox::Ok);dialog.exec();});
+ QObject::connect(action,&QAction::triggered,window,[window]{QMessageBox dialog(window);dialog.setWindowTitle("About mPainter");const bool dark=dialog.palette().color(QPalette::Window).lightness()<128;const QPixmap logo(dark?":/branding/about-logo.png":":/branding/about-logo-light.png");dialog.setIconPixmap(logo.scaled(300,93,Qt::KeepAspectRatio,Qt::SmoothTransformation));dialog.setText("mPainter "+product_version());dialog.setInformativeText("Copyright Mattias Lind\nGPL-3.0-or-later\nBuilt with Blender and Qt.\n\nNot affiliated with or endorsed by Adobe. Substance 3D is a trademark of Adobe Inc.");dialog.setStandardButtons(QMessageBox::Ok);dialog.exec();});
 }
 }

@@ -8,6 +8,6 @@ The application starts with an empty material library. [Download free materials 
 
 Build and packaging instructions are in [docs/building.md](docs/building.md). Linux is the locally tested platform. Windows CI is prepared but unverified. The macOS native viewport requires a Metal integration port; no working macOS release is claimed.
 
-The supplied splash artwork and brush-and-curl icon establish mPainter's own identity. Source and asset attributions are in [NOTICE.md](NOTICE.md); see [LICENSE](LICENSE) for GPL-3.0.
+The supplied splash artwork and Mattias Lind’s m-mark icon establish mPainter's own identity. Source and asset attributions are in [NOTICE.md](NOTICE.md); see [LICENSE](LICENSE) for GPL-3.0.
 
 Not affiliated with or endorsed by Adobe. Substance 3D is a trademark of Adobe Inc.

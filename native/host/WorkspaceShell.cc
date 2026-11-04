@@ -1060,7 +1060,7 @@ WorkspaceShell::WorkspaceShell(QWidget *viewport, Callbacks callbacks, QWidget *
   material_count->setObjectName("layerMaterialLibraryCount");
   material_count->hide();
   layers_layout->addWidget(material_count);
-  auto *empty=new QFrame(layers);empty->setObjectName("emptyLayersView");auto *empty_layout=new QVBoxLayout(empty);auto *empty_label=new QLabel("Inget projekt - File → New (Ctrl+N) / File → Open",empty);empty_label->setObjectName("emptyLayersMessage");empty_label->setWordWrap(true);empty_layout->addWidget(empty_label);
+  auto *empty=new QFrame(layers);empty->setObjectName("emptyLayersView");auto *empty_layout=new QVBoxLayout(empty);auto *empty_label=new QLabel("No project – File → New (Ctrl+N) / File → Open",empty);empty_label->setObjectName("emptyLayersMessage");empty_label->setWordWrap(true);empty_layout->addWidget(empty_label);
   for(const auto &[text,name]:{std::pair{"New project…","newProject"},std::pair{"Open project…","openProject"}}){auto *button=new QPushButton(text,empty);empty_layout->addWidget(button);connect(button,&QPushButton::clicked,this,[this,name]{if(auto *action=findChild<QAction *>(name))action->trigger();});}layers_layout->addWidget(empty);
   auto *layer_list = new LayerStackList(layers);
   layer_list->layer_dropped=[this](QUuid id,int target_row){if(callbacks_.layer_dropped)callbacks_.layer_dropped(id,target_row);};
@@ -1914,7 +1914,7 @@ void WorkspaceShell::show_texture_set(const TextureSet *set, const NewProjectOpt
   findChild<QWidget *>("materialProperties")->setEnabled(!set||!layer_is_cached(*set,set->selected_layer));
   findChild<QToolButton *>("toolbarBakeMeshMaps")->setEnabled(set&&!set->disabled&&bool(callbacks_.bake_mesh_maps));
   findChild<QWidget *>("emptyLayersView")->setVisible(!set);layers_->setVisible(set);
-  const QString unavailable=!set?QStringLiteral("Inget projekt öppet"):!set->uniform_editable?(property("materialEditabilityReason").toString().isEmpty()?QStringLiteral("Kräver en Principled BSDF direkt till Surface med okopplade Base Color/Roughness/Metallic/Normal"):property("materialEditabilityReason").toString()):QString{};
+  const QString unavailable=!set?QStringLiteral("No project open"):!set->uniform_editable?(property("materialEditabilityReason").toString().isEmpty()?QStringLiteral("Requires a Principled BSDF connected directly to Surface with unlinked Base Color/Roughness/Metallic/Normal inputs"):property("materialEditabilityReason").toString()):QString{};
   for(auto *button:{paint_button_,fill_button_,folder_button_,mask_button_,effects_button_})button->setToolTip(unavailable.isEmpty()?button->accessibleName():unavailable);
   {const TextureLayer *selected=nullptr;if(set)for(const auto &layer:set->layers)if(layer.id==set->selected_layer)selected=&layer;
    const bool editable=set&&set->uniform_editable&&selected&&!selected->instance&&selected->kind!=LayerKind::Folder&&!set->selected_mask;

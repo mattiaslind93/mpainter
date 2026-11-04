@@ -11,6 +11,9 @@ inline bool is_hidden_shelf_asset(const StudioAsset &asset){
 inline bool asset_in_category(const StudioAsset &asset,const QString &category){
   if(is_hidden_shelf_asset(asset))return false;
   if(asset.search_terms.contains("internal:flattened-normal")||(asset.search_terms.contains("flattened")&&asset.filename=="flattened_3.btsseq"))return false; // Retain old project pixels, hide the internal Normal resource.
+  // Imported Blender shaders and channel presets are reusable fill presets too.
+  if(category=="Material presets"&&asset.usages.contains("material")&&
+     (asset.filename.endsWith(".btsnative.blend")||asset.filename.endsWith(".btsuniform")))return true;
   if(category=="Flattened layers")return asset.search_terms.contains("flattened");
   if(category=="Baked")return false;
   if(category=="Skin")return asset.usages.contains("skin")||asset.search_terms.contains("skin")||asset.search_terms.contains("category:skin");
