@@ -1,0 +1,9 @@
+# Original displaced tilted high surface, intentionally without UVs.
+mtllib cage_high.mtl
+o Surface_high
+v -1.5 -1.5 -.03
+v 1.5 -1.5 .27
+v 1.5 1.5 .27
+v -1.5 1.5 -.03
+usemtl HighSurface
+f 1 2 3 4

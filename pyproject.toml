@@ -1,0 +1,7 @@
+[project]
+name = "mpainter"
+version = "1.0.0"
+description = "Native 3D texture painting"
+requires-python = ">=3.11"
+license = "GPL-3.0-or-later"
+authors = [{name = "Mattias Lind"}]

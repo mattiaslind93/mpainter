@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>se.mattiaslind.mpainter</id>
+  <name>mPainter</name>
+  <summary>Paint textures on 3D models</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <developer id="se.mattiaslind"><name>Mattias Lind</name></developer>
+  <description><p>A native texture painting workspace with layers, masks, texture sets, UV views and Blender rendering.</p><p>Import your own materials and textures. The application includes no material library.</p></description>
+  <launchable type="desktop-id">se.mattiaslind.mpainter.desktop</launchable>
+  <provides><binary>mpainter</binary></provides>
+  <url type="homepage">https://github.com/mattiaslind93</url>
+  <content_rating type="oars-1.1"/>
+  <releases><release version="1.0.0" date="2026-11-04"/></releases>
+</component>

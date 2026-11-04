@@ -1,0 +1,62 @@
+{
+  "blender": {
+    "repository": "https://projects.blender.org/blender/blender.git",
+    "commit": "fbe6228777e7d9afefcd61a413844e790ae75db7",
+    "linux_libraries": "30d9f881c4b62c52323fd11637eeea56d460e35c",
+    "update_command": "make update",
+    "patches": "third_party/blender/patches/*.patch",
+    "tag": "v5.2.0"
+  },
+  "qt": {
+    "version": "6.8.3",
+    "archive": "https://download.qt.io/archive/qt/6.8/6.8.3/submodules/qtbase-everywhere-src-6.8.3.tar.xz",
+    "sha256": "56001b905601bb9023d399f3ba780d7fa940f3e4861e496a7c490331f49e0b80",
+    "modules": [
+      "Core",
+      "Gui",
+      "Widgets",
+      "OpenGL",
+      "OpenGLWidgets"
+    ],
+    "linux_display": "xcb (XWayland)",
+    "linux_fonts": "Fontconfig with system FreeType and HarfBuzz"
+  },
+  "development_toolchain": {
+    "container": "Fedora 43 bts-build",
+    "gcc": "15.3.1",
+    "glibc": "2.42",
+    "cmake": "3.31.11",
+    "ninja": "1.13.1",
+    "cxx_standard": 20
+  },
+  "vfx_reference_platform": {
+    "target": "CY2026",
+    "reference": "https://vfxplatform.com/",
+    "checked": "2026-10-18",
+    "qt_series_matches": true,
+    "cxx_standard_matches": true,
+    "full_compliance": false,
+    "known_toolchain_differences": {
+      "gcc": {
+        "reference": "14.2",
+        "development": "15.3.1"
+      },
+      "glibc": {
+        "reference": "2.28",
+        "development": "2.42"
+      }
+    },
+    "matching_library_series_from_pinned_manifest": {
+      "python": "3.13.13",
+      "numpy": "2.3.4",
+      "alembic": "1.8.3",
+      "imath": "3.2.2",
+      "opencolorio": "2.5.0",
+      "openexr": "3.4.10",
+      "opensubdiv": "3.7.0",
+      "openvdb": "13.0.0",
+      "onetbb": "2022.3.0"
+    },
+    "blender_library_manifest": "blender/lib/linux_x64/deps.md"
+  }
+}

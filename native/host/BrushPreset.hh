@@ -1,0 +1,56 @@
+#pragma once
+#include "BrushSettings.hh"
+#include "MaterialValuesJson.hh"
+#include "ResourceBudget.hh"
+#include <QCryptographicHash>
+#include <QJsonDocument>
+#include <QJsonArray>
+#include <QtEndian>
+#include <bit>
+#include <map>
+
+namespace bts {
+struct BrushPreset {QString name;BrushSettings brush;};
+namespace brush_codec {
+inline void require(bool ok){if(!ok)throw std::invalid_argument("Invalid brush preset data");}
+inline QJsonObject object(const QJsonValue &v){require(v.isObject());return v.toObject();}
+inline void keys(const QJsonObject &o,std::initializer_list<const char *> fields){require(o.size()==int(fields.size()));for(const auto *key:fields)require(o.contains(QLatin1String(key)));}
+inline double number(const QJsonValue &v,double low,double high){const auto n=v.toDouble();require(v.isDouble()&&std::isfinite(n)&&n>=low&&n<=high);return n;}
+inline int integer(const QJsonValue &v,int low,int high){const auto n=number(v,low,high);require(n==std::floor(n));return int(n);}
+inline bool boolean(const QJsonValue &v){require(v.isBool());return v.toBool();}
+inline QString text(const QJsonValue &v){require(v.isString()&&!v.toString().contains(QChar(0)));return v.toString();}
+template<class T,std::size_t N> QJsonArray array(const std::array<T,N> &a){QJsonArray r;for(auto v:a)r.append(v);return r;}
+template<class T,std::size_t N> void read_array(std::array<T,N> &a,const QJsonValue &v,double low,double high){require(v.isArray()&&v.toArray().size()==N);const auto r=v.toArray();for(int i=0;i<int(N);++i){if constexpr(std::is_same_v<T,bool>)a[i]=boolean(r[i]);else a[i]=T(number(r[i],low,high));}}
+struct Writer {
+ QJsonArray resources;std::map<const AlphaBitmap *,int> bitmaps;
+ QJsonObject alpha(const BrushAlpha &a){QJsonValue resource=QJsonValue::Null;if(a.bitmap){auto [i,added]=bitmaps.emplace(a.bitmap.get(),bitmaps.size());if(added){const auto &b=*a.bitmap;require(b.width>0&&b.height>0&&std::uint64_t(b.pixels.size())==resource_product(b.width,b.height));ResourceBudget{}.require(resource_product(b.pixels.size(),12),0,"Brush bitmap encoding");QByteArray raw;raw.resize(qsizetype(resource_product(b.pixels.size(),4)));for(std::size_t k=0;k<b.pixels.size();++k){require(std::isfinite(b.pixels[k])&&b.pixels[k]>=0&&b.pixels[k]<=1);qToLittleEndian(std::bit_cast<quint32>(b.pixels[k]),raw.data()+k*4);}resources.append(QJsonObject{{"width",b.width},{"height",b.height},{"name",QString::fromStdString(b.name)},{"float32_le",QString::fromLatin1(raw.toBase64())},{"sha256",QString::fromLatin1(QCryptographicHash::hash(raw,QCryptographicHash::Sha256).toHex())}});}resource=i->second;}
+ return {{"kind",int(a.kind)},{"inverted",a.inverted},{"uniform",a.uniform},{"bitmap",resource},{"dynamic",QJsonObject{{"cycle",a.dynamic.cycle},{"random_start",a.dynamic.random_start},{"roundness",a.dynamic.roundness},{"width",a.dynamic.width},{"phase",a.dynamic.phase}}}};}
+ QJsonObject stencil(const BrushStencil &s){return {{"resource",s.resource?QJsonValue(alpha(*s.resource)):QJsonValue(QJsonValue::Null)},{"tiling",s.tiling},{"offset",array(s.offset)},{"scale",s.scale},{"angle",s.angle},{"overlay",s.overlay}};}
+ QJsonObject brush(const BrushSettings &b){QJsonObject r{{"users",array(b.users)},{"user_values",array(b.user_values)},{"values",material_values_json(b.values)},{"channels",array(b.channels)},{"alpha",alpha(b.alpha)},{"stencil",stencil(b.stencil)},
+ {"projection",QJsonObject{{"alignment",int(b.projection.alignment)},{"cull",b.projection.cull},{"angle",b.projection.angle},{"orientation",b.projection.orientation},{"symmetry_ray",b.projection.symmetry_ray},{"camera_right",array(b.projection.camera_right)},{"camera_up",array(b.projection.camera_up)}}},
+ {"jitter",QJsonObject{{"size",b.jitter.size},{"flow",b.jitter.flow},{"angle",b.jitter.angle},{"position",b.jitter.position}}}};
+#define BTS_BRUSH_WRITE(field) r[#field]=b.field;
+ BTS_BRUSH_WRITE(erase) BTS_BRUSH_WRITE(ao) BTS_BRUSH_WRITE(smudge) BTS_BRUSH_WRITE(clone) BTS_BRUSH_WRITE(clone_absolute) BTS_BRUSH_WRITE(displacement) BTS_BRUSH_WRITE(displacement_value) BTS_BRUSH_WRITE(angle) BTS_BRUSH_WRITE(follow_path) BTS_BRUSH_WRITE(hardness) BTS_BRUSH_WRITE(mask_value) BTS_BRUSH_WRITE(diameter) BTS_BRUSH_WRITE(pressure_size) BTS_BRUSH_WRITE(pressure_flow) BTS_BRUSH_WRITE(minimum_size) BTS_BRUSH_WRITE(minimum_flow) BTS_BRUSH_WRITE(lazy_mouse) BTS_BRUSH_WRITE(lazy_distance) BTS_BRUSH_WRITE(spacing) BTS_BRUSH_WRITE(stroke_opacity) BTS_BRUSH_WRITE(flow)
+#undef BTS_BRUSH_WRITE
+ if(b.projected){const auto &p=*b.projected;r["projected"]=QJsonObject{{"transform",stencil(p.transform)},{"values",material_values_json(p.values)},{"name",QString::fromStdString(p.name)},{"weave",p.weave},{"density",p.density}};}else r["projected"]=QJsonValue::Null;return r;}
+};
+struct Reader {
+ std::vector<std::shared_ptr<const AlphaBitmap>> bitmaps;
+ explicit Reader(const QJsonValue &value){require(value.isArray());const auto resources=value.toArray();ResourceBudget{}.require(resource_product(resources.size(),sizeof(AlphaBitmap)+sizeof(void*)),0,"Brush bitmap descriptors");std::uint64_t total=0;for(const auto &v:resources){const auto o=object(v);keys(o,{"width","height","name","float32_le","sha256"});auto b=std::make_shared<AlphaBitmap>();b->width=integer(o["width"],1,std::numeric_limits<int>::max());b->height=integer(o["height"],1,std::numeric_limits<int>::max());b->name=text(o["name"]).toStdString();const auto count=resource_product(b->width,b->height),bytes=resource_product(count,4);total=resource_sum(total,resource_product(bytes,4));ResourceBudget{}.require(total,0,"Brush bitmap decoding");const auto encoded=text(o["float32_le"]).toLatin1();require(std::uint64_t(encoded.size())==resource_product((bytes+2)/3,4));const auto decoded=QByteArray::fromBase64Encoding(encoded,QByteArray::AbortOnBase64DecodingErrors);require(bool(decoded)&&std::uint64_t(decoded.decoded.size())==bytes);const auto &raw=decoded.decoded;require(text(o["sha256"])==QString::fromLatin1(QCryptographicHash::hash(raw,QCryptographicHash::Sha256).toHex()));b->pixels.resize(count);for(std::size_t k=0;k<count;++k){b->pixels[k]=std::bit_cast<float>(qFromLittleEndian<quint32>(raw.constData()+k*4));require(std::isfinite(b->pixels[k])&&b->pixels[k]>=0&&b->pixels[k]<=1);}bitmaps.push_back(std::move(b));}}
+ BrushAlpha alpha(const QJsonValue &v){const auto o=object(v);keys(o,{"kind","inverted","uniform","bitmap","dynamic"});BrushAlpha a;a.kind=AlphaKind(integer(o["kind"],0,4));a.inverted=boolean(o["inverted"]);a.uniform=number(o["uniform"],0,1);const auto d=object(o["dynamic"]);keys(d,{"cycle","random_start","roundness","width","phase"});a.dynamic.cycle=integer(d["cycle"],1,1024);a.dynamic.random_start=boolean(d["random_start"]);a.dynamic.roundness=number(d["roundness"],0,1);a.dynamic.width=number(d["width"],double(.01f),1);a.dynamic.phase=number(d["phase"],0,1);a.dynamic.validate();if(!o["bitmap"].isNull()){require(!bitmaps.empty());a.bitmap=bitmaps.at(integer(o["bitmap"],0,int(bitmaps.size())-1));}require(a.kind!=AlphaKind::Bitmap||bool(a.bitmap));return a;}
+ BrushStencil stencil(const QJsonValue &v){const auto o=object(v);keys(o,{"resource","tiling","offset","scale","angle","overlay"});BrushStencil s;if(!o["resource"].isNull())s.resource=alpha(o["resource"]);s.tiling=integer(o["tiling"],0,3);read_array(s.offset,o["offset"],-10000,10000);s.scale=number(o["scale"],.01,100);s.angle=number(o["angle"],-36000,36000);s.overlay=boolean(o["overlay"]);s.validate();return s;}
+ BrushSettings brush(const QJsonValue &v){const auto o=object(v);keys(o,{"users","user_values","values","channels","alpha","stencil","projection","jitter","erase","ao","smudge","clone","clone_absolute","displacement","displacement_value","angle","follow_path","hardness","mask_value","diameter","pressure_size","pressure_flow","minimum_size","minimum_flow","lazy_mouse","lazy_distance","spacing","stroke_opacity","flow","projected"});BrushSettings b;read_array(b.users,o["users"],0,1);read_array(b.user_values,o["user_values"],-65504,65504);b.values=read_material_values(o["values"]);read_array(b.channels,o["channels"],0,1);b.alpha=alpha(o["alpha"]);b.stencil=stencil(o["stencil"]);
+#define BTS_BRUSH_BOOL(field) b.field=boolean(o[#field]);
+ BTS_BRUSH_BOOL(erase) BTS_BRUSH_BOOL(ao) BTS_BRUSH_BOOL(smudge) BTS_BRUSH_BOOL(clone) BTS_BRUSH_BOOL(clone_absolute) BTS_BRUSH_BOOL(displacement) BTS_BRUSH_BOOL(follow_path) BTS_BRUSH_BOOL(pressure_size) BTS_BRUSH_BOOL(pressure_flow) BTS_BRUSH_BOOL(lazy_mouse)
+#undef BTS_BRUSH_BOOL
+#define BTS_BRUSH_NUMBER(field,lo,hi) b.field=number(o[#field],lo,hi);
+ BTS_BRUSH_NUMBER(displacement_value,-1,1) BTS_BRUSH_NUMBER(angle,-180,180) BTS_BRUSH_NUMBER(hardness,0,1) BTS_BRUSH_NUMBER(mask_value,0,1) BTS_BRUSH_NUMBER(diameter,.1,100) BTS_BRUSH_NUMBER(minimum_size,0,100) BTS_BRUSH_NUMBER(minimum_flow,0,100) BTS_BRUSH_NUMBER(lazy_distance,0,100) BTS_BRUSH_NUMBER(spacing,1,500) BTS_BRUSH_NUMBER(stroke_opacity,0,100) BTS_BRUSH_NUMBER(flow,0,100)
+#undef BTS_BRUSH_NUMBER
+ const auto p=object(o["projection"]);keys(p,{"alignment","cull","angle","orientation","symmetry_ray","camera_right","camera_up"});b.projection.alignment=BrushAlignment(integer(p["alignment"],0,3));b.projection.cull=boolean(p["cull"]);b.projection.angle=number(p["angle"],0,90);b.projection.orientation=number(p["orientation"],-1,1);b.projection.symmetry_ray=boolean(p["symmetry_ray"]);read_array(b.projection.camera_right,p["camera_right"],-1,1);read_array(b.projection.camera_up,p["camera_up"],-1,1);
+ const auto j=object(o["jitter"]);keys(j,{"size","flow","angle","position"});b.jitter.size=number(j["size"],0,100);b.jitter.flow=number(j["flow"],0,100);b.jitter.angle=number(j["angle"],0,180);b.jitter.position=number(j["position"],0,100);b.jitter.validate();
+ if(!o["projected"].isNull()){const auto m=object(o["projected"]);keys(m,{"transform","values","name","weave","density"});ProjectionMaterial material;material.transform=stencil(m["transform"]);material.values=read_material_values(m["values"]);material.name=text(m["name"]).toStdString();material.weave=boolean(m["weave"]);material.density=number(m["density"],4,512);material.validate();b.projected=std::move(material);}return b;}
+};
+}
+inline BrushPreset read_brush_preset(const QByteArray &bytes){ResourceBudget{}.require(resource_product(bytes.size(),4),0,"Brush preset JSON");QJsonParseError error;const auto document=QJsonDocument::fromJson(bytes,&error);brush_codec::require(error.error==QJsonParseError::NoError&&document.isObject());const auto root=document.object();brush_codec::keys(root,{"type","version","name","brush","alpha_resources"});brush_codec::require(root["type"]=="btsbrush"&&brush_codec::integer(root["version"],1,1)==1);BrushPreset p;p.name=brush_codec::text(root["name"]).trimmed();brush_codec::require(!p.name.isEmpty());brush_codec::Reader reader(root["alpha_resources"]);p.brush=reader.brush(root["brush"]);return p;}
+inline QByteArray write_brush_preset(const BrushPreset &p){brush_codec::Writer writer;const auto settings=writer.brush(p.brush);const auto bytes=QJsonDocument(QJsonObject{{"type","btsbrush"},{"version",1},{"name",p.name},{"brush",settings},{"alpha_resources",writer.resources}}).toJson(QJsonDocument::Compact);(void)read_brush_preset(bytes);return bytes;}
+}

@@ -1,0 +1,5 @@
+#pragma once
+namespace bts::openpbr_reference {
+inline constexpr char xml[]=R"BTS_OPENPBR(@BTS_OPENPBR_XML@)BTS_OPENPBR";
+inline constexpr char license[]=R"BTS_OPENPBR(@BTS_OPENPBR_LICENSE@)BTS_OPENPBR";
+}

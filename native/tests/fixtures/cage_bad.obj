@@ -1,0 +1,6 @@
+# Deliberately mismatched vertex count for transactional error verification.
+o WrongCage
+v -1 -1 .4
+v 1 -1 .4
+v 1 1 .4
+f 1 2 3

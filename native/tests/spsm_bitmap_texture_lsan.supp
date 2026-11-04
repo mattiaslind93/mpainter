@@ -1,0 +1,6 @@
+# Existing process-exit allocations in the reused native host dependencies.
+# A --runtime-baseline run with no bitmap calls reproduces exactly 1544+31 bytes
+# in these two uninstrumented vendor DSOs. Keep leak checking enabled for the
+# new instrumented bridge, reader and decoder; never suppress their stacks.
+leak:libusd_ms.so
+leak:libceres.so

@@ -1,0 +1,13 @@
+# Original low plane with a full 0-1 UV tile; native OBJ axes shared by all fixtures.
+mtllib cage_low.mtl
+o Surface_low
+v -1 -1 0
+v 1 -1 0
+v 1 1 0
+v -1 1 0
+vt 0 0
+vt 1 0
+vt 1 1
+vt 0 1
+usemtl LowSurface
+f 1/1 2/2 3/3 4/4

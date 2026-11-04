@@ -1,0 +1,7 @@
+# Original enclosing cage, matching native low vertex order/count, no UVs required.
+o Surface_cage
+v -1 -1 .4
+v 1 -1 .4
+v 1 1 .4
+v -1 1 .4
+f 1 2 3 4

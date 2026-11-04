@@ -1,0 +1,9 @@
+newmtl BodyRed
+Kd 1 0 0
+illum 2
+newmtl HeadGreen
+Kd 0 1 0
+illum 2
+newmtl WrongBlue
+Kd 0 0 1
+illum 2

@@ -1,0 +1,3 @@
+newmtl SharedSurface
+Kd .5 .5 .5
+illum 2

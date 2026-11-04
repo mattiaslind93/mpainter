@@ -1,0 +1,21 @@
+# Own two-tile UV fixture: fractional slanted borders in 1001, full second tile.
+mtllib bake_quality.mtl
+o QualityPlane
+v -2 -1 0
+v 0 -1 0
+v 2 -1 0
+v -2 1 0
+v 0 1 0
+v 2 1 0
+vt .13 .19
+vt .91 .21
+vt .80 .70
+vt .35 .84
+vt 1 0
+vt 2 0
+vt 2 1
+vt 1 1
+vn 0 0 1
+usemtl QualitySurface
+f 1/1/1 2/2/1 5/3/1 4/4/1
+f 2/5/1 3/6/1 6/7/1 5/8/1

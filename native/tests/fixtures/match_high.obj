@@ -1,0 +1,23 @@
+# Original overlapping high planes with deliberately different names/material colors.
+mtllib match_high.mtl
+o Body_high_top
+v -3 -1.5 0.060000
+v 3 -1.5 0.180000
+v 3 1.5 0.180000
+v -3 1.5 0.060000
+usemtl BodyRed
+f 1 2 3 4
+o Head_high
+v -3 -1.5 0.110000
+v 3 -1.5 0.110000
+v 3 1.5 0.290000
+v -3 1.5 0.290000
+usemtl HeadGreen
+f 5 6 7 8
+o Unrelated_high_ignorebf
+v -3 -1.5 0.650000
+v 3 -1.5 0.350000
+v 3 1.5 0.350000
+v -3 1.5 0.650000
+usemtl WrongBlue
+f 9 10 11 12

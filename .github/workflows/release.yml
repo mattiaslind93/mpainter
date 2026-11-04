@@ -1,0 +1,128 @@
+name: Build release packages
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    name: ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows-x64
+            qt_arch: win64_msvc2022_64
+            lib_arch: windows_x64
+          - os: macos-14
+            platform: macos-arm64
+            qt_arch: clang_64
+            lib_arch: macos_arm64
+          - os: ubuntu-24.04
+            platform: linux-x86_64
+            qt_arch: linux_gcc_64
+            lib_arch: linux_x64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 360
+    env:
+      CMAKE_BUILD_PARALLEL_LEVEL: '3'
+      PIP_CACHE_DIR: ${{ github.workspace }}/.cache/pip
+    steps:
+      - uses: actions/checkout@v4
+      - name: Free Linux runner disk
+        if: runner.os == 'Linux'
+        run: |
+          sudo rm -rf /usr/local/lib/android /opt/ghc /usr/share/dotnet
+          df -h .
+          sudo apt-get update
+          sudo apt-get install -y ninja-build git-lfs libassimp-dev libhdf5-dev libx11-dev libxxf86vm-dev libxfixes-dev libxi-dev libxrender-dev libxrandr-dev libxcursor-dev libxkbcommon-dev libwayland-dev wayland-protocols libdecor-0-dev libdbus-1-dev libfontconfig1-dev libfreetype-dev libepoxy-dev libgl-dev libegl-dev libsm-dev libice-dev libxkbcommon-x11-0 libxcb-cursor0 patchelf
+      - name: Free Windows runner disk
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          @('C:\Android', 'C:\hostedtoolcache\CodeQL', 'C:\Program Files\Android') | ForEach-Object {
+            if (Test-Path $_) { Remove-Item $_ -Recurse -Force -ErrorAction SilentlyContinue }
+          }
+          Get-PSDrive C
+      - name: Free macOS runner disk
+        if: runner.os == 'macOS'
+        run: |
+          sudo rm -rf /Users/runner/Library/Android /Users/runner/Library/Developer/CoreSimulator/Caches
+          df -h .
+          brew install ninja git-lfs assimp hdf5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          arch: ${{ matrix.qt_arch }}
+          cache: true
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+        with:
+          arch: x64
+      - name: Prepare pinned Blender source
+        run: python scripts/prepare-blender.py build/blender
+      - uses: actions/cache@v4
+        with:
+          path: |
+            build/blender/lib/${{ matrix.lib_arch }}
+            build/blender/.git/modules/lib/${{ matrix.lib_arch }}
+          key: blender-5.2-fbe62287-${{ matrix.platform }}-libs-v1
+      - name: Fetch upstream precompiled libraries
+        working-directory: build/blender
+        run: python build_files/utils/make_update.py --no-blender
+      - name: Windows auxiliary libraries
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          & "$env:VCPKG_INSTALLATION_ROOT/vcpkg.exe" install assimp:x64-windows hdf5:x64-windows --clean-after-build
+          if ($LASTEXITCODE -ne 0) { throw 'Dependency build failed' }
+          python scripts/build.py --blender build/blender --build build/native --qt "$env:QT_ROOT_DIR" --jobs 3 --toolchain "$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          if ($LASTEXITCODE -ne 0) { throw 'Native build failed' }
+          Copy-Item "$env:VCPKG_INSTALLATION_ROOT/installed/x64-windows/bin/*.dll" build/native/bin
+      - name: Build native host
+        if: runner.os != 'Windows'
+        run: python scripts/build.py --blender build/blender --build build/native --qt "$QT_ROOT_DIR" --jobs 3
+      - name: Package Linux
+        if: runner.os == 'Linux'
+        run: python scripts/package-linux.py --runtime build/native/bin --qt "$QT_ROOT_DIR" --output dist
+      - name: Package AppImage
+        if: runner.os == 'Linux'
+        run: python scripts/package-appimage.py --appdir dist/mPainter-1.0.0-linux-x86_64 --output dist/mPainter-1.0.0-linux-x86_64.AppImage --cache .cache/appimage
+      - name: Package Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/package-windows.ps1 -Runtime build/native/bin -Qt $env:QT_ROOT_DIR -Output dist
+      - name: Package macOS
+        if: runner.os == 'macOS'
+        run: bash scripts/package-macos.sh build/native/bin dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mPainter-${{ matrix.platform }}
+          path: |
+            dist/*.AppImage
+            dist/*.tar.gz
+            dist/*.zip
+            dist/*.dmg
+          if-no-files-found: error
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: packages
+          pattern: mPainter-*
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: packages/*
+          fail_on_unmatched_files: true
+          draft: true

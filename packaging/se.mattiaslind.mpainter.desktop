@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=mPainter
+Comment=Paint textures on 3D models
+Exec=mpainter
+Icon=se.mattiaslind.mpainter
+Terminal=false
+Categories=Graphics;3DGraphics;
+StartupWMClass=mpainter

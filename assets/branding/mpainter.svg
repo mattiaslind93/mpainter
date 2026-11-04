@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+<title>mPainter brush and curl</title><rect width="512" height="512" rx="112" fill="#111315"/>
+<path d="M145 355C100 318 109 254 158 245C188 239 205 259 198 281C191 303 157 293 163 276" fill="none" stroke="#E5BC78" stroke-width="27" stroke-linecap="round"/>
+<path d="M182 345L327 142Q342 123 356 137Q369 150 353 168L211 366Z" fill="#C8D2DC"/>
+<path d="M176 336L215 365C215 408 175 427 119 409C155 396 141 358 176 336Z" fill="#F2F4F5"/>
+<path d="M185 325L224 354" stroke="#111315" stroke-width="12"/>
+</svg>

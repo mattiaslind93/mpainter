@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>CFBundleName</key><string>mPainter</string>
+<key>CFBundleDisplayName</key><string>mPainter</string>
+<key>CFBundleIdentifier</key><string>se.mattiaslind.mpainter</string>
+<key>CFBundleExecutable</key><string>mPainter</string>
+<key>CFBundleIconFile</key><string>mpainter.icns</string>
+<key>CFBundlePackageType</key><string>APPL</string>
+<key>CFBundleShortVersionString</key><string>1.0.0</string>
+<key>CFBundleVersion</key><string>1.0.0</string>
+<key>NSHighResolutionCapable</key><true/>
+<key>NSHumanReadableCopyright</key><string>Copyright Mattias Lind</string>
+</dict></plist>

@@ -1,0 +1,9 @@
+# Full BlenderHost initialization/shutdown, with no variant calls, has the exact
+# same normalized stacks/counts/bytes as this fixture: Python direct 131439 B /
+# 135 objects + indirect 2937 B / 4, USD 1544 B / 1, Ceres 31 B / 1.
+# Total 135951 B / 141. Retain unsuppressed baseline/scoped reports and compare
+# every normalized allocation stack before using this fixture-only suppression.
+# detect_leaks remains enabled. Never suppress any new reader/variant frame.
+leak:_PyObject_Malloc
+leak:libusd_ms.so
+leak:libceres.so

@@ -1,0 +1,51 @@
+#usda 1.0
+(
+    defaultPrim = "World"
+    startTimeCode = 1
+    endTimeCode = 10
+    metersPerUnit = 1
+    upAxis = "Y"
+)
+def Xform "World" {
+    def Xform "Asset" (
+        variants = { string modelingVariant = "low" }
+        prepend variantSets = "modelingVariant"
+    ) {
+        variantSet "modelingVariant" = {
+            "low" {
+                def Mesh "Surface" {
+                    uniform token subdivisionScheme = "catmullClark"
+                    int[] faceVertexCounts = [4]
+                    int[] faceVertexIndices = [0, 1, 2, 3]
+                    point3f[] points.timeSamples = {
+                        1: [(-1, -1, 0), (1, -1, 0), (1, 1, 0), (-1, 1, 0)],
+                        10: [(-2, -1, 1), (2, -1, 1), (2, 1, 1), (-2, 1, 1)]
+                    }
+                    texCoord2f[] primvars:st = [(0, 0), (1, 0), (1, 1), (0, 1)] (
+                        interpolation = "faceVarying"
+                    )
+                }
+            }
+            "high" {
+                def Mesh "Surface" {
+                    uniform token subdivisionScheme = "catmullClark"
+                    int[] faceVertexCounts = [4, 4]
+                    int[] faceVertexIndices = [0, 1, 4, 3, 1, 2, 5, 4]
+                    point3f[] points = [(-2, -1, 0), (0, -1, 0), (2, -1, 0), (-2, 1, 0), (0, 1, 0), (2, 1, 0)]
+                    texCoord2f[] primvars:st = [(0, 0), (0.5, 0), (0.5, 1), (0, 1), (0.5, 0), (1, 0), (1, 1), (0.5, 1)] (
+                        interpolation = "faceVarying"
+                    )
+                }
+            }
+        }
+    }
+    def Mesh "Other" {
+        uniform token subdivisionScheme = "none"
+        int[] faceVertexCounts = [3]
+        int[] faceVertexIndices = [0, 1, 2]
+        point3f[] points = [(4, 0, 0), (6, 0, 0), (5, 2, 0)]
+        texCoord2f[] primvars:st = [(0, 0), (1, 0), (0.5, 1)] (
+            interpolation = "faceVarying"
+        )
+    }
+}
