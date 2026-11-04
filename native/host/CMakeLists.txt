@@ -7,7 +7,11 @@ qt6_add_resources(BTS_BRANDING_RESOURCES ${BTS_HOST_SOURCE_DIR}/../../assets/bra
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${BTS_HOST_SOURCE_DIR}/../../pyproject.toml)
 file(STRINGS ${BTS_HOST_SOURCE_DIR}/../../pyproject.toml BTS_PRODUCT_VERSION_LINE REGEX "^version = ")
 string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+(-[A-Za-z0-9.-]+)?" BTS_PRODUCT_VERSION "${BTS_PRODUCT_VERSION_LINE}")
-add_executable(bts-host ${SRC}
+# The standalone Blender target retains its resources; this host has its own
+# icon and VERSIONINFO in packaging/mpainter.rc.
+set(BTS_CREATOR_SOURCES ${SRC})
+list(REMOVE_ITEM BTS_CREATOR_SOURCES "${CMAKE_SOURCE_DIR}/release/windows/icons/winblender.rc")
+add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_BRANDING_RESOURCES}
   ${BTS_HOST_SOURCE_DIR}/Branding.cc
   ${BTS_HOST_SOURCE_DIR}/Theme.cc
