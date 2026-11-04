@@ -1,0 +1,44 @@
+{
+  "eevee": {
+    "object_pixels": 153208,
+    "mean_absolute_rgb_255": 4.568952012949715e-05,
+    "p99_rgb_255": 0.0,
+    "maximum_rgb_255": 1.0
+  },
+  "cycles": {
+    "object_pixels": 153721,
+    "mean_absolute_rgb_255": 0.0,
+    "p99_rgb_255": 0.0,
+    "maximum_rgb_255": 0.0
+  },
+  "world": {
+    "object_pixels": 153181,
+    "mean_absolute_rgb_255": 0.01776112355100611,
+    "p99_rgb_255": 1.0,
+    "maximum_rgb_255": 5.0
+  },
+  "orbit": {
+    "object_pixels": 149523,
+    "mean_absolute_rgb_255": 0.005140792163524453,
+    "p99_rgb_255": 0.0,
+    "maximum_rgb_255": 2.0
+  },
+  "thumbnail_mapping": {
+    "directions": 24,
+    "max_linear_rgb_error": 1.7763568394002505e-15,
+    "rotation_degrees": 90,
+    "mirror": false
+  },
+  "persistence": {
+    "reopened": 90.00000250447816,
+    "legacy_reopened": 90.00000250447816,
+    "authored_zero_reopened": 0,
+    "legacy_authored_reopened": 36.99999875288908
+  },
+  "cycles_background_rgb": [
+    114,
+    114,
+    114
+  ],
+  "passed": true
+}

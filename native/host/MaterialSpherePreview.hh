@@ -191,131 +191,32 @@ inline ShaderBallUvSurface shaderball_uv_surface(int size){
   return result;
 }
 
-inline std::array<double, 3>
-env_studio_reflection(double rx, double ry, double rz, double rough) {
-  const double blur = std::clamp(rough * rough, 0.0, 1.0);
-  // Note: in generated sphere G-buffer, ny > 0 is UPWARD, ny < 0 is DOWNWARD
-  const double sky_t = std::clamp(ry * 0.5 + 0.5, 0.0, 1.0);
-  std::array<double, 3> dome{0.15 + 0.44 * sky_t, 0.17 + 0.48 * sky_t,
-                             0.21 + 0.55 * sky_t};
-  const double horizon =
-      std::exp(-std::pow((ry - 0.05) / (0.16 + 0.35 * blur), 2.0));
-  const double floor_mask =
-      std::clamp((-ry - 0.12) / (0.22 + 0.30 * blur), 0.0, 1.0);
-
-  // Studio softbox 1 (upper left key panel)
-  const double d_key = rx * (-0.46) + ry * 0.60 + rz * 0.65;
-  const double sb_key =
-      std::pow(std::max(0.0, d_key), 18.0 / (1.0 + 14.0 * blur));
-  // Studio softbox 2 (right fill strip)
-  const double d_fill = rx * 0.64 + ry * 0.24 + rz * 0.73;
-  const double sb_fill =
-      std::pow(std::max(0.0, d_fill), 22.0 / (1.0 + 16.0 * blur));
-  // Studio top rim light bar
-  const double d_rim = rx * 0.10 + ry * 0.88 + rz * (-0.46);
-  const double sb_rim =
-      std::pow(std::max(0.0, d_rim), 16.0 / (1.0 + 12.0 * blur));
-
-  std::array<double, 3> env;
-  for (int c = 0; c < 3; ++c) {
-    const double base_env =
-        dome[c] * (1.0 - 0.68 * floor_mask) +
-        horizon * (c == 0 ? 0.42 : (c == 1 ? 0.44 : 0.48));
-    const double boxes =
-        sb_key * (c == 0 ? 1.85 : (c == 1 ? 1.80 : 1.72)) +
-        sb_fill * (c == 0 ? 0.78 : (c == 1 ? 0.86 : 0.98)) + sb_rim * 0.92;
-    env[c] = base_env + boxes * (1.0 - 0.55 * rough);
-  }
-  return env;
-}
-
-inline std::array<double, 3>
-shade_shaderball_pixel(const MaterialValues &material, double nx, double ny,
-                       double nz, double ao_factor = 1.0, double curv = 0.5,
-                       double micro_cavity = 1.0) {
-  const double rough = std::clamp(double(material.roughness), 0.03, 1.0);
-  const double metal = std::clamp(double(material.metallic), 0.0, 1.0);
-  const double mat_ao =
-      std::clamp(double(material.ambient_occlusion), 0.05, 1.0) * ao_factor *
-      micro_cavity;
-  const double occ = std::clamp(mat_ao, 0.05, 1.15);
-  const double bevel_boost = 1.0 + std::max(0.0, curv - 0.5) * 0.38;
-
-  struct Light {
-    double lx, ly, lz, r, g, b;
-  };
-  static constexpr std::array<Light, 3> lights{{
-      {-0.46, 0.60, 0.65, 1.25, 1.22, 1.17}, // Key studio softbox (top-left)
-      {0.64, 0.24, 0.73, 0.46, 0.52, 0.62},  // Cool fill light (right)
-      {0.10, 0.88, -0.46, 0.48, 0.50, 0.56}, // Top rim light
-  }};
-
-  const double ndotv = std::max(0.001, nz);
-  const double fresnel_v = std::pow(1.0 - ndotv, 5.0);
-  const double rx = 2.0 * ndotv * nx;
-  const double ry = 2.0 * ndotv * ny;
-  const double rz = 2.0 * ndotv * nz - 1.0;
-  const auto env_spec = env_studio_reflection(rx, ry, rz, rough);
-
-  // Detect fabric/velvet sheen or car-paint/marble clearcoat from material properties
-  const bool is_cloth_like =
-      metal < 0.05 && rough >= 0.72 && material.ambient_occlusion <= 0.965f;
-  const bool is_clearcoated =
-      (metal > 0.1 && metal < 0.6 && rough < 0.30);
-  const auto env_cc = env_studio_reflection(rx, ry, rz, 0.04);
-
-  std::array<double, 3> linear{0.0, 0.0, 0.0};
-  for (int c = 0; c < 3; ++c) {
-    const double base_c = std::clamp(double(material.base_color[c]), 0.0, 1.0);
-    const double f0 = 0.04 * (1.0 - metal) + base_c * metal;
-    const double f_env = f0 + (std::max(1.0 - rough, f0) - f0) * fresnel_v;
-
-    const double sky = 0.5 + 0.5 * ny;
-    double diff_sum = (0.14 + 0.24 * sky) * occ;
-    double spec_sum = env_spec[c] * f_env * bevel_boost * (0.42 + 0.58 * ao_factor);
-    double cc_sum =
-        is_clearcoated ? env_cc[c] * (0.04 + 0.96 * fresnel_v) * 0.45 : 0.0;
-
-    for (const auto &l : lights) {
-      const double lc = (&l.r)[c];
-      const double ndotl = std::max(0.0, nx * l.lx + ny * l.ly + nz * l.lz);
-      diff_sum += ndotl * lc * (0.35 + 0.65 * occ);
-      if (ndotl > 0.0) {
-        double hx = l.lx, hy = l.ly, hz = l.lz + 1.0;
-        const double hlen = std::sqrt(hx * hx + hy * hy + hz * hz);
-        hx /= hlen;
-        hy /= hlen;
-        hz /= hlen;
-        const double ndoth = std::max(0.0, nx * hx + ny * hy + nz * hz);
-        const double a2 = std::pow(std::max(0.035, rough), 4.0);
-        const double denom = ndoth * ndoth * (a2 - 1.0) + 1.0;
-        const double d_term = a2 / std::max(1e-4, 3.14159 * denom * denom);
-        const double vdoth = std::max(0.0, hz);
-        const double f_light = f0 + (1.0 - f0) * std::pow(1.0 - vdoth, 5.0);
-        spec_sum +=
-            std::min(16.0, d_term) * f_light * ndotl * lc * 0.24 * bevel_boost;
-      }
-    }
-
-    const double sheen_term =
-        is_cloth_like
-            ? std::pow(1.0 - ndotv, 3.0) * (0.22 + 0.68 * base_c) * 0.48
-            : 0.0;
-    linear[c] = base_c * (1.0 - metal) * diff_sum + spec_sum + cc_sum + sheen_term;
-  }
-  // Working colors are ACEScg; display transfer below expects linear Rec.709.
-  // Matrix from the bundled OCIO configuration, including D60/D65 adaptation.
-  return {1.705050945*linear[0]-.621792138*linear[1]-.083258927*linear[2],
-          -.130256400*linear[0]+1.140804768*linear[1]-.010548267*linear[2],
-          -.024003355*linear[0]-.128968999*linear[1]+1.152972341*linear[2]};
-}
-
 inline std::array<double,3> preview_environment(double x,double y,double z,double rough,bool diffuse=false){
-  if(diffuse){
-    const double sky=std::clamp(y*.5+.5,0.0,1.0);
-    return {.28+.42*sky,.29+.44*sky,.32+.46*sky};
-  }
-  return env_studio_reflection(x,y,z,rough);
+  static const std::array<QImage,9> images=[] {
+    init_mask_preview_resources();
+    std::array<QImage,9> result;
+    for(int i=0;i<9;++i)result[i]=QImage(QString(":/builtin-mask-preview/preview-studio-%1.png").arg(i)).convertToFormat(QImage::Format_RGBA8888);
+    return result;
+  }();
+  const double lod=std::clamp(rough,0.0,1.0)*7;
+  const auto sample=[&](int level){
+    const auto &img=images[level];std::array<double,3> rgb{};if(img.isNull())return rgb;
+    // EEVEE camera vector (x,y,z) -> Z-up (x,-z,y), then +pi/2 -> (z,x,y).
+    // Blender equirectangular u=-atan2(Y,X)/(2*pi)+.5; PNG rows run top-down.
+    const double u=-std::atan2(x,z)/(2*std::numbers::pi)+.5;
+    const double v=std::acos(std::clamp(y,-1.0,1.0))/std::numbers::pi;
+    const double fx=u*img.width()-.5,fy=v*img.height()-.5;const int ix=int(std::floor(fx)),iy=int(std::floor(fy));
+    for(int dy=0;dy<2;++dy)for(int dx=0;dx<2;++dx){
+      const auto *p=img.constScanLine(std::clamp(iy+dy,0,img.height()-1))+4*((ix+dx+img.width())%img.width());
+      const double weight=(dx?fx-ix:1-fx+ix)*(dy?fy-iy:1-fy+iy);
+      const double scale=p[3]?std::ldexp(weight,int(p[3])-136):0;
+      for(int c=0;c<3;++c)rgb[c]+=p[c]*scale;
+    }
+    return rgb;
+  };
+  if(diffuse)return sample(8);
+  const auto low=sample(int(lod)),high=sample(std::min(int(lod)+1,7));std::array<double,3> rgb;
+  for(int c=0;c<3;++c)rgb[c]=std::lerp(low[c],high[c],lod-int(lod));return rgb;
 }
 inline std::array<double,3> shade_material_environment(const MaterialValues &material,double nx,double ny,double nz,double ao){
   const double metal=std::clamp(double(material.metallic),0.0,1.0),rough=std::clamp(double(material.roughness),0.0,1.0),nv=std::max(0.0,nz);
@@ -331,6 +232,14 @@ inline std::array<double,3> shade_material_environment(const MaterialValues &mat
   }
   return result;
 }
+
+inline std::array<double,3> shade_shaderball_pixel(const MaterialValues &material,
+    double nx,double ny,double nz,double ao_factor=1.0,double curv=.5,double micro_cavity=1.0){
+  // All thumbnail surfaces share the actual Studio illumination/reflections.
+  (void)curv;
+  return shade_material_environment(material,nx,ny,nz,ao_factor*micro_cavity);
+}
+
 
 inline std::array<double, 3>
 shade_forest_agx_pixel(const MaterialValues &material, double nx, double ny,

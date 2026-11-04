@@ -55,6 +55,8 @@
 #include "BLO_readfile.hh"
 #include "SurfaceBrush.hh"
 #include "NewProjectProfile.hh"
+#include "BKE_world.h"
+#include "DNA_world_types.h"
 #include "EnvironmentResource.hh"
 #include "BKE_studiolight.h"
 
@@ -364,6 +366,7 @@ struct BlenderHost::Impl {
   }
   s.main = CTX_data_main(s.context);
   s.scene = CTX_data_scene(s.context);
+  NewProjectProfile::restore_environment_orientation(*s.scene,*s.view);
   s.lens=display_post_settings(*s.scene).projection();
   s.view_layer = CTX_data_view_layer(s.context);
   }
@@ -371,9 +374,23 @@ struct BlenderHost::Impl {
   bool preview_force_cpu=false;
   bool preview_cpu_fallback=false;
   QString preview_device="CPU", preview_device_message;
+  void sync_preview_background(){
+    // Cycles' Studio Light shader uses World.color for camera rays when HDR
+    // opacity is zero. Convert the UI gray back through the active view so it
+    // stays neutral; illumination and glossy rays still sample the Studio HDR.
+    if(!scene->world)scene->world=BKE_world_add(main,"mPainter Environment");
+    const QColor gray(bts::theme::Viewport);
+    float rgb[3]={float(gray.redF()),float(gray.greenF()),float(gray.blueF())};
+    auto inverse=ColormanageProcessor::display_processor_new(
+        &scene->view_settings,&scene->display_settings,DISPLAY_SPACE_DRAW,true);
+    inverse.apply_v3(rgb);
+    scene->world->horr=rgb[0];scene->world->horg=rgb[1];scene->world->horb=rgb[2];
+    DEG_id_tag_update_ex(main,&scene->world->id,ID_RECALC_SHADING|ID_RECALC_SYNC_TO_EVAL);
+  }
   void configure_preview(bool enabled,bool force_cpu=false,bool probe=false){
     auto &s=*this;s.free_targets();
     if(enabled){
+      s.sync_preview_background();
       if(!RE_engines_find("CYCLES"))throw std::runtime_error("Cycles is not registered");
       if(!BPY_run_string_exec(s.context,nullptr,(std::string("force_cpu = ")+(force_cpu?"True":"False")+"\nprobe_defaults = "+(probe?"True":"False")+"\n"+R"PY(import bpy, os, cycles, _cycles
 # Blender starts without its own window; Qt supplies a real graphical viewport.
@@ -1068,6 +1085,7 @@ void BlenderHost::set_display_transform(const std::string &name)
   if (!RNA_property_enum_value(s.context, &view, property, name.c_str(), &value))
     throw std::invalid_argument("The native OCIO config does not offer this display transform");
   RNA_property_enum_set(&view, property, value);
+  if(STREQ(s.scene->r.engine,"CYCLES"))s.sync_preview_background();
   DEG_id_tag_update_ex(s.main, &s.scene->id, ID_RECALC_SYNC_TO_EVAL);
   s.uv_dirty = true;
 }

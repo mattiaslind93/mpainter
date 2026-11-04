@@ -12,6 +12,8 @@ class NewProjectProfile {
   ~NewProjectProfile();
   // Owner-only initialization, before worker/program use; does not change view or lighting.
   static void initialize_working_space(blender::Main &);
+  // Upgrade the unversioned Studio default once; preserve authored rotations/alignment.
+  static void restore_environment_orientation(blender::Scene &, blender::View3D &);
   void apply(blender::Main &, blender::Scene &, blender::View3D &);
   static QJsonObject inspect(blender::Main &, blender::Scene &, blender::View3D &);
  private:

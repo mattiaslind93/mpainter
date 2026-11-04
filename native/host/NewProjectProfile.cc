@@ -6,6 +6,7 @@
 #include <QFileInfo>
 #include <QJsonDocument>
 #include "BKE_main.hh"
+#include "BKE_idprop.hh"
 #include "BKE_context.hh"
 #include "BKE_studiolight.h"
 #include "BLI_string.h"
@@ -163,7 +164,22 @@ void NewProjectProfile::apply(Main &main, Scene &scene, View3D &view)
   // Product default: camera-relative Material Preview lighting (Mattias 2026-10-19).
   view.shading.flag|=V3D_SHADING_STUDIOLIGHT_VIEW_ROTATION;
   STRNCPY(view.shading.lookdev_light, impl_->light->name);
+  IDP_ReplaceInGroup(IDP_EnsureProperties(&scene.id),
+                    bke::idprop::create("mpainter_environment_orientation", 1).release());
   impl_->owned = false; // Registry now owns the resource used by the accepted document.
+}
+void NewProjectProfile::restore_environment_orientation(Scene &scene, View3D &view)
+{
+  auto *properties=IDP_EnsureProperties(&scene.id);
+  if(IDP_GetPropertyFromGroup(properties,"mpainter_environment_orientation"))return;
+  // Earlier mPainter Studio projects inherited 0 instead of mfPainter's +pi/2.
+  // Do not reset a user's non-default angle, custom HDR, or World/Local choice.
+  auto *hash=IDP_GetPropertyFromGroup(properties,"bts_environment_sha256");
+  if(STREQ(view.shading.lookdev_light,"default-studio.hdr") && hash && hash->type==IDP_STRING &&
+     STREQ(IDP_string_get(hash),"48505ffc80c0ca026775c77621b5a85a4c44b0fb7819ddadfa9e7bc6f5732031") &&
+     view.shading.studiolight_rot_z==0.0f)
+    view.shading.studiolight_rot_z=float(profile()["shading"].toObject()["studiolight_rotate_z"].toDouble());
+  IDP_ReplaceInGroup(properties,bke::idprop::create("mpainter_environment_orientation",1).release());
 }
 QJsonObject NewProjectProfile::inspect(Main &main, Scene &scene, View3D &view)
 {

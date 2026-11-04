@@ -372,7 +372,13 @@ ProjectFileIdentity ProjectSaveSnapshot::write(const std::string &path,const Gpu
    // Non-Color generated image avoids Blender's generated-color sRGB decoding,
    // preserves float bits/HDR/signed data and feeds stock shader nodes unchanged.
    STRNCPY(image->colorspace_settings.name,"Non-Color");
-   tile->gen_x=capture.width;tile->gen_y=capture.height;tile->gen_depth=32;tile->gen_type=IMA_GENTYPE_BLANK;tile->gen_flag|=IMA_GEN_FLOAT|IMA_GEN_TILE;std::copy_n(capture.pixels,4,tile->gen_color);
+   // Disabled native world-normal inputs use a 1x1 zero GPU placeholder after
+   // Open. Its readback is uniform, but the saved descriptor must retain the
+   // texture set's logical dimensions or the next Open rejects the project.
+   if(!IDP_GetPropertyFromGroup_null(image->id.properties,"bts_native_world_normal_owner")){
+    tile->gen_x=capture.width;tile->gen_y=capture.height;
+   }
+   tile->gen_depth=32;tile->gen_type=IMA_GENTYPE_BLANK;tile->gen_flag|=IMA_GEN_FLOAT|IMA_GEN_TILE;std::copy_n(capture.pixels,4,tile->gen_color);
    continue;
   }
   ImageUser user{};user.tile=capture.tile;
