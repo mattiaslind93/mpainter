@@ -190,7 +190,7 @@ class CyclesUdimArtist final:public QObject {
   MeshMap position;position.name="BA independently specified Position input";
   for(int tile:{1001,1002}){std::vector<float> rgba(32*32*4);for(int y=0;y<32;++y)for(int x=0;x<32;++x){const auto at=(y*32+x)*4;rgba[at+2]=tile==1001?.125f+.75f*float(x)/31.f:.1875f+.625f*float(y)/31.f;rgba[at+3]=1;}
    auto pixels=std::make_shared<MeshMapPixels>(32,std::move(rgba));position.tiles[tile]=MeshMapPlane{32,pixels->hash,std::move(pixels),32};}
-  set.mesh_maps[5]=std::move(position);set.selected_mask=false;set.selected_effect=QUuid();prepared=true;
+  set.mesh_maps[5]=std::move(position);set.selected_mask=false;set.selected_effect={};prepared=true;
  });
   require(prepared,"BA fixture callback was rejected before completion");
   const auto committed=state(true);QFile file(output+"/fixture-committed.json");require(file.open(QIODevice::WriteOnly),"Cannot save committed fixture evidence");file.write(QJsonDocument(committed).toJson());file.close();
