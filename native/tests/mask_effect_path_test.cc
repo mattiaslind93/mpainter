@@ -63,9 +63,9 @@ int main(){try{
   require(bulk_snapshot[0].group_effects->size()==2,"Recursive Paint erasure changed source");
   {
     TextureRamQueryScope memory(counted_ram);budget_queries=0;
-    const auto rows=mask_effect_entries(before);require(!rows.empty()&&budget_queries==1,"Traversal queried available RAM per row");
-    budget_queries=0;auto one=before;edit_mask_effect(one,paint.id,MaskEffectKind::Paint);require(budget_queries==1,"Typed edit queried available RAM per ancestor");
-    budget_queries=0;auto all=before;edit_mask_effects_of_kind(all,MaskEffectKind::Paint);require(budget_queries==1,"Bulk edit queried available RAM per leaf");
+    const auto rows=mask_effect_entries(before);require(!rows.empty()&&budget_queries==0,"Traversal queried available RAM per row");
+    budget_queries=0;auto one=before;edit_mask_effect(one,paint.id,MaskEffectKind::Paint);require(budget_queries==0,"Typed edit queried available RAM per ancestor");
+    budget_queries=0;auto all=before;edit_mask_effects_of_kind(all,MaskEffectKind::Paint);require(budget_queries==0,"Bulk edit queried available RAM per leaf");
     const std::vector<MaskEffect> empty,flat{first,levels,paint,filter};
     budget_queries=0;require(!find_mask_effect(empty,paint.id)&&budget_queries==0,"Empty const lookup queried RAM");
     budget_queries=0;require(find_mask_effect(flat,paint.id)==&flat[2]&&budget_queries==0,"Flat const lookup queried RAM");
@@ -76,10 +76,10 @@ int main(){try{
     budget_queries=0;require(!any_active_mask_effect(empty,is_paint)&&budget_queries==0,"Empty dependency lookup queried RAM");
     budget_queries=0;require(any_active_mask_effect(flat,is_paint)&&budget_queries==0,"Flat dependency lookup queried RAM");
     budget_queries=0;require(!any_active_mask_effect(empty_groups,is_paint)&&budget_queries==0,"Empty Group dependency queried RAM");
-    budget_queries=0;require(find_mask_effect(before,paint.id)&&budget_queries==1,"Nested const lookup lost one guarded snapshot");
-    budget_queries=0;require(any_active_mask_effect(before,is_paint)&&budget_queries==1,"Nested dependency lookup lost one guarded snapshot");
+    budget_queries=0;require(find_mask_effect(before,paint.id)&&budget_queries==0,"Nested lookup queried irrelevant RAM telemetry");
+    budget_queries=0;require(any_active_mask_effect(before,is_paint)&&budget_queries==0,"Nested dependency queried irrelevant RAM telemetry");
     const std::vector<MaskEffect> shadowed{group({first}),first};
-    budget_queries=0;require(find_mask_effect(shadowed,first.id)==&shadowed[0].group_effects->at(0)&&budget_queries==1,"Nested lookup changed DFS preorder");
+    budget_queries=0;require(find_mask_effect(shadowed,first.id)==&shadowed[0].group_effects->at(0)&&budget_queries==0,"Nested lookup changed DFS preorder");
   }
   std::printf("MASK_EFFECT_PATH PASS checks=%d ancestor_only_cow=1 const_ownership_changes=0\n",checks);return 0;
 }catch(const std::exception &error){std::fprintf(stderr,"MASK_EFFECT_PATH FAILED: %s\n",error.what());return 1;}}

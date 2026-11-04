@@ -11,7 +11,7 @@ const auto initialize_native_image_ui=[&]{
   const auto source_id=QUuid(QString::fromStdString(layer.fill.material_resource));
   const auto found=std::find_if(assets.assets().begin(),assets.assets().end(),[&](const auto &a){return a.id==source_id;});
   if(found==assets.assets().end()||!bts::is_native_material_asset(*found))throw std::runtime_error("Native material source is missing from the resource catalog");
-  bts::require_texture_ram(bts::resource_product(assets.assets().size(),sizeof(bts::StudioAsset)),"Native image resource snapshot metadata");
+
   bts::NativeImageUiTarget target;target.document=document->id();target.layer=layer.id;target.material_uid=uid;target.source=*found;target.resources=assets.assets();target.instance=*layer.fill.native_material;
   const auto project=target.document,layer_id=target.layer,set_id=set.id;const auto revision=document_revision;const auto hash=found->hash();const auto authored=layer.fill.native_material;const auto source=layer.fill.material_resource;
   target.current=[&,project,uid,layer_id,set_id,revision,source_id,hash,authored,source]{

@@ -1,4 +1,4 @@
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "EnvironmentResource.hh"
 #include <cmath>
 #include <memory>
@@ -20,11 +20,11 @@ namespace {
 QByteArray read(const QString &path) {
   QFile file(path);
   if(!file.open(QIODevice::ReadOnly)||file.size()<=0)throw std::runtime_error("Environment must be a readable HDR/EXR file");
-  require_texture_ram(resource_product(file.size(),2),"Environment source read");
+
   const auto bytes=file.readAll();if(bytes.size()!=file.size())throw std::runtime_error("Environment read was incomplete");return bytes;
 }
 }
-QJsonObject pack_environment_resource(const QString &name){for(StudioLight &light:BKE_studiolight_listbase())if(name==light.name&&(light.flag&STUDIOLIGHT_TYPE_WORLD)){const auto bytes=read(QString::fromUtf8(light.filepath));require_texture_ram(resource_product(bytes.size(),3),"Template environment encoding");return {{"name",name},{"data",QString::fromLatin1(bytes.toBase64())},{"sha256",QString::fromLatin1(QCryptographicHash::hash(bytes,QCryptographicHash::Sha256).toHex())}};}throw std::runtime_error("Template environment resource is missing");}
+QJsonObject pack_environment_resource(const QString &name){for(StudioLight &light:BKE_studiolight_listbase())if(name==light.name&&(light.flag&STUDIOLIGHT_TYPE_WORLD)){const auto bytes=read(QString::fromUtf8(light.filepath));return {{"name",name},{"data",QString::fromLatin1(bytes.toBase64())},{"sha256",QString::fromLatin1(QCryptographicHash::hash(bytes,QCryptographicHash::Sha256).toHex())}};}throw std::runtime_error("Template environment resource is missing");}
 QString unpack_environment_resource(const QJsonObject &data){auto *light=register_environment_bytes(QByteArray::fromBase64(data["data"].toString().toLatin1(),QByteArray::AbortOnBase64DecodingErrors),data["name"].toString());return QString::fromUtf8(light->filepath);}
 StudioLight *register_environment_bytes(const QByteArray &bytes,const QString &name)
 {
@@ -44,7 +44,7 @@ StudioLight *register_environment_bytes(const QByteArray &bytes,const QString &n
   const auto native_path=path.toUtf8();
   using Buffer=std::unique_ptr<ImBuf,decltype(&IMB_freeImBuf)>;
   Buffer header(IMB_load_image_from_filepath(native_path.constData(),ImBufFlags::Test|ImBufFlags::AlphaIgnore),IMB_freeImBuf);
-  if(!header||header->x<1||header->y<1)throw std::runtime_error("Cannot decode environment dimensions");ResourceBudget{}.require(resource_product(resource_product(header->x,header->y),16),resource_product(resource_product(header->x,header->y),16),"Environment image decode");
+  if(!header||header->x<1||header->y<1)throw std::runtime_error("Cannot decode environment dimensions");
   Buffer image(IMB_load_image_from_filepath(native_path.constData(),ImBufFlags::AlphaIgnore),IMB_freeImBuf);
   if(!image||!image->float_data()||image->channels<1||image->channels>4)throw std::runtime_error("Environment requires native floating-point HDR/EXR pixels");
   const auto count=std::size_t(image->x)*image->y*image->channels;

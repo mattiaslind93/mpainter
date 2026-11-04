@@ -1,4 +1,4 @@
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #pragma once
 #include "SubsurfaceSettings.hh"
 #include "OpenPbrCompatibility.hh"
@@ -26,19 +26,19 @@ struct ShaderInstances {
  std::map<QUuid,QUuid> assignments;
  bool operator==(const ShaderInstances &)const=default;
  static QString key(const QUuid &id){return id.toString(QUuid::WithoutBraces);}
- static void validate_name(const QString &name,bool admit=true){if(admit)require_texture_ram(resource_product(name.size(),8),"Shader instance name");if(name.isEmpty()||name.trimmed()!=name||name.contains(QChar(0))||QString::fromUtf8(name.toUtf8())!=name)throw std::invalid_argument("Use a nonempty shader instance name without surrounding whitespace or NUL");}
+ static void validate_name(const QString &name,bool admit=true){if(name.isEmpty()||name.trimmed()!=name||name.contains(QChar(0))||QString::fromUtf8(name.toUtf8())!=name)throw std::invalid_argument("Use a nonempty shader instance name without surrounding whitespace or NUL");}
  static ShaderInstances defaults(const QUuid &document,const std::set<QUuid> &sets){
   if(document.isNull())throw std::invalid_argument("Shader instances require a project identity");ShaderInstances value;const auto id=QUuid::createUuidV5(document,QByteArray("BTS Main shader"));value.default_instance=id;value.instances.emplace(id,ShaderInstance{id,"Main shader",{}});for(const auto &set:sets)value.assignments.emplace(set,id);value.validate();return value;
  }
  void validate()const{
-  std::uint64_t text_bytes=0;for(const auto &[id,value]:instances)text_bytes=resource_sum(text_bytes,resource_product(value.name.size(),8));require_texture_ram(resource_sum(text_bytes,resource_sum(resource_product(instances.size(),sizeof(ShaderInstance)),resource_product(assignments.size(),sizeof(std::pair<QUuid,QUuid>)))),"Shader library metadata");if(instances.empty()||!instances.contains(default_instance))throw std::invalid_argument("Invalid shader instance library");std::set<QString> names;
+  std::uint64_t text_bytes=0;for(const auto &[id,value]:instances)text_bytes=resource_sum(text_bytes,resource_product(value.name.size(),8));if(instances.empty()||!instances.contains(default_instance))throw std::invalid_argument("Invalid shader instance library");std::set<QString> names;
   for(const auto &[id,value]:instances){if(id.isNull()||id!=value.id)throw std::invalid_argument("Invalid shader instance identity");validate_name(value.name,false);if(!names.insert(value.name).second)throw std::invalid_argument("Shader instance names must be unique");value.parameters.validate();}
   for(const auto &[set,id]:assignments)if(set.isNull()||!instances.contains(id))throw std::invalid_argument("Shader assignment refers to a missing instance");
  }
  void validate_sets(const std::set<QUuid> &sets)const{validate();if(sets.size()!=assignments.size()||std::any_of(sets.begin(),sets.end(),[&](const auto &id){return !assignments.contains(id);}))throw std::invalid_argument("Shader assignments do not match the project's Texture Sets");}
  const ShaderInstance &for_set(const QUuid &id)const{return instances.at(assignments.at(id));}
  void rename(const QUuid &id,const QString &name){validate_name(name);for(const auto &[other,value]:instances)if(other!=id&&value.name==name)throw std::invalid_argument("Shader instance name is already in use");instances.at(id).name=name;}
- QUuid create(const QUuid &parent,const QString &name){require_texture_ram(resource_product(resource_sum(instances.size(),1),sizeof(ShaderInstance)),"Shader instances");validate_name(name);for(const auto &[id,value]:instances)if(value.name==name)throw std::invalid_argument("Shader instance name is already in use");auto next=instances.at(parent);next.id=QUuid::createUuid();next.name=name;const auto id=next.id;instances.emplace(id,std::move(next));return id;}
+ QUuid create(const QUuid &parent,const QString &name){validate_name(name);for(const auto &[id,value]:instances)if(value.name==name)throw std::invalid_argument("Shader instance name is already in use");auto next=instances.at(parent);next.id=QUuid::createUuid();next.name=name;const auto id=next.id;instances.emplace(id,std::move(next));return id;}
  void assign(const QUuid &set,const QUuid &id){if(!instances.contains(id))throw std::invalid_argument("Shader instance is missing");assignments.at(set)=id;}
  void parameters(const QUuid &id,ShaderParameters value){value.validate();instances.at(id).parameters=value;}
  void remove(const QUuid &id){if(!instances.contains(id)||instances.size()==1||std::any_of(assignments.begin(),assignments.end(),[&](const auto &entry){return entry.second==id;}))throw std::invalid_argument("Only unused shader instances can be deleted");instances.erase(id);if(default_instance==id)default_instance=instances.begin()->first;}

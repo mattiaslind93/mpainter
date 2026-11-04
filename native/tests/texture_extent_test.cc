@@ -42,7 +42,7 @@ int main(int argc,char **argv){
   TilePaintPixels tiled;tiled.assign_page(16384,0,(255u<<16)|255u,page,1001);QByteArray encoded;QDataStream write(&encoded,QIODevice::WriteOnly);stream_format(write);std::uint64_t decoded=0;write_preset_plane(write,tiled,decoded,1024*1024);assert(decoded==sizeof(page));
   QDataStream read(encoded);stream_format(read);decoded=0;const auto restored=read_preset_plane(read,{1001},decoded,1024*1024);assert(read.atEnd()&&restored.sample(0,16383,16383)==page.back());
   TextureRamQueryScope empty([]()->std::uint64_t{return 0;});
-  assert(rejects([&]{PaintPixels denied;denied.assign_page(16384,0,0,page);}));
+  PaintPixels admitted;admitted.assign_page(16384,0,0,page);assert(admitted.resolution()==16384&&admitted.page_count(0)==1&&admitted.sample(0,63,63)==page.back());
   PaintPixels::PageVersions versions;versions[0][UINT32_MAX]=1;auto source=std::make_shared<DeferredSource>();auto retained=PaintPixels::from_source(sparse_texture_max_side,source,versions);PaintMetadataScope metadata;assert(retained.page_count(0)==1&&source->evaluations==0);
   QJsonArray planes;for(int i=0;i<11;++i)planes.append(QJsonArray{});
   QJsonArray counts{double(1ULL<<32),0,0,0,0},hashes{"0","0","0","0","0"};planes[0]=QJsonArray{QJsonObject{{"number",1001},{"pages",counts},{"hashes",hashes}}};

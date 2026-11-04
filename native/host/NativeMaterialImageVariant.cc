@@ -63,7 +63,7 @@ QJsonArray active_uses(const NativeMaterialGraph &graph,const Image &image,const
   std::uint64_t nodes=0,links=0;
   for([[maybe_unused]]const auto &n:channel.tree->nodes){worker(cancel);nodes=resource_sum(nodes,1);}
   for([[maybe_unused]]const auto &link:channel.tree->links){worker(cancel);links=resource_sum(links,1);}
-  require_texture_ram(resource_sum(resource_product(nodes,256),resource_product(links,4*sizeof(void *))),"Native image AOV dependency metadata");
+
   std::map<const bNode *,std::vector<const bNode *>> incoming;std::vector<const bNode *> work;std::set<const bNode *> seen;
   for(const auto &link:channel.tree->links)incoming[link.tonode].push_back(link.fromnode);
   for(const auto &n:channel.tree->nodes)if(STREQ(n.idname,"ShaderNodeOutputAOV"))work.push_back(&n);
@@ -110,7 +110,7 @@ NativeImageBindingAvailability native_material_image_availability(const StudioAs
  auto source=read();NativeImageBindingAvailability result;
  result.inventory=native_material_image_bindings(*source.material,cancel);
  auto expected=native_material_description_json(*asset.fill_preset->native_material);auto described=describe_native_material_source(*source.material,cancel);preserve_legacy_vector_math_mapping_policy(described,*asset.fill_preset->native_material);auto actual=native_material_description_json(described);for(const auto *field:{"warnings","channels","color_to_aces","color_from_aces"}){expected.remove(field);actual.remove(field);}if(expected!=actual)throw std::invalid_argument("Native image inventory source interface does not match immutable metadata");
- auto used=resource_product(result.inventory.bindings.size(),sizeof(NativeImageBindingStatus)+256);for(const auto &binding:result.inventory.bindings)used=resource_sum(used,resource_product(binding.groups.size(),sizeof(NativeImageGroupStep)));require_texture_ram(used,"Native image eligibility results");result.bindings.reserve(result.inventory.bindings.size());
+ auto used=resource_product(result.inventory.bindings.size(),sizeof(NativeImageBindingStatus)+256);for(const auto &binding:result.inventory.bindings)used=resource_sum(used,resource_product(binding.groups.size(),sizeof(NativeImageGroupStep)));result.bindings.reserve(result.inventory.bindings.size());
  for(const auto &binding:result.inventory.bindings){
   worker(cancel);NativeImageBindingStatus status;status.binding=binding;
   try{
@@ -146,7 +146,7 @@ PreparedNativeImageVariant prepare_native_image_variant(
  if(source_space_bytes.size()>=IM_MAX_SPACE)throw std::length_error((QString("Native image source-space name needs %1 UTF-8 bytes; Image color-space name stores at most %2 bytes plus NUL").arg(source_space_bytes.size()).arg(IM_MAX_SPACE-1)).toStdString());
  if((policy.source_space!=NativeImageSourceSpace::Named&&policy.source_space!=NativeImageSourceSpace::OriginalDeclared)||space.isEmpty()||space.contains(QChar::Null)||IMB_colormanagement_colorspace_get_named_index(space.toUtf8().constData())<0)throw std::invalid_argument("Native replacement requires a concrete known source color space");
  if(!replacement.usages.contains("texture")||(!replacement.texture_files.empty()&&(replacement.texture_files.size()!=1||replacement.texture_files.front().tile!=0)))throw std::invalid_argument("Native replacement requires one immutable encoded image");
- require_texture_ram(resource_product(resources.size(),sizeof(QUuid)+64),"Native replacement resource snapshot identities");
+
  std::set<QUuid> ids;for(const auto &resource:resources)if(resource.id.isNull()||!ids.insert(resource.id).second)throw std::invalid_argument("Duplicate or empty native replacement resource identity");
  asset_metadata_read(asset_metadata(base));asset_metadata_read(asset_metadata(replacement));
  const auto bundle=read_native_material_bundle(base.bytes);const auto previous=native_material_bundle_provenance(base.bytes);

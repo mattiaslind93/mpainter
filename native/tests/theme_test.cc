@@ -35,5 +35,5 @@ int main(int argc, char **argv)
   check.setChecked(true); app.processEvents();
   assert(check.grab().toImage() != unchecked); // Native checked mark remains visible.
   QMenu menu; menu.addAction("New project"); menu.ensurePolished();
-  assert(menu.palette().color(QPalette::Window) == QColor(bts::theme::Canvas));
+  assert(menu.palette().color(QPalette::Window) == QColor(bts::theme::Menu));
 }

@@ -25,5 +25,5 @@ int main(int argc,char **argv){QApplication app(argc,argv);QListWidget list;auto
  // App labels retain long text; only native datablocks have a byte-sized boundary.
  const QString long_name(70000,'x');list.editItem(item);app.processEvents();editor=list.findChild<QLineEdit *>("inlineNameEditor");assert(editor);editor->setText(long_name);assert(editor->text()==long_name);delegate->setModelData(editor,list.model(),list.indexFromItem(item));assert(committed==long_name);
  bts::rename_layer_item(set,layer.id,{},long_name);assert(QString::fromStdString(set.layers[0].name)==long_name);set.selected_layer=layer.id;bts::TextureDocument::add_mask_anchor(set);assert(set.layers[0].effects.back().anchor_name==long_name);assert(bts::read_effects(bts::effects_json(set.layers[0].effects)).back().anchor_name==long_name);
- {bts::TextureRamQueryScope memory(+[]()->std::uint64_t{return 0;});bool denied=false;try{bts::checked_name("edited");}catch(const std::length_error &){denied=true;}assert(denied);}
+ {bts::TextureRamQueryScope memory(+[]()->std::uint64_t{return 0;});bool denied=false;try{bts::checked_name("edited");}catch(const std::length_error &){denied=true;}assert(!denied);}
  std::puts("Inline naming: trim/empty/Escape, document-only commit and anchor identity PASS");}

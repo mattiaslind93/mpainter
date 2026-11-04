@@ -7,7 +7,7 @@
 namespace bts::native_fragment_normal_test {
 using native_raw_height_test::require;
 using native_raw_height_test::socket;
-enum class Kind {Unlinked,ActiveBump,NormalMap,Combined,Grouped,Ramp,Emission,UnsupportedSurface,UnsupportedContext};
+enum class Kind {Unlinked,ActiveBump,NormalMap,Combined,Grouped,Ramp,Emission,DiffuseSurface,UnsupportedContext};
 inline DetachedNativeMaterial fixture(Kind kind){
  using namespace blender;using Raw=native_raw_height_test::Kind;
  auto result=native_raw_height_test::fixture(kind==Kind::ActiveBump?Raw::LinkedStrength:(kind==Kind::Combined?Raw::CustomNormal:Raw::Affine));
@@ -47,7 +47,7 @@ inline DetachedNativeMaterial fixture(Kind kind){
   auto &band=*static_cast<ColorBand *>(ramp->storage);band.data[0].r=.1f;band.data[0].g=.2f;band.data[0].b=.3f;band.data[1].r=.9f;band.data[1].g=.7f;band.data[1].b=.5f;
   bke::node_add_link(tree,*ramp,socket(*ramp,"Color",false),*top,*bias);
  }
- if(kind==Kind::Emission||kind==Kind::UnsupportedSurface){
+ if(kind==Kind::Emission||kind==Kind::DiffuseSurface){
   auto &surface=*static_cast<bNodeSocket *>(out->inputs.first);unlink(surface);
   auto *shader=bke::node_add_node(nullptr,*group,UString(kind==Kind::Emission?"ShaderNodeEmission":"ShaderNodeBsdfDiffuse"));
   bke::node_add_link(*group,*shader,socket(*shader,kind==Kind::Emission?"Emission":"BSDF",false),*out,surface);

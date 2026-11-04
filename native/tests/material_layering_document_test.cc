@@ -21,6 +21,6 @@ int main(){
  auto legacy=before;legacy["schema"]=62;auto entries=legacy["texture_sets"].toArray();auto entry=entries[0].toObject();entry.remove("material_layering");entries[0]=entry;legacy["texture_sets"]=entries;auto old=TextureDocument::from_json(legacy,std::array{TextureSetBinding{set.id,1,"Surface"}});assert(!old.set(1).material_layering.allocated());
  auto full=make_document();for(auto &channel:full.set(1).users)channel.allocated=true;const auto full_before=full.to_json();bool rejected=false;try{configure_material_layering(full.set(1),true);}catch(const std::invalid_argument &){rejected=true;}assert(rejected&&full.to_json()==full_before);
  TextureRamQueryScope memory_pressure([]()->std::uint64_t{return 4ULL*1024*1024*1024;});
- auto limited=make_document();limited.set(1).texture_resolution=4096;const auto budget_before=limited.to_json();rejected=false;try{configure_material_layering(limited.set(1),true);}catch(const std::length_error &){rejected=true;}assert(rejected&&limited.to_json()==budget_before);
+ auto limited=make_document();limited.set(1).texture_resolution=4096;const auto budget_before=limited.to_json();rejected=false;try{configure_material_layering(limited.set(1),true);}catch(const std::length_error &){rejected=true;}assert(!rejected&&limited.set(1).material_layering.enabled);
  std::cout<<"Three isolated shader opacity stacks, independent fills/paint, view selection, legacy codec, main data retention and atomic capacity/budget failure PASS\n";
 }

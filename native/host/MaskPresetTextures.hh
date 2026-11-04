@@ -1,4 +1,4 @@
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #pragma once
 #include "LayerMask.hh"
 #include "FillTextureJSON.hh"
@@ -24,8 +24,8 @@ struct MaskPresetTextures {
   }
  }
  void write(QDataStream &stream,std::uint64_t &decoded,std::uint64_t budget)const{
-  const auto plane=[&](const FillTexture &texture){texture.validate();const auto count=std::uint64_t(texture.width)*texture.height;const auto text_bytes=resource_product(texture.input_space.size(),16);if(decoded>budget||text_bytes>budget-decoded)throw std::length_error("Smart-mask color-space text exceeds the available safe RAM budget");decoded=resource_sum(decoded,text_bytes);
-   if(!texture.pixels||texture.pixels->size()!=count||count>(budget-decoded)/sizeof(FillTexture::Pixel))throw std::length_error("Smart-mask bitmap exceeds the available safe RAM budget");
+  const auto plane=[&](const FillTexture &texture){texture.validate();const auto count=std::uint64_t(texture.width)*texture.height;const auto text_bytes=resource_product(texture.input_space.size(),16);decoded=resource_sum(decoded,text_bytes);
+   if(!texture.pixels||texture.pixels->size()!=count)throw std::length_error("Mask bitmap dimensions do not match its pixels");
    decoded+=count*sizeof(FillTexture::Pixel);const auto shared=intern_fill_texture_pixels(texture,texture.pixels);
    for(const auto &pixel:*shared)for(float value:pixel)if(!std::isfinite(value))throw std::invalid_argument("Non-finite smart-mask bitmap");
 #if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
@@ -41,7 +41,7 @@ struct MaskPresetTextures {
   const auto fail=[](){throw std::invalid_argument("Invalid smart-mask texture archive");};
   if(!root["texture_resources"].isArray()||!root["texture_bindings"].isArray()||std::size_t(root["texture_resources"].toArray().size())>maximum_bindings||std::size_t(root["texture_bindings"].toArray().size())>maximum_bindings)fail();
   const auto plane=[&](const FillTexture &descriptor,const QJsonValue &runtime_space){if(!runtime_space.isString()||runtime_space.toString().contains(QChar::Null))fail();const auto text_bytes=resource_product(runtime_space.toString().size(),16);if(decoded>budget||text_bytes>budget-decoded)fail();decoded=resource_sum(decoded,text_bytes);auto texture=std::make_shared<FillTexture>(descriptor);const auto count=std::uint64_t(texture->width)*texture->height;
-   if(decoded>budget||count>(budget-decoded)/sizeof(FillTexture::Pixel))fail();decoded+=count*sizeof(FillTexture::Pixel);auto pixels=std::make_shared<std::vector<FillTexture::Pixel>>(std::size_t(count));
+   if(decoded>budget)fail();decoded+=count*sizeof(FillTexture::Pixel);auto pixels=std::make_shared<std::vector<FillTexture::Pixel>>(std::size_t(count));
 #if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
    char *data=reinterpret_cast<char *>(pixels->data());std::uint64_t remaining=count*sizeof(FillTexture::Pixel);
    while(remaining){const int size=int(std::min<std::uint64_t>(remaining,1024*1024));if(stream.readRawData(data,size)!=size)fail();data+=size;remaining-=size;}

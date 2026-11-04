@@ -42,8 +42,8 @@ int main(){using namespace bts;LayerMask mask;mask.background=0;PaintPixels::Sta
  auto alias=*sequence;alias.asset=QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();auto members=std::make_shared<std::map<int,std::shared_ptr<const FillTexture>>>();for(const auto &[tile,member]:*sequence->tiles){auto copy=std::make_shared<FillTexture>(*member);copy->asset=alias.asset;members->emplace(tile,copy);}alias.tiles=members;
  const auto rebound=bind_fill_texture_descriptor(alias,*shared);assert(fill_texture_json(rebound)==fill_texture_json(std::make_shared<const FillTexture>(alias))&&rebound->pixels==shared->pixels);
  // Admission follows actual available RAM, not the former 128 MiB cap.
- {TextureRamQueryScope query(+[]()->std::uint64_t{return 16ULL*1024*1024*1024;});assert(mask_preset_memory_budget()==2ULL*1024*1024*1024);}
- {TextureRamQueryScope query(+[]()->std::uint64_t{return 8*1024;});bool low_memory=false;try{write_mask_preset(bitmap_mask);}catch(const std::exception &){low_memory=true;}assert(low_memory);}
+ {TextureRamQueryScope query(+[]()->std::uint64_t{return 16ULL*1024*1024*1024;});assert(mask_preset_memory_budget()==std::numeric_limits<quint32>::max()-1ULL);}
+ {TextureRamQueryScope query(+[]()->std::uint64_t{return 8*1024;});bool low_memory=false;try{write_mask_preset(bitmap_mask);}catch(const std::exception &){low_memory=true;}assert(!low_memory);}
  if(qEnvironmentVariableIsSet("BTS_MASK_PRESET_LARGE_TEST")){
   auto large=std::make_shared<FillTexture>(*image);large->width=large->height=4096;large->hash=std::string(64,'d');large->input_space="Non-Color/raw";large->pixels=std::make_shared<const std::vector<FillTexture::Pixel>>(std::size_t(4096)*4096,FillTexture::Pixel{.25f,.5f,.75f,1});
   std::vector<StudioAsset> sources;

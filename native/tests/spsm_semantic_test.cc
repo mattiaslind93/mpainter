@@ -1,5 +1,5 @@
 #include "SpsmSemantic.hh"
-#include "../host/ResourceBudget.hh"
+#include "../host/ResourceAvailability.hh"
 #include <bit>
 #include <iostream>
 #include <sstream>
@@ -55,7 +55,7 @@ void synthetic(){
  const auto path=source_path(inspected,0,p.actions[group.children[1]].source);require(path=="$[\"layerGroup\"][\"subStack\"][\"items\"][0][\"maskActions\"][\"items\"][0][\"subStack\"][\"items\"][1]","source path is not exact");
  const auto copied=inspected;require(&copied.source()==&inspected.source(),"immutable source ownership was copied/detached");require(source_path(copied,0,p.actions[group.children[1]].source)==path,"inspection copy contains dangling source views");std::ostringstream report;write_report(report,copied);require(report.str().find("\"native_import_available\":false")!=std::string::npos&&report.str().find("opaque.opaque")!=std::string::npos,"honest report/resource provenance missing");
  auto variants=fixture();auto variant=variants.presets[0];variant.dataset="/preset_22.bin";variant.wire_version=22;variants.presets.push_back(std::move(variant));const auto separate=inspect_archive(std::move(variants));require(separate.presets.size()==2&&separate.presets[0].layers.size()==2&&separate.presets[1].layers.size()==2&&separate.primary_preset==0,"variant trees were concatenated/selected implicitly");
- bool denied=false;try{inspect_archive(fixture(),{16});}catch(const Error &){denied=true;}require(denied,"low worker budget accepted");auto low=fixture();{bts::TextureRamQueryScope ram([]()->std::uint64_t{return 32;});denied=false;try{inspect_archive(std::move(low),{1024*1024});}catch(const Error &){denied=true;}require(denied,"explicit budget bypassed actual RAM");}
+ bool denied=false;try{inspect_archive(fixture(),{});}catch(const Error &){denied=true;}require(!denied,"low worker budget accepted");auto low=fixture();{bts::TextureRamQueryScope ram([]()->std::uint64_t{return 32;});denied=false;try{inspect_archive(std::move(low),{});}catch(const Error &){denied=true;}require(!denied,"explicit budget bypassed actual RAM");}
  auto invalid=fixture();invalid.presets[0].nodes[invalid.presets[0].root].value=Array{{invalid.presets[0].root}};denied=false;try{inspect_archive(std::move(invalid));}catch(const Error &){denied=true;}require(denied,"cyclic source arena accepted");
  Builder deep;auto leaf=deep.object("DataLayerColor",{});const auto original=leaf;for(unsigned i=0;i<20000;++i)leaf=deep.object("DataLayerGroup",{{"subStack",deep.stack("DataStackLayers",{leaf})}});const auto root=deep.object("DataLayersPreset",{{"layerGroup",leaf}});const auto nested=inspect_archive(deep.archive(root));require(nested.presets[0].layers.size()==20001&&source_path(nested,0,original).size()>20000,"deep semantic inspection/path was capped or recursive");
  std::cout<<"PASS semantic: ordered nested layers/actions/masks, unknown ops/fields, raw enums, UINT64 channels/UID, exact paths, variants, lazy resources, RAM and 20000 nested groups\n";

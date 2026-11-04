@@ -1,5 +1,6 @@
 #pragma once
 #include "FillTexture.hh"
+#include "DiskScratch.hh"
 #include "AnchorReference.hh"
 #include "FillSymmetry.hh"
 #include "WarpGrid.hh"
@@ -125,7 +126,7 @@ inline float fill_uv_sample(const FillProjection &p,int x,int y,int resolution,i
 
 namespace bts {
 struct FillSurfacePoint {std::array<float,3> position{},normal{0,0,1};float footprint=0;bool valid=false;std::array<float,3> baked_normal{.5,.5,1},source_color{};std::uint32_t match_object=0;};
-struct FillSurfaceAtlas {int resolution=0,height=0;double extent=1;std::array<double,3> center{};std::map<int,std::vector<FillSurfacePoint>> tiles;std::map<int,std::vector<float>> curvature;};
+struct FillSurfaceAtlas {int resolution=0,height=0;double extent=1;std::array<double,3> center{};std::map<int,ScratchVector<FillSurfacePoint>> tiles;std::map<int,std::vector<float>> curvature;};
 inline std::array<double,3> fill_inverse_rotation(std::array<double,3> v,const std::array<double,3> &angles) {
   for(int axis=2;axis>=0;--axis){const double a=-angles[axis]*std::numbers::pi/180,c=std::cos(a),s=std::sin(a);const int x=(axis+1)%3,y=(axis+2)%3;const auto before=v;v[x]=c*before[x]-s*before[y];v[y]=s*before[x]+c*before[y];}return v;
 }

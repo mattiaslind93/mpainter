@@ -1,5 +1,5 @@
 #include "SpsmLevelsLowering.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include <set>
 
 namespace bts { namespace {
@@ -13,12 +13,10 @@ struct Lower {
   const sem::PresetInspection &ir;
   const s::Preset &p;
   PreparedSpsm result;
-  std::uint64_t used = 0, limit;
+  std::uint64_t used = 0;
   Lower(const PreparedSpsm &o, SpsmLevelsOptions v)
       : original(o), options(v), pi(primary(o)), ir(o.source->presets.at(pi)),
-        p(o.source->source().presets.at(pi)),
-        limit(v.memory_budget_bytes ? std::min(v.memory_budget_bytes, ResourceBudget{}.ram())
-                                    : ResourceBudget{}.ram()) {
+        p(o.source->source().presets.at(pi)) {
     add(resource_product(o.material.set.layers.size(), sizeof(TextureLayer) * 2));
     add(resource_product(o.layers.size(), sizeof(SpsmLayerBinding) * 2));
     add(resource_product(o.actions.size(), sizeof(SpsmActionBinding) * 2));
@@ -40,9 +38,7 @@ struct Lower {
   }
   void add(std::uint64_t n) {
     used = resource_sum(used, n);
-    if (used > limit)
-      throw s::Error("SPSM Levels preparation requires " + std::to_string(double(used)/(1024*1024)) +
-                     " MiB; available RAM budget " + std::to_string(double(limit)/(1024*1024)) + " MiB");
+
   }
   const s::Node &node(s::NodeId id) const { return p.nodes.at(id); }
   const s::Object &object(s::NodeId id) const {

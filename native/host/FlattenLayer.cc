@@ -1,6 +1,6 @@
 #include "LayerSourceChannels.hh"
 #include "NativeMaterialParameters.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "FlattenLayer.hh"
 #include "AnchorEvaluationScope.hh"
 #include "TextureMemory.hh"
@@ -27,7 +27,7 @@ void install_precompose_layer(TextureSet &set,TextureLayer cache,int index,bool 
  else set.layers.insert(set.layers.begin()+index,std::move(cache));
  set.selected_layer=set.layers[index].id;set.selected_mask=false;set.selected_geometry=false;set.selected_effect={};set.instance_layers.reset();TextureDocument::validate_hierarchy(set);
 }
-std::uint64_t flatten_safe_ram_bytes(){const auto available=texture_available_ram_bytes();return available/2;}
+std::uint64_t flatten_available_ram_bytes(){const auto available=texture_available_ram_bytes();return available;}
 FlattenPlan prepare_flatten_layer(const TextureSet &source,const QUuid &id){
  const auto &layers=evaluation_layers(source);const auto found=std::find_if(layers.begin(),layers.end(),[&](const auto &layer){return layer.id==id;});
  if(found==layers.end()||!found->visible)throw std::invalid_argument("Select a visible layer or group to flatten");
@@ -81,8 +81,8 @@ std::optional<FlattenedLayer> flatten_layer_pixels(const TextureSet &source,cons
  std::optional<TextureSet> backdrop;
  if(needs_context){backdrop=source;backdrop->instance_layers.reset();backdrop->layers=layers;backdrop->layers.at(last).mask.reset();}
  auto plan=prepare_flatten_layer(source,id);auto result=std::move(plan.result);auto &flat=result.layer;const auto &enabled=plan.enabled;
- const int mask_canvas=plan.mask_canvas;const auto budget=flatten_safe_ram_bytes();
- if(plan.snapshot_bytes>budget)throw std::length_error("Flatten snapshot requires "+std::to_string((plan.snapshot_bytes+1048575)/1048576)+" MiB, safe available RAM budget "+std::to_string((budget+1048575)/1048576)+" MiB");
+ const int mask_canvas=plan.mask_canvas;const auto budget=flatten_available_ram_bytes();
+
  std::printf("BTS_GPU_CPU_REFERENCE reason=flatten-export-oracle required_bytes=%llu budget_bytes=%llu\n",(unsigned long long)plan.snapshot_bytes,(unsigned long long)budget);
  bool nonempty=false,mask_background_chosen=false;
  for(int tile:source.tiles){

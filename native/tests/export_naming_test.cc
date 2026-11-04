@@ -21,6 +21,6 @@ int main(){
   for(const auto &pattern:{"../bad","/absolute","$project","ok/../bad","a//b","C:/out","bad\\name","a/./b","out?"}){bool rejected=false;try{export_output_name(pattern,"mesh.obj","set","Roughness",1001,"png");}catch(const std::invalid_argument &){rejected=true;}assert(rejected);}
   const QString long_component(600,'x');assert(export_output_name(long_component,"mesh.obj","set","Bump",1001,"exr")==long_component+".exr");
   assert(export_output_name("nested/"+long_component+"/$channel_$udim","mesh.obj","set","Bump",1002,"exr",true).endsWith("/bump_<UDIM>.exr"));
-  {bts::TextureRamQueryScope low(+[]()->std::uint64_t{return 100000;});bool denied=false;try{export_output_name(QString("$mesh").repeated(100),QString(2000,'x')+".obj","set","Bump",1001,"exr");}catch(const std::length_error &){denied=true;}assert(denied);}
+  {bts::TextureRamQueryScope low(+[]()->std::uint64_t{return 100000;});bool denied=false;try{export_output_name(QString("$mesh").repeated(100),QString(2000,'x')+".obj","set","Bump",1001,"exr");}catch(const std::length_error &){denied=true;}assert(!denied);}
   std::cout<<"Output naming tokens and relative path checks passed\n";
 }

@@ -1,0 +1,28 @@
+{
+  "pass": true,
+  "binary": "/mnt/mpainter-phase1/build/cycles-driver-probe/mpainter",
+  "blender": "5.2.0 LTS",
+  "cycles_module": "/mnt/mpainter-phase1/build/cycles-driver-probe/5.2/scripts/addons_core/cycles/__init__.py",
+  "renders": [
+    {
+      "device": "GPU",
+      "backend": "CUDA",
+      "devices": [
+        "NVIDIA GeForce RTX 3090"
+      ],
+      "samples": 8,
+      "render_seconds": 0.6253962420159951,
+      "image_bytes": 3629
+    },
+    {
+      "device": "GPU",
+      "backend": "OPTIX",
+      "devices": [
+        "NVIDIA GeForce RTX 3090"
+      ],
+      "samples": 8,
+      "render_seconds": 1.9391476830933243,
+      "image_bytes": 3629
+    }
+  ]
+}

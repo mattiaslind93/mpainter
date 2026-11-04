@@ -1,6 +1,6 @@
 #include <QStandardPaths>
 #pragma once
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include <QDir>
 #include <QTemporaryFile>
 #include <algorithm>

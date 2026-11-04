@@ -16,7 +16,7 @@ int main(int argc,char **argv){
  const bool large=argc>1&&std::strcmp(argv[1],"--large")==0;
  const int resolution=large?4096:32;
  const auto bytes=bts::resource_product(bts::resource_product(resolution,resolution),16);
- bts::require_texture_ram(bytes,"Bake storage regression working tile");
+
  std::uint64_t retained=0;int completed=0;
  {
   bts::MeshMaps maps;

@@ -30,7 +30,7 @@ std::map<std::string,std::shared_ptr<const FillTexture>> required(std::span<cons
 }
 ImBuf *material_layer_source_pixel_view(const FillTexture &source){
  source.validate();if(source.tiles||!source.pixels)throw std::invalid_argument("Reusable material map pixels are not hydrated");
- require_texture_ram(sizeof(ImBuf)+sizeof(PixelOwner),"Shared reusable material pixel-view headers");
+
  Buffer buffer(IMB_allocImBuf(source.width,source.height,ImBufFlags(0)),IMB_freeImBuf);if(!buffer)throw std::bad_alloc();buffer->channels=4;
  buffer->assign_float_data(source.pixels->front().data(),ImplicitSharingPtr<>(new PixelOwner(source.pixels)));
  IMB_colormanagement_assign_float_colorspace(buffer.get(),IMB_colormanagement_role_colorspace_name_get(COLOR_ROLE_DATA));

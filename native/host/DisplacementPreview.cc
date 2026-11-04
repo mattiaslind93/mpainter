@@ -1,4 +1,4 @@
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "DisplacementPreview.hh"
 #include "SubdivisionPolicy.hh"
 #include "TextureDocument.hh"
@@ -72,7 +72,7 @@ bool DisplacementPreview::refresh(Main &main,Depsgraph &graph){
     for(int slot=1;slot<=object.totcol;++slot){const auto *material=BKE_object_material_get(&object,slot);if(!material)continue;const auto found=requests_.find(material->id.session_uid);if(found==requests_.end())continue;const auto &request=found->second;const auto &settings=request.settings;if(settings.channel&&settings.enabled&&request.content){active_materials.push_back(material->id.session_uid);requested=std::max(requested,settings.mode==1?edge_length_subdivision(longest_edge(),settings.max_length):settings.subdivision);if(settings.mode==2)requested_type=SUBSURF_TYPE_CATMULL_CLARK;}}
     if(requested<0){if(remove_owned(object)){DEG_id_tag_update(&object.id,ID_RECALC_GEOMETRY);changed=relations=true;}levels_.erase(uid);continue;}
     if(!source_meshes_.contains(uid)){auto *evaluated=DEG_get_evaluated(&graph,&object);const auto *mesh=BKE_object_get_evaluated_mesh(evaluated);if(!mesh)throw std::runtime_error("Displacement preview source mesh is unavailable");auto *copy=BKE_mesh_copy_for_eval(*mesh);for(int i=0;i<copy->totcol;++i)if(copy->mat[i])copy->mat[i]=DEG_get_original(copy->mat[i]);source_meshes_[uid]=copy;}
-    int level=requested;const auto count=triangles(*source_meshes_.at(uid),level);ResourceBudget{}.require(resource_product(count,sizeof(UvFaceTriangle)+3*8*sizeof(float)),resource_product(count,3*8*sizeof(float)),"Displacement preview subdivision");for(auto material:active_materials)material_levels_[material]=std::max(material_levels_[material],level);
+    int level=requested;const auto count=triangles(*source_meshes_.at(uid),level);for(auto material:active_materials)material_levels_[material]=std::max(material_levels_[material],level);
     if((!levels_.contains(uid)||levels_[uid]!=level)&&level!=requested)std::printf("BTS_PREVIEW_SUBDIVISION_CLAMP object=%s requested=%d applied=%d triangles=%llu\n",object.id.name+2,requested,level,static_cast<unsigned long long>(triangles(*source_meshes_.at(uid),level)));
     bool object_changed=false;
     if(!BKE_modifiers_findby_name(&object,smooth_name)){if(!smooth_group_)smooth_group_=smooth_tree(main);auto *modifier=BKE_modifier_new(eModifierType_Nodes);STRNCPY(modifier->name,smooth_name);modifier->mode=eModifierMode_Realtime|eModifierMode_Render;auto *nodes=reinterpret_cast<NodesModifierData *>(modifier);nodes->node_group=smooth_group_;id_us_plus(&smooth_group_->id);BKE_modifiers_persistent_uid_init(object,*modifier);BLI_addtail(&object.modifiers,modifier);object_changed=relations=true;}

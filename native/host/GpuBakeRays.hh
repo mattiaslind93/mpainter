@@ -16,13 +16,13 @@ namespace bts {
 struct GpuBakeRayStats {std::uint64_t batches=0,dispatches=0,peak_batch_rays=0;};
 // Geometry is uploaded once. Each reusable batch preserves the previous CPU
 // cosine samples and accumulation order, while the GPU traverses a balanced BVH.
-inline std::vector<float> gpu_bake_cosine_occlusion(const std::vector<bake_bvh::Triangle> &triangles,const std::vector<FillSurfacePoint> &points,int rays,float maximum,bool inward=false,GpuBakeRayStats *statistics=nullptr){
+inline std::vector<float> gpu_bake_cosine_occlusion(const std::vector<bake_bvh::Triangle> &triangles,std::span<const FillSurfacePoint> points,int rays,float maximum,bool inward=false,GpuBakeRayStats *statistics=nullptr,const ResourceAvailability *availability=nullptr,float origin_epsilon=0){
  using namespace blender;
  if(!GPU_context_active_get())throw std::logic_error("Bake rays require the active GPU context");
  if(triangles.empty()||points.empty()||rays<1||rays>512||!std::isfinite(maximum)||maximum<=0)throw std::invalid_argument("Invalid GPU bake rays");
  if(GPU_max_compute_shader_storage_blocks()<6)throw std::length_error("GPU bake needs six compute SSBO bindings; driver provides fewer");
  if(statistics)*statistics={};
- const auto plan=bake_bvh::plan(triangles.size(),points.size(),rays,GPU_max_storage_buffer_size(),GPU_max_work_group_count(0),ResourceBudget{});
+ const auto plan=bake_bvh::plan(triangles.size(),points.size(),rays,GPU_max_storage_buffer_size(),GPU_max_work_group_count(0),availability?*availability:ResourceAvailability{});
  auto nodes=bake_bvh::build(triangles);
  std::vector<std::array<float,4>> tris(std::size_t(resource_product(triangles.size(),3)));
  for(std::size_t i=0;i<triangles.size();++i)for(int k=0;k<3;++k)tris[i*3+k]={triangles[i][k][0],triangles[i][k][1],triangles[i][k][2],0};
@@ -81,7 +81,7 @@ void main(){
    const auto index=point++;const auto &value=points[index];bake_bvh::Frame frame;
    if(!value.valid||!bake_bvh::frame(frame,value.position,value.normal,std::uint32_t(index),maximum,inward))continue;
    const auto offset=owners.size()*std::size_t(rays);
-   for(int sample=0;sample<rays;++sample)bake_bvh::ray(frame,sample,rays,ray_data[(offset+sample)*2],ray_data[(offset+sample)*2+1]);
+   for(int sample=0;sample<rays;++sample){auto &origin=ray_data[(offset+sample)*2];bake_bvh::ray(frame,sample,rays,origin,ray_data[(offset+sample)*2+1]);if(origin_epsilon>0)for(int axis=0;axis<3;++axis)origin[axis]=frame.position[axis]+frame.n[axis]*origin_epsilon;}
    owners.push_back(index);
   }
   if(owners.empty())continue;

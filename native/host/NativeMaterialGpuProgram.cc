@@ -44,11 +44,11 @@ NativeMaterialGpuProgram::NativeMaterialGpuProgram(bNodeTree &tree,std::size_t c
  if(!s.material||GPU_material_status(s.material)!=GPU_MAT_SUCCESS)throw std::runtime_error("Native material GPU compilation failed");
  for(const auto &attribute:GPU_material_attributes(s.material)){const std::string_view name(attribute.name);if(name=="BTS_Mesh_AO")s.ao_required=true;if(name.starts_with("BTS_Geometry_")||name=="BTS_Coord_Object"||name=="BTS_Coord_Generated"||name=="BTS_Coord_Normal"||name=="BTS_Object_DisplacementScale")s.surface_required=true;}
  const auto rows=std::max<std::uint64_t>(1,native_mapping_parameter_rows(count,s.mapping_required)),bytes=resource_product(rows,sizeof(s.values[0]));
- if(bytes>GPU_max_storage_buffer_size())throw std::length_error("Native material inputs exceed driver SSBO block storage");ResourceBudget{}.require(bytes,bytes,"Native material dynamic parameter rows");
+ if(bytes>GPU_max_storage_buffer_size())throw std::length_error("Native material inputs exceed driver SSBO block storage");
  s.values.resize(rows);s.parameters=GPU_storagebuf_create_ex(s.values.size()*sizeof(s.values[0]),s.values.data(),GPU_USAGE_DYNAMIC,"mPainter native inputs");if(!s.parameters)throw std::runtime_error("Native material parameter allocation failed");
  const auto projection_bytes=sizeof(s.projection_values);
  if(projection_bytes>GPU_max_storage_buffer_size())throw std::length_error("Native Fill projection exceeds driver SSBO storage");
- ResourceBudget{}.require(projection_bytes,projection_bytes,"Native Fill projection parameters");
+
  s.projection=GPU_storagebuf_create_ex(projection_bytes,s.projection_values.data(),GPU_USAGE_DYNAMIC,"mPainter native Fill projection");
  if(!s.projection)throw std::runtime_error("Native Fill projection allocation failed");
 }
@@ -104,7 +104,7 @@ void NativeMaterialGpuProgram::dispatch(gpu::Texture *target,std::span<const std
  const int projection_binding=GPU_shader_get_ssbo_binding(shader,"native_projection");
  if(object_binding>=0){
   const auto *table=context.objects.get();const auto needed=table?table->rows().size():std::size_t(0);const auto capacity=std::bit_ceil(std::max(std::size_t(1),needed));
-  if(!s.objects||s.object_values.size()<capacity){const auto bytes=resource_product(capacity,sizeof(s.object_values[0]));if(bytes>GPU_max_storage_buffer_size())throw std::length_error("Native object context exceeds driver SSBO block storage");ResourceBudget{}.require(bytes,bytes,"Native GPU object context table");if(s.objects)GPU_storagebuf_free(s.objects);s.object_values.assign(capacity,{});s.objects=GPU_storagebuf_create_ex(capacity*sizeof(s.object_values[0]),s.object_values.data(),GPU_USAGE_DYNAMIC,"mPainter native object context");if(!s.objects)throw std::runtime_error("Native material object context allocation failed");s.object_count=-1;}
+  if(!s.objects||s.object_values.size()<capacity){const auto bytes=resource_product(capacity,sizeof(s.object_values[0]));if(bytes>GPU_max_storage_buffer_size())throw std::length_error("Native object context exceeds driver SSBO block storage");if(s.objects)GPU_storagebuf_free(s.objects);s.object_values.assign(capacity,{});s.objects=GPU_storagebuf_create_ex(capacity*sizeof(s.object_values[0]),s.object_values.data(),GPU_USAGE_DYNAMIC,"mPainter native object context");if(!s.objects)throw std::runtime_error("Native material object context allocation failed");s.object_count=-1;}
   const int count=table?table->size():0;
   if(needed&&(s.object_count!=count||s.object_hash!=table->hash()||std::memcmp(s.object_values.data(),table->rows().data(),needed*sizeof(s.object_values[0]))!=0)){std::copy(table->rows().begin(),table->rows().end(),s.object_values.begin());GPU_storagebuf_update(s.objects,s.object_values.data());++s.object_uploads;s.object_hash=table->hash();}s.object_count=count;
  }

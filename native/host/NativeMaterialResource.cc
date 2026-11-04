@@ -8,6 +8,7 @@
 #include "NativeMaterialArchive.hh"
 #include "NativeMaterialGraph.hh"
 #include "NativeMaterialFragmentNormal.hh"
+#include "NativeMaterialFragmentContext.hh"
 #include "NativeMaterialImages.hh"
 #include "NativeMaterialImageDependencies.hh"
 #include "NativeMaterialSource.hh"
@@ -25,6 +26,10 @@
 
 namespace bts {
 namespace {
+void validate_optional_normal(const std::shared_ptr<NativeMaterialGraph> &graph){
+ if(graph->world_normal_tree&&graph->world_normal_error.isEmpty())try{(void)native_world_normal_source_request({graph,graph->world_normal_tree});}catch(const std::exception &error){graph->world_normal_error=QString::fromUtf8(error.what());}
+ if(!graph->world_normal_error.isEmpty())graph->description.warnings.append("Normal input was retained but cannot be evaluated: "+graph->world_normal_error);
+}
 void require_worker(const std::atomic_bool &cancel)
 {
   if (auto *app=QCoreApplication::instance();app&&QThread::currentThread()==app->thread())
@@ -46,8 +51,10 @@ PreparedNativeMaterialResource prepare_native_material_resource(
   const auto image_references=native_material_bundle_image_manifest(archive.bytes);auto images=prepare_native_material_images(*graph,cancel);
   if(!graph->tiled_image_resources.empty())validate_native_material_tiled_sources(*graph,image_references,cancel);
   prepare_native_world_normal_images(graph,cancel,image_references);
+  validate_optional_normal(graph);
+  for(const auto &warning:graph->description.warnings)if(!archive.description.warnings.contains(warning))archive.description.warnings.append(warning);
   auto description=std::move(archive.description);const QStringList names{"Color","Metallic","Roughness","Normal (internal)","Bump","Ambient occlusion"};for(const auto &channel:graph->channels)if(!channel.tree&&!(channel.channel==4&&graph->world_normal_tree&&graph->world_normal_error.isEmpty())){const auto name=channel.channel==14?QString("Displacement"):channel.channel<int(names.size())?names[channel.channel]:QString("Channel %1").arg(channel.channel);description.warnings.append(QString("%1 unavailable: %2").arg(name).arg(channel.error));}
-  auto asset=native_material_asset(material,std::move(archive.bytes),std::move(description));for(const auto &channel:graph->channels)if(channel.tree)asset.search_terms.append("native-channel:"+QString::number(channel.channel));
+  auto asset=native_material_asset(material,std::move(archive.bytes),std::move(description));for(const auto &channel:graph->channels)if(channel.tree)asset.search_terms.append("native-channel:"+QString::number(channel.channel));if(graph->world_normal_perturbed&&!graph->world_normal_error.isEmpty())asset.search_terms.append("native-normal:unsupported");
   auto diagnostics=std::move(archive.diagnostics);diagnostics["decoded_images"]=images;
   require_worker(cancel);
   return {std::move(asset),std::move(graph),std::move(diagnostics),std::move(archive.textures)};
@@ -76,6 +83,7 @@ std::shared_ptr<NativeMaterialGraph> hydrate_native_material_resource(
   graph->generate_resource_preview=blend_material_preview(asset).isNull();
   prepare_optional_native_world_normal(graph,cancel);
   prepare_native_world_normal_images(graph,cancel,bundle.images);
+  validate_optional_normal(graph);
   require_worker(cancel);
   return graph;
 }

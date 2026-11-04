@@ -25,7 +25,7 @@ void require_worker(const std::atomic_bool &cancel){
 QString materialize_native_material_archive(const StudioAsset &asset,const std::atomic_bool &cancel)
 {
   require_worker(cancel);
-  require_texture_ram(std::uint64_t(asset.bytes.size()),"Native material source archive");
+
   const auto root=qEnvironmentVariable("BTS_RESOURCE_CACHE",QStandardPaths::writableLocation(QStandardPaths::CacheLocation)+"/resources");
   const auto folder=QDir(root).filePath(asset.hash());
   if(!QDir().mkpath(folder))throw std::runtime_error("Cannot create native material source cache");

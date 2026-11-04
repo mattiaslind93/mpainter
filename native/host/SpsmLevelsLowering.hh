@@ -8,7 +8,6 @@ namespace bts {
 // 1=final [0,1], and equal RGB components interpreted as scalar working data.
 struct SpsmLevelsOptions {
   SpsmLevelsPolicy policy = SpsmLevelsPolicy::Unknown;
-  std::uint64_t memory_budget_bytes = 0;
 };
 // Detached, strongly atomic reconstruction from retained source IR. Supports
 // independent uniform Roughness Fill -> Levels chains only; never adds effects

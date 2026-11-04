@@ -1,0 +1,10 @@
+{
+    "cpu_max_error": 1.7881393432617188e-07,
+    "gpu_maps": 2,
+    "pending_GPU_cancel_join_safe": true,
+    "production_MeshBakeJob": true,
+    "renderer": "NVIDIA GeForce RTX 3090/PCIe/SSE2",
+    "resolution": 64,
+    "visible_windows": 0,
+    "zero_VRAM_CPU_fallback_bit_exact": true
+}

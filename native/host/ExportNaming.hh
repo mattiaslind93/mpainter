@@ -1,5 +1,5 @@
 #pragma once
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include <QFileInfo>
 #include <QRegularExpression>
 #include <QString>
@@ -38,12 +38,8 @@ inline QString export_token_component(QString value){
   value.replace(QRegularExpression("[^\\p{L}\\p{N}_-]"),"_");if(value.isEmpty()||value=="."||value=="..")value="Unnamed";return value;
 }
 // Templates are relative paths; tokens are single safe path components.
-inline QString export_output_name(QString pattern,QString mesh,QString texture_set,QString channel,int tile,QString extension,bool udim_asset=false,bool openpbr=false,const ResourceBudget *budget=nullptr){
-  // Count repeated tokens before replacement: a short template can expand to
-  // many copies of a long datablock name. Charge every copy, not only one.
-  auto units=resource_sum(resource_sum(pattern.size(),mesh.size()),resource_sum(texture_set.size(),channel.size()));
-  for(const auto &[token,length]:{std::pair{QString("$textureSet"),std::uint64_t(texture_set.size())},std::pair{QString("$mesh"),std::uint64_t(mesh.size())},std::pair{QString("$channel"),std::uint64_t(channel.size())},std::pair{QString("$udim"),std::uint64_t(16)}})units=resource_sum(units,resource_product(pattern.count(token),length));
-  const auto bytes=resource_product(units,12);if(budget)budget->require(bytes,0,"Export filename expansion");else require_texture_ram(bytes,"Export filename expansion");pattern=canonical_export_pattern(pattern,openpbr);channel=canonical_export_suffix(channel,openpbr);
+inline QString export_output_name(QString pattern,QString mesh,QString texture_set,QString channel,int tile,QString extension,bool udim_asset=false,bool openpbr=false){
+  pattern=canonical_export_pattern(pattern,openpbr);channel=canonical_export_suffix(channel,openpbr);
   QString marker(QChar(0xe002));while(pattern.contains(marker))marker+=QChar(0xe003);
   pattern.replace("$textureSet",export_token_component(texture_set));pattern.replace("$mesh",export_token_component(QFileInfo(mesh).completeBaseName()));pattern.replace("$channel",export_token_component(channel));pattern.replace("$udim",udim_asset?marker:QString::number(tile));
   if(pattern.contains('$'))throw std::invalid_argument("Unknown output naming token");

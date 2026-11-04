@@ -43,8 +43,7 @@ SpsmBitmapLoweringPolicy policy() {
            true,
            {}},
           SpsmBitmapUV::Projection0CenteredRepeatFactors,
-          SpsmBitmapSampling::HQRepeat,
-          0};
+          SpsmBitmapSampling::HQRepeat};
 }
 struct Writer {
   s::ImageBytes data;
@@ -391,13 +390,13 @@ void synthetic() {
     require(!named(skipped.material, "leaf").visible && calls == count,
             "Unproven sampling policy hydrated");
   }
-  options.memory_budget_bytes = 16;
-  reject([&] { enhance_prepared_spsm_bitmaps(original, options, resolver); });
-  require(calls == count, "Low RAM hydrated");
+
+  enhance_prepared_spsm_bitmaps(original, options, resolver);
+  require(calls > count, "Former memory policy skipped resolver");
   options = policy();
   {
     TextureRamQueryScope low(+[]() -> std::uint64_t { return 32; });
-    reject([&] { enhance_prepared_spsm_bitmaps(original, options, resolver); });
+    enhance_prepared_spsm_bitmaps(original, options, resolver);
   }
   reject([&] {
     enhance_prepared_spsm_bitmaps(

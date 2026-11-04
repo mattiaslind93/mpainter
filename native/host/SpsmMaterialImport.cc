@@ -1,6 +1,6 @@
 #include "SpsmMaterialImport.hh"
 #include "SpsmNativeSemantics.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include <cmath>
 #include <limits>
 #include <map>
@@ -9,16 +9,15 @@ namespace bts { namespace {
 using namespace spsm;
 namespace sem = spsm::semantic;
 constexpr std::array<std::uint64_t,6> channel_bits{1,8192,128,4194304,2,8388608};
-struct Budget {
-  std::uint64_t used=0,limit;
-  explicit Budget(SpsmImportOptions o):limit(o.memory_budget_bytes?
-    std::min(o.memory_budget_bytes,ResourceBudget{}.ram()):ResourceBudget{}.ram()){}
-  void add(std::uint64_t n){used=resource_sum(used,n);if(used>limit)throw Error("SPSM native preparation exceeds available RAM budget");}
+struct SizeAccounting {
+  std::uint64_t used=0;
+  explicit SizeAccounting(SpsmImportOptions){}
+  void add(std::uint64_t n){used=resource_sum(used,n);}
   template<class T> void items(std::size_t n=1){add(resource_product(resource_product(n,sizeof(T)),2));}
 };
 struct Compiler {
   PreparedSpsm result;
-  Budget budget;
+  SizeAccounting sizes;
   std::size_t pi;
   const Preset &p;
   const sem::PresetInspection &ir;
@@ -29,19 +28,19 @@ struct Compiler {
   std::vector<unsigned char> action_seen;
   SpsmImportOptions options;
   explicit Compiler(sem::Inspection &&inspection,SpsmImportOptions options):
-    result(),budget(options),pi(inspection.primary_preset.value_or(std::numeric_limits<std::size_t>::max())),
+    result(),sizes(options),pi(inspection.primary_preset.value_or(std::numeric_limits<std::size_t>::max())),
     p(check_primary(inspection,pi)),ir(inspection.presets.at(pi)),options(std::move(options)) {
-    budget.items<PreparedSpsm>();budget.items<sem::Inspection>();
+    sizes.items<PreparedSpsm>();sizes.items<sem::Inspection>();
     result.source=std::make_shared<const sem::Inspection>(std::move(inspection));
-    budget.items<TextureLayer>(ir.layers.size());budget.items<SpsmLayerBinding>(ir.layers.size());
-    budget.items<QUuid>(ir.layers.size());budget.items<unsigned char>(ir.layers.size());
-    budget.items<SpsmActionBinding>(ir.actions.size());
-    budget.items<std::size_t>(ir.actions.size());action_todo.reserve(ir.actions.size());
-    budget.items<unsigned char>(ir.actions.size());action_seen.resize(ir.actions.size());
+    sizes.items<TextureLayer>(ir.layers.size());sizes.items<SpsmLayerBinding>(ir.layers.size());
+    sizes.items<QUuid>(ir.layers.size());sizes.items<unsigned char>(ir.layers.size());
+    sizes.items<SpsmActionBinding>(ir.actions.size());
+    sizes.items<std::size_t>(ir.actions.size());action_todo.reserve(ir.actions.size());
+    sizes.items<unsigned char>(ir.actions.size());action_seen.resize(ir.actions.size());
     ids.resize(ir.layers.size());seen.resize(ir.layers.size());
     result.layers.reserve(ir.layers.size());result.actions.reserve(ir.actions.size());
     for(auto &id:ids)id=QUuid::createUuid();
-    for(const auto &s:ir.sources){budget.add(sizeof(std::pair<const NodeId,const sem::Source *>)+4*sizeof(void*));sources.emplace(s.source,&s);}
+    for(const auto &s:ir.sources){sizes.add(sizeof(std::pair<const NodeId,const sem::Source *>)+4*sizeof(void*));sources.emplace(s.source,&s);}
     result.material.set.layers.clear();result.material.set.bump_origin=.5f;
     result.material.set.layers.reserve(ir.layers.size());
     result.material.set.displacement.channel=false;result.material.set.ao_channel=false;result.material.set.channels[3]=false;
@@ -76,7 +75,7 @@ struct Compiler {
     if(!id)return fallback;const auto v=number(id);if(!v||!std::isfinite(*v)||*v<0||*v>1)throw Error("SPSM opacity/mask value is outside [0,1]");return float(*v);
   }
   void diagnostic(NodeId id,SpsmDiagnosticKind kind,std::string_view code,std::string_view detail,std::optional<std::size_t> preset={}){
-    budget.items<SpsmImportDiagnostic>();result.diagnostics.push_back({preset.value_or(pi),id,kind,code,detail});
+    sizes.items<SpsmImportDiagnostic>();result.diagnostics.push_back({preset.value_or(pi),id,kind,code,detail});
     if(kind!=SpsmDiagnosticKind::SourceMetadata)result.partial=true;
   }
   void omit(NodeId id,std::string_view code,std::string_view detail){diagnostic(id,SpsmDiagnosticKind::Omission,code,detail);}
@@ -183,12 +182,12 @@ struct Compiler {
   TextureLayer lower_layer(std::size_t index,int depth){
     const auto &src=ir.layers.at(index);TextureLayer out;out.id=ids[index];out.depth=depth;if(src.parent)out.parent=ids.at(*src.parent);
     out.kind=src.group?LayerKind::Folder:LayerKind::Fill;out.channels.fill(true);out.ao_enabled=true;out.values.bump=.5f;out.displacement.enabled=false;for(auto &u:out.users)u.enabled=false;
-    if(src.label){if(const auto *label=std::get_if<std::string>(&node(*src.label).value)){if(label->find('\0')!=std::string::npos)throw Error("SPSM layer label contains NUL, which native project metadata cannot store");budget.add(label->size());out.name=*label;}else throw Error("Invalid SPSM layer label");}
+    if(src.label){if(const auto *label=std::get_if<std::string>(&node(*src.label).value)){if(label->find('\0')!=std::string::npos)throw Error("SPSM layer label contains NUL, which native project metadata cannot store");sizes.add(label->size());out.name=*label;}else throw Error("Invalid SPSM layer label");}
     out.visible=boolean(src.enabled,true);bool okay=geometry(src);layer_blending(src,out);
     if(boolean(field(src.source,"gammaCompensation"),false))assumption(src.source,"gamma-compensation","Source gamma compensation retained as metadata; native scene-linear Base Color remains active under the reported source-color policy");
     if(src.group){if(!src.actions.empty()){for(auto a:src.actions)skip_action(a,out.id,"folder-content-actions","Native Folder cannot evaluate source content actions");okay=false;}}
     else{
-      std::vector<std::size_t> active;budget.items<std::size_t>(src.actions.size());for(auto a:src.actions)if(boolean(ir.actions.at(a).enabled,true))active.push_back(a);else skip_action(a,out.id,"inactive-content-action","Disabled source action retained without evaluation");
+      std::vector<std::size_t> active;sizes.items<std::size_t>(src.actions.size());for(auto a:src.actions)if(boolean(ir.actions.at(a).enabled,true))active.push_back(a);else skip_action(a,out.id,"inactive-content-action","Disabled source action retained without evaluation");
       bool initial=false;
       for(const auto ai:active){const auto &a=ir.actions.at(ai);
         if(!initial&&a.kind==sem::ActionKind::Fill&&a.children.empty()){
@@ -207,23 +206,23 @@ struct Compiler {
     assumption(ir.layers.at(ir.roots[0]).source,"stack-order-policy","Source subStack.items retained bottom-to-top; native folders emitted after children (observed Dirty Plastic Base/Splats/Dirt/Edges order)");
     assumption(ir.layers.at(ir.roots[0]).source,"blend-policy","Named public Shader API blend constants explicitly mapped to native operations; DataBlending enum identity and appearance remain inferred");
     for(std::size_t si=0;si<result.source->presets.size();++si){for(const auto &f:result.source->presets[si].findings)if(f.capability!=sem::Capability::NativePrimitive)diagnostic(f.source,SpsmDiagnosticKind::SourceMetadata,f.code,f.detail,si);if(si!=pi)diagnostic(result.source->source().presets[si].root,SpsmDiagnosticKind::Omission,"alternate-preset-stream","Alternate preset stream retained independently, not applied or merged",si);}
-    struct Frame{std::size_t index;int depth;bool finish;};budget.items<Frame>(resource_sum(ir.layers.size(),ir.layers.size()));std::vector<Frame> todo{{ir.roots[0],0,false}};
+    struct Frame{std::size_t index;int depth;bool finish;};sizes.items<Frame>(resource_sum(ir.layers.size(),ir.layers.size()));std::vector<Frame> todo{{ir.roots[0],0,false}};
     while(!todo.empty()){auto f=todo.back();todo.pop_back();if(f.finish){result.material.set.layers.push_back(lower_layer(f.index,f.depth));continue;}
       if(seen.at(f.index)++)throw Error("Repeated SPSM layer in preparation tree");todo.push_back({f.index,f.depth,true});const auto &l=ir.layers.at(f.index);
       if(!l.group&&!l.children.empty())throw Error("SPSM color layer unexpectedly owns child layers");if(f.depth==std::numeric_limits<int>::max()&&!l.children.empty())throw Error("SPSM hierarchy exceeds native depth representation");
       for(auto it=l.children.rbegin();it!=l.children.rend();++it)todo.push_back({*it,f.depth+1,false});
     }
     for(std::size_t i=0;i<seen.size();++i)if(!seen[i])throw Error("SPSM layer exists outside primary root hierarchy");
-    for(std::size_t i=0;i<action_seen.size();++i)if(!action_seen[i]){budget.items<SpsmActionBinding>();result.actions.push_back({ir.actions[i].source,{},false});omit(ir.actions[i].source,"unbound-source-action","Source action is outside the applied layer/action tree and remains retained only");}
+    for(std::size_t i=0;i<action_seen.size();++i)if(!action_seen[i]){sizes.items<SpsmActionBinding>();result.actions.push_back({ir.actions[i].source,{},false});omit(ir.actions[i].source,"unbound-source-action","Source action is outside the applied layer/action tree and remains retained only");}
     if(result.material.set.layers.back().kind!=LayerKind::Folder)throw Error("SPSM material root must be a Folder");
-    result.material.set.selected_layer=result.material.set.layers.back().id;budget.add(result.material.set.layers.back().name.size());result.material.set.name=result.material.set.layers.back().name;
+    result.material.set.selected_layer=result.material.set.layers.back().id;sizes.add(result.material.set.layers.back().name.size());result.material.set.name=result.material.set.layers.back().name;
     return std::move(result);
   }
 };
 } // namespace
 std::string PreparedSpsm::diagnostic_path(const SpsmImportDiagnostic &d)const{return spsm::semantic::source_path(*source,d.preset,d.source);}
 PreparedSpsm prepare_spsm_material(spsm::semantic::Inspection &&inspection,SpsmImportOptions options){auto result=Compiler(std::move(inspection),options).run();if(options.native_actions)lower_spsm_native_actions(result,options.uniform_rgb_to_scene_linear);return result;}
-PreparedSpsm prepare_spsm_material(const std::filesystem::path &path,SpsmImportOptions options){auto inspection=spsm::semantic::inspect_archive(spsm::read_archive(path,{options.memory_budget_bytes}),{options.memory_budget_bytes});return prepare_spsm_material(std::move(inspection),std::move(options));}
+PreparedSpsm prepare_spsm_material(const std::filesystem::path &path,SpsmImportOptions options){auto inspection=spsm::semantic::inspect_archive(spsm::read_archive(path,{}),{});return prepare_spsm_material(std::move(inspection),std::move(options));}
 SmartMaterialPreset spsm_material_for_destination(const PreparedSpsm &prepared,const TextureSet &destination){
   const auto origin=destination.bump_origin;
   if(origin!=0&&origin!=.5f)throw spsm::Error("Unsupported destination Bump origin");
@@ -252,7 +251,7 @@ SmartMaterialPreset spsm_material_for_destination(const PreparedSpsm &prepared,c
       throw spsm::Error("Legacy SPSM Bump constant exceeds native serialized range");
   }
   if(origin==0&&(!std::isfinite(source.base_values.bump)||std::abs(source.base_values.bump-.5f)>65504))throw spsm::Error("Legacy SPSM Bump base exceeds native serialized range");
-  require_texture_ram(resource_product(bytes,2),"SPSM destination preparation");
+
   auto result=prepared.material;
   if(origin==.5f)return result;
   result.set.bump_origin=0;result.set.base_values.bump-=.5f;

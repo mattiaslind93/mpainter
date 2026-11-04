@@ -4,7 +4,7 @@
 #include "NativeCyclesRevisions.hh"
 #include "BKE_image_hosted.hh"
 #include "GpuProjectReadback.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "BKE_main.hh"
 #include "BKE_image.hh"
 #include "BKE_image_gpu_override.hh"
@@ -68,10 +68,10 @@ bool same_live_identity(Main &main,Image &image,std::uint32_t material,int role,
  return true;
 }
 std::shared_ptr<const Identity> describe(Main &main,Image &image,std::uint32_t material,int role,gpu::Texture *texture){
- if(!publishable_image(image))throw std::runtime_error("Cycles mirror target is not an authoritative native image");
+ if(!publishable_image(image))throw std::runtime_error("Cycles mirror target is not an authoritative native image: "+std::string(image.id.name+2)+" (source="+std::to_string(image.source)+", type="+std::to_string(image.type)+", flags="+std::to_string(image.runtime?image.runtime->gpuflag:0)+", role="+std::to_string(role)+")");
  const auto count=std::uint64_t(BLI_listbase_count(&image.tiles));
  const auto header=resource_sum(sizeof(Identity)+2*sizeof(void *),sizeof(image.colorspace_settings.name)+2*sizeof(main.colorspace.scene_linear_name));
- require_texture_ram(resource_sum(header,resource_product(count,sizeof(NativeCyclesTileIdentity))),"Cycles complete image identity");
+
  const auto format=GPU_texture_format(texture);
  if(format!=gpu::TextureFormat::SFLOAT_16_16_16_16&&format!=gpu::TextureFormat::SFLOAT_32_32_32_32)throw std::runtime_error("Cycles mirror requires native float4 target");
  auto id=std::make_shared<Identity>();id->main=reinterpret_cast<std::uintptr_t>(&main);id->allocation=reinterpret_cast<std::uintptr_t>(texture);id->image=image.id.session_uid;id->material=material;id->role=role;
@@ -80,7 +80,11 @@ std::shared_ptr<const Identity> describe(Main &main,Image &image,std::uint32_t m
  id->declared_space=image.colorspace_settings.name;id->working_space=main.colorspace.scene_linear_name;id->buffer_space=id->data?id->declared_space:id->working_space;id->working_matrix=working_matrix(main);
  id->tiles.reserve(count);for(ImageTile &tile:image.tiles)id->tiles.push_back(tile_identity(image,tile));
  std::sort(id->tiles.begin(),id->tiles.end(),[](const auto &a,const auto &b){return a.number<b.number;});
- if(!native_cycles_valid_identity(*id))throw std::runtime_error("Cycles mirror requires a complete native image/tile identity");
+ if(!native_cycles_valid_identity(*id)){
+  std::string detail="Cycles mirror requires a complete native image/tile identity: "+std::string(image.id.name+2)+" role="+std::to_string(role)+" gpu="+std::to_string(id->width)+"x"+std::to_string(id->height)+" layers="+std::to_string(id->layers)+" mips="+std::to_string(id->mips)+" space="+id->buffer_space+" image="+std::to_string(id->image)+" material="+std::to_string(id->material);
+  for(const auto &tile:id->tiles)detail+=" tile="+std::to_string(tile.number)+" region="+std::to_string(tile.width)+"x"+std::to_string(tile.height)+" generated="+std::to_string(tile.generated_width)+"x"+std::to_string(tile.generated_height)+" xy="+std::to_string(tile.x)+","+std::to_string(tile.y)+" layer="+std::to_string(tile.layer);
+  throw std::runtime_error(detail);
+ }
  return id;
 }
 struct CaptureImage {std::shared_ptr<const Identity> identity;std::uint64_t revision=0,entry_epoch=0;};
@@ -186,7 +190,7 @@ bool NativeCyclesImages::update(Main &main,bool active)try{
   struct Commit {NativeCyclesRevision *state;std::uint64_t captured;Image *image;};
   std::vector<Commit> commits;bool current=active&&!paused;
   if(current){
-   require_texture_ram(resource_product(batch->captures.size(),sizeof(Commit)),"Cycles prepared revision commit");commits.reserve(batch->captures.size());
+   commits.reserve(batch->captures.size());
    for(const auto &capture:batch->captures){const auto &id=*capture.identity;auto found=s.entries.find(id.image);auto *image=find_image(main,id.image);
     if(!image||found==s.entries.end()||!found->second.identity){current=false;continue;}
     auto &entry=found->second;
@@ -199,7 +203,7 @@ bool NativeCyclesImages::update(Main &main,bool active)try{
    // These are already-owned publication buffers, never a cache load/acquire.
    decltype(s.bk_packets) bk_candidate;const bool bk_diagnostic=std::getenv("BTS_BK_FOLDER_MASK")!=nullptr||std::getenv("BTS_BJ_PROJECTION_UI")!=nullptr||std::getenv("BTS_BM_ADJUSTMENT_DEMO")!=nullptr;
    if(bk_diagnostic){
-    ResourceBudget{}.require(resource_product(resource_sum(s.bk_packets.size(),batch->entries.size()),4096),0,"BK Cycles publication diagnostic");bk_candidate=s.bk_packets;
+    bk_candidate=s.bk_packets;
     for(const auto &tile:batch->entries){const auto capture=std::find_if(batch->captures.begin(),batch->captures.end(),[&](const auto &value){return value.identity->image==tile.image;});if(capture==batch->captures.end())throw std::runtime_error("BK publication packet identity missing");const auto &identity=*capture->identity;if(identity.role!=0&&identity.role!=2)continue;
      const auto *buffer=tile.buffer;if(!buffer||!buffer->float_data()||buffer->channels!=4||buffer->x<1||buffer->y<1)throw std::runtime_error("BK publication packet is not Float32 RGBA");QJsonArray samples;
      for(int part:{1,3,2}){const int x=std::min(buffer->x-1,buffer->x*part/4),y=buffer->y/2;QJsonArray rgba;for(int c=0;c<4;++c){const auto value=buffer->float_data()[(std::size_t(y)*buffer->x+x)*4+c];if(!std::isfinite(value))throw std::runtime_error("BK publication packet has nonfinite pixels");rgba.append(value);}samples.append(QJsonObject{{"xy",QJsonArray{x,y}},{"rgba",rgba}});}
@@ -226,7 +230,7 @@ bool NativeCyclesImages::update(Main &main,bool active)try{
    struct Release {GpuProjectReadback *capture;~Release(){capture->release_cpu();}} release{capture};
    // Readback arrays already exist and are excluded from MemAvailable here.
    // This phase allocates only the immutable float4 ImBuf copies.
-   std::uint64_t bytes=0;for(const auto &t:targets)bytes=resource_sum(bytes,resource_product(resource_product(t.region.width,t.region.height),16));ResourceBudget{}.require(bytes,0,"Cycles immutable CPU mirror");
+   std::uint64_t bytes=0;for(const auto &t:targets)bytes=resource_sum(bytes,resource_product(resource_product(t.region.width,t.region.height),16));
    auto result=std::make_unique<CpuBatch>();result->captures=images;result->buffers.reserve(targets.size());result->images.reserve(images.size());result->entries.reserve(targets.size());
    for(const auto &image:images)result->images.push_back(image.identity->image);
    for(std::size_t i=0;i<targets.size();++i){const auto &t=targets[i];const auto &id=*images.at(t.image_index).identity;const auto &image=capture->images().at(i);auto buffer=own(IMB_allocImBuf(t.region.width,t.region.height,ImBufFlags::FloatData));if(!buffer)throw std::bad_alloc();buffer->channels=4;
@@ -239,7 +243,7 @@ bool NativeCyclesImages::update(Main &main,bool active)try{
  std::vector<Tile> targets;std::vector<CaptureImage> images;std::vector<OwnerRef> keepers;std::vector<const Identity *> allocations;std::uint64_t cpu=0,gpu_bytes=0,held_gpu_bytes=0,total_tiles=0;
  for(const auto &[uid,entry]:s.entries)if(entry.revision.wanted!=entry.revision.published)total_tiles=resource_sum(total_tiles,entry.identity->tiles.size());
  const auto metadata=resource_sum(resource_product(s.entries.size(),sizeof(CaptureImage)+sizeof(OwnerRef)+sizeof(const Identity *)),resource_product(total_tiles,2*sizeof(Tile)+sizeof(NativeCyclesCacheEntry)+sizeof(Buffer)));
- require_texture_ram(metadata,"Cycles capture identity keepers");images.reserve(s.entries.size());keepers.reserve(s.entries.size());allocations.reserve(s.entries.size());targets.reserve(total_tiles);
+ images.reserve(s.entries.size());keepers.reserve(s.entries.size());allocations.reserve(s.entries.size());targets.reserve(total_tiles);
  for(auto &[uid,entry]:s.entries){
   if(entry.revision.wanted==entry.revision.published)continue;const auto &id=*entry.identity;const auto index=images.size();
   images.push_back({entry.identity,entry.revision.wanted,s.entry_epoch});keepers.push_back(keep(entry.keeper.get()));allocations.push_back(&id);
@@ -258,7 +262,7 @@ bool NativeCyclesImages::update(Main &main,bool active)try{
  cpu=resource_sum(cpu,metadata);
  // Driver free VRAM already excludes resident source allocations. Plain refs
  // keep them alive but allocate no new storage; charge only snapshot copies.
- ResourceBudget{}.require(cpu,gpu_bytes,"Cycles asynchronous snapshot");s.ensure_retirement();
+ s.ensure_retirement();
  const auto submit_started=Clock::now();auto capture=std::make_unique<GpuProjectReadback>();
  for(const auto &t:targets){const auto &id=*images[t.image_index].identity;const auto &r=t.region;capture->submit(id.image,r.number,keepers[t.image_index].get(),r.x,r.y,r.layer,r.width,r.height);}
  if(tracing())std::printf("BTS_CYCLES_MIRROR_CAPTURE tiles=%zu bytes=%llu held_source_bytes=%llu owner_ms=%.6f\n",targets.size(),static_cast<unsigned long long>(gpu_bytes),static_cast<unsigned long long>(held_gpu_bytes),milliseconds(submit_started));

@@ -33,6 +33,10 @@ void diffuse(blender::ImBuf &image){
 }
 std::vector<float> filter_mesh_bake(std::vector<float> pixels,int source_width,int source_height,int width,int height,int dilation,bool diffusion,int role){
   if(pixels.size()!=std::size_t(source_width)*source_height*4)throw std::invalid_argument("Invalid supersampled bake buffer");
+  if(source_width==width&&source_height==height&&!dilation&&!diffusion){
+    if(role==0||role==1)for(std::size_t i=0;i<pixels.size();i+=4){const float alpha=pixels[i+3];if(alpha<=0)continue;float vector[3],length=0;for(int c=0;c<3;++c){vector[c]=pixels[i+c]/alpha*2-1;length+=vector[c]*vector[c];}length=std::sqrt(length);if(length>1e-8f)for(int c=0;c<3;++c)pixels[i+c]=(vector[c]/length*.5f+.5f)*alpha;}
+    return pixels;
+  }
   auto image=buffer(width,height);
   if(source_width==width&&source_height==height)std::copy(pixels.begin(),pixels.end(),image->float_data_for_write());
   else blender::IMB_scale_box(pixels.data(),{source_width,source_height},4,image->float_data_for_write(),{width,height},true);

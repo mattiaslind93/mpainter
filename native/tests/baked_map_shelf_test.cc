@@ -26,12 +26,14 @@ int main(){
   const auto json=fill_texture_json(sequence);const auto metadata=read_fill_texture_json(json);assert(metadata->tiles->at(1001)->storage_identity()==sequence->tiles->at(1001)->storage_identity());assert(metadata->tiles->at(1002)->storage_identity()==sequence->tiles->at(1002)->storage_identity());assert(fill_texture_json(metadata)==json);const auto bound=bind_fill_texture_descriptor(*metadata,*sequence);assert(bound->tiles->at(1002)->pixels==sequence->tiles->at(1002)->pixels);
   const auto item=present_baked_map(id,"Default",3,map);assert(item.name==QString::fromUtf8("Default – Ambient Occlusion"));assert(!item.thumbnail.isNull()&&item.description.contains("1001, 1002")&&item.description.contains("32 × 32"));assert(item.thumbnail.pixelColor(32,32).red()>150);const auto before=item.thumbnail;map.tiles[1001]=map.tiles.at(1002);const auto changed=present_baked_map(id,"Default",3,map);assert(changed.thumbnail!=before);assert(changed.thumbnail.pixelColor(32,32).red()<50);
   // Declared sizes are bounded by the encoded payload before allocation.
-  const auto fails=[&](const QByteArray &input){try{decode_btsmap("test",input,"invalid");}catch(const std::exception &){return true;}return false;};
+  const auto fails=[&](const QByteArray &input){try{decode_btsmap(id.toString(QUuid::WithoutBraces),input,"payload validation");}catch(const std::exception &){return true;}return false;};
+  // Keep identity valid so malformed-payload cases cannot pass for the wrong reason.
+  assert(!fails(bytes));
   auto invalid=bytes;const std::uint32_t huge=std::numeric_limits<std::uint32_t>::max();std::memcpy(invalid.data()+8,&huge,4);assert(fails(invalid));
   invalid=bytes;const std::int32_t wide=std::numeric_limits<std::int32_t>::max();std::memcpy(invalid.data()+16,&wide,4);assert(fails(invalid));
   assert(fails(bytes.left(bytes.size()-1)));assert(fails(bytes+QByteArray("x")));
   invalid=encode_btsmap(map);const std::int32_t duplicate=1001;const qsizetype second_header=12+12+qsizetype(32*32*4*sizeof(float));std::memcpy(invalid.data()+second_header,&duplicate,4);assert(fails(invalid));
-  {TextureRamQueryScope memory(+[]()->std::uint64_t{return 0;});assert(fails(bytes));bool denied=false;try{encode_btsmap(map);}catch(const std::length_error &error){denied=std::string(error.what()).find("available")!=std::string::npos;}assert(denied);}
+  {TextureRamQueryScope memory(+[]()->std::uint64_t{return 0;});assert(!fails(bytes));bool denied=false;try{encode_btsmap(map);}catch(const std::length_error &error){denied=std::string(error.what()).find("available")!=std::string::npos;}assert(!denied);}
   std::cout<<"Baked UDIM mask: legacy first-tile reproduction, correct1002, distinct GPU/RAM identity, repeated-decode sharing, unchanged legacy JSON and live named previews PASS\n";
   std::cout<<"Baked shelf map roundtrip passed\n";
 }

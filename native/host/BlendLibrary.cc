@@ -1,4 +1,4 @@
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "BlendLibrary.hh"
 
 #include <QFileInfo>
@@ -42,7 +42,7 @@ BlendLibraryCatalog inspect_blend_library(const std::string &path, std::stop_tok
     std::unique_ptr<LinkNode, decltype(&BLI_linklist_freeN)> entries(
         BLO_blendhandle_get_datablock_names(handle.get(), type, false, &count), BLI_linklist_freeN);
     if(count<0)throw std::runtime_error("Invalid Blender library entry count");
-    require_texture_ram(resource_product(count,sizeof(std::string)+sizeof(LinkNode)),"Blender library entries");
+
     for (auto *entry = entries.get(); entry; entry = entry->next) {
       check();
       names.emplace_back(static_cast<const char *>(entry->link));

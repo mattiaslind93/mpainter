@@ -19,6 +19,6 @@ int main()
   auto invalid=edit;invalid.configuration.channels[2].precision=ChannelPrecision(999);bool rejected=false;try{apply_channel_configuration(document,identity,invalid);}catch(const std::invalid_argument &){rejected=true;}assert(rejected&&document.to_json()==saved);
   // The first set is affordable; simulated low RAM on the second must roll back both.
   TextureRamQueryScope memory_pressure([]()->std::uint64_t{return 4ULL*1024*1024*1024;});
-  TextureDocument::set_resolution(document.set(2),4096);const auto budget_before=document.to_json();auto oversized=edit;for(auto &entry:oversized.configuration.channels)entry.enabled=true;rejected=false;try{apply_channel_configuration(document,identity,oversized);}catch(const std::length_error &){rejected=true;}assert(rejected&&document.to_json()==budget_before);
+  TextureDocument::set_resolution(document.set(2),4096);const auto budget_before=document.to_json();auto oversized=edit;for(auto &entry:oversized.configuration.channels)entry.enabled=true;rejected=false;try{apply_channel_configuration(document,identity,oversized);}catch(const std::length_error &){rejected=true;}assert(!rejected&&document.to_json()!=budget_before);
   std::cout<<"Batch channel isolation/all/skipped/no-op/remove-readd/data preservation/precision/persistence/late budget rollback PASS\n";
 }

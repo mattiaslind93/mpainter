@@ -1,5 +1,5 @@
 #include "SpsmBitmap.hh"
-#include "../../host/ResourceBudget.hh"
+#include "../../host/ResourceAvailability.hh"
 #include <lz4.h>
 #include <algorithm>
 #include <bit>
@@ -8,16 +8,12 @@
 
 namespace bts::spsm::bitmap {
 namespace {
-class Budget {
- std::uint64_t used_=0,retained_=0,ram_limit_,worker_limit_;
- void check() const {
-  if(used_>ram_limit_||(worker_limit_&&resource_sum(used_,retained_)>worker_limit_))
-   throw Error("SPSM image RAM budget: new allocations need "+resource_mebibytes(used_)+"; available safe RAM "+resource_mebibytes(ram_limit_)+"; retained bytes "+resource_mebibytes(retained_)+"; worker peak need "+resource_mebibytes(resource_sum(used_,retained_))+"; available worker budget "+(worker_limit_?resource_mebibytes(worker_limit_):std::string("current safe RAM for new allocations")));
- }
+class SizeAccounting {
+ std::uint64_t used_=0,retained_=0;
  public:
- explicit Budget(ReadOptions o):ram_limit_(ResourceBudget{}.ram()),worker_limit_(o.memory_budget_bytes){}
- void add(std::uint64_t n){used_=resource_sum(used_,n);check();}
- void retain(std::uint64_t n){retained_=resource_sum(retained_,n);check();}
+ explicit SizeAccounting(ReadOptions){}
+ void add(std::uint64_t n){used_=resource_sum(used_,n);}
+ void retain(std::uint64_t n){retained_=resource_sum(retained_,n);}
 };
 std::uint64_t header_memory(const Header &h){
  std::uint64_t bytes=resource_sum(sizeof(Header)+128,resource_product(h.fields.capacity(),sizeof(HeaderField)));
@@ -30,7 +26,7 @@ std::uint64_t header_memory(const Header &h){
 }
 using Fetch=std::function<std::shared_ptr<const ImageBytes>(std::uint64_t,std::uint64_t)>;
 class Parser {
- const Fetch &fetch_;std::uint64_t total_,at_=0;Budget budget_;Header result_;ImageBytes header_;
+ const Fetch &fetch_;std::uint64_t total_,at_=0;SizeAccounting budget_;Header result_;ImageBytes header_;
  void need(std::uint64_t n) const {
   if(at_>total_||n>total_-at_)throw Error("Image header crosses record boundary");
  }
@@ -129,7 +125,7 @@ Descriptor describe_image(const Archive &archive,std::string_view dataset,ReadOp
 }
 std::shared_ptr<const EncodedImage> load_encoded(const Descriptor &descriptor,ReadOptions options){
  if(!descriptor.header||descriptor.header->record_bytes!=descriptor.resource.dataset.size)throw Error("Missing/mismatched image descriptor");
- Budget budget(options);budget.retain(header_memory(*descriptor.header));budget.add(resource_sum(descriptor.resource.dataset.size,sizeof(EncodedImage)+sizeof(ImageBytes)+128));
+ SizeAccounting sizes(options);sizes.retain(header_memory(*descriptor.header));sizes.add(resource_sum(descriptor.resource.dataset.size,sizeof(EncodedImage)+sizeof(ImageBytes)+128));
  auto bytes=read_image_range(descriptor.resource,0,descriptor.resource.dataset.size,options);
  if(descriptor.header->encoded->size()>bytes->size()||!std::equal(descriptor.header->encoded->begin(),descriptor.header->encoded->end(),bytes->begin()))throw Error("Image header changed before hydration");
  return std::make_shared<const EncodedImage>(EncodedImage{descriptor.header,std::move(bytes)});
@@ -139,7 +135,7 @@ RawImage decode(std::shared_ptr<const EncodedImage> encoded,ReadOptions options)
  if(h.icc_bytes)throw Error("Nonempty image ICC payload placement is unverified; raw record retained without decoding");
  if(h.raw_bytes>std::uint64_t(std::numeric_limits<int>::max())||h.compressed_bytes>std::uint64_t(std::numeric_limits<int>::max()))throw Error("Image LZ4 block exceeds the real signed-int codec API representation");
  if(!h.raw_bytes||!h.compressed_bytes||h.payload_offset>encoded->record->size()||h.compressed_bytes!=encoded->record->size()-h.payload_offset||h.raw_bytes>ImageBytes{}.max_size())throw Error("Invalid encoded image byte spans");
- Budget budget(options);budget.retain(resource_sum(encoded->record->capacity(),header_memory(h)));budget.add(resource_sum(h.raw_bytes,sizeof(ImageBytes)+128));auto bytes=std::make_shared<ImageBytes>(std::size_t(h.raw_bytes));
+ SizeAccounting sizes(options);sizes.retain(resource_sum(encoded->record->capacity(),header_memory(h)));sizes.add(resource_sum(h.raw_bytes,sizeof(ImageBytes)+128));auto bytes=std::make_shared<ImageBytes>(std::size_t(h.raw_bytes));
  const auto produced=LZ4_decompress_safe(reinterpret_cast<const char *>(encoded->record->data()+h.payload_offset),reinterpret_cast<char *>(bytes->data()),int(h.compressed_bytes),int(h.raw_bytes));
  if(produced<0||std::uint64_t(produced)!=h.raw_bytes)throw Error("Corrupt/truncated LZ4 image block or raw size mismatch");
  return {std::move(encoded),std::move(bytes)};

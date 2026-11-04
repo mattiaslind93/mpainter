@@ -1,7 +1,7 @@
 #include "NativeMaterialPreviewImages.hh"
 #include "NativeMaterialDecodedImage.hh"
 #include "NativeMaterialGraph.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "BKE_image.hh"
 #include "BKE_image_hosted.hh"
 #include "BKE_main.hh"

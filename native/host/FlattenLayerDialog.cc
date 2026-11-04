@@ -35,7 +35,7 @@ std::vector<StudioAsset> resources(FlattenedLayer &bake,const std::atomic_bool &
  std::vector<StudioAsset> result;std::uint64_t bytes=0;
  for(int c=0;c<15;++c)if(!bake.images[c].empty()){
   if(cancel)return {};StudioAsset asset;asset.scope=AssetScope::Project;asset.name=QString::fromStdString(bake.layer.name)+QString(" channel %1").arg(c);asset.usages={"texture"};asset.search_terms={"flattened"};if(c==3)asset.search_terms.append("internal:flattened-normal");
-  std::vector<SequenceMember> members;for(const auto &[tile,image]:bake.images[c]){if(cancel)return {};const auto data=encode(image);bytes+=data.size();if(std::uint64_t(data.size())>texture_available_ram_bytes()/2)throw std::length_error("Insufficient available RAM to package flattened texture");members.push_back({tile,QString("flattened_%1.%2.exr").arg(c).arg(tile),data});}
+  std::vector<SequenceMember> members;for(const auto &[tile,image]:bake.images[c]){if(cancel)return {};const auto data=encode(image);bytes+=data.size();members.push_back({tile,QString("flattened_%1.%2.exr").arg(c).arg(tile),data});}
   asset.filename=QString("flattened_%1.btsseq").arg(c);asset.bytes=make_image_sequence(members);
   fill_channel_texture(bake.layer.fill,c)=decode_fill_texture(asset,c!=0,c==0?"ACEScg":"");result.push_back(std::move(asset));
  }
@@ -46,7 +46,7 @@ std::optional<PreparedFlatten> choose_layer_flatten(QWidget *parent,TextureSet s
  Wait dialog(parent);dialog.setObjectName("flattenProgressDialog");dialog.setWindowTitle("Flatten layers");auto *layout=new QVBoxLayout(&dialog);auto *label=new QLabel("Baking channel bitmaps on the GPU…",&dialog);layout->addWidget(label);auto *progress=new QProgressBar(&dialog);progress->setRange(0,0);layout->addWidget(progress);auto *buttons=new QDialogButtonBox(QDialogButtonBox::Cancel,&dialog);layout->addWidget(buttons);QObject::connect(buttons,&QDialogButtonBox::rejected,&dialog,&Wait::reject);
  std::optional<PreparedFlatten> result;std::string error;std::atomic_bool done=false;
  struct Mailbox {std::mutex mutex;std::optional<LayerCaptureRequest> request;std::optional<LayerCaptureResult> result;std::uint64_t ticket=0;};Mailbox mailbox;
- std::jthread worker([&]{try{EditTiming timing("BTS_FLATTEN_MS");auto plan=prepare_flatten_layer(source,selected);if(plan.snapshot_bytes>flatten_safe_ram_bytes())throw std::length_error("Flatten capture requires "+std::to_string((plan.snapshot_bytes+1048575)/1048576)+" MiB; insufficient available RAM for channel buffers");auto &bake=plan.result;
+ std::jthread worker([&]{try{EditTiming timing("BTS_FLATTEN_MS");auto plan=prepare_flatten_layer(source,selected);auto &bake=plan.result;
   const auto capture=[&](LayerCaptureRequest request)->std::shared_ptr<std::vector<FillTexture::Pixel>>{
    {std::lock_guard lock(mailbox.mutex);mailbox.result.reset();mailbox.ticket=0;mailbox.request=request;}
    while(!dialog.cancelled){
@@ -58,7 +58,6 @@ std::optional<PreparedFlatten> choose_layer_flatten(QWidget *parent,TextureSet s
   for(int tile:source.tiles){if(dialog.cancelled)break;const auto &original=TextureDocument::layer(source,selected);if(original.geometry.type==1&&!original.geometry.includes_tile(tile))continue;
    for(int c=0;c<16;++c){const bool mask=c==15;if(mask?!bake.layer.mask:!plan.enabled[c])continue;if(dialog.cancelled)break;
     const int width=mask?plan.mask_canvas:source.width(tile),height=mask?plan.mask_canvas:source.rows(tile);const auto bytes=std::uint64_t(width)*height*16;
-    const auto budget=flatten_safe_ram_bytes();if(bytes>budget)throw std::length_error("Layer bake needs "+std::to_string((bytes+1048575)/1048576)+" MiB, available safe RAM budget "+std::to_string(budget/1048576)+" MiB");
     auto pixels=std::make_shared<std::vector<FillTexture::Pixel>>(std::size_t(width)*height);
     for(int y=0;y<height&&!dialog.cancelled;y+=256)for(int x=0;x<width&&!dialog.cancelled;x+=256){
      LayerCaptureRequest request{selected,mask?0:c,tile,x,y,std::min(256,width-x),std::min(256,height-y),width,height,mask,!mask&&plan.contextual[c]};auto packet=capture(request);if(!packet)break;

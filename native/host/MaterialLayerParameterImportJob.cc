@@ -8,7 +8,7 @@ namespace bts {
 namespace {
 MaterialParameterImportCandidate read_candidate(MaterialParameterImportTarget target,
  TextureDocument document,const QString &directory,const OwnerWorkerJob<MaterialParameterImportCandidate>::Cancel &cancel,
- const OwnerWorkerJob<MaterialParameterImportCandidate>::Progress &report,std::uint64_t memory){
+ const OwnerWorkerJob<MaterialParameterImportCandidate>::Progress &report){
  if(document.id()!=target.project||document.set(target.uid).id!=target.set||document.edit_state()!=target.signature)
   throw std::runtime_error("Import target differs from the admitted document snapshot");
  report("Reading and verifying parameter package…");
@@ -35,7 +35,7 @@ MaterialParameterImportCandidate read_candidate(MaterialParameterImportTarget ta
   if(!admitted)throw std::logic_error("Parameter decoder ran before target admission");
   const auto [found,inserted]=names.emplace(original.asset,source.name);
   if(!inserted&&found->second!=source.name)throw std::invalid_argument("One parameter original has conflicting source names");
-  TextureDecodeControl control;control.cancel=cancel.get();control.memory_bytes=memory;
+  TextureDecodeControl control;control.cancel=cancel.get();
   control.progress=[&](const TextureDecodeProgress &progress){report(QString("%1 — %2 (%3/%4)").arg(progress.filename,progress.phase).arg(progress.index+1).arg(progress.total));};
   return decode_fill_texture(asset(original,source.name),mask||source.raw,source.source_space,control);
  };
@@ -65,11 +65,11 @@ void MaterialLayerParameterImportJob::start(MaterialParameterImportTarget target
  hooks_.validate(target); // Owner/native admission BEFORE any package decode.
  if(document.id()!=target.project||document.set(target.uid).id!=target.set||document.edit_state()!=target.signature)
   throw std::runtime_error("The parameter import snapshot changed");
- const auto memory=texture_decode_budget_bytes();
+
  target_=std::move(target);token_=QUuid::createUuid();cancelled_=false;error_.clear();text_="Reading parameter package…";active_=true;
  try{
-  reader_.start([target=target_,document=std::move(document),directory,memory](auto cancel,auto report)mutable{
-    return read_candidate(std::move(target),std::move(document),directory,cancel,report,memory);
+  reader_.start([target=target_,document=std::move(document),directory](auto cancel,auto report)mutable{
+    return read_candidate(std::move(target),std::move(document),directory,cancel,report);
    },[this]{return active_&&!cancelled_&&hooks_.current(target_);},
    [this](MaterialParameterImportCandidate result){candidate_=std::move(result);text_="Waiting to prepare material images…";},
    [this](const QString &error){fail(error);},

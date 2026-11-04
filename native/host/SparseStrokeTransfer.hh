@@ -31,7 +31,7 @@ class SparseStrokeTransfer {
  SparseStrokeTransfer(const UvTransferMap &mapping,const std::set<int> &allowed):mapping_(mapping),allowed_(allowed){
   const int size=mapping.resolution;require_sparse_texture_extent(size,"Stroke reprojection",128,true);
   std::uint64_t cells=0;for(const auto &[tile,values]:mapping.tiles){if(!allowed.contains(tile)||values.size()!=std::size_t(size)*size)throw std::invalid_argument("Invalid stroke reprojection map");cells+=values.size();}
-  require_texture_ram(cells*sizeof(Target)*4,"Sparse stroke transfer index");
+
   for(const auto &[tile,values]:mapping.tiles){const auto grid=std::uint32_t(grids_.size());grids_.push_back({tile,&values});
    for(std::uint32_t index=0;index<values.size();++index){const auto &value=values[index];if(!value.valid)continue;const double u=value.source[0],v=value.source[1];if(!std::isfinite(u)||!std::isfinite(v)||u< -1||u>11||v< -1||v>101)continue;
     const int x=int(std::floor(u*size-.5)),y=int(std::floor(v*size-.5));std::array<std::uint64_t,4> keys{};int count=0;

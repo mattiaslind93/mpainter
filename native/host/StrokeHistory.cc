@@ -1,12 +1,12 @@
 #include "StrokeHistory.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "PaintRecipe.hh"
 #include <limits>
 #include <algorithm>
 namespace bts {
 PaintPixels::Bounds stroke_bounds(const StrokeRaster &raster){PaintPixels::Bounds total;for(const auto *tiles:{&raster.paint,&raster.ao})for(const auto &[tile,pixels]:tiles->tiles())for(const auto &channel:pixels.page_versions())for(const auto &[key,version]:channel){PaintPixels::Bounds page{int(key%65536)*64,int(key/65536)*64,int(key%65536)*64+64,int(key/65536)*64+64};if(total.empty())total=page;else{total.x0=std::min(total.x0,page.x0);total.y0=std::min(total.y0,page.y0);total.x1=std::max(total.x1,page.x1);total.y1=std::max(total.y1,page.y1);}}return total;}
 std::shared_ptr<const StrokeHistory> append_surface_path(const std::shared_ptr<const StrokeHistory> &previous,const StrokeRaster &before,const StrokeRaster &ink,std::shared_ptr<const SurfacePath> path,int resolution){
-  if(!path)throw std::invalid_argument("Surface path is missing");path->validate();require_texture_ram(resource_product(previous?resource_sum(previous->operations.size(),1):1,sizeof(std::shared_ptr<const StrokeOperation>)),"Editable surface paths");if(previous)for(const auto &operation:previous->operations)if(operation->path&&operation->path->id==path->id)throw std::invalid_argument("Duplicate surface path identity");
+  if(!path)throw std::invalid_argument("Surface path is missing");path->validate();if(previous)for(const auto &operation:previous->operations)if(operation->path&&operation->path->id==path->id)throw std::invalid_argument("Duplicate surface path identity");
   auto history=std::make_shared<StrokeHistory>(*append_stroke(previous,before,before,ink,true,false,path->brush.stroke_opacity/100));auto operation=std::make_shared<StrokeOperation>(*history->operations.back());operation->path=std::move(path);history->operations.back()=std::move(operation);history->declared_paths.clear();history->final_pixels=std::make_shared<StrokeRaster>(replay_strokes(*history,resolution));return history;
 }
 bool has_surface_paths(const std::shared_ptr<const StrokeHistory> &history){if(!history)return false;if(!history->declared_paths.empty())return true;return std::any_of(history->operations.begin(),history->operations.end(),[](const auto &operation){return operation&&bool(operation->path);});}

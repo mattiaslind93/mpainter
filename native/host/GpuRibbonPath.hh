@@ -21,12 +21,12 @@ class GpuRibbonPath {
  static std::uint64_t row_bytes(std::uint64_t rows){const auto width=std::min<std::uint64_t>(1024,std::max<std::uint64_t>(1,rows));return width*std::max<std::uint64_t>(1,(rows+width-1)/width)*16;}
  std::uint64_t owned()const{std::uint64_t bytes=0;for(const auto &[key,entry]:geometry_)bytes+=entry.bytes;for(const auto &[key,entry]:grids_)bytes+=entry.bytes;for(const auto &[key,entry]:images_)bytes+=entry.bytes;return bytes;}
  void reserve(std::uint64_t requested,const RibbonPathGeometry *geometry,const RibbonPathGrid *grid,const RibbonImage *image){
-  const auto free=texture_free_vram.load(),budget=free?(owned()+free)/16:texture_available_ram_bytes()/32;
+  const auto free=texture_free_vram.load(),budget=resource_sum(owned(),(texture_vram_query_valid.load()||free!=0)?free:texture_available_ram_bytes());
   while(owned()+requested>budget){
    auto g=geometry_.end();for(auto i=geometry_.begin();i!=geometry_.end();++i)if(i->first!=geometry&&(g==geometry_.end()||i->second.used<g->second.used))g=i;
    auto p=grids_.end();for(auto i=grids_.begin();i!=grids_.end();++i)if(i->first!=grid&&(p==grids_.end()||i->second.used<p->second.used))p=i;
    auto r=images_.end();for(auto i=images_.begin();i!=images_.end();++i)if(i->first!=image&&(r==images_.end()||i->second.used<r->second.used))r=i;
-   if(g==geometry_.end()&&p==grids_.end()&&r==images_.end())throw std::length_error("Ribbon GPU sources need "+std::to_string((owned()+requested+1048575)/1048576)+" MiB; available source budget "+std::to_string((budget+1048575)/1048576)+" MiB");
+   if(g==geometry_.end()&&p==grids_.end()&&r==images_.end())break;
    const auto age=[](const auto &it,const auto &map){return it==map.end()?UINT64_MAX:it->second.used;};
    if(age(g,geometry_)<=age(p,grids_)&&age(g,geometry_)<=age(r,images_))geometry_.erase(g);
    else if(age(p,grids_)<=age(r,images_))grids_.erase(p);else images_.erase(r);

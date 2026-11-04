@@ -8,7 +8,6 @@ namespace bts {
 enum class SpsmMeshMapPolicy { Unknown, NativeAOGeneratorUVIdentityNearest };
 struct SpsmMeshMapOptions {
   SpsmMeshMapPolicy policy = SpsmMeshMapPolicy::Unknown;
-  std::uint64_t memory_budget_bytes = 0;
 };
 // Detached, atomic source-validated restoration of the independent AO-alias
 // Color single-Fill subset. Requires a compiler-disabled candidate; attempting

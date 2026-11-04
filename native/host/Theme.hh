@@ -4,32 +4,47 @@
 #include <QString>
 class QApplication;
 namespace bts::theme {
-// Single source of UI color values. Neutral/status colors follow mattias-tech-design
-// tokens; Canvas and Accent also match brand-final/icon.svg. Surface is its raised role.
+// Turquoise Dark, Blender 5.1 interface_theme. See assets/theme/Turquoise_Dark.xml.
+// Region, panel and widget roles intentionally retain Blender's different grays.
 // Black/White are endpoints for value ramps, never panel backgrounds.
-inline constexpr auto Canvas = "#111315";
-inline constexpr auto Surface = "#1B1E21";
-inline constexpr auto Raised = Surface;
-inline constexpr auto Hover = "#2A2F34";
-inline constexpr auto Border = "#717B86";
-inline constexpr auto Separator = "#090A0B";
-inline constexpr auto Text = "#B4BAC1";
-inline constexpr auto Heading = "#F2F4F5";
-inline constexpr auto Muted = "#8B949E";
-inline constexpr auto Disabled = "#68737D";
-inline constexpr auto Accent = "#62C7D4";
-inline constexpr auto Selection = "#244950";
-inline constexpr auto OnAccent = "#111315";
-inline constexpr auto Warning = "#E5BC78";
-inline constexpr auto Error = "#FF9B9B";
-inline constexpr auto ErrorSurface = "#392628";
-inline constexpr auto Success = "#8FC8A5";
-inline constexpr auto AxisX = "#DF6969";
-inline constexpr auto AxisY = "#83BC71";
-inline constexpr auto AxisZ = "#7C9FDD";
-inline constexpr auto PlotPurple = "#C378D7";
+inline constexpr auto Canvas = "#282828";
+inline constexpr auto Surface = "#424242";
+inline constexpr auto Raised = "#585858";
+inline constexpr auto Hover = "#505050";
+inline constexpr auto Border = "#373737";
+inline constexpr auto Separator = "#161616";
+inline constexpr auto Text = "#E6E6E6";
+inline constexpr auto Heading = "#FFFFFF";
+inline constexpr auto Muted = "#A6A6A6";
+inline constexpr auto Disabled = "#838383";
+inline constexpr auto Accent = "#22947D";
+inline constexpr auto Selection = "#22947D";
+inline constexpr auto OnAccent = "#FFFFFF";
+inline constexpr auto Warning = "#E3C16E";
+inline constexpr auto Error = "#FF3352";
+inline constexpr auto ErrorSurface = "#771111";
+inline constexpr auto Success = "#8BDC00";
+inline constexpr auto AxisX = "#FF3352";
+inline constexpr auto AxisY = "#8BDC00";
+inline constexpr auto AxisZ = "#2890FF";
+inline constexpr auto PlotPurple = "#9B80FF";
 inline constexpr auto Black = "#000000";
 inline constexpr auto White = "#FFFFFF";
+inline constexpr auto Panel = "#3D3D3D";
+inline constexpr auto Header = "#424242";
+inline constexpr auto Input = "#1F1F1F";
+inline constexpr auto Number = "#595959";
+inline constexpr auto ButtonText = "#D9D9D9";
+inline constexpr auto ListSelection = "#33524B";
+inline constexpr auto ListActive = "#186858";
+inline constexpr auto ScrollHandle = "#676767";
+inline constexpr auto ScrollHover = "#B3B3B3";
+inline constexpr auto Menu = "#1F1F1F";
+inline constexpr auto MenuBar = "#232323";
+inline constexpr auto Status = "#303030";
+inline constexpr auto Tab = "#2B2B2B";
+inline constexpr auto TabText = "#989898";
+inline constexpr auto ToolbarItem = "#313131";
 inline QColor alpha(const char *token, int opacity) { QColor result(token); result.setAlpha(opacity); return result; }
 inline QString qss(QString source) {
   source.replace("@Canvas@", QLatin1String(Canvas));
@@ -55,6 +70,21 @@ inline QString qss(QString source) {
   source.replace("@PlotPurple@", QLatin1String(PlotPurple));
   source.replace("@Black@", QLatin1String(Black));
   source.replace("@White@", QLatin1String(White));
+  source.replace("@Panel@", QLatin1String(Panel));
+  source.replace("@Header@", QLatin1String(Header));
+  source.replace("@Input@", QLatin1String(Input));
+  source.replace("@Number@", QLatin1String(Number));
+  source.replace("@ButtonText@", QLatin1String(ButtonText));
+  source.replace("@ListSelection@", QLatin1String(ListSelection));
+  source.replace("@ListActive@", QLatin1String(ListActive));
+  source.replace("@ScrollHandle@", QLatin1String(ScrollHandle));
+  source.replace("@ScrollHover@", QLatin1String(ScrollHover));
+  source.replace("@Menu@", QLatin1String(Menu));
+  source.replace("@MenuBar@", QLatin1String(MenuBar));
+  source.replace("@Status@", QLatin1String(Status));
+  source.replace("@Tab@", QLatin1String(Tab));
+  source.replace("@TabText@", QLatin1String(TabText));
+  source.replace("@ToolbarItem@", QLatin1String(ToolbarItem));
   return source;
 }
 QPalette palette();

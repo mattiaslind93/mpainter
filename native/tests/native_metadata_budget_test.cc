@@ -47,7 +47,7 @@ int main(int argc,char **argv){
  auto *color_property=IDP_GetPropertyFromGroup(image_metadata,"colorInteropID");
  // Non-string metadata is optional, whereas a malformed declared string rejects.
  property_corruption(*color_property,[&]{const auto value=image_color_metadata(image_metadata,"colorInteropID");if(!value)throw std::invalid_argument("Required image metadata fixture is missing");assert(*value==color_space);});
- {TextureRamQueryScope low([]()->std::uint64_t{return 0;});assert(rejects([&]{image_color_metadata(image_metadata,"colorInteropID");}));assert(image_color_metadata(image_metadata,"empty")==std::string{});assert(!image_color_metadata(image_metadata,"non-string"));}
+ {TextureRamQueryScope low([]()->std::uint64_t{return 0;});assert(!rejects([&]{image_color_metadata(image_metadata,"colorInteropID");}));assert(image_color_metadata(image_metadata,"empty")==std::string{});assert(!image_color_metadata(image_metadata,"non-string"));}
  IDP_FreeProperty(image_metadata);
  Scene scene{};SymmetrySettings symmetry;symmetry.enabled=true;symmetry.axis=2;symmetry.center={1,2,3};write_project_symmetry(scene,symmetry);
  const auto padded=[](const QJsonObject &value){return QJsonDocument(value).toJson(QJsonDocument::Compact)+QByteArray(65536,' ');};
@@ -57,20 +57,20 @@ int main(int argc,char **argv){
  property_corruption(*IDP_GetPropertyFromGroup(scene.id.properties,"bts_symmetry"),[&]{read_project_symmetry(scene);});property_corruption(*IDP_GetPropertyFromGroup(scene.id.properties,"bts_display_post_effects"),[&]{display_post_settings(scene);});
  assert(rejects([]{new_native_json_property(QByteArray("{}\0suffix",9),"corrupt","Fixture");}));
  {
-  TextureRamQueryScope low([]()->std::uint64_t{return 0;});assert(rejects([&]{read_project_symmetry(scene);}));assert(rejects([&]{display_post_settings(scene);}));assert(rejects([&]{write_project_symmetry(scene,symmetry);}));
+  TextureRamQueryScope low([]()->std::uint64_t{return 0;});assert(!rejects([&]{read_project_symmetry(scene);}));assert(!rejects([&]{display_post_settings(scene);}));assert(!rejects([&]{write_project_symmetry(scene,symmetry);}));
  }
  // The actual display writer stays inactive, so this needs no render context.
  auto *main=BKE_main_new();View3D view{};set_display_post_settings(*main,scene,view,display);assert(display_post_settings(scene)==display);BKE_main_free(main);IDP_FreeProperty(scene.id.properties);scene.id.properties=nullptr;
  QTemporaryDir directory(QString::fromLocal8Bit(argv[1])+"/recovery-XXXXXX");assert(directory.isValid());RecoveryStore store(directory.path());const auto id=QUuid::createUuid();const auto snapshot=store.next_path(id);write_file(snapshot,QByteArray(64,'B'));
  const QString source="/source/"+QString(65536,QChar('a'))+"/project.blend";store.record(id,snapshot,source);const auto manifest=snapshot+".json";QFile original_file(manifest);assert(original_file.open(QIODevice::ReadOnly));const auto original=original_file.readAll();original_file.close();assert(original.size()>32768);
  const auto check=[&](const QString &expected){const auto entries=store.entries();assert(entries.size()==1&&entries[0].project==id&&entries[0].path==snapshot&&entries[0].source==expected);};check(source);
- {TextureRamQueryScope low([]()->std::uint64_t{return 0;});check({});assert(rejects([&]{store.record(id,snapshot,source);}));}check(source);
+ {TextureRamQueryScope low([]()->std::uint64_t{return 0;});check(source);assert(!rejects([&]{store.record(id,snapshot,source);}));}check(source);
  write_file(manifest,original+'\0');check({});write_file(manifest,"{ broken");check({});
  auto object=QJsonDocument::fromJson(original).object();object["source"]=QString("corrupt")+QChar::Null+"path";write_file(manifest,QJsonDocument(object).toJson());check({});
  for(const auto &key:{"project","snapshot"}){object=QJsonDocument::fromJson(original).object();object[key]="wrong identity";write_file(manifest,QJsonDocument(object).toJson());check({});}
  QTemporaryDir outside(QString::fromLocal8Bit(argv[1])+"/outside-XXXXXX");assert(outside.isValid());const auto outside_manifest=outside.path()+"/manifest.json";write_file(outside_manifest,original);assert(QFile::remove(manifest)&&QFile::link(outside_manifest,manifest));check({});assert(QFile::remove(manifest));write_file(manifest,original);
  const auto outside_snapshot=outside.path()+"/outside.blend";assert(QFile::rename(snapshot,outside_snapshot)&&QFile::link(outside_snapshot,snapshot));assert(store.entries().empty());
  // Planning large output sets and16K destinations allocates metadata, not pixels.
- {ExportRequest request;request.standard_outputs=false;request.mesh="fixture.obj";TextureSet set;request.tiles.push_back({set,1001,128});request.tiles.back().output_resolution=16384;for(int n=0;n<40;++n)request.outputs.push_back({"$mesh_map_"+std::to_string(n),ExportMapSource::Bump,false});const auto files=export_file_list(request);assert(files.size()==40);for(const auto &file:files)assert(file.resolution==16384);TextureRamQueryScope low(+[]()->std::uint64_t{return 0;});assert(rejects([&]{export_file_list(request);}));}
- std::cout<<"Native metadata: full4096-byte image color metadata, absent/non-string/empty distinction, padded64KiB scene JSON, actual IDProperty spans/NUL/int limits, RAM refusal, >32KiB recovery and full long source, corrupt/foreign manifest containment PASS\n";
+ {ExportRequest request;request.standard_outputs=false;request.mesh="fixture.obj";TextureSet set;request.tiles.push_back({set,1001,128});request.tiles.back().output_resolution=16384;for(int n=0;n<40;++n)request.outputs.push_back({"$mesh_map_"+std::to_string(n),ExportMapSource::Bump,false});const auto files=export_file_list(request);assert(files.size()==40);for(const auto &file:files)assert(file.resolution==16384);TextureRamQueryScope low(+[]()->std::uint64_t{return 0;});assert(!rejects([&]{export_file_list(request);}));}
+ std::cout<<"Native metadata: full4096-byte image color metadata, absent/non-string/empty distinction, padded64KiB scene JSON, actual IDProperty spans/NUL/int limits, low-RAM admission, >32KiB recovery and full long source, corrupt/foreign manifest containment PASS\n";
 }

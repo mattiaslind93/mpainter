@@ -1,6 +1,6 @@
 #include <QCoreApplication>
 #pragma once
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include <QElapsedTimer>
 #include <QJsonArray>
 #if defined(__linux__)

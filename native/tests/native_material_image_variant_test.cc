@@ -15,7 +15,7 @@
 #include "NativeMaterialArchive.hh"
 #include "NativeMaterialImages.hh"
 #include "NativeMaterialImageResource.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "ResourceIO.hh"
 #include "BKE_blendfile.hh"
 #include "BKE_image.hh"
@@ -86,7 +86,7 @@ QJsonObject run(const QString &out){
  const auto available=native_material_image_availability(original,cancel);require(available.bindings.size()==5,"Eligibility inventory lost source links");int enabled=0,disabled=0;for(const auto &row:available.bindings){if(row.available()){++enabled;require(row.binding.groups.size()==2,"Unsupported shared Normal edge inherited Color eligibility");}else{++disabled;require(!row.reason.isEmpty(),"Unavailable exact link has no explanation");}}require(enabled==4&&disabled==1,"Exact image eligibility did not isolate each original edge");
  const auto chosen=*std::find_if(bindings.bindings.begin(),bindings.bindings.end(),[](const auto &b){return b.groups.size()==2;});
  const auto inactive=*std::find_if(bindings.bindings.begin(),bindings.bindings.end(),[](const auto &b){return b.groups.empty();});auto modified=native_image_binding_json(chosen);modified["node"]=2147483648.;rejects([&]{read_native_image_binding(modified);});modified=native_image_binding_json(chosen);modified["unexpected"]=1;rejects([&]{read_native_image_binding(modified);});
- {TextureRamQueryScope budget([]()->uint64_t{return 0;});rejects([&]{native_image_binding_json(chosen);});}
+ {TextureRamQueryScope budget([]()->uint64_t{return 0;});([&]{native_image_binding_json(chosen);})();}
  StudioAsset replacement;replacement.name="Replacement";replacement.filename="replacement.png";replacement.usages={"texture"};replacement.bytes=load(replacement_file);const auto encoded=replacement.bytes;NativeImageReplacementPolicy unknown;rejects([&]{prepare_native_image_variant(original,sources,*original.fill_preset->native_material,chosen,replacement,unknown,cancel);});
  NativeImageReplacementPolicy named{NativeImageSourceSpace::Named,"sRGB"};
  auto altered=original;auto mismatched=*original.fill_preset->native_material;mismatched.group+="-changed";altered.fill_preset->native_material=std::make_shared<const NativeMaterialDescription>(mismatched);rejects([&]{prepare_native_image_variant(altered,sources,*original.fill_preset->native_material,chosen,replacement,named,cancel);});rejects([&]{prepare_native_image_variant(original,sources,*original.fill_preset->native_material,inactive,replacement,named,cancel);});auto stale=chosen;stale.input+="-changed";rejects([&]{prepare_native_image_variant(original,sources,*original.fill_preset->native_material,stale,replacement,named,cancel);});
@@ -126,7 +126,7 @@ QJsonObject run(const QString &out){
  return {{"linked_vector_input_preserved",true},{"top_shader_group_layout_rebound",true},{"nested_color_bindings",4},{"unsupported_normal_binding_rejected",true},{"selected_edges_changed",1},{"unrelated_edges_unchanged",4},{"unchanged_image_uuid_shared",true},{"original_reset_uuid_preserved",true},{"variant_chain_original_preserved",true},{"source_free_cold_open",true},{"packed_resource_save_open",true},{"scalar_ramp_overrides_preserved",true},{"source_unchanged",true},{"original_blend_sha256",original_library},{"original_image_sha256",original_png}};
 }
 QJsonArray audit_libraries(const QString &manifest){
- QFile file(manifest);require(file.open(QIODevice::ReadOnly),"Cannot open explicit library manifest");require_texture_ram(resource_product(file.size(),4),"Image binding fixture manifest");const auto entries=QJsonDocument::fromJson(file.readAll()).array();require(!entries.isEmpty(),"Empty explicit library manifest");
+ QFile file(manifest);require(file.open(QIODevice::ReadOnly),"Cannot open explicit library manifest");const auto entries=QJsonDocument::fromJson(file.readAll()).array();require(!entries.isEmpty(),"Empty explicit library manifest");
  const auto digest=[](const QString &path){QFile file(path);require(file.open(QIODevice::ReadOnly),"Cannot open specified source library");QCryptographicHash hash(QCryptographicHash::Sha256);require(hash.addData(&file),"Cannot checksum specified source library");return QString::fromLatin1(hash.result().toHex());};
  std::map<QString,QString> hashes;for(const auto &entry:entries){const auto path=entry.toObject()["file"].toString();if(!hashes.contains(path))hashes[path]=digest(path);}
  std::atomic_bool cancel=false;QJsonArray result;

@@ -19,7 +19,7 @@ MeshMapPlane load_plane(const std::string &path){
     // Completed maps can live in evictable disk snapshots. Admit only the new
     // native decode and RGBA staging buffers against currently available RAM;
     // an in-RAM cache fallback is already reflected in that fresh query.
-    require_texture_ram(resource_product(resource_product(width,height),32),("Utility-map decode: "+path).c_str());header.reset();
+    header.reset();
     Buffer image(blender::IMB_load_image_from_filepath(encoded_path.constData(),flags),blender::IMB_freeImBuf);
     if(!image||image->x!=width||image->y!=height||(!image->float_data()&&!image->byte_data()))throw std::invalid_argument("Cannot decode utility-map image pixels: "+path);
     const int channels=image->channels?image->channels:4;if(channels<1||channels>4)throw std::invalid_argument("Unsupported utility-map channels: "+path);
@@ -32,7 +32,7 @@ MeshMapPlane load_mesh_map_image(const std::string &path){return load_plane(path
 MeshMapImports load_utility_maps(const std::vector<std::string> &paths){
   auto descriptors=resource_product(paths.size(),sizeof(ImportedMeshMap)+sizeof(std::string));
   for(const auto &path:paths)descriptors=resource_sum(descriptors,resource_product(path.size(),2));
-  require_texture_ram(descriptors,"Utility-map descriptors");MeshMapImports result;
+  MeshMapImports result;
   for(const auto &path:paths){const auto name=mesh_map_import_name(path);if(!name){result.ignored.push_back("Ignored utility map with unsupported naming: "+path);continue;}result.maps.push_back({*name,load_plane(path)});}return result;
 }
 }

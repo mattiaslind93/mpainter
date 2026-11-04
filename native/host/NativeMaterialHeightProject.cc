@@ -21,7 +21,7 @@ std::vector<NativeHeightProjectSource> prepare_native_height_project(
   const QUuid id(QString::fromStdString(layer.fill.material_resource));if(id.isNull())throw std::invalid_argument("Saved native Height instance has no source UUID");
   required[id]|=layer.fill.native_material->height_policy==NativeHeightPolicy::RawAuthoredFloatV1;
  }
- require_texture_ram(resource_product(required.size(),sizeof(NativeHeightProjectSource)),"Pending native Height source metadata");
+
  std::vector<NativeHeightProjectSource> prepared;prepared.reserve(required.size());
  for(const auto &[id,raw]:required){
   if(cancel.load())throw std::runtime_error("Native Height project preparation cancelled");

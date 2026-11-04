@@ -1,0 +1,80 @@
+[
+  {
+    "file": "source/blender/blenkernel/BKE_image_gpu_override.hh",
+    "same": true,
+    "reference_sha256": "3c60d49a1d0ca492397576f484ee5ddb4f3037cc8e32c6c2097f2f488abfb04a",
+    "mpainter_sha256": "3c60d49a1d0ca492397576f484ee5ddb4f3037cc8e32c6c2097f2f488abfb04a"
+  },
+  {
+    "file": "source/blender/blenkernel/BKE_image_hosted.hh",
+    "same": true,
+    "reference_sha256": "c379db2420893f8d8ef365c885225e00499f0e2a15d49c1ec1ea4bf3e23930a1",
+    "mpainter_sha256": "c379db2420893f8d8ef365c885225e00499f0e2a15d49c1ec1ea4bf3e23930a1"
+  },
+  {
+    "file": "source/blender/blenkernel/BKE_image_residency.hh",
+    "same": true,
+    "reference_sha256": "bea0fbef1d7e22f9e81e9c7f72fca9807b5414f6e94b605c30d707793bff749e",
+    "mpainter_sha256": "bea0fbef1d7e22f9e81e9c7f72fca9807b5414f6e94b605c30d707793bff749e"
+  },
+  {
+    "file": "source/blender/gpu/GPU_context_hosted.hh",
+    "same": true,
+    "reference_sha256": "7e277da5a1b8207e8edf67083e638b4892f5d3b09667a7e22f70790fcaa5a226",
+    "mpainter_sha256": "7e277da5a1b8207e8edf67083e638b4892f5d3b09667a7e22f70790fcaa5a226"
+  },
+  {
+    "file": "source/blender/gpu/GPU_host_metrics.hh",
+    "same": true,
+    "reference_sha256": "16087344672dff755fca0f759834d9a86fd27f2869f7c8ad7197272d92f1e1ed",
+    "mpainter_sha256": "16087344672dff755fca0f759834d9a86fd27f2869f7c8ad7197272d92f1e1ed"
+  },
+  {
+    "file": "source/blender/gpu/GPU_host_texture_memory.hh",
+    "same": true,
+    "reference_sha256": "2a3dc708a06c8ce21cfe3cf3f611ba89270ed2f82590eb5665ed4a8bf75a0e1b",
+    "mpainter_sha256": "2a3dc708a06c8ce21cfe3cf3f611ba89270ed2f82590eb5665ed4a8bf75a0e1b"
+  },
+  {
+    "file": "source/blender/gpu/GPU_material_hosted.hh",
+    "same": true,
+    "reference_sha256": "e93b5775804f6ff6cdc814c4a5f77dfb4e038cc86a8eea4851f864782bc2fdb9",
+    "mpainter_sha256": "e93b5775804f6ff6cdc814c4a5f77dfb4e038cc86a8eea4851f864782bc2fdb9"
+  },
+  {
+    "file": "source/blender/gpu/GPU_pass_hosted.hh",
+    "same": true,
+    "reference_sha256": "4631cb84a3ffaa02fb5988725629f5be1ea8e1e0f54e3528ff6c9b20dee896d1",
+    "mpainter_sha256": "4631cb84a3ffaa02fb5988725629f5be1ea8e1e0f54e3528ff6c9b20dee896d1"
+  },
+  {
+    "file": "source/blender/gpu/GPU_shader_hosted.hh",
+    "same": true,
+    "reference_sha256": "f26771bdc98f08950bb360c7bc74c5cd70d24d49a3b6270a37934944228dbf2b",
+    "mpainter_sha256": "f26771bdc98f08950bb360c7bc74c5cd70d24d49a3b6270a37934944228dbf2b"
+  },
+  {
+    "file": "source/blender/gpu/GPU_shader_hosted_diagnostics.hh",
+    "same": true,
+    "reference_sha256": "98a868dabbe4f0e0f59c4b7cc599debdd8a463286818573d79ab169831c0b288",
+    "mpainter_sha256": "98a868dabbe4f0e0f59c4b7cc599debdd8a463286818573d79ab169831c0b288"
+  },
+  {
+    "file": "source/blender/gpu/GPU_storage_buffer_poll.hh",
+    "same": true,
+    "reference_sha256": "7572f7eb50ab34ea4fbb843243912ce32cf874520170b7241de237a306faeb72",
+    "mpainter_sha256": "7572f7eb50ab34ea4fbb843243912ce32cf874520170b7241de237a306faeb72"
+  },
+  {
+    "file": "source/blender/gpu/GPU_texture_mip_range.hh",
+    "same": true,
+    "reference_sha256": "342606a76f3fc154ac5a1479ef07c31195853a12921a3db19d9bb03a0fcd13bb",
+    "mpainter_sha256": "342606a76f3fc154ac5a1479ef07c31195853a12921a3db19d9bb03a0fcd13bb"
+  },
+  {
+    "file": "source/blender/gpu/GPU_viewport_offscreen_cache.hh",
+    "same": true,
+    "reference_sha256": "72f768bde279aacf4343dd51602196bee5ce0bb3ca5975fb0b5d4fa72be7b847",
+    "mpainter_sha256": "72f768bde279aacf4343dd51602196bee5ce0bb3ca5975fb0b5d4fa72be7b847"
+  }
+]

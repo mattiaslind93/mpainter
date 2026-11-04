@@ -23,7 +23,7 @@ Use a development distrobox with the compiler and development packages; the immu
 From this repository, with `QT_ROOT_DIR` pointing to the installed Qt SDK:
 
 ```sh
-python3 scripts/build.py --blender ../build/blender --build ../build/native --qt "$QT_ROOT_DIR" --jobs 4
+python3 scripts/build.py --blender ../build/blender --build ../build/native --qt "$QT_ROOT_DIR" --cuda "$CUDA_TOOLKIT_ROOT_DIR" --optix "$OPTIX_ROOT_DIR" --jobs 4
 python3 scripts/package-linux.py --runtime ../build/native/bin --qt "$QT_ROOT_DIR" --output ../dist
 python3 scripts/package-appimage.py --appdir ../dist/mPainter-0.9.0-alpha-linux-x86_64 --output ../dist/mPainter-0.9.0-alpha-linux-x86_64.AppImage --cache ../cache/appimage
 ../dist/mPainter-0.9.0-alpha-linux-x86_64.AppImage
@@ -33,7 +33,7 @@ The AppImage wrapper uses checksum-pinned appimagetool 1.9.1 and type2 runtime 2
 
 In the tarball, `AppRun` is the launcher and `mpainter` is the actual ELF executable.
 
-The tarball bundles Qt and dynamically resolved dependencies, runtime scripts, color management data and studio lights. It requires a compatible glibc, the system graphics driver, X11/XWayland and OpenGL 4.3. A package built on Fedora 43 is not a universal older-Linux package. The hosted Ubuntu build has a different glibc baseline; it must also be launch-tested before publication. GPU device kernels are disabled in release build scripts to fit runner resources; CPU rendering and EEVEE remain available. Runtime GPU features are not equivalent to a GPU-kernel-enabled development build. The Linux package omits optional Intel Level Zero and AMD HIP denoising backends; CPU denoising remains included. Its CUDA denoising plugin requires the system NVIDIA driver (`libcuda.so.1`), which is deliberately not bundled.
+The tarball bundles Qt and dynamically resolved dependencies, runtime scripts, color management data and studio lights. It requires a compatible glibc, the system graphics driver, X11/XWayland and OpenGL 4.3. A package built on Fedora 43 is not a universal older-Linux package. The hosted Ubuntu build has a different glibc baseline; it must also be launch-tested before publication. Linux releases include CUDA kernels for sm_86 (RTX 30 series), forward-compatible compute_75 PTX, and OptiX kernels. Building these requires a CUDA toolkit and OptiX 8.0 or newer SDK headers; pass their roots with `--cuda` and `--optix`. The verified build uses CUDA 13.2 and [NVIDIA OptiX 9.1 headers](https://github.com/NVIDIA/optix-dev/tree/v9.1.0). Cycles selects OptiX, then CUDA, and falls back to CPU when no compatible GPU is available. The launcher resolves host NVIDIA drivers, including the `/run/host` driver mount in Distrobox, without packaging driver binaries. The Linux package omits optional Intel Level Zero and AMD HIP denoising backends; CPU denoising remains included. Its CUDA denoising plugin requires the system NVIDIA driver (`libcuda.so.1`), which is deliberately not bundled.
 
 A drive with literal backslashes in its mount-point name exposes a CMake path-normalization problem. In the development container, bind-mount the work directory to a simple path on the same volume, configure/build through that path, and unmount it after finishing. This does not copy sources onto the home partition.
 
@@ -67,7 +67,7 @@ For a future unsigned reviewed build, Gatekeeper may require Finder > right-clic
 
 ## CI and publication
 
-`.github/workflows/release.yml` runs on `v*` tags and manual dispatch with Windows, macOS arm64 and Linux jobs. It uses GitHub-hosted runners, a six-hour timeout, three build workers, early disk cleanup, shallow upstream source, cached platform libraries, Qt 6.8.3 from `install-qt-action`, and no precompiled Cycles GPU kernels. Library caches reduce network cost but cannot guarantee hosted disk space or build duration. Windows and Mac builds can exceed the nominal 14 GB budget; monitor runner disk usage on the first run.
+`.github/workflows/release.yml` runs on `v*` tags and manual dispatch with Windows, macOS arm64 and Linux jobs. It uses GitHub-hosted runners, a six-hour timeout, three build workers, early disk cleanup, shallow upstream source, cached platform libraries, Qt 6.8.3 from `install-qt-action`, and CUDA/OptiX kernels. Runners must provision CUDA and OptiX SDKs before invoking the build script. Library caches reduce network cost but cannot guarantee hosted disk space or build duration. Windows and Mac builds can exceed the nominal 14 GB budget; monitor runner disk usage on the first run.
 
 Each successful build uploads its platform archive. A tagged run creates a draft release via `softprops/action-gh-release` only if the full matrix passes. The known Mac blocker currently prevents that release step. Manual dispatch builds artifacts without publishing. No workflows were run remotely during phase one, and no repository, remote, tag or release was created.
 

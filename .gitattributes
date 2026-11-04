@@ -1,0 +1,2 @@
+# Stored unified diffs retain their original context-line whitespace.
+docs/parity/baseline.diff -whitespace

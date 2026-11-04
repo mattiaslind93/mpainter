@@ -16,11 +16,12 @@ int main(){
   else {assert(node.triangle<triangles.size()&&leaves.insert(node.triangle).second);for(const auto &vertex:triangles[node.triangle])for(int axis=0;axis<3;++axis)assert(vertex[axis]>=node.lower[axis]&&vertex[axis]<=node.upper[axis]);}
  }
  assert(leaves.size()==triangles.size()&&nodes.front().escape==nodes.size());
- ResourceBudget budget;budget.available_ram=1ULL<<40;budget.available_vram=1ULL<<40;budget.vram_known=true;
- const auto p=plan(1001,1000000000,256,2ULL*1024*1024*1024,65535,budget);assert(p.batch_points>0&&p.batch_points<=1024);
+ ResourceAvailability budget;budget.available_ram=1ULL<<40;budget.available_vram=1ULL<<40;budget.vram_known=true;
+ const auto p=plan(1001,1000000000,256,2ULL*1024*1024*1024,65535,budget);assert(p.batch_points>0&&p.batch_points<=1000000000);
  // Total sample/triangle work is deliberately unrelated to admission. Only
  // live buffers, encoded shader indices and actual device limits apply.
- assert(p.cpu<5ULL*1024*1024*1024&&p.gpu<64ULL*1024*1024);
+ assert(p.cpu<=budget.available_ram&&p.gpu<=budget.available_vram);
+ const auto abundant=p.batch_points;budget.available_vram=16ULL*1024*1024;const auto small=plan(1001,1000000000,256,2ULL*1024*1024*1024,65535,budget);assert(small.batch_points<abundant&&small.gpu<=budget.available_vram);
  bool rejected=false;try{plan(1001,1000000,256,64,65535,budget);}catch(const std::length_error &){rejected=true;}assert(rejected);
  rejected=false;budget.available_ram=4096;try{plan(1001,1000000,256,2ULL*1024*1024*1024,65535,budget);}catch(const std::length_error &){rejected=true;}assert(rejected);
  Frame out,in;assert(frame(out,{0,0,0},{0,0,2},123,2,false));assert(frame(in,{0,0,0},{0,0,2},123,2,true));

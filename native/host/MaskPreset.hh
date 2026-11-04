@@ -1,5 +1,5 @@
 #include "TextureExtent.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #pragma once
 #include "LayerMask.hh"
 #include "MaskPresetTextures.hh"
@@ -12,17 +12,14 @@
 #include <limits>
 namespace bts {
 inline std::uint64_t mask_preset_memory_budget(){
- const auto ram=texture_available_ram_bytes();
- // Raw qCompress archives have a 32-bit decoded-length header. This is a file
- // representation limit; actual admission comes from currently available RAM.
- return std::min<std::uint64_t>(ram/8,std::numeric_limits<quint32>::max()-1ULL);
+ return std::numeric_limits<quint32>::max()-1ULL;
 }
 inline QByteArray write_mask_preset(const LayerMask &mask){
   const auto mask_preset_budget=mask_preset_memory_budget();const MaskPresetTextures textures(mask);
   if(!std::isfinite(mask.background)||mask.background<0||mask.background>1)throw std::invalid_argument("Invalid smart-mask background");
   std::uint64_t pages=0;for(const auto &[number,pixels]:mask.pixels.tiles())pages+=pixels.page_count(2);
   const auto metadata=QJsonDocument(QJsonObject{{"version",6},{"background",mask.background},{"effects",mask_effects_json(mask.effects)},{"texture_resources",textures.descriptors},{"texture_bindings",textures.bindings}}).toJson(QJsonDocument::Compact);
-  if(std::uint64_t(metadata.size())>std::numeric_limits<quint32>::max()||pages*PaintPixels::page_side*PaintPixels::page_side*16+metadata.size()+40960>std::uint64_t(mask_preset_budget))throw std::length_error("Mask generator exceeds the available safe RAM budget");
+  if(std::uint64_t(metadata.size())>std::numeric_limits<quint32>::max()||pages*PaintPixels::page_side*PaintPixels::page_side*16+metadata.size()+40960>std::uint64_t(mask_preset_budget))throw std::length_error("Mask generator exceeds the archive format size");
   QByteArray raw;QDataStream stream(&raw,QIODevice::WriteOnly);stream.setVersion(QDataStream::Qt_6_8);stream.setByteOrder(QDataStream::LittleEndian);stream.setFloatingPointPrecision(QDataStream::SinglePrecision);
   stream<<quint32(0x42544d31)<<quint32(metadata.size());if(stream.writeRawData(metadata.constData(),metadata.size())!=metadata.size())throw std::runtime_error("Cannot encode smart-mask header");stream<<quint32(mask.pixels.tiles().size());
   for(const auto &[number,pixels]:mask.pixels.tiles()){stream<<qint32(number)<<qint32(pixels.resolution())<<quint32(pixels.page_count(2));pixels.visit_pages([&](int channel,std::uint32_t key,std::span<const PaintPixels::Pixel> values){if(channel!=2)return;stream<<quint32(key);for(const auto &pixel:values)for(float v:pixel)stream<<v;});}

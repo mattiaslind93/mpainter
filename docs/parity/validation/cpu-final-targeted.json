@@ -1,0 +1,17 @@
+{
+  "executable_sha256": "b92130ae25d81b535bcc953702d6ba478ff787573b404b480a5a788c7b98663c",
+  "results": [
+    {
+      "test": "bts-native-cycles-revisions-tests",
+      "returncode": 0
+    },
+    {
+      "test": "bts-native-cycles-publication-tests",
+      "returncode": 0
+    },
+    {
+      "test": "bts-native-material-ui",
+      "returncode": 0
+    }
+  ]
+}

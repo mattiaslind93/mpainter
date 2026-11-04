@@ -3,7 +3,7 @@
 #include "LayerCapture.hh"
 #include "TextureExportDialog.hh"
 #include "NativeExportGuard.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include <QObject>
 #include <QTimer>
 #include <QElapsedTimer>
@@ -79,7 +79,7 @@ class GpuTextureExportSource final:public QObject {
  GpuTextureExportSource(QObject *parent,BlenderHost &host,std::function<void()> redraw,const TextureDocument &document,const ExportRequest &request,std::shared_ptr<const std::atomic_bool> cancel,std::function<void(std::vector<ExportTile>)> complete,std::function<void(std::string)> failed):QObject(parent),host_(host),redraw_(std::move(redraw)),cancelled_(std::move(cancel)),complete_(std::move(complete)),failed_(std::move(failed)),tiles_(source_metadata(host,document,request)){
   material_ids_=std::any_of(request.outputs.begin(),request.outputs.end(),[](const auto &output){return output.source==ExportMapSource::MaterialId;});
   std::uint64_t bytes=0;for(auto &tile:tiles_)if(needs_gpu_capture(tile)){tile.set=host_.prepare_layer_capture(tile.set);bytes=resource_sum(bytes,resource_product(resource_product(std::uint64_t(tile.resolution),tile.rows()),16ULL*(8+int(tile.set.displacement.channel)+(material_ids_?evaluation_layers(tile.set).size():0))));}
-  require_texture_ram(bytes,"Explicit GPU Export completed planes");
+
   // Non-adjustment tiles retain their existing worker route. Capture every BM
   // tile, including hidden retained recipes after a PT toggle is switched off.
   while(tile_<tiles_.size()&&!needs_gpu_capture(tiles_[tile_]))++tile_;

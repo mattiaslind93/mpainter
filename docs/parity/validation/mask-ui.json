@@ -1,0 +1,19 @@
+{
+  "display": ":100",
+  "private_xvfb": true,
+  "names": [
+    "Crevice Sediment",
+    "Curvature Ridge",
+    "Exposed Edges",
+    "Gravity Streaks",
+    "Ground Contact",
+    "Height Fade",
+    "Organic Growth",
+    "Oxide Flecks",
+    "Settled Dust",
+    "Surface Scuffs"
+  ],
+  "count": 10,
+  "app_pid": 2718671,
+  "artifact_stage": "intermediate AppImage, identical Theme/MaskGenerator sources to final build"
+}

@@ -13,12 +13,12 @@ class NativeFragmentGeometry;struct NativeFragmentGeometryObject;
 blender::ObjectMatrices native_fragment_image_object_matrices(const NativeFragmentGeometryObject &,const blender::ObjectInfos &);
 // Exact stock transform_utils world-to-object normal math. Restrict the
 // whole-library dependency: its unused view transforms need unbound matrices.
-inline std::string_view native_fragment_image_object_matrices_source(){return "ObjectMatrices object_matrices_get(){return native_object_matrices[0];}\nvoid normal_transform_world_to_object(vec3 vin,out vec3 vout){const ObjectMatrices obj=object_matrices_get();vout=vin*mat3(obj.model);}\n";}
+inline std::string_view native_fragment_image_object_matrices_source(){return "ObjectMatrices object_matrices_get(){return native_object_matrices[0];}\nvoid normal_transform_world_to_object(vec3 vin,out vec3 vout){const ObjectMatrices obj=object_matrices_get();vout=vin*mat3(obj.model);}\nvoid normal_transform_object_to_world(vec3 vin,out vec3 vout){const ObjectMatrices obj=object_matrices_get();vout=vin*mat3(obj.model_inverse);}\n";}
 inline bool native_fragment_image_keep_dependency(std::string_view dependency,bool box,std::string_view code){
  if(dependency!="gpu_shader_material_transform_utils.glsl")return true;
  const auto reject=[](){throw NativeFragmentContextError(NativeFragmentContextCode::Images,"Fragment stock transform dependency requires a separately admitted physical binding");};
  if(!box)reject();
- for(const auto prefix:{"normal_transform_","direction_transform_","point_transform_"})for(std::size_t at=0;(at=code.find(prefix,at))!=std::string_view::npos;){auto end=at;while(end<code.size()&&(std::isalnum(static_cast<unsigned char>(code[end]))||code[end]=='_'))++end;if(code.substr(at,end-at)!="normal_transform_world_to_object")reject();at=end;}
+ for(const auto prefix:{"normal_transform_","direction_transform_","point_transform_"})for(std::size_t at=0;(at=code.find(prefix,at))!=std::string_view::npos;){auto end=at;while(end<code.size()&&(std::isalnum(static_cast<unsigned char>(code[end]))||code[end]=='_'))++end;if(code.substr(at,end-at)!="normal_transform_world_to_object"&&code.substr(at,end-at)!="normal_transform_object_to_world")reject();at=end;}
  return false;
 }
 // Optional immutable owner allocations: shared by production and CPU callbacks.

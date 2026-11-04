@@ -22,12 +22,12 @@ inline void hydrate_spsm_native_bitmaps(PreparedSpsm &prepared,const SpsmBitmapL
   }
   result.linked=result.scale[0]==result.scale[1];validate_fill_projection(result);return result;
  };
- const auto limit=policy.memory_budget_bytes?std::min(policy.memory_budget_bytes,ResourceBudget{}.ram()):ResourceBudget{}.ram();std::uint64_t retained=0;std::set<const void *> pixel_owners,raw_owners,record_owners;
+ std::uint64_t retained=0;std::set<const void *> pixel_owners,raw_owners,record_owners;
  const auto load=[&](const auto &descriptor){
-  if(retained>=limit)throw spsm::Error("Native ordered bitmap RAM budget exhausted");
-  const auto image=resolve(descriptor,policy.pixels,{limit-retained});
+
+  const auto image=resolve(descriptor,policy.pixels,{});
   if(!image||image->policy!=policy.pixels||image->source.source!=descriptor.resource.source||image->source.dataset.path!=descriptor.resource.dataset.path||!image->texture.pixels)throw spsm::Error("Native bitmap resolver returned incompatible provenance or pixels");
-  const auto account=[&](const void *owner,std::uint64_t bytes,auto &owners){if(owner&&owners.insert(owner).second){retained=resource_sum(retained,bytes);if(retained>limit)throw spsm::Error("Native ordered bitmap retained storage exceeds RAM budget");}};
+  const auto account=[&](const void *owner,std::uint64_t bytes,auto &owners){if(owner&&owners.insert(owner).second){retained=resource_sum(retained,bytes);}};
   account(image->texture.pixels.get(),resource_product(image->texture.pixels->size(),sizeof(FillTexture::Pixel)),pixel_owners);
   if(image->original.bytes)account(image->original.bytes.get(),image->original.bytes->size(),raw_owners);
   if(image->original.encoded&&image->original.encoded->record)account(image->original.encoded->record.get(),image->original.encoded->record->size(),record_owners);
@@ -43,7 +43,7 @@ inline void hydrate_spsm_native_bitmaps(PreparedSpsm &prepared,const SpsmBitmapL
     if(reference==prepared.source->source().references.end()||!reference->resource_dataset.ends_with(".image"))continue;
     constexpr std::array<std::uint64_t,6> channels{1,8192,128,4194304,2,8388608};auto selected=bits(field(id,"channelTypes"))&(field(a.source,"channelTypes")?bits(field(a.source,"channelTypes")):~std::uint64_t(0));if(!use.color)selected&=~std::uint64_t(1);if(!use.roughness)selected&=~std::uint64_t(128);if(!selected)continue;
     try{
-     const auto descriptor=spsm::bitmap::describe_image(prepared.source->source(),reference->resource_dataset,{policy.memory_budget_bytes});
+     const auto descriptor=spsm::bitmap::describe_image(prepared.source->source(),reference->resource_dataset,{});
      const auto image=load(descriptor);if(!image)throw spsm::Error("Native bitmap resolver returned no image");
      auto projection=mapping(a);projection.texture=image->binding();projection.alpha_mask[0]=false;
      prepared.bitmap_content_sources.insert_or_assign(id,projection);prepared.bitmap_content_channels.insert_or_assign(id,selected);
@@ -76,7 +76,7 @@ inline void hydrate_spsm_native_bitmaps(PreparedSpsm &prepared,const SpsmBitmapL
    while(!todo.empty()){const auto index=todo.back();todo.pop_back();const auto &a=ir.actions.at(index);if(!active(a.enabled))continue;for(auto it=a.children.rbegin();it!=a.children.rend();++it)todo.push_back(*it);if(a.kind!=spsm::semantic::ActionKind::Fill)continue;
     for(const auto id:a.sources){const auto source=std::find_if(ir.sources.begin(),ir.sources.end(),[&](const auto &v){return v.source==id;});if(source==ir.sources.end()||source->kind!=spsm::semantic::Source::Kind::Bitmap||!source->bitmap)continue;
      const auto uri=field(*source->bitmap,"urlToBitmapRes");if(!uri)continue;const auto reference=std::find_if(prepared.source->source().references.begin(),prepared.source->source().references.end(),[&](const auto &r){return r.preset==pi&&r.source==*uri&&r.field=="urlToBitmapRes";});if(reference==prepared.source->source().references.end()||!reference->resource_dataset.ends_with(".image"))continue;
-     try{const auto descriptor=spsm::bitmap::describe_image(prepared.source->source(),reference->resource_dataset,{policy.memory_budget_bytes});const auto image=load(descriptor);if(!image)throw spsm::Error("No native mask bitmap");auto projection=mapping(a);projection.texture=image->binding();projection.alpha_mask[0]=false;prepared.bitmap_mask_sources.insert_or_assign(id,std::move(projection));note(id,SpsmDiagnosticKind::Assumption,"native-independent-bitmap-mask","Direct embedded mask image uses native raw R, ignored alpha and centered repeat mapping; ordered native Fill/Levels/group semantics remain editable");}
+     try{const auto descriptor=spsm::bitmap::describe_image(prepared.source->source(),reference->resource_dataset,{});const auto image=load(descriptor);if(!image)throw spsm::Error("No native mask bitmap");auto projection=mapping(a);projection.texture=image->binding();projection.alpha_mask[0]=false;prepared.bitmap_mask_sources.insert_or_assign(id,std::move(projection));note(id,SpsmDiagnosticKind::Assumption,"native-independent-bitmap-mask","Direct embedded mask image uses native raw R, ignored alpha and centered repeat mapping; ordered native Fill/Levels/group semantics remain editable");}
      catch(const spsm::Error &){note(id,SpsmDiagnosticKind::Omission,"native-mask-bitmap-unavailable","Mask bitmap format or mapping could not be hydrated; its unsupported subaction is omitted independently");}
     }
    }

@@ -29,8 +29,8 @@ struct MarginGeometryJob {
       if(job->cancelled.load(std::memory_order_relaxed))break;
       // Raster, dependency arrays and worst-case sparse instructions for this
       // tile. Completed plans are already reflected in available RAM.
-      const auto required=std::uint64_t(size.first)*size.second*160,budget=texture_available_ram_bytes()/2;
-      if(required>budget)throw std::length_error("Margin geometry tile "+std::to_string(tile)+" needs up to "+std::to_string((required+1048575)/1048576)+" MiB; safe available RAM is "+std::to_string(budget/1048576)+" MiB");
+      const auto required=std::uint64_t(size.first)*size.second*160,budget=texture_available_ram_bytes();
+
       job->extend[tile]=padding->gpu_margin_plan(size.first,size.second,tile,false);
       job->adjacent[tile]=padding->gpu_margin_plan(size.first,size.second,tile,true);
      }

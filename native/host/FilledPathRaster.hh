@@ -1,4 +1,4 @@
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #pragma once
 #include "RibbonRaster.hh"
 #include "SceneSnapshot.hh"
@@ -52,7 +52,7 @@ inline ribbon_detail::Raster raster(const SurfacePath &path,const std::vector<Sh
  const auto candidates=candidates_for(shapes,position,normal);if(candidates.empty())continue;
  const auto &a=triangle.corners[0],&b=triangle.corners[1],&c=triangle.corners[2];const double ux=b[0]-a[0],uy=b[1]-a[1],vx=c[0]-a[0],vy=c[1]-a[1],det=ux*vy-uy*vx;if(std::abs(det)<1e-20)continue;
  for(int tile:tiles){const int tile_u=(tile-1001)%10,tile_v=(tile-1001)/10;const auto bound=[&](double v){return int(std::clamp(v,0.,double(resolution)));};int x0=bound(std::floor((std::min({a[0],b[0],c[0]})-tile_u)*resolution)),x1=bound(std::ceil((std::max({a[0],b[0],c[0]})-tile_u)*resolution)),y0=bound(std::floor((std::min({a[1],b[1],c[1]})-tile_v)*resolution)),y1=bound(std::ceil((std::max({a[1],b[1],c[1]})-tile_v)*resolution));if(!clip.empty()){x0=std::max(x0,clip.x0);y0=std::max(y0,clip.y0);x1=std::min(x1,clip.x1);y1=std::min(y1,clip.y1);}if(x0>=x1||y0>=y1)continue;std::uint64_t count=0;for(const auto *s:candidates)count+=s->boundary.size();const auto samples=std::uint64_t(x1-x0)*(y1-y0);work=resource_sum(work,resource_product(samples,count));
- for(int y=y0;y<y1;++y)for(int x=x0;x<x1;++x){const double u=(x+.5)/resolution+tile_u,v=(y+.5)/resolution+tile_v,w1=((u-a[0])*vy-(v-a[1])*vx)/det,w2=(ux*(v-a[1])-uy*(u-a[0]))/det;if(w1< -1e-9||w2< -1e-9||w1+w2>1+1e-9)continue;V p{};for(int k=0;k<3;++k)p[k]=position[0][k]*(1-w1-w2)+position[1][k]*w1+position[2][k]*w2;bool inside=false;for(const auto *shape:candidates)if(shape->contains(p)){inside=true;break;}if(!inside)continue;const float alpha=mask?mask->sample_uv(u,v,resolution):1;if(alpha<=0)continue;auto &row=output[tile];const auto key=std::uint64_t(y)*resolution+x;if(row.contains(key))continue;if((++covered&4095)==0)require_texture_ram(resource_product(covered,sizeof(ribbon_detail::Texel)+sizeof(std::uint64_t)+4*sizeof(void*)),"Filled path raster texels");auto &texel=row[key];std::copy_n(path.brush.values.base_color.begin(),3,texel.rgba.begin());texel.rgba[3]=alpha;
+ for(int y=y0;y<y1;++y)for(int x=x0;x<x1;++x){const double u=(x+.5)/resolution+tile_u,v=(y+.5)/resolution+tile_v,w1=((u-a[0])*vy-(v-a[1])*vx)/det,w2=(ux*(v-a[1])-uy*(u-a[0]))/det;if(w1< -1e-9||w2< -1e-9||w1+w2>1+1e-9)continue;V p{};for(int k=0;k<3;++k)p[k]=position[0][k]*(1-w1-w2)+position[1][k]*w1+position[2][k]*w2;bool inside=false;for(const auto *shape:candidates)if(shape->contains(p)){inside=true;break;}if(!inside)continue;const float alpha=mask?mask->sample_uv(u,v,resolution):1;if(alpha<=0)continue;auto &row=output[tile];const auto key=std::uint64_t(y)*resolution+x;if(row.contains(key))continue;auto &texel=row[key];std::copy_n(path.brush.values.base_color.begin(),3,texel.rgba.begin());texel.rgba[3]=alpha;
  }}
  }return output;
 }

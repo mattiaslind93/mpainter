@@ -45,7 +45,7 @@ struct AutoBakeEngine::Impl {
       for(const auto &t:high->uv_triangles)if(matches.contains(std::uint32_t(t.vertex_ids[0]>>32)))hp->uv_triangles.push_back(t);
       if(hp->uv_triangles.empty())continue;
       held+=(lp->uv_triangles.size()+hp->uv_triangles.size())*sizeof(UvFaceTriangle);
-      require_memory_budget(held,"Automatic matching cache");
+
       set.parts.push_back({lp,hp,std::make_unique<TexturePadding>(*lp,material)});
     }
     return set;
@@ -59,6 +59,7 @@ MeshMaps AutoBakeEngine::bake(std::uint32_t material,const std::string &name,con
                             const std::set<int> &tiles,const SkewField &field,const AutoBakeOptions &options,
                             const std::atomic<bool> &cancel) {
   if(cancel.load())return {};
+  if(tiles.size()>1){MeshMaps result;for(int tile:tiles){auto part=bake(material,name,base,{tile},field,options,cancel);if(cancel.load())return {};for(int role=0;role<7;++role)if(part[role]){if(!result[role])result[role]=MeshMap{};result[role]->name=part[role]->name;result[role]->tiles.merge(part[role]->tiles);}}return result;}
   auto &s=*impl_;auto settings=options.maps;
   if(!valid_sparse_texture_extent(settings.resolution,32,true)||!valid_sparse_texture_extent(settings.rows(),32,true)||
      (settings.resolution&(settings.resolution-1))||(settings.rows()&(settings.rows()-1))||
@@ -67,7 +68,7 @@ MeshMaps AutoBakeEngine::bake(std::uint32_t material,const std::string &name,con
     throw std::invalid_argument("Invalid automatic bake parameters");
   const int width=settings.resolution*settings.sampling,height=settings.rows()*settings.sampling;
   const auto count=std::uint64_t(width)*height;
-  require_texture_ram(resource_product(resource_product(count,tiles.size()),sizeof(FillSurfacePoint)+(settings.enabled[4]?sizeof(float):0)),"Automatic bake atlas");
+
   if(std::none_of(settings.enabled.begin(),settings.enabled.end(),[](bool enabled){return enabled;}))throw std::length_error("Automatic bake maps are empty");
   // MeshBakeJob admits only its current working tile. Completed outputs are
   // immutable disk snapshots, so their aggregate size is not a RAM/VRAM bill.
@@ -78,6 +79,12 @@ MeshMaps AutoBakeEngine::bake(std::uint32_t material,const std::string &name,con
   for(const auto &[uid,label]:source->object_names)
     if(bake_ignores_backfaces(label,options.ray.ignore_marker))settings.ignore_backface_objects.insert(uid);
   auto &set=s.prepare(material,options);
+  if(set.parts.size()==1&&settings.use_project_mesh&&!options.ray.use_cage){
+    TexturePadding geometry(*s.low,material);auto atlas=geometry.projection_geometry(width,tiles,settings.enabled[4],height);
+    MeshBakeJob job(source,{{material,name,base,std::move(atlas)}},settings);
+    while(!job.finished.load(std::memory_order_acquire)){job.process_gpu();if(cancel.load())job.cancel();std::this_thread::sleep_for(std::chrono::milliseconds(2));}
+    if(cancel.load())return {};if(!job.error.empty())throw std::runtime_error(job.error);return job.result.empty()?MeshMaps{}:std::move(job.result.front().maps);
+  }
   auto merged=std::make_shared<FillSurfaceAtlas>();merged->resolution=width;merged->height=height;
   for(int axis=0;axis<3;++axis)merged->extent=std::max(merged->extent,double(s.low->maximum[axis]-s.low->minimum[axis]));
   for(int tile:tiles){merged->tiles[tile].resize(count);if(settings.enabled[4])merged->curvature[tile].resize(count);}
@@ -105,7 +112,7 @@ MeshMaps AutoBakeEngine::bake(std::uint32_t material,const std::string &name,con
   if(cancel.load())return {};
   MeshBakeJob job(source,{{material,name,base,merged}},settings);
   while(!job.finished.load(std::memory_order_acquire)) {
-    if(cancel.load())job.cancel();
+    job.process_gpu();if(cancel.load())job.cancel();
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
   }
   if(cancel.load())return {};

@@ -19,7 +19,7 @@ inline bool texture_export_needs_native_capture(const TextureSet &set,int tile)
  const auto opacity=[](const TextureLayer &l,int c){return c<5?l.opacity[c]:c==5?l.ao_opacity:c==14?l.displacement.opacity:l.users[c-6].opacity;};
  const auto included=[&](const TextureLayer &l){return l.geometry.type==1?l.geometry.includes_tile(tile):l.geometry.default_include||!l.geometry.meshes.empty();};
  Channels available{};for(int c=0;c<15;++c)available[c]=c<5?set.channels[c]:c==5?set.ao_channel:c==14?set.displacement.channel:set.users[c-6].present;
- require_texture_ram(resource_product(layers.size(),sizeof(Channels)+sizeof(QUuid)+8*sizeof(void *)),"Native export dependency metadata");
+
  std::map<QUuid,Channels> active;
  // Parents follow children in the validated postorder, including expanded instances.
  for(auto i=layers.rbegin();i!=layers.rend();++i){auto on=available;if(!i->parent.isNull()){const auto p=active.find(i->parent);if(p==active.end())throw std::invalid_argument("Invalid export layer hierarchy");on=p->second;}
@@ -32,7 +32,7 @@ inline bool texture_export_needs_native_capture(const TextureSet &set,int tile)
  }
  struct Point{const TextureLayer *layer=nullptr;bool mask=false;bool enabled=false;};
  std::uint64_t point_count=0;for(const auto &l:layers){for(const auto &e:l.effects)point_count=resource_sum(point_count,e.kind==ContentEffectKind::Anchor);if(l.mask)for(const auto &e:l.mask->effects)point_count=resource_sum(point_count,e.kind==MaskEffectKind::Anchor);}
- require_texture_ram(resource_product(point_count,sizeof(Point)+sizeof(QUuid)+8*sizeof(void *)+15*(sizeof(QUuid)+sizeof(int)+sizeof(bool)+8*sizeof(void *))),"Native export anchor dependency metadata");
+
  std::map<QUuid,Point> points;
  for(const auto &l:layers){for(const auto &e:l.effects)if(e.kind==ContentEffectKind::Anchor)points[e.id]={&l,false,e.enabled};if(l.mask)for(const auto &e:l.mask->effects)if(e.kind==MaskEffectKind::Anchor)points[e.id]={&l,true,e.enabled};}
  std::set<std::pair<QUuid,int>> visiting;std::map<std::pair<QUuid,int>,bool> complete;

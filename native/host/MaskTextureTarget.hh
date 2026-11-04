@@ -38,7 +38,7 @@ inline MaskEffect &install_mask_texture_target(TextureSet &set,const TextureLoad
  auto &layer=TextureDocument::layer(set,target.layer);if(layer.instance)throw std::invalid_argument("Edit instance masks at their source");
  if(target.create_mask_fill){
   if(!layer.mask)layer.mask=LayerMask{};
-  require_texture_ram(resource_product(resource_sum(layer.mask->effects.size(),1),sizeof(MaskEffect)),"Mask effects");
+
   MaskEffect effect;effect.kind=MaskEffectKind::Fill;effect.id=target.effect;layer.mask->effects.push_back(std::move(effect));
  }
  if(!layer.mask)throw std::runtime_error("Mask is missing");

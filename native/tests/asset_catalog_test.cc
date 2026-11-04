@@ -4,7 +4,8 @@
 #include <QTemporaryDir>
 #include <cassert>
 int main(int argc,char **argv){QCoreApplication app(argc,argv);QTemporaryDir dir;assert(dir.isValid());bts::AssetCatalog catalog(dir.path());
-for(const auto &asset:catalog.assets()){assert(!asset.material);assert(!asset.smart_material);assert(!asset.material_preset);assert(!bts::asset_in_category(asset,"Materials"));assert(asset.bytes.isEmpty()||asset.smart_mask);}
+for(const auto &asset:catalog.assets()){assert(!asset.material);assert(!asset.smart_material);assert(!asset.material_preset);assert(!bts::asset_in_category(asset,"Materials"));assert(asset.bytes.isEmpty()||asset.smart_mask||asset.brush_preset);}
+int generators=0;for(const auto &asset:catalog.assets())if(bts::asset_in_category(asset,"Mask generators")){++generators;assert(asset.smart_mask);assert(asset.filename.endsWith(".btsmask"));}assert(generators==10);
 // Blender imports remain in Materials and must also be discoverable as presets.
 for(const auto &filename:{"material.btsnative.blend","material.btsuniform"}){
  bts::StudioAsset imported;imported.filename=filename;imported.usages={"material"};

@@ -98,8 +98,8 @@ void tests() {
   apply_material_preset(legacy, adapted);
   verify(legacy);
   auto low = policy();
-  low.memory_budget_bytes = 1;
-  reject([&] { enhance_prepared_spsm_mesh_maps(input, low); });
+
+  enhance_prepared_spsm_mesh_maps(input, low);
   auto invalid = input;
   invalid.source.reset();
   reject([&] { enhance_prepared_spsm_mesh_maps(invalid, policy()); });

@@ -14,9 +14,9 @@
 #include <QJsonDocument>
 #include <stdexcept>
 namespace bts {
-QJsonObject verify_native_host_material_queue(BlenderHost &host,const std::function<void()> &frame)
+QJsonObject verify_native_host_material_queue(BlenderHost &host,const std::function<void()> &frame,const std::function<QImage()> &capture)
 {
- if(qEnvironmentVariableIsSet("BTS_NATIVE_THUMBNAIL_TEST"))return {{"native_thumbnails",verify_native_material_thumbnails(host,frame)}};
+ if(qEnvironmentVariableIsSet("BTS_NATIVE_THUMBNAIL_TEST"))return {{"native_thumbnails",verify_native_material_thumbnails(host,frame,capture)}};
  if(qEnvironmentVariableIsSet("BTS_NATIVE_CAPTURE_TEST"))return {{"native_capture",verify_native_capture(host,frame)}};
  QFile file(qEnvironmentVariable("BTS_NATIVE_MATERIAL_CASES"));if(!file.open(QIODevice::ReadOnly))throw std::runtime_error("Native host queue requires an explicit source manifest");const auto cases=QJsonDocument::fromJson(file.readAll()).array();if(cases.isEmpty())throw std::runtime_error("Native host queue source manifest is empty");const auto source=cases.first().toObject();
  auto prepared=host.import_native_material(source["file"].toString(),source["material"].toString(),std::make_shared<std::atomic_bool>(false)).get();

@@ -1,5 +1,5 @@
 #include "SmartMaterialPreset.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "BlendMaterialBindings.hh"
 #include "AssetCatalog.hh"
 #include "BuiltinBrushPresets.hh"
@@ -62,13 +62,13 @@ QJsonObject asset_metadata(const StudioAsset &asset){QJsonObject result{{"id",as
 StudioAsset asset_metadata_read(const QJsonObject &object){
   StudioAsset asset;asset.id=QUuid(object["id"].toString());asset.name=object["name"].toString();asset.filename=object["filename"].toString();asset.path=object["path"].toString();const auto usages=object["usages"].toArray();
   if(asset.id.isNull()||asset.name.isEmpty()||asset.name.contains(QChar(0))||asset.filename.isEmpty()||asset.filename.contains('/')||asset.filename.contains('\\')||asset.filename.contains(QChar(0))||asset.path.contains(QChar(0))||usages.isEmpty())throw std::invalid_argument("Invalid resource metadata");
-  const ResourceBudget text_memory;std::uint64_t text_units=resource_sum(resource_sum(asset.name.size(),asset.filename.size()),asset.path.size());text_memory.require(resource_product(text_units,16),0,"Resource metadata text");
+  const ResourceAvailability text_memory;std::uint64_t text_units=resource_sum(resource_sum(asset.name.size(),asset.filename.size()),asset.path.size());
   for(const auto &usage:usages){const auto value=usage.toString();if(!QStringList{"alpha","texture","environment","procedural","material","smartmask","smartmaterial","grunge","hardsurface","skin","filter","brush","particle","tool","colorprofile"}.contains(value)||asset.usages.contains(value))throw std::invalid_argument("Invalid resource usage");asset.usages.append(value);}
   asset.smart_material=asset.usages.contains("smartmaterial");
   if((asset.smart_material||asset.usages.contains("smartmask")||asset.usages.contains("brush"))&&asset.usages.size()!=1)throw std::invalid_argument("Preset resources require one dedicated usage");
   if(object.contains("texture_files")){if(!asset.usages.contains("texture"))throw std::invalid_argument("Disk texture files require Texture usage");asset.texture_files=read_texture_sources(object["texture_files"]);if(texture_sources_hash(asset.texture_files)!=object["sha256"].toString())throw std::invalid_argument("Texture file manifest checksum mismatch");}
   if(object.contains("material")){if(!asset.usages.contains("material"))throw std::invalid_argument("Material values require material usage");asset.material=read_material_values(object["material"]);}
-  if(object.contains("tags")){if(!object["tags"].isArray())throw std::invalid_argument("Invalid resource tags");require_texture_ram(resource_product(object["tags"].toArray().size(),sizeof(QString)),"Resource tags");for(const auto &entry:object["tags"].toArray()){const auto tag=entry.toString();if(!entry.isString()||tag.isEmpty()||std::any_of(tag.begin(),tag.end(),[](QChar c){return c.unicode()<32||c.unicode()==127;})||asset.search_terms.contains(tag))throw std::invalid_argument("Invalid resource tag");text_units=resource_sum(text_units,tag.size());text_memory.require(resource_product(text_units,16),0,"Resource metadata text");asset.search_terms.append(tag);}}
+  if(object.contains("tags")){if(!object["tags"].isArray())throw std::invalid_argument("Invalid resource tags");for(const auto &entry:object["tags"].toArray()){const auto tag=entry.toString();if(!entry.isString()||tag.isEmpty()||std::any_of(tag.begin(),tag.end(),[](QChar c){return c.unicode()<32||c.unicode()==127;})||asset.search_terms.contains(tag))throw std::invalid_argument("Invalid resource tag");text_units=resource_sum(text_units,tag.size());asset.search_terms.append(tag);}}
   if(object.contains("material_textures")){if(!asset.material||!asset.filename.endsWith(".btsuniform")||!asset.search_terms.contains("blender-images"))throw std::invalid_argument("Material textures require a Blender channel preset");asset.fill_preset=read_blend_material_bindings(object["material_textures"]);}
   if(object.contains("native_material")){
    if(!is_native_material_asset(asset)||!asset.material||!asset.search_terms.contains("blender-native")||object.contains("material_textures"))throw std::invalid_argument("Native interface requires a native Blender material archive");
@@ -81,7 +81,7 @@ namespace {
 void write_bytes(const QString &path,const QByteArray &bytes){QSaveFile file(path);if(!file.open(QIODevice::WriteOnly)||file.write(bytes)!=bytes.size()||!file.commit())throw std::runtime_error("Cannot write resource library");}
 void validate_resources(const std::vector<StudioAsset> &resources){
  std::set<QUuid> ids;std::set<std::pair<const void *,qsizetype>> buffers;std::set<const AlphaBitmap *> alphas;std::uint64_t total=resource_product(resources.size(),sizeof(StudioAsset)+12*sizeof(void *));
- require_texture_ram(total,"Resource library descriptors");
+
  for(const auto &asset:resources){if(!ids.insert(asset.id).second)throw std::invalid_argument("Duplicate resource identity");
   const auto characters=resource_sum(resource_sum(asset.name.size(),asset.filename.size()),asset.path.size());
   total=resource_sum(total,resource_product(characters,sizeof(QChar)));
@@ -93,17 +93,15 @@ void validate_resources(const std::vector<StudioAsset> &resources){
   if(asset.brush_preset){const auto account=[&](const BrushAlpha &a){if(a.bitmap&&alphas.insert(a.bitmap.get()).second)total=resource_sum(total,resource_product(a.bitmap->pixels.size(),sizeof(float)));};account(asset.brush_preset->alpha);if(asset.brush_preset->stencil.resource)account(*asset.brush_preset->stencil.resource);if(asset.brush_preset->projected&&asset.brush_preset->projected->transform.resource)account(*asset.brush_preset->projected->transform.resource);}
 
  }
- require_texture_ram(total,"Resource library");
+
 }
 }
 AssetCatalog::AssetCatalog(QString directory):directory_(std::move(directory)){
   {StudioAsset asset;asset.name="Square To Circle";asset.filename="square-to-circle.builtin";asset.scope=AssetScope::Builtin;asset.usages={"alpha"};asset.search_terms={"dynamicstroke"};BrushAlpha alpha;alpha.kind=AlphaKind::DynamicOutline;asset.alpha=alpha;assets_.push_back(std::move(asset));}
   for(int kind=0;kind<2;++kind){StudioAsset asset;asset.name=kind==0?"Shape":"Sign Plus";asset.filename=asset.name+".builtin";asset.scope=AssetScope::Builtin;asset.usages={"alpha"};BrushAlpha alpha;alpha.kind=kind==0?AlphaKind::Shape:AlphaKind::Plus;asset.alpha=alpha;assets_.push_back(std::move(asset));}
   for(int simple=0;simple<2;++simple){StudioAsset asset;asset.name=simple?"Atom Simple":"Atom";asset.filename=asset.name+".builtin";asset.scope=AssetScope::Builtin;asset.usages={"alpha","procedural"};auto bitmap=std::make_shared<AlphaBitmap>();bitmap->width=bitmap->height=128;bitmap->name=asset.name.toStdString();bitmap->pixels.resize(128*128);FillProjection p;p.middle_dot=!simple;p.border_dots=!simple;for(int y=0;y<128;++y)for(int x=0;x<128;++x)bitmap->pixels[y*128+x]=fill_uv_sample(p,x,y,128);BrushAlpha alpha;alpha.kind=AlphaKind::Bitmap;alpha.bitmap=bitmap;asset.alpha=alpha;assets_.push_back(std::move(asset));}
-  for(int generator:{1,2}){
-   auto mask=std::make_shared<LayerMask>();mask->background=0;MaskEffect effect;effect.kind=MaskEffectKind::Generator;effect.generator=generator;if(generator==2){effect.contrast=4;effect.bias=-.5f;}mask->effects.push_back(effect);
-   StudioAsset preset;preset.name=generator==1?"Position height":"Curvature edges";preset.filename=generator==1?"position-height.btsmask":"curvature-edges.btsmask";preset.scope=AssetScope::Builtin;preset.usages={"smartmask"};preset.smart_mask=mask;preset.bytes=write_mask_preset(*mask);assets_.push_back(std::move(preset));
-  }
+  for(auto preset:builtin_brush_presets()){StudioAsset asset;asset.id=QUuid::createUuidV5(QUuid("{557ad8f1-4d31-4d95-8b22-e1a56ca507b3}"),preset.name.toUtf8());asset.name=preset.name;asset.filename=QString("stock-brush-%1.btsbrush").arg(assets_.size());asset.scope=AssetScope::Builtin;asset.usages={"brush"};asset.brush_preset=std::move(preset.brush);asset.bytes=write_brush_preset({asset.name,*asset.brush_preset});hydrate_asset_presets(asset);assets_.push_back(std::move(asset));}
+  const auto &masks=builtin_smart_mask_assets();assets_.insert(assets_.end(),masks.begin(),masks.end());
 }
 void AssetCatalog::add(StudioAsset asset){asset.revision=asset_revision.fetch_add(1);
   hydrate_asset_presets(asset);
@@ -163,7 +161,7 @@ std::optional<StudioAsset> AssetCatalog::hydrate_preset(const QUuid &id,const QS
  if(found==assets_.end()||found->hash()!=expected_hash)return {};
  hydrate_asset_presets(*found);if(!found->material_preset&&!found->smart_mask&&!found->brush_preset)return {};return *found;
 }
-void AssetCatalog::rename(const QUuid &id,const QString &value){const auto name=value.trimmed();if(name.isEmpty()||name.contains(QChar::Null))throw std::invalid_argument("Invalid asset name");require_texture_ram(resource_product(name.size(),16),"Asset name text");const auto found=std::find_if(assets_.begin(),assets_.end(),[&](const auto &a){return a.id==id;});if(found==assets_.end()||found->scope==AssetScope::Builtin)throw std::invalid_argument("Built-in resource names are read-only");const auto previous=*found;found->name=name;found->revision=asset_revision.fetch_add(1);try{if(found->scope==AssetScope::User)save_user_library();}catch(...){*found=previous;throw;}}
+void AssetCatalog::rename(const QUuid &id,const QString &value){const auto name=value.trimmed();if(name.isEmpty()||name.contains(QChar::Null))throw std::invalid_argument("Invalid asset name");const auto found=std::find_if(assets_.begin(),assets_.end(),[&](const auto &a){return a.id==id;});if(found==assets_.end()||found->scope==AssetScope::Builtin)throw std::invalid_argument("Built-in resource names are read-only");const auto previous=*found;found->name=name;found->revision=asset_revision.fetch_add(1);try{if(found->scope==AssetScope::User)save_user_library();}catch(...){*found=previous;throw;}}
 bool AssetCatalog::replace(StudioAsset asset,const QString &expected_hash){asset.revision=asset_revision.fetch_add(1);
   const auto found=std::find_if(assets_.begin(),assets_.end(),[&](const auto &a){return a.id==asset.id;});
   if(found==assets_.end()||found->hash()!=expected_hash)return false;
@@ -184,8 +182,8 @@ bool AssetCatalog::remove_user(const QUuid &id,const QString &expected_hash,std:
 }
 void AssetCatalog::save_user_library() const {if(!QDir().mkpath(directory_))throw std::runtime_error("Cannot create resource library");QJsonArray entries;for(const auto &asset:assets_)if(asset.scope==AssetScope::User)entries.append(asset_metadata(asset));write_bytes(QDir(directory_).filePath("library.json"),QJsonDocument(QJsonObject{{"version",1},{"resources",entries}}).toJson());}
 void AssetCatalog::load_user_library(){
-  QFile file(QDir(directory_).filePath("library.json"));if(!file.exists())return;if(!file.open(QIODevice::ReadOnly))throw std::runtime_error("Cannot read user resource library");require_texture_ram(resource_product(file.size(),4),"User resource library decode");QJsonParseError error;const auto document=QJsonDocument::fromJson(file.readAll(),&error);const auto root=document.object();if(error.error!=QJsonParseError::NoError||root["version"].toInt()!=1||!root["resources"].isArray())throw std::runtime_error("Invalid user resource library");auto candidate=assets_;std::erase_if(candidate,[](const auto &a){return a.scope==AssetScope::User;});
-  for(const auto &entry:root["resources"].toArray()){const auto metadata=entry.toObject();auto asset=asset_metadata_read(metadata);asset.revision=asset_revision.fetch_add(1);if(!asset.texture_files.empty()){asset.scope=AssetScope::User;candidate.push_back(std::move(asset));continue;}QFile source(QDir(directory_).filePath("blobs/"+metadata["sha256"].toString()));if(!source.open(QIODevice::ReadOnly)||source.size()<=0)throw std::runtime_error("User resource bytes missing");require_texture_ram(resource_product(source.size(),2),"User resource blob decode");asset.bytes=source.readAll();if(asset.hash()!=metadata["sha256"].toString())throw std::runtime_error("User resource checksum mismatch");asset.scope=AssetScope::User;hydrate_asset_presets(asset);candidate.push_back(std::move(asset));}resolve_user_material_textures(candidate);validate_resources(candidate);assets_=std::move(candidate);
+  QFile file(QDir(directory_).filePath("library.json"));if(!file.exists())return;if(!file.open(QIODevice::ReadOnly))throw std::runtime_error("Cannot read user resource library");QJsonParseError error;const auto document=QJsonDocument::fromJson(file.readAll(),&error);const auto root=document.object();if(error.error!=QJsonParseError::NoError||root["version"].toInt()!=1||!root["resources"].isArray())throw std::runtime_error("Invalid user resource library");auto candidate=assets_;std::erase_if(candidate,[](const auto &a){return a.scope==AssetScope::User;});
+  for(const auto &entry:root["resources"].toArray()){const auto metadata=entry.toObject();auto asset=asset_metadata_read(metadata);asset.revision=asset_revision.fetch_add(1);if(!asset.texture_files.empty()){asset.scope=AssetScope::User;candidate.push_back(std::move(asset));continue;}QFile source(QDir(directory_).filePath("blobs/"+metadata["sha256"].toString()));if(!source.open(QIODevice::ReadOnly)||source.size()<=0)throw std::runtime_error("User resource bytes missing");asset.bytes=source.readAll();if(asset.hash()!=metadata["sha256"].toString())throw std::runtime_error("User resource checksum mismatch");asset.scope=AssetScope::User;hydrate_asset_presets(asset);candidate.push_back(std::move(asset));}resolve_user_material_textures(candidate);validate_resources(candidate);assets_=std::move(candidate);
 }
 void AssetCatalog::replace_project(std::vector<StudioAsset> project){auto candidate=assets_;std::erase_if(candidate,[](const auto &a){return a.scope==AssetScope::Project;});for(auto &asset:project){asset.revision=asset_revision.fetch_add(1);asset.scope=AssetScope::Project;hydrate_asset_presets(asset);candidate.push_back(std::move(asset));}validate_resources(candidate);assets_=std::move(candidate);}
 std::vector<StudioAsset> AssetCatalog::project_assets() const{

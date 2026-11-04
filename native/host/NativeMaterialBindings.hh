@@ -25,6 +25,7 @@ inline void apply_native_material_bindings(TextureLayer &layer,const StudioAsset
   // remains independently admitted; hidden Normal3 is never enabled here.
   for(int channel:{0,1,2})layer.channels[channel]=layer.channels[channel]&&native_material_channel_supported(asset,channel);
   layer.channels[3]=false;
+  if(asset.search_terms.contains("native-normal:unsupported")&&!native_material_channel_supported(asset,4))layer.channels[4]=false;
   if(!native_material_channel_supported(asset,5))layer.ao_enabled=false;
   if(!native_material_channel_supported(asset,14))layer.displacement.enabled=false;
 }

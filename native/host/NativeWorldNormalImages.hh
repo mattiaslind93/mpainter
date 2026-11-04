@@ -1,6 +1,6 @@
 #pragma once
 #include "TextureDocument.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "NativeGpuImages.hh"
 #include "GPU_context.hh"
 namespace bts {
@@ -16,7 +16,7 @@ inline void native_world_normal_placeholder(blender::Image &image){
  const int target=tiled?TEXTARGET_2D_ARRAY:TEXTARGET_2D;
  int count=0,last=1001;for(const auto &tile:image.tiles){++count;last=std::max(last,tile.tile_number);}
  if(!count)throw std::invalid_argument("Native world Normal image has no tiles");
- const auto bytes=resource_sum(resource_product(count,16),tiled?resource_product(last-1000,32):0);ResourceBudget{}.require(0,bytes,"Native world Normal zero placeholders");
+ const auto bytes=resource_sum(resource_product(count,16),tiled?resource_product(last-1000,32):0);
  BKE_image_free_gputextures(&image);image.runtime->gpuflag|=native_generated_gpu_bit;image.flag|=IMA_HIGH_BITDEPTH;
  const auto format=gpu::TextureFormat::SFLOAT_32_32_32_32;
  auto *texture=tiled?GPU_texture_create_2d_array("Native world Normal zero",1,1,count,1,format,GPU_TEXTURE_USAGE_GENERAL,nullptr):GPU_texture_create_2d("Native world Normal zero",1,1,1,format,GPU_TEXTURE_USAGE_GENERAL,nullptr);

@@ -1,4 +1,4 @@
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #pragma once
 #include <QJsonArray>
 #include <QJsonObject>

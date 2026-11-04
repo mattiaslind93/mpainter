@@ -6,6 +6,10 @@
   auto baked=flatten_layer_pixels(set,selected,cancel);assert(baked&&AnchorEvaluationScope::source()==nullptr);bind(*baked);auto after=set;install_flattened_layer(after,baked->layer,selected);same(set,after);
   // Memory depends on actual RAM, not a per-sequence 16M texel/512MiB cap.
   auto large=set;large.texture_resolution=4096;large.tiles={1001,1002};const auto plan=prepare_flatten_layer(large,selected);assert(plan.snapshot_bytes>512ULL*1024*1024);
-  {TextureRamQueryScope ram(+[]()->std::uint64_t{return 32ULL*1024*1024*1024;});assert(plan.snapshot_bytes<flatten_safe_ram_bytes());}
-  {TextureRamQueryScope ram(+[]()->std::uint64_t{return 8ULL*1024*1024;});bool refused=false;try{flatten_layer_pixels(large,selected,cancel);}catch(const std::length_error &e){const std::string message=e.what();refused=message.find("MiB")!=std::string::npos&&message.find("budget 4 MiB")!=std::string::npos;}assert(refused&&AnchorEvaluationScope::source()==nullptr);}
+  {TextureRamQueryScope ram(+[]()->std::uint64_t{return 32ULL*1024*1024*1024;});assert(plan.snapshot_bytes<flatten_available_ram_bytes());}
+  // Exercise admission independently of workload size: the old refusal probe
+  // never evaluated its33M anchored pixels. Keep that size as a planning check.
+  {TextureRamQueryScope ram(+[]()->std::uint64_t{return 0;});const auto unrestricted=flatten_layer_pixels(set,selected,cancel);assert(unrestricted&&AnchorEvaluationScope::source()==nullptr);
+   for(int channel=0;channel<15;++channel){assert(unrestricted->images[channel].size()==baked->images[channel].size());for(const auto &[tile,image]:baked->images[channel]){const auto &actual=unrestricted->images[channel].at(tile);assert(actual.width==image.width&&actual.height==image.height&&*actual.pixels==*image.pixels);}}
+  }
  }

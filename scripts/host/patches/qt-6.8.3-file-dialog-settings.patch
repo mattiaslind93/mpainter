@@ -1,0 +1,23 @@
+--- a/src/widgets/dialogs/qfiledialog.cpp
++++ b/src/widgets/dialogs/qfiledialog.cpp
+@@ -375,7 +375,10 @@
+ {
+     Q_D(QFileDialog);
+ #if QT_CONFIG(settings)
+-    d->saveSettings();
++    // An application that owns an asynchronous snapshot may opt out per dialog.
++    // All other QFileDialog instances retain upstream persistence behavior.
++    if (!property("_btsOwnsFileDialogSettings").toBool())
++        d->saveSettings();
+ #endif
+     if (QPlatformFileDialogHelper *platformHelper = d->platformFileDialogHelper()) {
+         // QIOSFileDialog emits directoryChanged while hiding, causing an assert
+@@ -2908,6 +2911,8 @@
+ void QFileDialogPrivate::init(const QFileDialogArgs &args)
+ {
+     Q_Q(QFileDialog);
++    // Capability marker only; persistence remains enabled unless opted out.
++    q->setProperty("_btsFileDialogOwnSettingsSupported", true);
+     if (!args.caption.isEmpty()) {
+         useDefaultCaption = false;
+         setWindowTitle = args.caption;

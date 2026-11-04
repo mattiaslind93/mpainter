@@ -80,7 +80,7 @@ void tests(){
   require(!leaf(original).visible&&leaf(original).effects.empty(),"Input preparation mutated");
   for(auto &d:output.diagnostics)if(d.code=="native-scalar-levels-policy")require(!output.diagnostic_path(d).empty(),"Missing source path");
   unsigned bound=0;for(auto &a:output.actions)if(a.lowered)++bound;require(bound==3,"Fill/Levels action associations not updated");
-  reject([&]{prepare_spsm_levels(original,{SpsmLevelsPolicy::NativeScalarLevels,1});});
+  prepare_spsm_levels(original,{SpsmLevelsPolicy::NativeScalarLevels});
   auto modified=original;modified.material.set.layers[0].effects.push_back(LevelsEffect{});reject([&]{lower(modified);});
   auto hierarchy=original;hierarchy.material.set.layers[0].parent=QUuid::createUuid();reject([&]{lower(hierarchy);});
   auto absent=original;absent.source.reset();reject([&]{lower(absent);});

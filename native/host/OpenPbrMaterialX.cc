@@ -1,5 +1,5 @@
 #include "OpenPbrMaterialX.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "OpenPbrReferenceData.hh"
 #include <MaterialXCore/Document.h>
 #include <MaterialXFormat/XmlIo.h>
@@ -11,7 +11,7 @@ namespace bts {namespace {
 namespace mx=MaterialX;
 std::string number(float value){return QString::number(double(value),'g',std::numeric_limits<float>::max_digits10).toStdString();}
 const char *space_name(OpenPbrImageSpace value){switch(value){case OpenPbrImageSpace::Raw:return "raw";case OpenPbrImageSpace::AcesCg:return "acescg";case OpenPbrImageSpace::Srgb:return "srgb_texture";case OpenPbrImageSpace::LinearRec709:return "lin_rec709";}throw std::invalid_argument("Unknown MaterialX image color space");}
-void filename(const QString &path){require_texture_ram(resource_product(path.size(),16),"MaterialX image filename text");if(path.isEmpty()||QDir::isAbsolutePath(path)||path.contains('\\')||path.contains(':')||QString::fromUtf8(path.toUtf8())!=path)throw std::invalid_argument("MaterialX images require portable relative filenames");for(auto c:path)if(c.unicode()<32||c.unicode()==127)throw std::invalid_argument("Invalid control character in MaterialX filename");for(const auto &part:path.split('/'))if(part.isEmpty()||part=="."||part=="..")throw std::invalid_argument("MaterialX image path must stay inside the package");}
+void filename(const QString &path){if(path.isEmpty()||QDir::isAbsolutePath(path)||path.contains('\\')||path.contains(':')||QString::fromUtf8(path.toUtf8())!=path)throw std::invalid_argument("MaterialX images require portable relative filenames");for(auto c:path)if(c.unicode()<32||c.unicode()==127)throw std::invalid_argument("Invalid control character in MaterialX filename");for(const auto &part:path.split('/'))if(part.isEmpty()||part=="."||part=="..")throw std::invalid_argument("MaterialX image path must stay inside the package");}
 mx::InputPtr literal(mx::NodePtr node,const std::string &name,const std::string &type,const std::string &value){auto input=node->addInput(name,type);input->setValueString(value);return input;}
 mx::InputPtr connected(mx::NodePtr node,const std::string &name,const std::string &type,const std::string &source){auto input=node->getInput(name);if(!input)input=node->addInput(name,type);input->removeAttribute("value");input->setNodeName(source);return input;}
 }
@@ -22,7 +22,7 @@ QByteArray openpbr_materialx_document(const OpenPbrMaterialX &request){
  // strings; its count is limited by current RAM, not an invented 256 tiles.
  auto required=resource_sum(resource_product(request.material_name.size(),16),resource_sum(resource_product(sizeof(openpbr_reference::xml),16),resource_product(request.tiles.size(),4*(sizeof(std::string)+32))));
  for(const auto &[id,image]:request.images)required=resource_sum(required,resource_sum(resource_product(image.filename.size(),8),1024));
- require_texture_ram(required,"OpenPBR MaterialX graph and XML metadata");
+
  for(const auto &[id,image]:request.images){filename(image.filename);const bool scalar=id=="bump"||id=="displacement";const auto type=scalar?OpenPbrType::Number:openpbr_parameters[OpenPbrParameters::index(id)].type;if(type==OpenPbrType::Boolean)throw std::invalid_argument("Boolean OpenPBR parameters cannot use image maps");space_name(image.space);if((type==OpenPbrType::Number)!=(image.space==OpenPbrImageSpace::Raw))throw std::invalid_argument("Scalar maps must be raw; color maps need an explicit color space");}
  auto doc=mx::createDocument();mx::readFromXmlString(doc,openpbr_reference::xml);auto definition=doc->getNodeDef("ND_open_pbr_surface_surfaceshader");auto graph=doc->getNodeGraph("NG_open_pbr_surface_surfaceshader");if(!definition||!graph||definition->getVersionString()!="1.1.1")throw std::runtime_error("Pinned OpenPBR reference is unavailable");
  definition->setName("ND_BTS_OpenPBR_1_1_1");graph->setName("NG_BTS_OpenPBR_1_1_1");graph->setNodeDefString(definition->getName());doc->setColorSpace("acescg");doc->setVersionString("1.39");doc->setAttribute("doc","ASWF OpenPBR 1.1.1, revision f8d6d947dfae4c9b599965a86c22826ea7a8dbfb. See OpenPBR-LICENSE.txt. Reference graph names are made package-local; the viewport Principled approximation is not this BSDF.");

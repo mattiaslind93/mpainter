@@ -34,18 +34,26 @@ inline QList<qint64> user_session_pids(const QString &proc="/proc"){
 #endif
  return result;
 }
-// A private xcb test is allowed only on its sibling Xvfb server. The explicit
-// display, server command, uid, parent and X11 lock must all agree. A flag alone
+// A private xcb test is allowed only on its owned Xvfb server. The explicit
+// display, server command, uid, launcher ancestry and X11 lock must all agree. A flag alone
 // never permits a test window on the artist's display.
 inline bool owned_private_xvfb(const QString &proc="/proc",const QString &locks="/tmp"){
 #ifdef Q_OS_LINUX
  if(qEnvironmentVariable("QT_QPA_PLATFORM")!="xcb"||!qEnvironmentVariableIsEmpty("WAYLAND_DISPLAY"))return false;
  const auto config=qEnvironmentVariable("XDG_CONFIG_HOME");if((!config.contains("/bts/build/")&&!config.contains("/mpainter-test-sessions/"))||!(config.endsWith("/config")||config.endsWith("/.config")))return false;
- auto display=qEnvironmentVariable("DISPLAY");if(display.endsWith(".0"))display.chop(2);bool number_ok=false,pid_ok=false;const int number=display.startsWith(':')?display.mid(1).toInt(&number_ok):-1;const auto pid=qEnvironmentVariable("BTS_PRIVATE_XVFB_PID").toLongLong(&pid_ok);if(!number_ok||number<=0||number>65535||!pid_ok||pid<=1)return false;
+ auto display=qEnvironmentVariable("DISPLAY");if(display.endsWith(".0"))display.chop(2);bool number_ok=false,pid_ok=false;const int number=display.startsWith(':')?display.mid(1).toInt(&number_ok):-1;const auto pid=qEnvironmentVariable("BTS_PRIVATE_XVFB_PID").toLongLong(&pid_ok);if(!number_ok||number<=1||number>65535||!pid_ok||pid<=1)return false;
  const auto base=proc+"/"+QString::number(pid);if(QFileInfo(base).ownerId()!=::getuid())return false;
  QFile command(base+"/cmdline"),comm(base+"/comm"),status(base+"/status"),lock(locks+"/.X"+QString::number(number)+"-lock");if(!command.open(QIODevice::ReadOnly)||!comm.open(QIODevice::ReadOnly)||!status.open(QIODevice::ReadOnly)||!lock.open(QIODevice::ReadOnly))return false;
  const auto args=command.readAll().split('\0');if(args.isEmpty()||QFileInfo(QString::fromLocal8Bit(args.front())).fileName()!="Xvfb"||!args.contains(display.toLocal8Bit())||comm.readAll().trimmed()!="Xvfb"||lock.readAll().trimmed().toLongLong()!=pid)return false;
- bool parent=false;for(const auto &line:status.readAll().split('\n'))if(line.startsWith("PPid:"))parent=line.mid(5).trimmed().toLongLong()==::getppid();return parent;
+ // AppImage/driver cleanup launchers may remain between xvfb-run and the app.
+ qint64 owner=0;for(const auto &line:status.readAll().split('\n'))if(line.startsWith("PPid:"))owner=line.mid(5).trimmed().toLongLong();
+ for(qint64 ancestor=::getppid(),depth=0;ancestor>1&&depth<32;++depth){
+  if(ancestor==owner)return true;
+  QFile parent_status(proc+"/"+QString::number(ancestor)+"/status");if(!parent_status.open(QIODevice::ReadOnly))break;
+  qint64 next=0;for(const auto &line:parent_status.readAll().split('\n'))if(line.startsWith("PPid:"))next=line.mid(5).trimmed().toLongLong();
+  if(next==ancestor)break;ancestor=next;
+ }
+ return false;
 #else
  return false;
 #endif
@@ -68,10 +76,10 @@ inline bool display_dpms_off(const QString &drm="/sys/class/drm"){
 inline bool prepare_test_session(int argc,char **argv){
  QStringList args;for(int i=0;i<argc;++i)args.append(QString::fromLocal8Bit(argv[i]));const bool cpu=cpu_test_arguments(args);
  if(qEnvironmentVariable("BTS_NO_BACKGROUND_GPU")=="1"&&!cpu){std::fprintf(stderr,"BTS_GUI_SKIPPED BTS_NO_BACKGROUND_GPU=1; no GPU/GUI/OpenGL test started\n");return false;}
- if(!cpu&&gui_test_arguments(args)&&display_dpms_off()){std::fprintf(stderr,"BTS_GUI_SKIPPED display_dpms_off; no GPU/GUI/OpenGL test started\n");return false;}
+ if(!cpu&&gui_test_arguments(args)&&!owned_private_xvfb()&&display_dpms_off()){std::fprintf(stderr,"BTS_GUI_SKIPPED display_dpms_off; no GPU/GUI/OpenGL test started\n");return false;}
  if(!gui_test_arguments(args))return true;
  if(cpu){qputenv("QT_QPA_PLATFORM","offscreen");qputenv("QT_QPA_OFFSCREEN_NO_GLX","1");}
- else{const auto active=graphics_session_pids();if(!active.empty()){std::fprintf(stderr,"BTS_GUI_SKIPPED graphics_session_active pid=%lld; no GPU/GUI/OpenGL test started\n",static_cast<long long>(active.front()));return false;}}
+ else if(!owned_private_xvfb()){const auto active=graphics_session_pids();if(!active.empty()){std::fprintf(stderr,"BTS_GUI_SKIPPED graphics_session_active pid=%lld; no GPU/GUI/OpenGL test started\n",static_cast<long long>(active.front()));return false;}}
  const auto root=qEnvironmentVariable("XDG_CACHE_HOME",QDir::homePath()+"/.cache")+"/mpainter-test-sessions/";const auto config=qEnvironmentVariable("XDG_CONFIG_HOME");const bool isolated=(config.contains("/bts/build/")||config.contains("/mpainter-test-sessions/"))&&(config.endsWith("/config")||config.endsWith("/.config"));const auto temp=root+"session-tests/"+QString::number(QCoreApplication::applicationPid());qputenv("BTS_TEST_CONTINUOUS_FRAMES","1");if(!isolated)qputenv("XDG_CONFIG_HOME",(temp+"/config").toUtf8());if(!qEnvironmentVariable("BTS_RECOVERY_DIR").contains("/bts/build/")&&!qEnvironmentVariable("BTS_RECOVERY_DIR").contains("/mpainter-test-sessions/"))qputenv("BTS_RECOVERY_DIR",(temp+"/recovery").toUtf8());return true;
 }
 }

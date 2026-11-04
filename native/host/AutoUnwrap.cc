@@ -1,4 +1,4 @@
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "AutoUnwrap.hh"
 #include <QComboBox>
 #include <QCheckBox>
@@ -61,7 +61,7 @@ void generate_missing_uvs(blender::Main &main,blender::Scene &scene,blender::bCo
     if(object.type!=OB_MESH)continue;auto &mesh=*reinterpret_cast<Mesh *>(object.data);if(!mesh.faces_num)continue;
     const bool had_uv=!mesh.uv_map_names().is_empty();const bool islands=!had_uv||options.islands==UvDataPolicy::Recompute||options.seams==UvDataPolicy::Recompute;
     if(had_uv&&!islands&&options.seams==UvDataPolicy::Missing&&options.packing==UvDataPolicy::Missing)continue;
-    ResourceBudget{}.require(resource_sum(resource_product(mesh.verts_num,sizeof(BMVert)),resource_sum(resource_product(mesh.corners_num,sizeof(BMLoop)+sizeof(BMEdge)),resource_product(mesh.faces_num,sizeof(BMFace)))),0,"Automatic UV edit mesh staging");
+
     auto *base=BKE_view_layer_base_find(layer,&object);if(!base)throw std::runtime_error("Automatic UV mesh is not in the staging view layer");layer->basact=base;
     if(!ed::object::editmode_enter_ex(&main,&scene,&object,ed::object::EM_NO_CONTEXT))throw std::runtime_error("Cannot enter staged UV edit mode");
     try{

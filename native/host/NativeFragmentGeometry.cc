@@ -2,7 +2,7 @@
 #include "NativeSurfaceBasis.hh"
 #include "NativeMaterialSourcePolicy.hh"
 #include <NativeMaterialFragmentGpuCompiler.hh> // final phase2 ABI, supplied by coherent integration
-#include <ResourceBudget.hh>
+#include <ResourceAvailability.hh>
 #include <QCoreApplication>
 #include <QThread>
 #include <algorithm>
@@ -44,8 +44,6 @@ using namespace blender;
 void check_cancel(const std::atomic_bool &cancel){if(cancel.load(std::memory_order_relaxed))throw std::runtime_error("Fragment geometry preparation cancelled");}
 void owner_only(){if(auto *app=QCoreApplication::instance();app&&QThread::currentThread()!=app->thread())throw std::logic_error("Fragment geometry capture requires the native owner");}
 void worker_only(){if(auto *app=QCoreApplication::instance();app&&QThread::currentThread()==app->thread())throw std::logic_error("Fragment geometry preparation requires a worker");}
-void admit(std::uint64_t bytes,std::uint64_t limit){if(bytes>limit)throw std::length_error("Fragment geometry needs "+resource_mebibytes(bytes)+"; safe available RAM budget "+resource_mebibytes(limit));}
-std::uint64_t safe_budget(std::uint64_t requested){const auto available=ResourceBudget{}.ram();return requested?std::min(requested,available):available;}
 std::uint32_t index_value(std::uint64_t value){if(value>std::numeric_limits<std::uint32_t>::max())throw std::length_error("Fragment geometry exceeds uint32 index API");return std::uint32_t(value);}
 template<class T>std::vector<T> copied(Span<T> data){return {data.begin(),data.end()};}
 struct UvCopy {std::string name;std::vector<float2> values;std::vector<NativeFragmentUvRequest> requests;};
@@ -75,7 +73,7 @@ void copy_generated(ObjectCopy &copy,const Object &object,const Mesh &mesh,const
  if(!request.generated_stream)return;
  auto *original_object=DEG_get_original(&object);const auto *original=original_object&&original_object->data&&GS(original_object->data->name)==ID_ME?reinterpret_cast<const Mesh *>(original_object->data):nullptr;
  if(original)copy.object.original_mesh_uid=original->id.session_uid;
- const auto count=mesh.verts_num;bytes=resource_sum(bytes,resource_product(count,sizeof(float3)));admit(bytes,budget);
+ const auto count=mesh.verts_num;bytes=resource_sum(bytes,resource_product(count,sizeof(float3)));
  const auto *orco=static_cast<const float3 *>(CustomData_get_layer(&mesh.vert_data,CD_ORCO));
  std::unique_ptr<Mesh,decltype(&free_orco_clone)> clone(nullptr,free_orco_clone),texclone(nullptr,free_orco_clone);
  if(orco)copy.object.generated_provenance=NativeFragmentGeneratedProvenance::CapturedOrco;
@@ -85,7 +83,7 @@ void copy_generated(ObjectCopy &copy,const Object &object,const Mesh &mesh,const
   if(original->texcomesh&&original->texcomesh->verts_num>original->verts_num)missing_orco("original texcomesh vertex count exceeds source topology");
   auto temporary=resource_sum(mesh_bytes(*original),resource_product(count,sizeof(float3)));
   if(original->texcomesh)temporary=resource_sum(temporary,mesh_bytes(*original->texcomesh));
-  admit(resource_sum(bytes,temporary),budget);
+
   clone.reset(BKE_mesh_copy_for_eval(*original));if(!clone)throw std::runtime_error("Cannot clone original ORCO capture source");
   // Stock texspace ensure may update lazy texspace values. Isolate texcomesh
   // too, so no authored source ID/custom-data/texspace value is changed.
@@ -166,8 +164,8 @@ std::shared_ptr<const NativeFragmentGeometrySource> capture_native_fragment_geom
   if((uv.kind==NativeFragmentUvKind::Named)!=!uv.name.empty())throw std::invalid_argument("Fragment geometry UV request name/semantics mismatch");
  };for(const auto &uv:request.uv_requests)validate_uv(uv);validate_uv(request.target_uv);
  std::sort(request.tiles.begin(),request.tiles.end());request.tiles.erase(std::unique(request.tiles.begin(),request.tiles.end()),request.tiles.end());for(const int tile:request.tiles)tile_origin(tile);
- auto result=std::make_unique<NativeFragmentGeometrySource::Impl>();result->budget=safe_budget(request.ram_budget_bytes);result->request=std::move(request);result->bytes=resource_sum(sizeof(*result),resource_sum(resource_product(result->request.uv_requests.capacity(),sizeof(NativeFragmentUvRequest)),resource_product(result->request.tiles.capacity(),sizeof(int))));
- for(const auto &r:result->request.uv_requests)result->bytes=resource_sum(result->bytes,r.name.capacity());result->bytes=resource_sum(result->bytes,result->request.target_uv.name.capacity());admit(result->bytes,result->budget);
+ auto result=std::make_unique<NativeFragmentGeometrySource::Impl>();result->request=std::move(request);result->bytes=resource_sum(sizeof(*result),resource_sum(resource_product(result->request.uv_requests.capacity(),sizeof(NativeFragmentUvRequest)),resource_product(result->request.tiles.capacity(),sizeof(int))));
+ for(const auto &r:result->request.uv_requests)result->bytes=resource_sum(result->bytes,r.name.capacity());result->bytes=resource_sum(result->bytes,result->request.target_uv.name.capacity());
  auto *main=CTX_data_main(context);auto *scene=CTX_data_scene(context);auto *layer=CTX_data_view_layer(context);
  if(!main||!scene||!layer)throw std::invalid_argument("Fragment geometry native scene is unavailable");
  auto *graph=CTX_data_ensure_evaluated_depsgraph(context);
@@ -183,7 +181,7 @@ std::shared_ptr<const NativeFragmentGeometrySource> capture_native_fragment_geom
   const auto triangles=mesh->corner_tris();const auto faces=mesh->corner_tri_faces();bool selected=false;
   const auto matches=[&](int triangle){const int slot=std::clamp(materials[faces[triangle]],0,slots-1);auto *m=BKE_object_material_get_eval(*object,mesh->id,short(slot+1));return m&&DEG_get_original(m)->id.session_uid==result->request.material_uid;};
   for(int i=0;i<triangles.size();++i)if(matches(i)){selected=true;break;}if(!selected)continue;
-  const auto next=resource_sum(result->bytes,resource_sum(sizeof(ObjectCopy)*2,mesh_bytes(*mesh)));admit(next,result->budget);
+  const auto next=resource_sum(result->bytes,resource_sum(sizeof(ObjectCopy)*2,mesh_bytes(*mesh)));
   ObjectCopy copy;copy.object.object_uid=object_uid;copy.object.source_mesh_uid=mesh->id.session_uid;copy.object.source_override=sources.contains(object_uid);
   bool invertible=false;(void)math::invert(object->object_to_world(),invertible);if(!invertible)throw std::invalid_argument("Fragment geometry object transform is singular");
   std::copy_n(&object->object_to_world()[0][0],16,copy.object.object_to_world.begin());std::copy_n(&object->world_to_object()[0][0],16,copy.object.world_to_object.begin());
@@ -202,7 +200,7 @@ std::shared_ptr<const NativeFragmentGeometrySource> capture_native_fragment_geom
    if(found!=copy.uv.end()){if(source_request&&std::find(found->requests.begin(),found->requests.end(),wanted)==found->requests.end())found->requests.push_back(wanted);return std::size_t(found-copy.uv.begin());}
    const VArraySpan<float2> uv=*attributes.lookup<float2>(name,bke::AttrDomain::Corner);
    if(uv.size()!=mesh->corners_num)throw std::invalid_argument("Fragment geometry exact UV layer is missing: "+name);
-   result->bytes=resource_sum(result->bytes,resource_sum(resource_product(uv.size(),sizeof(float2)),sizeof(UvCopy)*2+name.size()+sizeof(NativeFragmentUvRequest)*result->request.uv_requests.size()));admit(result->bytes,result->budget);
+   result->bytes=resource_sum(result->bytes,resource_sum(resource_product(uv.size(),sizeof(float2)),sizeof(UvCopy)*2+name.size()+sizeof(NativeFragmentUvRequest)*result->request.uv_requests.size()));
    UvCopy u;u.name=name;if(source_request)u.requests.push_back(wanted);u.values.reserve(uv.size());for(const auto value:uv){if((u.values.size()&1023)==0)check_cancel(cancel);u.values.push_back(value);}copy.uv.push_back(std::move(u));return copy.uv.size()-1;
   };
   copy.target_uv=load_uv(result->request.target_uv,false);
@@ -249,10 +247,10 @@ std::shared_ptr<const NativeFragmentGeometry> prepare_native_fragment_geometry(s
    }
   }
  }
- bytes=resource_sum(bytes,resource_sum(resource_product(index_count,sizeof(std::uint32_t)),resource_product(range_count,sizeof(NativeFragmentGeometryRange))));bytes=resource_sum(bytes,resource_product(s.objects.size(),sizeof(NativeFragmentGeometryObject)*2));admit(resource_sum(bytes,scratch),s.budget);
+ bytes=resource_sum(bytes,resource_sum(resource_product(index_count,sizeof(std::uint32_t)),resource_product(range_count,sizeof(NativeFragmentGeometryRange))));bytes=resource_sum(bytes,resource_product(s.objects.size(),sizeof(NativeFragmentGeometryObject)*2));
  // The captured source is already resident and is excluded by current MemAvailable.
  // Enforce its aggregate cap separately; charge only NEW worker bytes to fresh RAM.
- admit(resource_sum(bytes-s.bytes,scratch),ResourceBudget{}.ram());
+
  if(!index_count)throw std::invalid_argument("Fragment geometry has no UV-addressable triangles in the requested UDIMs");
  auto result=std::make_unique<NativeFragmentGeometry::Impl>();result->source=std::move(source);result->bytes=bytes;result->indices.resize(std::size_t(index_count));result->ranges.reserve(std::size_t(range_count));std::size_t cursor=0;
  for(std::size_t oi=0;oi<s.objects.size();++oi){

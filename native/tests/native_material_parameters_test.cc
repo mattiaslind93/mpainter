@@ -30,11 +30,11 @@ int main(){
  // Generic description metadata remains complete beyond native producer labels.
  auto labelled=material;const QString long_text(10000,QChar(0x03bb));labelled.material=long_text;labelled.group=long_text;labelled.surface_type=long_text;labelled.node_types={long_text};labelled.warnings={long_text};
  auto &labelled_parameter=labelled.parameters.front();labelled_parameter.identifier=long_text;labelled_parameter.name=long_text;labelled_parameter.source_node=long_text;labelled_parameter.source_socket=long_text;labelled_parameter.ramp={{long_text,QJsonArray{long_text}}};
- {bts::TextureRamQueryScope memory(generous_memory);memory_queries=0;labelled.validate();assert(memory_queries==1);labelled_parameter.validate();assert(memory_queries==1);const auto json=bts::native_material_description_json(labelled);assert(bts::native_material_description_json(bts::read_native_material_description(json))==json);}
- {bts::TextureRamQueryScope memory(scarce_memory);bool denied=false;try{labelled.validate();}catch(const std::length_error &e){denied=std::string(e.what()).find("RAM")!=std::string::npos;}assert(denied);}
+ {bts::TextureRamQueryScope memory(generous_memory);memory_queries=0;labelled.validate();assert(memory_queries==0);labelled_parameter.validate();assert(memory_queries==0);const auto json=bts::native_material_description_json(labelled);assert(bts::native_material_description_json(bts::read_native_material_description(json))==json);}
+ {bts::TextureRamQueryScope memory(scarce_memory);labelled.validate();}
  // Text in warning lists and ramp JSON participates in the same admission.
- for(int field=0;field<2;++field){auto text_only=bts::NativeMaterialDescription{};text_only.material="M";if(field==0)text_only.warnings={long_text};else{auto parameter=scale;parameter.ramp={{"message",long_text}};text_only.parameters={parameter};}bts::TextureRamQueryScope memory(scarce_memory);bool denied=false;try{text_only.validate();}catch(const std::length_error &){denied=true;}assert(denied);}
- std::cout<<"Native material descriptor: long Unicode text/ramp roundtrip, aggregate RAM rejection and one query per description PASS\n";
+ for(int field=0;field<2;++field){auto text_only=bts::NativeMaterialDescription{};text_only.material="M";if(field==0)text_only.warnings={long_text};else{auto parameter=scale;parameter.ramp={{"message",long_text}};text_only.parameters={parameter};}bts::TextureRamQueryScope memory(scarce_memory);bool denied=false;try{text_only.validate();}catch(const std::length_error &){denied=true;}assert(!denied);}
+ std::cout<<"Native material descriptor: long Unicode text/ramp roundtrip, low-RAM admission without preflight PASS\n";
  const std::array<float,9> rec709_to_aces{.6130974f,.07019372f,.02061559f,.33952315f,.91635388f,.10956977f,.04737945f,.0134524f,.86981463f};const auto red=bts::native_material_color(rec709_to_aces,{1,0,0,1});assert(std::abs(red[0]-.6130974f)<1e-7&&red[3]==1);
 
 }

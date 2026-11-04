@@ -2,7 +2,7 @@
 #include "NativeMaterialImageResource.hh"
 #include "NativeMaterialTiledStorage.hh"
 #include "NativeFragmentImageReadiness.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "GPU_capabilities.hh"
 #include "NativeMaterialGraph.hh"
 #include "NativeMaterialSharedGpuImages.hh"
@@ -78,7 +78,7 @@ bool NativeMaterialImageUpload::step(std::size_t packet_bytes)
       s.tiled_plan=std::make_shared<const NativeTiledStoragePlan>(native_tiled_storage_plan(*request.image,*s.tiled_source,request.representation,{limit,GPU_max_texture_layers(),GPU_max_texture_size()}));
       try{const auto &ready=retained_native_tiled_gpu_plan(s.graph,request.image,request.representation);if(ready.key==s.tiled_plan->key){++s.next;s.tiled_plan.reset();s.tiled_source.reset();return s.next==s.images.size();}}catch(const NativeFragmentImagePending &){}
       if(reuse_native_tiled_gpu_image(s.graph,request.image,s.tiled_plan)){++s.next;++s.shared_images;s.tiled_plan.reset();s.tiled_source.reset();return s.next==s.images.size();}
-      ResourceBudget{}.require(s.tiled_plan->mapping_bytes,resource_sum(s.tiled_plan->texture_bytes,s.tiled_plan->mapping_bytes),"Native retained TILED storage");
+
       s.tiled_upload=std::make_unique<NativeTiledUploadState<std::unique_ptr<Impl::PendingTiled>>>(*s.tiled_plan);s.image=request.image;
     }
     const auto done=s.tiled_upload->step(packet_bytes,[&](const NativeTiledUploadAction &action,std::unique_ptr<Impl::PendingTiled> &pending){

@@ -276,31 +276,12 @@ shade_shaderball_pixel(const MaterialValues &material, double nx, double ny,
           -.024003355*linear[0]-.128968999*linear[1]+1.152972341*linear[2]};
 }
 
-// Shared material-preview environment; source HDR radiance is retained in RGBE.
-// This is independent of the material name and whether a channel is textured.
 inline std::array<double,3> preview_environment(double x,double y,double z,double rough,bool diffuse=false){
-  static const std::array<QImage,9> images=[] {
-    std::array<QImage,9> result;
-    for(int i=0;i<9;++i)result[i]=QImage(i==8?QStringLiteral(":/builtin-procedurals/preview-forest-irradiance.png"):QString(":/builtin-procedurals/preview-forest-%1.png").arg(i)).convertToFormat(QImage::Format_RGBA8888);
-    return result;
-  }();
-  const double lod=std::clamp(rough,0.0,1.0)*7;
-  const auto sample=[&](int level){
-    const auto &img=images[level];std::array<double,3> rgb{};if(img.isNull())return rgb;
-    const double u=std::atan2(x,z)/(2*std::numbers::pi)+.5;
-    const double v=std::acos(std::clamp(y,-1.0,1.0))/std::numbers::pi;
-    const double fx=u*img.width()-.5,fy=v*img.height()-.5;const int ix=int(std::floor(fx)),iy=int(std::floor(fy));
-    for(int dy=0;dy<2;++dy)for(int dx=0;dx<2;++dx){
-      const auto *p=img.constScanLine(std::clamp(iy+dy,0,img.height()-1))+4*((ix+dx+img.width())%img.width());
-      const double weight=(dx?fx-ix:1-fx+ix)*(dy?fy-iy:1-fy+iy);
-      const double scale=p[3]?std::ldexp(weight,int(p[3])-136):0;
-      for(int c=0;c<3;++c)rgb[c]+=p[c]*scale;
-    }
-    return rgb;
-  };
-  if(diffuse)return sample(8);
-  const auto low=sample(int(lod)),high=sample(std::min(int(lod)+1,7));std::array<double,3> rgb;
-  for(int c=0;c<3;++c)rgb[c]=std::lerp(low[c],high[c],lod-int(lod));return rgb;
+  if(diffuse){
+    const double sky=std::clamp(y*.5+.5,0.0,1.0);
+    return {.28+.42*sky,.29+.44*sky,.32+.46*sky};
+  }
+  return env_studio_reflection(x,y,z,rough);
 }
 inline std::array<double,3> shade_material_environment(const MaterialValues &material,double nx,double ny,double nz,double ao){
   const double metal=std::clamp(double(material.metallic),0.0,1.0),rough=std::clamp(double(material.roughness),0.0,1.0),nv=std::max(0.0,nz);

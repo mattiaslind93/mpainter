@@ -1,0 +1,105 @@
+{
+    "all_maps_bit_exact_against_actual_VRAM": true,
+    "analytical_checks_per_map": 27,
+    "compared_maps": [
+        {
+            "compared_bytes": 268435456,
+            "pixel_hash": "722c91cde39d0383",
+            "role": 0,
+            "udim": 1001
+        },
+        {
+            "compared_bytes": 268435456,
+            "pixel_hash": "722c91cde39d0383",
+            "role": 0,
+            "udim": 1002
+        },
+        {
+            "compared_bytes": 268435456,
+            "pixel_hash": "722c91cde39d0383",
+            "role": 1,
+            "udim": 1001
+        },
+        {
+            "compared_bytes": 268435456,
+            "pixel_hash": "722c91cde39d0383",
+            "role": 1,
+            "udim": 1002
+        },
+        {
+            "compared_bytes": 268435456,
+            "pixel_hash": "f5cafe2e639d0383",
+            "role": 2,
+            "udim": 1001
+        },
+        {
+            "compared_bytes": 268435456,
+            "pixel_hash": "f5cafe2e639d0383",
+            "role": 2,
+            "udim": 1002
+        },
+        {
+            "compared_bytes": 268435456,
+            "pixel_hash": "34e915c0e39d0383",
+            "role": 3,
+            "udim": 1001
+        },
+        {
+            "compared_bytes": 268435456,
+            "pixel_hash": "34e915c0e39d0383",
+            "role": 3,
+            "udim": 1002
+        },
+        {
+            "compared_bytes": 268435456,
+            "pixel_hash": "f5cafe2e639d0383",
+            "role": 4,
+            "udim": 1001
+        },
+        {
+            "compared_bytes": 268435456,
+            "pixel_hash": "f5cafe2e639d0383",
+            "role": 4,
+            "udim": 1002
+        },
+        {
+            "compared_bytes": 268435456,
+            "pixel_hash": "0cf3e94c31a8a40a",
+            "role": 5,
+            "udim": 1001
+        },
+        {
+            "compared_bytes": 268435456,
+            "pixel_hash": "9d8a3c4709ecc08b",
+            "role": 5,
+            "udim": 1002
+        },
+        {
+            "compared_bytes": 268435456,
+            "pixel_hash": "34e915c0e39d0383",
+            "role": 6,
+            "udim": 1001
+        },
+        {
+            "compared_bytes": 268435456,
+            "pixel_hash": "34e915c0e39d0383",
+            "role": 6,
+            "udim": 1002
+        }
+    ],
+    "completed": 14,
+    "disk_cache_failure_completed": 14,
+    "elapsed_ms": 126528,
+    "exact_undo_redo": true,
+    "native_auto_bake": true,
+    "native_mesh_bake_job": true,
+    "peak_rss_bytes": 8718749696,
+    "per_map_gpu_with_CPU_fallback": true,
+    "renderer": "NVIDIA GeForce RTX 3090/PCIe/SSE2",
+    "resolution": 4096,
+    "retained_bytes": 3758096384,
+    "roles": 7,
+    "simulated_available_vram_bytes": 16777216,
+    "udim_tiles": 2,
+    "visible_windows": 0
+}

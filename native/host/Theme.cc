@@ -8,10 +8,10 @@ QPalette palette()
   const auto set = [&](QPalette::ColorRole role, const char *token) { p.setColor(role, QColor(token)); };
   set(QPalette::Window, Surface); set(QPalette::WindowText, Text);
   set(QPalette::Base, Canvas); set(QPalette::AlternateBase, Surface);
-  set(QPalette::Text, Text); set(QPalette::Button, Raised); set(QPalette::ButtonText, Text);
+  set(QPalette::Text, Text); set(QPalette::Button, Raised); set(QPalette::ButtonText, ButtonText);
   set(QPalette::BrightText, Heading); set(QPalette::Highlight, Selection);
   set(QPalette::HighlightedText, Heading); set(QPalette::Link, Accent);
-  set(QPalette::LinkVisited, Accent); set(QPalette::ToolTipBase, Canvas);
+  set(QPalette::LinkVisited, Accent); set(QPalette::ToolTipBase, Menu);
   set(QPalette::ToolTipText, Heading); set(QPalette::PlaceholderText, Muted);
   set(QPalette::Light, Border); set(QPalette::Midlight, Hover);
   set(QPalette::Mid, Border); set(QPalette::Dark, Canvas); set(QPalette::Shadow, Separator);
@@ -36,9 +36,9 @@ void apply(QApplication &app)
   QDockWidget::title { background: @Surface@; color: @Heading@; padding: 6px; }
   QToolBar { background: @Surface@; border: 0; spacing: 3px; }
   QToolBar::separator { background: @Border@; width: 1px; margin: 4px; }
-  QGroupBox { border: 1px solid @Border@; margin-top: 12px; padding-top: 8px; }
+  QGroupBox { background: @Panel@; border: 1px solid @Border@; margin-top: 12px; padding-top: 8px; }
   QGroupBox::title { color: @Heading@; subcontrol-origin: margin; left: 8px; padding: 0 4px; }
-  QPushButton { background: @Raised@; color: @Text@; border: 1px solid @Border@;
+  QPushButton { background: @Raised@; color: @ButtonText@; border: 1px solid @Border@;
     border-radius: 2px; padding: 4px 10px; min-height: 20px; }
   QPushButton:hover { background: @Hover@; }
   QPushButton:pressed, QPushButton:checked { background: @Selection@; color: @Heading@; }
@@ -48,7 +48,7 @@ void apply(QApplication &app)
     color: @Text@; border: 1px solid @Border@; selection-background-color: @Selection@;
     selection-color: @Heading@; outline: none; }
   QAbstractItemView::item:hover { background: @Hover@; }
-  QAbstractItemView::item:selected { background: @Selection@; color: @Heading@; }
+  QAbstractItemView::item:selected { background: @ListSelection@; color: @Heading@; }
   QHeaderView, QHeaderView::section, QTableCornerButton::section {
     background: @Surface@; color: @Heading@; border: 0; padding: 4px;
   }
@@ -63,7 +63,7 @@ void apply(QApplication &app)
   /* Keep Fusion's check marks and radio dots; their colors inherit the palette. */
   QProgressBar { background: @Canvas@; color: @Heading@; border: 1px solid @Border@; text-align: center; }
   QProgressBar::chunk { background: @Selection@; }
-  QScrollBar::handle:hover { background: @Accent@; }
+  QScrollBar::handle:hover { background: @ScrollHover@; }
   QLabel#projectSection { color: @Heading@; font-weight: 600; }
   QLabel#projectValidationError { color: @Error@; }
   QLabel#uvWorkflowDescription { color: @Muted@; }
@@ -72,7 +72,8 @@ void apply(QApplication &app)
   QWidget#materialProperties, QScrollArea#propertiesScroll {
     background: @Canvas@; color: @Heading@;
   }
-  QWidget#contextToolbar, QWidget#shelfFilter { background: @Surface@; }
+  QWidget#materialProperties, QScrollArea#propertiesScroll { background: @Surface@; }
+  QWidget#contextToolbar, QWidget#shelfFilter { background: @Header@; }
   QWidget#dockHeader { background: @Surface@; border-bottom: 1px solid @Separator@; }
   QLabel#dockTitle { color: @Heading@; font-size: 11px; font-weight: 600; }
   QLabel#sectionTitle { color: @Heading@; font-weight: 600; }
@@ -80,7 +81,7 @@ void apply(QApplication &app)
   QLabel:disabled { color: @Muted@; }
   QSplitter::handle { background: @Separator@; }
   QSplitter::handle:hover { background: @Accent@; }
-  QToolButton { border: 1px solid transparent; border-radius: 0; color: @Text@; }
+  QToolButton { background: @ToolbarItem@; border: 1px solid transparent; border-radius: 0; color: @Text@; }
   QToolButton:hover { background: @Hover@; border-color: @Hover@; }
   QToolButton:checked { background: @Selection@; color: @Heading@; border-color: @Accent@; }
   QWidget#assetShelf, QWidget#textureSetPanel { background: @Canvas@; }
@@ -101,14 +102,14 @@ void apply(QApplication &app)
   QDoubleSpinBox::up-button, QDoubleSpinBox::down-button { width: 12px; border: none; }
   QTabWidget::pane { background: @Surface@; border: none; border-top: 1px solid @Separator@; }
   QTabBar::tab {
-    color: @Text@; background: @Surface@; border: 1px solid transparent;
+    color: @TabText@; background: @Tab@; border: 1px solid transparent;
     padding: 0 7px; height: 32px; font-size: 10px; font-weight: 600;
   }
   QTabBar::tab:selected { background: @Surface@; border-top-color: @Accent@; color: @Heading@; }
   QTabBar::tab:hover { background: @Hover@; }
   QListWidget { background: @Canvas@; color: @Heading@; border: none; outline: none; }
   QListWidget::item { min-height: 22px; border: 1px solid transparent; padding: 0 5px; }
-  QListWidget::item:selected { background: @Surface@; border-color: @Accent@; color: @Heading@; }
+  QListWidget::item:selected { background: @ListSelection@; border-color: @Accent@; color: @Heading@; }
   QListWidget::item:hover { background: @Hover@; }
   QListWidget#layerStack::item { padding: 0; }
   QListWidget#shelfCategories { border-right: 1px solid @Separator@; font-size: 10px; }
@@ -119,23 +120,23 @@ void apply(QApplication &app)
     width: 7px; height: 7px; margin: -3px 0; border-radius: 4px; background: @Text@;
   }
   QSlider::handle:horizontal:disabled { background: @Muted@; }
-  QSlider::sub-page:horizontal { background: @Text@; }
+  QSlider::sub-page:horizontal { background: @Accent@; }
   QSlider::sub-page:horizontal:disabled { background: @Hover@; }
   QScrollBar:vertical { background: @Surface@; width: 8px; margin: 0; }
   QScrollBar:horizontal { background: @Surface@; height: 8px; margin: 0; }
-  QScrollBar::handle { background: @Hover@; min-height: 20px; min-width: 20px; }
+  QScrollBar::handle { background: @ScrollHandle@; min-height: 20px; min-width: 20px; }
   QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }
   QScrollBar::add-page, QScrollBar::sub-page { background: transparent; }
-  QStatusBar { background: @Surface@; color: @Text@; border-top: 1px solid @Separator@; }
+  QStatusBar { background: @Status@; color: @Text@; border-top: 1px solid @Separator@; }
   QStatusBar::item { border: none; }
-  QMenu { background: @Canvas@; color: @Heading@; border: 1px solid @Hover@; }
+  QMenu { background: @Menu@; color: @Heading@; border: 1px solid @Hover@; }
   QMenu::item { padding: 6px 24px; }
   QMenu::item:selected { background: @Selection@; }
   QMenu::separator { height: 1px; background: @Hover@; margin: 4px; }
-  QMenuBar { background: @Canvas@; color: @Heading@; border-bottom: 1px solid @Separator@; }
+  QMenuBar { background: @MenuBar@; color: @Heading@; border-bottom: 1px solid @Separator@; }
   QMenuBar::item { padding: 4px 8px; background: transparent; }
   QMenuBar::item:selected { background: @Selection@; }
-  QToolTip { background: @Canvas@; color: @Heading@; border: 1px solid @Hover@; }
+  QToolTip { background: @Menu@; color: @Heading@; border: 1px solid @Hover@; }
   QCheckBox[fillChannelToggle="true"] {
     spacing: 0; padding: 3px 6px; color: @Text@; background: @Hover@; border: 1px solid @Hover@;
   }
@@ -152,6 +153,10 @@ void apply(QApplication &app)
   QDoubleSpinBox#materialDisplacement, QDoubleSpinBox#materialAmbientOcclusion, QDoubleSpinBox[userChannelValue="true"] {
     background: transparent; border: none; padding: 0; min-height: 14px;
   }
+  QLineEdit, QTextEdit, QPlainTextEdit { background: @Input@; }
+  QAbstractSpinBox, QDoubleSpinBox { background: @Number@; }
+  QComboBox { background: @Menu@; }
+  QScrollBar::handle:hover { background: @ScrollHover@; }
 )")));
 }
 } // namespace bts::theme

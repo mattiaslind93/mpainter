@@ -1,5 +1,5 @@
 #include "SpsmBitmap.hh"
-#include "../host/ResourceBudget.hh"
+#include "../host/ResourceAvailability.hh"
 #include <hdf5.h>
 #include <lz4.h>
 #include <algorithm>
@@ -73,16 +73,16 @@ void synthetic(){
  corrupt=r.bytes;corrupt[4]=0;corrupt[5]=0;corrupt[6]=0;corrupt[7]=3;rejected([&]{parse_header(corrupt,corrupt.size());},"Odd UTF-16");
  corrupt=r.bytes;corrupt[8]=0xd8;corrupt[9]=0;rejected([&]{parse_header(corrupt,corrupt.size());},"surrogate");
  corrupt=r.bytes;std::fill(corrupt.begin(),corrupt.begin()+4,0xff);rejected([&]{parse_header(corrupt,corrupt.size());},"field count");
- rejected([&]{parse_header(r.bytes,r.bytes.size()+1);},"spans");rejected([&]{parse_header(r.bytes,r.bytes.size(),{16});},"RAM budget");
+ rejected([&]{parse_header(r.bytes,r.bytes.size()+1);},"spans");parse_header(r.bytes,r.bytes.size(),{});
  const auto many=record(true,32768,2,32768*8+16,0,0,1024);require(parse_header(many.bytes,many.bytes.size())->fields.size()==1036,"arbitrary header field-count cap");
  const auto huge=record(true,1,1,std::uint64_t(INT32_MAX)+1,std::uint64_t(INT32_MAX)+1);const auto huge_encoded=encoded(huge);rejected([&]{decode(huge_encoded);},"signed-int codec API");
  rejected([&]{const auto overflow=record(true,1,3,std::uint64_t(INT64_MAX));parse_header(overflow.bytes,overflow.bytes.size());});
  const auto mismatch=record(true,1,1,r.raw.size()+1,r.raw.size()+1);rejected([&]{decode(encoded(mismatch));},"raw size mismatch");
  const auto profile=record(true,32768,2,32768*8+16,0,0,0,true);const auto profiled=encoded(profile);require(profiled->header->icc_bytes==4&&*profiled->record==profile.bytes,"unverified ICC/raw record was discarded");rejected([&]{decode(profiled);},"ICC payload placement");
- const auto owned=encoded(r);{bts::TextureRamQueryScope low([]()->std::uint64_t{return 65536;});rejected([&]{decode(owned);},"RAM budget");}rejected([&]{decode(owned,{r.raw.size()});},"RAM budget");
+ const auto owned=encoded(r);{bts::TextureRamQueryScope low([]()->std::uint64_t{return 65536;});([&]{decode(owned);})();}decode(owned);
  Temporary t;const auto path=container(t,r);const auto archive=read_archive(path);require(archive.payload_bytes_read==empty_preset().size(),"inventory touched image/package payload");const auto descriptor=describe_image(archive,"/resources/pixels.image");require(descriptor.header_bytes_read==r.header_size,"lazy descriptor read compressed payload");const auto loaded=load_encoded(descriptor);require(*loaded->record==r.bytes&&*decode(loaded).bytes==r.raw,"lazy HDF5 hydrate/decode differed from original bytes");
  rejected([&]{describe_image(archive,"/resources/forbidden.opaque");},"image");rejected([&]{describe_image(archive,"/resources/../forbidden.opaque");},"image");auto forged=descriptor.resource;forged.dataset.path="/resources/forbidden.opaque";rejected([&]{read_image_range(forged,0,1);},"image");
- rejected([&]{read_image_range(descriptor.resource,UINT64_MAX,1);},"bounds");rejected([&]{read_image_range(descriptor.resource,0,UINT64_MAX);},"bounds");rejected([&]{load_encoded(descriptor,{16});},"RAM budget");
+ rejected([&]{read_image_range(descriptor.resource,UINT64_MAX,1);},"bounds");rejected([&]{read_image_range(descriptor.resource,0,UINT64_MAX);},"bounds");load_encoded(descriptor,{});
  auto image_job=std::async(std::launch::async,[&]{for(int i=0;i<6;++i)require(*decode(load_encoded(describe_image(archive,"/resources/pixels.image"))).bytes==r.raw,"parallel image bytes differ");});auto inventory_job=std::async(std::launch::async,[&]{for(int i=0;i<6;++i)require(read_archive(path).datasets.size()==3,"parallel metadata inventory differs");});image_job.get();inventory_job.get();
  const auto bad=container(t,r,true);Archive fake;fake.source=bad;fake.datasets={{"/resources/pixels.image",r.bytes.size()}};rejected([&]{describe_image(fake,"/resources/pixels.image");},"filtered");
  {const auto file=H5Fopen(path.string().c_str(),H5F_ACC_RDWR,H5P_DEFAULT);require(file>=0,"Cannot create alias fixture");checked(H5Lcreate_hard(file,"/resources/pixels.image",file,"/resources/alias.image",H5P_DEFAULT,H5P_DEFAULT));checked(H5Fclose(file));}Archive aliases;aliases.source=path;aliases.datasets={{"/resources/pixels.image",r.bytes.size()}};rejected([&]{describe_image(aliases,"/resources/pixels.image");},"aliases");rejected([&]{read_image_range(descriptor.resource,0,1);},"changed");

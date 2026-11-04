@@ -55,10 +55,10 @@ QImage build_thumbnail(const StudioAsset &asset,bool &native_missing){
     if(!extent.isValid()&&encoded.size()>=30&&encoded.startsWith("RIFF")&&encoded.mid(8,8)=="WEBPVP8X"){
       const auto size=[&](int offset){return 1+int(static_cast<unsigned char>(encoded[offset]))+(int(static_cast<unsigned char>(encoded[offset+1]))<<8)+(int(static_cast<unsigned char>(encoded[offset+2]))<<16);};extent=QSize(size(24),size(27));
     }
-    QImage preview;if(extent.isValid()){require_texture_ram(resource_product(resource_product(extent.width(),extent.height()),8),"SPSM shaderball decode");preview=reader.read();}
+    QImage preview;if(extent.isValid()){preview=reader.read();}
     if(preview.isNull()&&extent.isValid()&&!encoded.isEmpty()){
       using Buffer=std::unique_ptr<blender::ImBuf,decltype(&blender::IMB_freeImBuf)>;Buffer native(blender::IMB_load_image_from_memory(reinterpret_cast<const unsigned char *>(encoded.constData()),encoded.size(),blender::ImBufFlags::NoColorspaceConvert|blender::ImBufFlags::AlphaChannelPacked,"SPSM embedded shaderball"),blender::IMB_freeImBuf);
-      if(native&&native->byte_data()&&native->x>0&&native->y>0){require_texture_ram(resource_product(resource_product(native->x,native->y),4),"SPSM shaderball preview");preview=QImage(native->x,native->y,QImage::Format_RGBA8888);for(int y=0;y<native->y;++y)std::copy_n(native->byte_data()+std::size_t(native->y-y-1)*native->x*4,std::size_t(native->x)*4,preview.scanLine(y));}
+      if(native&&native->byte_data()&&native->x>0&&native->y>0){preview=QImage(native->x,native->y,QImage::Format_RGBA8888);for(int y=0;y<native->y;++y)std::copy_n(native->byte_data()+std::size_t(native->y-y-1)*native->x*4,std::size_t(native->x)*4,preview.scanLine(y));}
     }
     if(!preview.isNull()){const auto scaled=preview.scaled(58,58,Qt::KeepAspectRatio,Qt::SmoothTransformation);QPainter painter(&image);painter.drawImage((58-scaled.width())/2,(58-scaled.height())/2,scaled);}
     else{native_missing=is_spmsk_asset(asset)||bool(asset.smart_mask);QPainter painter(&image);painter.setPen(QPen(QColor(bts::theme::Text),2));painter.setBrush(QColor(bts::theme::Border));painter.drawEllipse(QRectF(8,8,42,42));}

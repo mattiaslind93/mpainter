@@ -1,6 +1,6 @@
 #pragma once
 #include "BlendMaterial.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include <QCryptographicHash>
 #include <QBuffer>
 #include <QDataStream>
@@ -59,7 +59,7 @@ class BlendLibraryIndex {
   static QByteArray bytes(QDataStream &in,QIODevice &file)
   {
     quint64 count=0;in>>count;if(in.status()!=QDataStream::Ok||count>quint64(file.bytesAvailable())||count>quint64(std::numeric_limits<qsizetype>::max()))throw Invalid{};
-    require_texture_ram(resource_product(count,4),"Blender library cached metadata");QByteArray value(qsizetype(count),Qt::Uninitialized);if(in.readRawData(value.data(),value.size())!=value.size())throw Invalid{};return value;
+    QByteArray value(qsizetype(count),Qt::Uninitialized);if(in.readRawData(value.data(),value.size())!=value.size())throw Invalid{};return value;
   }
   static QString text(QDataStream &in,QIODevice &file){const auto raw=bytes(in,file);const auto value=QString::fromUtf8(raw);if(value.toUtf8()!=raw||value.contains(QChar::Null))throw Invalid{};return value;}
   static std::optional<Entries> load(const QString &cache,const Stamp &stamp,std::stop_token stop)
@@ -67,7 +67,7 @@ class BlendLibraryIndex {
     QFile file(cache);if(!file.open(QIODevice::ReadOnly))return {};
     try{
       if(file.size()<32||quint64(file.size())>std::numeric_limits<std::uint64_t>::max()/4)throw Invalid{};
-      require_texture_ram(resource_product(file.size(),4),"Blender library cached index parse");
+
       const auto encoded=file.readAll();if(encoded.size()<32||encoded.size()!=file.size())throw Invalid{};
       const QByteArrayView body(encoded.constData(),encoded.size()-32);
       if(QCryptographicHash::hash(body,QCryptographicHash::Sha256)!=QByteArrayView(encoded).last(32))throw Invalid{};
@@ -78,9 +78,9 @@ class BlendLibraryIndex {
       // Every entry has at least four text lengths, a boolean, two dimensions,
       // a tag count and pixel length; reject impossible counts before allocation.
       if(in.status()!=QDataStream::Ok||count>quint64(input.bytesAvailable())/57||count>Entries{}.max_size())throw Invalid{};
-      require_texture_ram(resource_product(count,sizeof(BlendMaterialEntry)),"Blender library cached entries");Entries result;result.reserve(count);
+      Entries result;result.reserve(count);
       for(quint64 i=0;i<count;++i){check(stop);BlendMaterialEntry entry;entry.name=text(in,input);quint8 marked=0;in>>marked;if(marked>1||entry.name.isEmpty()||entry.name.toUtf8().size()>255)throw Invalid{};entry.marked_asset=marked;
-        entry.catalog_id=text(in,input);entry.catalog_name=text(in,input);entry.description=text(in,input);quint64 tags=0;in>>tags;if(tags>quint64(input.bytesAvailable())/8)throw Invalid{};require_texture_ram(resource_product(tags,sizeof(QString)),"Blender library cached tags");
+        entry.catalog_id=text(in,input);entry.catalog_name=text(in,input);entry.description=text(in,input);quint64 tags=0;in>>tags;if(tags>quint64(input.bytesAvailable())/8)throw Invalid{};
         for(quint64 t=0;t<tags;++t)entry.tags.append(text(in,input));quint32 width=0,height=0;in>>width>>height;const auto pixels=bytes(in,input);
         if(width>quint32(std::numeric_limits<int>::max()/4)||height>quint32(std::numeric_limits<int>::max())||(width==0)!=(height==0)||quint64(pixels.size())!=resource_product(resource_product(width,height),4))throw Invalid{};
         if(width)entry.preview=QImage(reinterpret_cast<const uchar *>(pixels.constData()),width,height,width*4,QImage::Format_RGBA8888).copy();result.push_back(std::move(entry));
@@ -95,7 +95,7 @@ class BlendLibraryIndex {
     if(!QDir().mkpath(QFileInfo(cache).absolutePath()))return;QSaveFile file(cache);if(!file.open(QIODevice::WriteOnly))return;
     std::uint64_t memory=resource_sum(256,resource_product(stamp.path.size(),4));
     for(const auto &e:entries){memory=resource_sum(memory,resource_sum(64,e.preview.sizeInBytes()));for(const auto &t:{e.name,e.catalog_id,e.catalog_name,e.description})memory=resource_sum(memory,resource_product(t.size(),4));for(const auto &t:e.tags)memory=resource_sum(memory,resource_sum(8,resource_product(t.size(),4)));}
-    require_texture_ram(resource_product(memory,2),"Blender library index encoding");
+
     try{QByteArray encoded;QBuffer buffer(&encoded);buffer.open(QIODevice::WriteOnly);QDataStream out(&buffer);out.setVersion(QDataStream::Qt_6_8);out<<quint32(0x42545349)<<quint32(2);text(out,"Blender-5.2-Qt-6.8-metadata-v2");text(out,stamp.path);out<<stamp.size<<stamp.device<<stamp.inode<<stamp.modified<<stamp.changed<<stamp.modified_ns<<stamp.changed_ns<<quint64(entries.size());
       for(const auto &entry:entries){check(stop);text(out,entry.name);out<<quint8(entry.marked_asset);text(out,entry.catalog_id);text(out,entry.catalog_name);text(out,entry.description);out<<quint64(entry.tags.size());for(const auto &tag:entry.tags)text(out,tag);
         const auto image=entry.preview;out<<quint32(image.width())<<quint32(image.height());bytes(out,QByteArrayView(reinterpret_cast<const char *>(image.constBits()),image.sizeInBytes()));}

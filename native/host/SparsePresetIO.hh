@@ -11,7 +11,7 @@ inline void write_preset_plane(QDataStream &stream,const TilePaintPixels &source
  stream<<quint32(source.tiles().size());
  for(const auto &[tile,pixels]:source.tiles()){
   std::uint64_t count=0;pixels.visit_pages([&](int,std::uint32_t,std::span<const PaintPixels::Pixel>){count=resource_sum(count,1);});if(count>std::numeric_limits<quint32>::max())throw std::length_error("Sparse preset page count exceeds its 32-bit stream representation");
-  const auto size=resource_product(count,64*64*sizeof(PaintPixels::Pixel));if(decoded>budget||size>budget-decoded)throw std::length_error("Smart-material pixels exceed the safe memory budget");decoded+=size;
+  const auto size=resource_product(count,64*64*sizeof(PaintPixels::Pixel));decoded+=size;
   stream<<qint32(tile)<<qint32(pixels.resolution())<<quint32(count);
   pixels.visit_pages([&](int channel,std::uint32_t key,std::span<const PaintPixels::Pixel> page){stream<<quint8(channel)<<quint32(key);
 #if Q_BYTE_ORDER == Q_LITTLE_ENDIAN

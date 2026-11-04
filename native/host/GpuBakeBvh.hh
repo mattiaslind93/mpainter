@@ -1,5 +1,5 @@
 #pragma once
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include <array>
 #include <algorithm>
 #include <cmath>
@@ -19,7 +19,7 @@ struct alignas(16) Node {
 static_assert(sizeof(Node)==32&&offsetof(Node,escape)==12&&offsetof(Node,triangle)==28);
 inline std::uint64_t node_count(std::uint64_t triangles){return triangles?resource_product(triangles,2)-1:0;}
 struct Plan {std::size_t batch_points=0;std::uint64_t cpu=0,gpu=0;};
-inline Plan plan(std::uint64_t triangles,std::uint64_t points,int rays,std::uint64_t ssbo,int groups,const ResourceBudget &budget){
+inline Plan plan(std::uint64_t triangles,std::uint64_t points,int rays,std::uint64_t ssbo,int groups,const ResourceAvailability &budget){
  if(!triangles||!points||rays<1)throw std::invalid_argument("Invalid GPU bake batch dimensions");
  const auto nodes=node_count(triangles),tri_bytes=resource_product(triangles,48),node_bytes=resource_product(nodes,sizeof(Node));
  if(!ssbo||groups<1)throw std::runtime_error("GPU bake requires reported SSBO and compute dispatch limits");
@@ -32,12 +32,12 @@ inline Plan plan(std::uint64_t triangles,std::uint64_t points,int rays,std::uint
  const auto ram=budget.ram()>fixed_cpu?budget.ram()-fixed_cpu:0;
  const auto vram=budget.vram()>fixed_gpu?budget.vram()-fixed_gpu:0;
  // A reusable dispatch granularity, never a limit on the complete bake.
- auto batch=std::min<std::uint64_t>({points,1024,ssbo/resource_product(std::uint64_t(rays),32),ram/point_cpu,
+ auto batch=std::min<std::uint64_t>({points,ssbo/resource_product(std::uint64_t(rays),32),ram/point_cpu,
    resource_product(std::uint64_t(groups),64)/std::uint64_t(rays),std::uint64_t(std::numeric_limits<int>::max())/std::uint64_t(rays)});
  if(budget.vram_known)batch=std::min(batch,vram/ray_bytes);
  const auto cpu=resource_sum(fixed_cpu,resource_product(std::max<std::uint64_t>(batch,1),point_cpu));
  const auto gpu=resource_sum(fixed_gpu,resource_product(std::max<std::uint64_t>(batch,1),ray_bytes));
- budget.require(cpu,gpu,"GPU bake BVH and reusable ray batch");
+
  if(!batch)throw std::length_error("GPU bake cannot fit one point in the driver SSBO/dispatch representation");
  return {std::size_t(batch),cpu,gpu};
 }

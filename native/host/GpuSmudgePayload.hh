@@ -35,8 +35,8 @@ class GpuSmudgePayload {
  static std::uint64_t bytes(const Texture &image){return image?std::uint64_t(blender::GPU_texture_width(image.get()))*blender::GPU_texture_height(image.get())*16:0;}
  std::uint64_t owned()const{std::uint64_t result=0;for(const auto &[key,entry]:entries_){result+=bytes(entry->contact);for(const auto &image:entry->channels)result+=bytes(image);for(const auto &g:entry->gathering)if(g)result+=bytes(g->atlas)+bytes(g->table);}return result;}
  void reserve(std::uint64_t requested){
-  const auto free=texture_free_vram.load(),budget=free?(owned()+free)/8:texture_available_ram_bytes()/32;
-  while(owned()+requested>budget){auto oldest=entries_.end();for(auto i=entries_.begin();i!=entries_.end();++i)if(i->second.use_count()==1&&(oldest==entries_.end()||i->second->used<oldest->second->used))oldest=i;if(oldest==entries_.end())throw std::length_error("Clone/Smudge GPU capture exceeds currently available memory");entries_.erase(oldest);}
+  const auto free=texture_free_vram.load(),budget=resource_sum(owned(),(texture_vram_query_valid.load()||free!=0)?free:texture_available_ram_bytes());
+  while(owned()+requested>budget){auto oldest=entries_.end();for(auto i=entries_.begin();i!=entries_.end();++i)if(i->second.use_count()==1&&(oldest==entries_.end()||i->second->used<oldest->second->used))oldest=i;if(oldest==entries_.end())break;entries_.erase(oldest);}
  }
  Texture image(const char *label,int width,int height,const float *data=nullptr){using namespace blender;reserve(std::uint64_t(width)*height*16);Texture result(GPU_texture_create_2d(label,width,height,1,gpu::TextureFormat::SFLOAT_32_32_32_32,GPU_TEXTURE_USAGE_GENERAL,data),GPU_texture_free);if(!result)throw std::bad_alloc();return result;}
  static blender::gpu::shader::ShaderCreateInfo program_info(int kind){using namespace blender;using namespace gpu::shader;ShaderCreateInfo info("pyGPU_Shader");info.local_group_size(16,16).image(0,gpu::TextureFormat::SFLOAT_32_32_32_32,Qualifier::write,ImageReadWriteType::image2D,"result_img");

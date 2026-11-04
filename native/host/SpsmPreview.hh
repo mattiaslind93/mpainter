@@ -1,6 +1,6 @@
 #pragma once
 #include "../spsm/SpsmReader.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include <QByteArray>
 #include <QTemporaryFile>
 #include <QString>
@@ -14,7 +14,7 @@ class Reader {
  std::uint32_t integer(){if(bytes.size()-position<4)throw spsm::Error("Truncated SPSM preview integer");std::uint32_t result=0;for(int i=0;i<4;++i)result=(result<<8)|bytes[position++];return result;}
  std::uint8_t byte(){if(position==bytes.size())throw spsm::Error("Truncated SPSM preview flag");return bytes[position++];}
  std::span<const std::uint8_t> data(){const auto size=integer();if(size==0xffffffffu)return {};if(size>bytes.size()-position)throw spsm::Error("SPSM preview span crosses metadata boundary");auto result=bytes.subspan(position,size);position+=size;return result;}
- QString string(){const auto value=data();if(value.size()%2)throw spsm::Error("Invalid SPSM preview string");require_texture_ram(resource_product(value.size(),2),"SPSM preview label");QString result;result.reserve(qsizetype(value.size()/2));for(std::size_t i=0;i<value.size();i+=2)result+=QChar(std::uint16_t(value[i])<<8|value[i+1]);return result;}
+ QString string(){const auto value=data();if(value.size()%2)throw spsm::Error("Invalid SPSM preview string");QString result;result.reserve(qsizetype(value.size()/2));for(std::size_t i=0;i<value.size();i+=2)result+=QChar(std::uint16_t(value[i])<<8|value[i+1]);return result;}
 };
 inline QByteArray encoded_preview(std::span<const std::uint8_t> bytes){
  Reader metadata(bytes);const auto count=metadata.integer();if(count>bytes.size()/9)throw spsm::Error("Invalid SPSM preview metadata count");
@@ -24,7 +24,7 @@ inline QByteArray encoded_preview(std::span<const std::uint8_t> bytes){
   const auto value=metadata.data();if(name!="previews"||type!=12)continue;
   Reader previews(value);const auto entries=previews.integer();if(entries>value.size()/8)throw spsm::Error("Invalid SPSM preview count");
   for(std::uint32_t entry=0;entry<entries;++entry){const auto label=previews.string();const auto image=previews.data();if(label=="__DEFAULT_PREVIEW__"){
-   require_texture_ram(resource_product(image.size(),2),"SPSM encoded preview");return QByteArray(reinterpret_cast<const char *>(image.data()),qsizetype(image.size()));
+   return QByteArray(reinterpret_cast<const char *>(image.data()),qsizetype(image.size()));
   }}return {};
  }return {};
 }

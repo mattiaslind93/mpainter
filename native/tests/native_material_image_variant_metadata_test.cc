@@ -26,7 +26,7 @@ int main(int argc,char **argv){
   auto many=b;for(int i=0;i<4097;++i)many.groups.push_back({i+1,"Nested"});require(read_native_image_binding(native_image_binding_json(many))==many,"Large native path hit an arbitrary count cap");
   auto ops=p;for(int i=0;i<65;++i)ops.operations.push_back(p.operations.front());require(read_native_image_variant_provenance(native_image_variant_provenance_json(ops)).operations.size()==66,"Operations hit arbitrary count cap");
   const auto binding_json=native_image_binding_json(b);
-  {TextureRamQueryScope low([]()->std::uint64_t{return 0;});rejects([&]{read_native_image_binding(binding_json);});rejects([&]{read_native_material_bundle(encoded);});}
+  {TextureRamQueryScope low([]()->std::uint64_t{return 0;});([&]{read_native_image_binding(binding_json);})();([&]{read_native_material_bundle(encoded);})();}
   auto truncated=encoded;truncated.chop(1);rejects([&]{read_native_material_bundle(truncated);});auto overflow=encoded;char length[8];qToBigEndian<quint64>(~quint64(0),length);std::copy_n(length,8,overflow.data()+8);rejects([&]{read_native_material_bundle(overflow);});
   std::cout<<"NATIVE_IMAGE_VARIANT_METADATA_PASS\n";return 0;
  }catch(const std::exception &e){std::cerr<<e.what()<<'\n';return 1;}

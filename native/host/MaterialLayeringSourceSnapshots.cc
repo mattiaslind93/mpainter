@@ -234,7 +234,7 @@ void pack_material_layer_source_bindings(bke::blendfile::PartialWriteContext &co
  for(auto *alias:aliases)context.id_delete(alias);
  if(!context.is_valid())throw std::runtime_error("Reusable source save snapshot retains invalid ID references");
  const auto json=QJsonDocument(QJsonObject{{"version",representation_version(rows)},{"bindings",rows}}).toJson(QJsonDocument::Compact);
- if(json.size()>std::numeric_limits<decltype(IDProperty::len)>::max()-1)throw std::length_error("Reusable source metadata exceeds Blender IDProperty storage");require_texture_ram(resource_sum(std::uint64_t(json.size()),1),"Reusable source metadata");
+ if(json.size()>std::numeric_limits<decltype(IDProperty::len)>::max()-1)throw std::length_error("Reusable source metadata exceeds Blender IDProperty storage");
  IDP_ReplaceInGroup(IDP_EnsureProperties(&scene.id),IDP_NewString(json.constData(),"bts_material_layer_sources"));
 }
 void prune_unused_material_resource_copies(bke::blendfile::PartialWriteContext &context,const ProjectResourceImages &resources){
@@ -252,7 +252,7 @@ bool validate_packed_material_layer_sources(Main &main,const Scene &scene,const 
  const auto *root=scene.id.properties;const auto *property=root?IDP_GetPropertyFromGroup(root,"bts_material_layer_sources"):nullptr;if(!property)return false;
  for(Material &material:main.materials)if(material.nodetree)BKE_ntree_update_after_single_tree_change(main,*material.nodetree);
  if(property->type!=IDP_STRING||property->len<1||IDP_string_get(property)[property->len-1]!=0)throw std::invalid_argument("Invalid reusable source persistence metadata");
- require_texture_ram(resource_product(std::uint64_t(property->len-1),8),"Reusable source metadata decode");QJsonParseError error;const auto saved=QJsonDocument::fromJson(QByteArray::fromRawData(IDP_string_get(property),property->len-1),&error);if(error.error!=QJsonParseError::NoError||!saved.isObject())throw std::invalid_argument("Invalid reusable source persistence JSON");QJsonArray rows;
+ QJsonParseError error;const auto saved=QJsonDocument::fromJson(QByteArray::fromRawData(IDP_string_get(property),property->len-1),&error);if(error.error!=QJsonParseError::NoError||!saved.isObject())throw std::invalid_argument("Invalid reusable source persistence JSON");QJsonArray rows;
  auto allowed=manifest_slots(main,scene,resources);std::set<ID *> carriers;std::map<Image *,CarrierDescriptor> descriptors;
  for(const auto &set:document.texture_sets())if(set.material_layering.enabled)for(int input=0;input<4;++input)for(int channel=0;channel<6;++channel)if(const auto &source=set.material_layering.materials[input].textures[channel]){
   require_source_set(set);source->validate();const auto &mapping=set.material_layering.materials[input];require_material_layer_udim_coverage(mapping,set.tiles);

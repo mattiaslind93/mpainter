@@ -23,7 +23,6 @@ struct SpsmActionBinding {
   bool lowered = false;
 };
 struct SpsmImportOptions {
-  std::uint64_t memory_budget_bytes = 0; // Also bounded by current ResourceBudget RAM.
   // Explicit source policy supplied by the host, normally configured OCIO
   // Linear Rec.709 -> scene-linear ACEScg. No callback means color is skipped;
   // scalar data channels do not pass through this conversion.

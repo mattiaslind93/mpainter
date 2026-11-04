@@ -19,11 +19,11 @@ class GpuFilledPath {
  static std::uint64_t row_bytes(std::uint64_t rows){const auto width=std::min<std::uint64_t>(1024,std::max<std::uint64_t>(1,rows));return width*std::max<std::uint64_t>(1,(rows+width-1)/width)*16;}
  std::uint64_t owned()const{std::uint64_t bytes=0;for(const auto &[key,entry]:geometry_)bytes+=entry.bytes;for(const auto &[key,entry]:grids_)bytes+=entry.bytes;return bytes;}
  void reserve(std::uint64_t requested,const FilledPathGeometry *geometry,const FilledPathGrid *grid){
-  const auto free=texture_free_vram.load(),budget=free?(owned()+free)/16:texture_available_ram_bytes()/32;
+  const auto free=texture_free_vram.load(),budget=resource_sum(owned(),(texture_vram_query_valid.load()||free!=0)?free:texture_available_ram_bytes());
   while(owned()+requested>budget){
    auto g=geometry_.end();for(auto i=geometry_.begin();i!=geometry_.end();++i)if(i->first!=geometry&&(g==geometry_.end()||i->second.used<g->second.used))g=i;
    auto p=grids_.end();for(auto i=grids_.begin();i!=grids_.end();++i)if(i->first!=grid&&(p==grids_.end()||i->second.used<p->second.used))p=i;
-   if(g==geometry_.end()&&p==grids_.end())throw std::length_error("Filled-path GPU metadata needs "+std::to_string((owned()+requested+1048575)/1048576)+" MiB; current available metadata budget "+std::to_string((budget+1048575)/1048576)+" MiB");
+   if(g==geometry_.end()&&p==grids_.end())break;
    if(p==grids_.end()||(g!=geometry_.end()&&g->second.used<p->second.used))geometry_.erase(g);else grids_.erase(p);
   }
  }

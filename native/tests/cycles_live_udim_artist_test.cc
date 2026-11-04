@@ -94,7 +94,7 @@ class CyclesUdimArtist final:public QObject {
  bool full_tiles_ready(const QString &name){
   if(!observer||full_hashes.contains(name))return true;
   if(!diagnostic_readback){
-   require_texture_ram(std::uint64_t(resolution)*resolution*16*4+16ULL*1024*1024,"Controlled diagnostic full tile hashes");
+
    diagnostic_stage=name;diagnostic_targets={};diagnostic_readback=std::make_unique<GpuProjectReadback>();
    host->with_gpu([&]{for(int tile:{1001,1002})for(int channel:{0,2}){auto *native=image(channel);const auto gpu=blender::BKE_image_gpu_override_texture(native);blender::ImageGpuTileRegion region;require(gpu.texture&&*gpu.texture&&blender::BKE_image_gpu_override_tile_region(native,tile,region),"Missing real diagnostic GPU tile region");require(region.width==resolution&&region.height==resolution,"Wrong full hash GPU tile extent");
     diagnostic_readback->submit(channel,tile,*gpu.texture,region.x,region.y,region.layer,region.width,region.height);

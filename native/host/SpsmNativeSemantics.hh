@@ -61,7 +61,7 @@ class Lowerer {
  std::optional<double> number(std::optional<NodeId> id)const{if(!id)return {};const auto &v=node(*id).value;if(const auto x=std::get_if<spsm::FloatValues>(&v);x&&x->count==1)return x->values[0];if(const auto x=std::get_if<spsm::IntValues>(&v);x&&x->count==1)return x->values[0];if(const auto x=std::get_if<std::uint64_t>(&v))return double(*x);if(const auto x=std::get_if<std::int64_t>(&v))return double(*x);if(const auto x=std::get_if<bool>(&v))return double(*x);return {};}
  std::uint64_t mask(std::optional<NodeId> id,std::uint64_t fallback=0)const{if(!id)return fallback;const auto &v=node(*id).value;if(const auto x=std::get_if<std::uint64_t>(&v))return *x;if(const auto x=std::get_if<std::int64_t>(&v);x&&*x>=0)return *x;const auto x=number(id);return x&&*x>=0&&*x<18446744073709551616.?std::uint64_t(*x):fallback;}
  bool enabled(std::optional<NodeId> id)const{if(id)if(const auto b=std::get_if<bool>(&node(*id).value))return *b;return true;}
- void note(NodeId source,SpsmDiagnosticKind kind,std::string_view code,std::string_view detail){require_texture_ram(resource_product(result.diagnostics.size()+1,sizeof(SpsmImportDiagnostic)*2),"SPSM semantic diagnostics");result.diagnostics.push_back({*result.source->primary_preset,source,kind,code,detail});if(kind!=SpsmDiagnosticKind::SourceMetadata)result.partial=true;}
+ void note(NodeId source,SpsmDiagnosticKind kind,std::string_view code,std::string_view detail){result.diagnostics.push_back({*result.source->primary_preset,source,kind,code,detail});if(kind!=SpsmDiagnosticKind::SourceMetadata)result.partial=true;}
  void lowered(NodeId source){for(auto &binding:result.actions)if(binding.source==source)binding.lowered=true;}
  static std::string key(std::string_view value){std::string r;for(unsigned char c:value)if(std::isalnum(c))r+=char(std::tolower(c));return r;}
  std::map<std::string,double> tweaks(const sem::Procedural &proc){std::map<std::string,double> result;
@@ -185,7 +185,7 @@ class Lowerer {
   else if(source.kind==sem::Source::Kind::Bitmap&&source.bitmap){const auto uri=string(field(*source.bitmap,"urlToBitmapRes"));e.kind=MaskEffectKind::Generator;e.map_filter=1;e.optional_inputs=true;
    if(uri=="resourcealias:AmbientOcclusion")e.generator=3;else if(uri=="resourcealias:Curvature")e.generator=2;else if(uri=="resourcealias:Position")e.generator=1;else if(uri=="resourcealias:NormalWorldSpace")e.generator=6;else if(uri=="resourcealias:Thickness")e.generator=4;else return false;e.name=uri;note(source.source,SpsmDiagnosticKind::Assumption,"native-meshmap-alias","Optional native mesh-map alias uses the destination baked map when present; before baking this subaction contributes no generated value and authored base Fill remains retained");
   }else return false;
-  require_texture_ram(resource_product(out.mask->effects.size()+1,sizeof(MaskEffect)),"Native SPSM mask effects");out.mask->effects.push_back(std::move(e));return true;
+  out.mask->effects.push_back(std::move(e));return true;
  }
  void actions(const std::vector<std::size_t> &indices,TextureLayer &out,bool is_mask,bool &initial){
   struct Pending{std::size_t index;std::array<float,6> opacity{1,1,1,1,1,1};};std::vector<Pending> todo;for(auto it=indices.rbegin();it!=indices.rend();++it)todo.push_back({*it});

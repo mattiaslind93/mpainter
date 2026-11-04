@@ -366,34 +366,43 @@ struct BlenderHost::Impl {
 # Blender starts without its own window; Qt supplies a real graphical viewport.
 _cycles.init(os.path.dirname(cycles.__file__), os.path.dirname(os.path.abspath(bpy.utils.user_resource('CONFIG', path=''))), False)
 p = bpy.context.preferences.addons['cycles'].preferences
-device_error = ''
-try:
-    p.compute_device_type = 'CUDA'
-    devices = [d for d in p.get_devices_for_type('CUDA') if d.type == 'CUDA']
-except Exception as exc:
-    device_error = str(exc)
-    devices = []
-if force_cpu or os.environ.get('BTS_CYCLES_DEVICE') == 'CPU':
-    devices = []
+devices = []
+backend = 'CPU'
+device_errors = []
+explicit_cpu = force_cpu or os.environ.get('BTS_CYCLES_DEVICE') == 'CPU'
+if not explicit_cpu:
+    for candidate in ('OPTIX', 'CUDA'):
+        try:
+            p.compute_device_type = candidate
+            devices = [d for d in p.get_devices_for_type(candidate) if d.type == candidate]
+            if devices:
+                backend = candidate
+                break
+        except Exception as exc:
+            device_errors.append(candidate + ': ' + str(exc))
 for d in p.devices:
     d.use = d in devices
 s = bpy.context.scene.cycles
 s.device = 'GPU' if devices else 'CPU'
+bpy.context.scene['_bts_cycles_backend'] = backend
 bpy.context.scene['_bts_cycles_device_message'] = (
-    ('CPU selected explicitly.' if force_cpu or os.environ.get('BTS_CYCLES_DEVICE') == 'CPU'
-     else 'CUDA unavailable; using CPU (slower). ' + (device_error or 'No CUDA GPU was detected.'))
-    if not devices else 'CUDA: ' + ', '.join(d.name for d in devices))
+    ('CPU selected explicitly.' if explicit_cpu
+     else 'GPU unavailable; using CPU. ' + ('; '.join(device_errors) or 'No compatible GPU was detected.'))
+    if not devices else backend + ': ' + ', '.join(d.name for d in devices))
 if probe_defaults:
     s.preview_samples = 32
     s.use_preview_denoising = False
 elif not s.is_property_set('preview_samples'):
     s.preview_samples = 128
 print('BTS_CYCLES_DEVICE', s.device, [d.name for d in devices], flush=True)
+print('BTS_CYCLES_BACKEND', backend, flush=True)
 print('BTS_CYCLES_INPUT', bpy.context.scene.name, [(o.name, o.type, o.hide_render) for o in bpy.context.scene.objects], s.film_exposure, s.max_bounces, flush=True)
 )PY").c_str()))throw std::runtime_error("Cycles preview initialization failed");
       STRNCPY(s.scene->r.engine,"CYCLES");s.view->shading.flag&=~(V3D_SHADING_SCENE_WORLD_RENDER|V3D_SHADING_SCENE_LIGHTS_RENDER);DEG_id_tag_update_ex(s.main,&s.scene->id,ID_RECALC_SYNC_TO_EVAL);DEG_relations_tag_update(s.main);std::fprintf(stderr,"BTS_CYCLES_MODE same_pid=%lld\n",static_cast<long long>(QCoreApplication::applicationPid()));
       s.view->shading.type=OB_RENDER;s.preview_force_cpu=force_cpu;
       auto root=RNA_id_pointer_create(&s.scene->id);auto settings=RNA_pointer_get(&root,"cycles");s.preview_device=RNA_enum_get(&settings,"device")==0?"CPU":"CUDA";s.preview_cpu_fallback=s.preview_device=="CPU"&&!force_cpu&&qEnvironmentVariable("BTS_CYCLES_DEVICE")!="CPU";
+      const auto *backend=IDP_GetPropertyFromGroup_null(s.scene->id.properties,"_bts_cycles_backend");
+      if(backend&&backend->type==IDP_STRING)s.preview_device=QString::fromUtf8(IDP_string_get(backend));
       const auto *message=IDP_GetPropertyFromGroup_null(s.scene->id.properties,"_bts_cycles_device_message");
       s.preview_device_message=message&&message->type==IDP_STRING?QString::fromUtf8(IDP_string_get(message)):QString{};
     }else{STRNCPY(s.scene->r.engine,"BLENDER_EEVEE");s.view->shading.type=OB_MATERIAL;DEG_id_tag_update_ex(s.main,&s.scene->id,ID_RECALC_SYNC_TO_EVAL);DEG_relations_tag_update(s.main);}
@@ -585,7 +594,7 @@ ImportSummary BlenderHost::new_project(const std::string &mesh_path, const std::
   if(options&&options->uv_workflow==UvWorkflow::PreserveTiles)for(const auto &material:summary.materials) {
     if(!material.udim_valid||material.tiles.empty())
       throw std::runtime_error("UV Tile projects require valid 1001–2000 UVs");
-    require_texture_ram(std::uint64_t(material.tiles.size())*int(options->resolution)*int(options->resolution)*5*16,"Texture Set composite images");
+
   }
   Set<ID *> retired;
   ID *id;
@@ -1084,6 +1093,12 @@ BlenderHost::~BlenderHost()
   shutdown();
 }
 
+void BlenderHost::release_bake_scratch(){with_gpu([&]{
+ GPU_finish();int before_total=0,before_free=0;if(GPU_mem_stats_supported())GPU_mem_stats_get(&before_total,&before_free);
+ const auto reclaimed=impl_->inspection.release_bake_scratch();GPU_finish();int total=0,free=0;if(GPU_mem_stats_supported())GPU_mem_stats_get(&total,&free);
+ texture_vram_query_valid=total>0&&free>=0&&free<=total;texture_free_vram=texture_vram_query_valid?std::uint64_t(free)*1024:0;++texture_vram_query_generation;
+ std::printf("BTS_BAKE_VRAM total_kib=%d free_before_kib=%d free_after_kib=%d reclaimed_cache_bytes=%llu\n",total,before_free,free,(unsigned long long)reclaimed);
+});}
 void BlenderHost::with_gpu(const std::function<void()> &fn){auto &s=*impl_;s.require_owner();if(s.phase!=Impl::Phase::GpuReady||s.drawing)throw std::logic_error("GPU bake rays require an idle viewport");s.enter_gpu();try{fn();DRW_gpu_context_disable_ex(false);}catch(...){DRW_gpu_context_disable_ex(false);throw;}}
 void BlenderHost::initialize_gpu(QOpenGLWidget &surface){impl_->surface=std::make_unique<QtGpuSurface>(surface);initialize_gpu_surface();}
 void BlenderHost::initialize_gpu(QOpenGLContext &context,QSurface &surface,unsigned framebuffer){impl_->surface=std::make_unique<QtGpuSurface>(context,surface,framebuffer);initialize_gpu_surface();}
@@ -1629,7 +1644,7 @@ QJsonObject BlenderHost::shader_parameter_state()const{auto &s=*impl_;s.require_
 void BlenderHost::preview_material_color(const TextureSet &set){auto &s=*impl_;s.require_owner();if(!s.inspection.preview_color(*s.main,set)){CompositeChannels channels{};channels[0]=true;if(!s.inspection.queue_layer_edit(set,channels))s.inspection.queue_composite(set);}s.texture_dirty=true;s.uv_preview.tag_images_updated();}
 void BlenderHost::prepare_paint_texture(const TextureSet &set){auto &s=*impl_;s.require_owner();prepare_warp_projections(set);if(s.inspection.shader_parameters(*s.main,set))s.uv_preview.tag_images_updated();if(!s.inspection.has_padding(set.material_session_uid))s.inspection.set_padding_geometry(*s.main,set.material_session_uid,s.source_snapshot());if(!s.inspection.has_pixels(set.material_session_uid)){s.inspection.prepare_pixels(*s.main,set);s.uv_dirty=true;}}
 QString BlenderHost::viewport_texture_status()const{
- auto &s=*impl_;s.require_owner();if(s.inspection.gpu_programs_pending())return "  |  Preparing GPU layer and mask shaders…";QStringList parts;const auto images=s.residency.snapshot()["images"].toArray();for(const auto &entry:images){const auto value=entry.toObject();if(!value["shader_bound"].toBool(true))continue;if(s.selected_material&&std::uint32_t(value["material_uid"].toDouble())!=*s.selected_material)continue;auto name=value["image"].toString();if(name.startsWith("BTS Composite ")){name=name.mid(14);name=name.mid(name.indexOf(' ')+1);}else if(name.startsWith("BTS Edit Preview ")){static const QStringList channels{"Base Color","Metallic","Roughness","Normal","Bump","AO","Authored Normal","User0","User1","User2","User3","User4","User5","User6","User7","Mask","Displacement"};name=channels.value(name.section(' ',4,4).toInt(),"Texture")+" (preview)";}else if(name=="BTS Complete Ambient Occlusion")name="AO";else if(name=="BTS Displacement")name="Displacement";else continue;const int size=std::min(value["sampling_cap"].toInt(),std::max(value["width"].toInt(),value["height"].toInt()));parts.append(name+" "+(size?QString::number(size):QString("loading")));}const auto residency=s.residency.snapshot();for(const auto *key:{"warning","budget_warning"})if(!residency[key].toString().isEmpty())parts.append(residency[key].toString());return parts.empty()?QString{}:QString("  |  Textures: ")+parts.join(", ");
+ auto &s=*impl_;s.require_owner();if(s.inspection.gpu_programs_pending())return "  |  Preparing GPU layer and mask shaders…";QStringList parts;const auto images=s.residency.snapshot()["images"].toArray();for(const auto &entry:images){const auto value=entry.toObject();if(!value["shader_bound"].toBool(true))continue;if(s.selected_material&&std::uint32_t(value["material_uid"].toDouble())!=*s.selected_material)continue;auto name=value["image"].toString();if(name.startsWith("BTS Composite ")){name=name.mid(14);name=name.mid(name.indexOf(' ')+1);}else if(name.startsWith("BTS Edit Preview ")){static const QStringList channels{"Base Color","Metallic","Roughness","Normal","Bump","AO","Authored Normal","User0","User1","User2","User3","User4","User5","User6","User7","Mask","Displacement"};name=channels.value(name.section(' ',4,4).toInt(),"Texture")+" (preview)";}else if(name=="BTS Complete Ambient Occlusion")name="AO";else if(name=="BTS Displacement")name="Displacement";else continue;const int size=std::min(value["sampling_cap"].toInt(),std::max(value["width"].toInt(),value["height"].toInt()));parts.append(name+" "+(size?QString::number(size):QString("loading")));}const auto residency=s.residency.snapshot();for(const auto *key:{"warning","memory_warning"})if(!residency[key].toString().isEmpty())parts.append(residency[key].toString());return parts.empty()?QString{}:QString("  |  Textures: ")+parts.join(", ");
 }
 bool BlenderHost::viewport_redraw_pending()const{
  auto &s=*impl_;s.require_owner();s.arm_program_poll();if(s.inspection.cycles_images_pending()||s.inspection.updates_pending(!s.texture_interacting)||s.residency.snapshot()["refining"].toBool())return true;
@@ -1677,7 +1692,7 @@ std::vector<ExportTile> BlenderHost::export_source(const TextureDocument &docume
   auto &s=*impl_;s.require_owner();if(s.phase==Impl::Phase::Closed||s.drawing)throw std::logic_error("Export outside idle session");
   std::uint64_t bytes=0;
   for(const auto &set:document.texture_sets())if(!set.disabled&&std::find(selected.begin(),selected.end(),set.id)!=selected.end())bytes+=set.evaluation_texels()*16*(set.ao_channel||set.mesh_maps[3]?2:1);
-  require_texture_ram(bytes,"Export source");
+
   std::map<std::uint32_t,float> bump_distances;for(Material &material:s.main->materials)if(material.nodetree){auto *bump=bke::node_find_node_by_name(*material.nodetree,"__BTS_PaintHeight");if(!bump)bump=bke::node_find_node_by_name(*material.nodetree,"__BTS_PaintBump");auto *distance=bump?bke::node_find_enabled_input_socket(*bump,"Distance"):nullptr;if(distance&&distance->default_value)bump_distances[material.id.session_uid]=static_cast<bNodeSocketValueFloat *>(distance->default_value)->value;}
   std::vector<ExportTile> result;
   for(const auto &set:document.texture_sets())if(!set.disabled&&std::find(selected.begin(),selected.end(),set.id)!=selected.end()){

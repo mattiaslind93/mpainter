@@ -1,5 +1,5 @@
 #include "SpsmReader.hh"
-#include "../host/ResourceBudget.hh"
+#include "../host/ResourceAvailability.hh"
 
 #include <hdf5.h>
 #include <algorithm>
@@ -18,13 +18,12 @@ namespace {
 // In-memory parse_preset deliberately does not acquire this mutex.
 std::mutex hdf5_mutex;
 
-struct Budget {
-  std::uint64_t limit, used = 0;
-  explicit Budget(ReadOptions options)
-      : limit(options.memory_budget_bytes ? options.memory_budget_bytes : ResourceBudget{}.ram()) {}
+struct SizeAccounting {
+  std::uint64_t used = 0;
+  explicit SizeAccounting(ReadOptions){}
   void charge(std::uint64_t n) {
-    if (n > limit - used) throw Error("SPSM metadata exceeds the available worker RAM budget");
-    used += n;
+
+    used = resource_sum(used,n);
   }
   void items(std::uint64_t n, std::uint64_t stride) {
     if (stride && n > std::numeric_limits<std::size_t>::max() / stride)
@@ -55,7 +54,7 @@ bool utf8(std::string_view s) {
 
 class Parser {
   struct Frame { NodeId node; std::uint64_t end; std::uint32_t remaining; bool object; };
-  Budget &budget;
+  SizeAccounting &sizes;
   Preset result;
   std::size_t pos = 0;
   std::uint64_t bound = 0;
@@ -75,7 +74,7 @@ class Parser {
   std::string text(bool name = false) {
     const auto n = number<std::uint32_t>(); need(n);
     if (n > std::string{}.max_size()) fail("string exceeds native representation");
-    budget.charge(std::uint64_t(n) + 1);
+    sizes.charge(std::uint64_t(n) + 1);
     std::string s(reinterpret_cast<const char *>(result.encoded.data() + pos), n); pos += n;
     if (!utf8(s) || (name && (s.empty() || s.find('\0') != std::string::npos)))
       fail("invalid UTF-8 or empty/NUL class/field name");
@@ -85,7 +84,7 @@ class Parser {
     if (pos != frame.end) fail("container end does not match its declared absolute offset");
     auto &node = result.nodes[frame.node]; node.end = pos;
     if (auto *object = std::get_if<Object>(&node.value)) {
-      budget.items(object->fields.size(), sizeof(std::string_view));
+      sizes.items(object->fields.size(), sizeof(std::string_view));
       std::vector<std::string_view> names;
       names.reserve(object->fields.size());
       for (const auto &field : object->fields) names.push_back(field.name);
@@ -130,7 +129,7 @@ class Parser {
       bound = end; count = number<std::uint32_t>();
       if (count > bound - pos) fail("array count cannot fit before its end");
       if (count > Array{}.elements.max_size()) fail("array exceeds native representation");
-      budget.items(count, sizeof(NodeId));
+      sizes.items(count, sizeof(NodeId));
       node.value = Array{}; std::get<Array>(node.value).elements.reserve(count);
       container = true;
     }
@@ -146,23 +145,23 @@ class Parser {
         // Each field needs a length, at least one name byte, and a value tag.
         if (count > (bound - pos) / 6) fail("object field count cannot fit before its end");
         if (count > object_value.fields.max_size()) fail("object exceeds native representation");
-        budget.items(count, sizeof(Field)); object_value.fields.reserve(count);
+        sizes.items(count, sizeof(Field)); object_value.fields.reserve(count);
         node.value = std::move(object_value); container = object = true;
       }
     }
     else fail("unknown wire tag; cannot safely skip unframed value");
     node.end = pos;
     // 2x accounts for amortized arena growth, without a fixed node count limit.
-    budget.items(2, sizeof(Node));
+    sizes.items(2, sizeof(Node));
     if (result.nodes.size() == result.nodes.max_size()) fail("node arena exceeds native representation");
     const auto id = result.nodes.size(); result.nodes.push_back(std::move(node));
     if (container) {
-      budget.items(2, sizeof(Frame)); stack.push_back({id, end, count, object});
+      sizes.items(2, sizeof(Frame)); stack.push_back({id, end, count, object});
     }
     return id;
   }
  public:
-  Parser(std::vector<std::uint8_t> bytes, Budget &b) : budget(b) { result.encoded = std::move(bytes); }
+  Parser(std::vector<std::uint8_t> bytes, SizeAccounting &b) : sizes(b) { result.encoded = std::move(bytes); }
   Preset run() {
     bound = result.encoded.size();
     if (number<std::uint32_t>() != 0x1b7c2fdd) fail("incorrect preset magic");
@@ -240,10 +239,7 @@ void image_links(hid_t file, const std::string &path) {
       throw Error("Image IO rejects aliases or invalid resource object types");
   }
 }
-ReadOptions image_options(ReadOptions options) {
-  const auto available = ResourceBudget{}.ram();
-  return {options.memory_budget_bytes ? std::min(options.memory_budget_bytes, available) : available};
-}
+ReadOptions image_options(ReadOptions){return {};}
 
 bool preset_name(std::string_view path) {
   if (path == "/preset.bin") return true;
@@ -291,8 +287,8 @@ std::span<const std::uint8_t> Preset::blob(const Blob &blob) const {
   return std::span(encoded).subspan(static_cast<std::size_t>(blob.offset), static_cast<std::size_t>(blob.size));
 }
 Preset parse_preset(std::span<const std::uint8_t> bytes, ReadOptions options) {
-  Budget budget(options); budget.charge(bytes.size());
-  return Parser(std::vector<std::uint8_t>(bytes.begin(), bytes.end()), budget).run();
+  SizeAccounting sizes(options); sizes.charge(bytes.size());
+  return Parser(std::vector<std::uint8_t>(bytes.begin(), bytes.end()), sizes).run();
 }
 
 Archive read_archive(const std::filesystem::path &path, ReadOptions options) {
@@ -303,11 +299,11 @@ Archive read_archive(const std::filesystem::path &path, ReadOptions options) {
       throw Error("SPSM file does not begin with the HDF5 signature");
   }
   const std::lock_guard hdf5_lock(hdf5_mutex);
-  Budget budget(options); // Sample current RAM after any wait for another reader.
+  SizeAccounting sizes(options); // Check representation-size arithmetic after waiting for another reader.
   Handle file(H5Fopen(path.string().c_str(), H5F_ACC_RDONLY, H5P_DEFAULT), H5Fclose);
-  Archive result; budget.items(path.native().size(), sizeof(std::filesystem::path::value_type)); result.source = path;
+  Archive result; sizes.items(path.native().size(), sizeof(std::filesystem::path::value_type)); result.source = path;
   result.source_stamp = source_stamp(path);
-  budget.charge(128);
+  sizes.charge(128);
   std::vector<std::string> groups{"/"};
   std::set<haddr_t> seen;
   H5O_info1_t root_info{};
@@ -323,8 +319,8 @@ Archive read_archive(const std::filesystem::path &path, ReadOptions options) {
       if (link.type != H5L_TYPE_HARD) throw Error("SPSM external, soft or user-defined links are unsupported");
       const auto size = H5Lget_name_by_idx(group, ".", H5_INDEX_NAME, H5_ITER_INC, i, nullptr, 0, H5P_DEFAULT);
       if (size < 0 || std::uint64_t(size) >= std::string{}.max_size()) throw Error("Invalid HDF5 link name length");
-      budget.items(std::uint64_t(size), 5);
-      budget.items(group_path.size(), 4); budget.charge(128);
+      sizes.items(std::uint64_t(size), 5);
+      sizes.items(group_path.size(), 4); sizes.charge(128);
       std::string name(static_cast<std::size_t>(size) + 1, '\0');
       const auto actual = H5Lget_name_by_idx(group, ".", H5_INDEX_NAME, H5_ITER_INC, i, name.data(), name.size(), H5P_DEFAULT);
       if (actual != size) throw Error("HDF5 link changed during SPSM read");
@@ -334,27 +330,27 @@ Archive read_archive(const std::filesystem::path &path, ReadOptions options) {
       H5O_info1_t object{}; check(H5Oget_info_by_name1(file, full.c_str(), &object, H5P_DEFAULT), "object info");
       if (!seen.insert(object.addr).second) throw Error("SPSM hard-link aliases/cycles are unsupported");
       if (object.type == H5O_TYPE_GROUP) {
-        budget.items(2, sizeof(std::string)); groups.push_back(full); continue;
+        sizes.items(2, sizeof(std::string)); groups.push_back(full); continue;
       }
       if (object.type != H5O_TYPE_DATASET) throw Error("SPSM contains an unsupported HDF5 object type");
       Handle dataset(H5Dopen2(file, full.c_str(), H5P_DEFAULT), H5Dclose);
       const auto length = dataset_length(dataset);
-      budget.items(2, sizeof(Dataset)); result.datasets.push_back({full, length});
+      sizes.items(2, sizeof(Dataset)); result.datasets.push_back({full, length});
       if (!preset_name(full)) continue; // No H5Dread for packages/images/previews.
       if (length > std::numeric_limits<std::uint32_t>::max() || length > std::numeric_limits<std::size_t>::max())
         throw Error("SPSM preset exceeds its absolute uint32 wire offsets");
-      budget.charge(length);
+      sizes.charge(length);
       std::vector<std::uint8_t> bytes(static_cast<std::size_t>(length));
       if (length) check(H5Dread(dataset, H5T_NATIVE_UCHAR, H5S_ALL, H5S_ALL, H5P_DEFAULT, bytes.data()), "preset read");
       result.payload_bytes_read = resource_sum(result.payload_bytes_read, length);
       Preset preset;
-      try { preset = Parser(std::move(bytes), budget).run(); }
+      try { preset = Parser(std::move(bytes), sizes).run(); }
       catch (const Error &error) { throw Error(full + ": " + error.what()); }
       preset.dataset = full;
       const auto *root = std::get_if<Object>(&preset.nodes[preset.root].value);
       if (!root || (root->class_name != "DataLayersPreset" && root->class_name != "DataSmartMask"))
         throw Error("SPSM root is not DataLayersPreset or DataSmartMask");
-      budget.items(2, sizeof(Preset)); result.presets.push_back(std::move(preset));
+      sizes.items(2, sizeof(Preset)); result.presets.push_back(std::move(preset));
     }
   }
   if (std::none_of(result.presets.begin(), result.presets.end(), [](const Preset &p) { return p.dataset == "/preset.bin"; }))
@@ -367,8 +363,8 @@ Archive read_archive(const std::filesystem::path &path, ReadOptions options) {
               (object->class_name == "DataBitmap" && field.name == "urlToBitmapRes"))) continue;
         const auto *uri = std::get_if<std::string>(&preset.nodes[field.value].value);
         if (!uri) throw Error("SPSM resource URL field is not a string");
-        budget.items(uri->size(), 2); budget.charge(field.name.size() + 12);
-        budget.items(2, sizeof(Reference));
+        sizes.items(uri->size(), 2); sizes.charge(field.name.size() + 12);
+        sizes.items(2, sizeof(Reference));
         auto resource = version_resource(*uri);
         if (std::none_of(result.datasets.begin(), result.datasets.end(), [&](const Dataset &d) { return d.path == resource; })) resource.clear();
         result.references.push_back({pi, field.value, field.name, *uri, std::move(resource)});
@@ -385,8 +381,8 @@ ImageResource describe_image_resource(const Archive &archive, std::string_view p
       [&](const Dataset &d) { return d.path == path; });
   if (found == archive.datasets.end()) throw Error("Image is not in the inventoried resource bank");
   const std::lock_guard hdf5_lock(hdf5_mutex);
-  Budget budget(image_options(options)); budget.items(path.size(), 2); budget.charge(sizeof(ImageResource));
-  budget.items(archive.source.native().size(), 2 * sizeof(std::filesystem::path::value_type));
+  SizeAccounting sizes(image_options(options)); sizes.items(path.size(), 2); sizes.charge(sizeof(ImageResource));
+  sizes.items(archive.source.native().size(), 2 * sizeof(std::filesystem::path::value_type));
   const auto stamp = source_stamp(archive.source);
   if (archive.source_stamp && *archive.source_stamp != stamp) throw Error("SPSM source changed since inventory");
   Handle file(H5Fopen(archive.source.string().c_str(), H5F_ACC_RDONLY, H5P_DEFAULT), H5Fclose);
@@ -404,8 +400,8 @@ std::shared_ptr<const ImageBytes> read_image_range(const ImageResource &resource
   if (count > ImageBytes{}.max_size() || count > std::numeric_limits<hsize_t>::max())
     throw Error("Image read exceeds native/HDF5 span representation");
   const std::lock_guard hdf5_lock(hdf5_mutex);
-  Budget budget(image_options(options)); budget.charge(count); budget.charge(sizeof(ImageBytes) + 128);
-  budget.items(resource.source.native().size(), 2 * sizeof(std::filesystem::path::value_type));
+  SizeAccounting sizes(image_options(options)); sizes.charge(count); sizes.charge(sizeof(ImageBytes) + 128);
+  sizes.items(resource.source.native().size(), 2 * sizeof(std::filesystem::path::value_type));
   if (source_stamp(resource.source) != resource.stamp) throw Error("SPSM image source changed before read");
   Handle file(H5Fopen(resource.source.string().c_str(), H5F_ACC_RDONLY, H5P_DEFAULT), H5Fclose);
   image_links(file, resource.dataset.path);
@@ -423,7 +419,7 @@ std::shared_ptr<const ImageBytes> read_image_range(const ImageResource &resource
   return result;
 }
 std::shared_ptr<const ImageBytes> read_preview_metadata(const std::filesystem::path &path,ReadOptions options){
- const std::lock_guard hdf5_lock(hdf5_mutex);Budget budget(image_options(options));
+ const std::lock_guard hdf5_lock(hdf5_mutex);SizeAccounting sizes(image_options(options));
  const auto before=source_stamp(path);Handle file(H5Fopen(path.string().c_str(),H5F_ACC_RDONLY,H5P_DEFAULT),H5Fclose);
  if(H5Lexists(file,"/.alg_meta",H5P_DEFAULT)<=0||H5Lexists(file,"/.alg_meta/preset.bin",H5P_DEFAULT)<=0)return {};
  for(const auto component:{"/.alg_meta","/.alg_meta/preset.bin"}){
@@ -432,7 +428,7 @@ std::shared_ptr<const ImageBytes> read_preview_metadata(const std::filesystem::p
   if(link.type!=H5L_TYPE_HARD||object.rc!=1||object.type!=(std::string_view(component)=="/.alg_meta"?H5O_TYPE_GROUP:H5O_TYPE_DATASET))throw Error("SPSM preview rejects links or invalid metadata objects");
  }
  Handle dataset(H5Dopen2(file,"/.alg_meta/preset.bin",H5P_DEFAULT),H5Dclose);const auto length=dataset_length(dataset);
- if(length>ImageBytes{}.max_size())throw Error("SPSM preview metadata exceeds native storage");budget.charge(resource_sum(length,sizeof(ImageBytes)+128));
+ if(length>ImageBytes{}.max_size())throw Error("SPSM preview metadata exceeds native storage");sizes.charge(resource_sum(length,sizeof(ImageBytes)+128));
  auto result=std::make_shared<ImageBytes>(std::size_t(length));if(length)check(H5Dread(dataset,H5T_NATIVE_UCHAR,H5S_ALL,H5S_ALL,H5P_DEFAULT,result->data()),"preview metadata read");
  if(source_stamp(path)!=before)throw Error("SPSM preview source changed during read");return result;
 }

@@ -1,4 +1,4 @@
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "OpenPbrUsdImport.hh"
 #include <QFileInfo>
 #include <pxr/base/gf/vec3f.h>
@@ -36,7 +36,7 @@ std::vector<OpenPbrUsdProfile> read_openpbr_usd_profiles(const QString &path){
  for(const auto &prim:stage->Traverse()){
   if(!prim.IsA<pxr::UsdShadeMaterial>())continue;pxr::UsdShadeMaterial material(prim);auto surface=material.ComputeSurfaceSource(pxr::TfToken("mtlx"));if(!surface)continue;
   pxr::TfToken definition;surface.GetSourceAssetSubIdentifier(&definition,pxr::TfToken("mtlx"));if(definition!=pxr::TfToken("ND_BTS_OpenPBR_1_1_1"))continue;
-  require_texture_ram(resource_product(result.size()+1,sizeof(OpenPbrUsdProfile)),"USD OpenPBR profiles");
+
   std::string inherited_space;pxr::SdfAssetPath definition_asset;if(surface.GetSourceAsset(&definition_asset,pxr::TfToken("mtlx"))&&!definition_asset.GetResolvedPath().empty()){if(auto document=pxr::UsdMtlxGetDocument(definition_asset.GetResolvedPath()))inherited_space=document->getColorSpace();}
   OpenPbrUsdProfile profile;profile.material_path=QString::fromStdString(prim.GetPath().GetString());profile.name=QString::fromStdString(prim.GetDisplayName().empty()?prim.GetName().GetString():prim.GetDisplayName());
   for(const auto &parameter:openpbr_parameters){

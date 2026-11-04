@@ -1,7 +1,7 @@
 #include "ExportConfiguration.hh"
 #include <QJsonArray>
 #include <QJsonDocument>
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "TextureDocument.hh"
 #include <vector>
 #include <cassert>
@@ -10,7 +10,7 @@ using namespace bts;
 int main(){
  const std::array<QUuid,2> sets{QUuid::createUuid(),QUuid::createUuid()};
  auto config=read_export_configuration({},sets);assert(config.selected.size()==2);config.presets.clear(); // The fixture below owns preset slot 0; Studio defaults are checked separately.
- 
+
  config.directory="/unavailable/portable-export";config.format=ExportFormat::Png16;config.size=512;config.sizes[sets[1]]=256;config.padding=ExportPadding::Diffusion;config.selected.erase(sets[1]);
  ExportOutputPreset preset;preset.name="Packed fixture";preset.packed=PackedOutput{};preset.packed->format=ExportFormat::Exr16;preset.standard_outputs=false;
  set_default_export_formats(preset);preset.outputs={{"$textureSet_glossiness",ExportMapSource::Glossiness,false,ExportFormat::Jpeg8}};
@@ -18,7 +18,7 @@ int main(){
  assert(json["version"]==8);assert(export_configuration_json(read_export_configuration(json,sets))==json);
  ExportRequest request;apply_export_preset(request,preset);assert(request.formats==preset.formats&&request.packed->format==ExportFormat::Exr16&&request.outputs[0].format==ExportFormat::Jpeg8);
  // Variable-size metadata is admitted by memory, not preset/output/string caps.
- {auto large=config;large.presets.clear();large.preset={};large.size=16384;large.directory="/metadata-only/"+QString(5000,'d');for(int i=0;i<140;++i){auto entry=preset;entry.id=QUuid::createUuid();entry.name=QString(8192,'n')+QString::number(i);entry.outputs.clear();for(int j=0;j<40;++j)entry.outputs.push_back({std::string(600,'x')+std::to_string(j),ExportMapSource::Bump,false});large.presets.push_back(std::move(entry));}const auto data=export_configuration_json(large);assert(QJsonDocument(data).toJson().size()>1024*1024);assert(export_configuration_json(read_export_configuration(data,sets))==data);auto old=data;old["version"]=7;const auto migrated=read_export_configuration(old,sets);assert(migrated.presets.size()==141&&migrated.preset==studio_preset_id);{TextureRamQueryScope low(+[]()->std::uint64_t{return 0;});bool denied=false;try{read_export_configuration(data,sets);}catch(const std::length_error &){denied=true;}assert(denied);}}
+ {auto large=config;large.presets.clear();large.preset={};large.size=16384;large.directory="/metadata-only/"+QString(5000,'d');for(int i=0;i<140;++i){auto entry=preset;entry.id=QUuid::createUuid();entry.name=QString(8192,'n')+QString::number(i);entry.outputs.clear();for(int j=0;j<40;++j)entry.outputs.push_back({std::string(600,'x')+std::to_string(j),ExportMapSource::Bump,false});large.presets.push_back(std::move(entry));}const auto data=export_configuration_json(large);assert(QJsonDocument(data).toJson().size()>1024*1024);assert(export_configuration_json(read_export_configuration(data,sets))==data);auto old=data;old["version"]=7;const auto migrated=read_export_configuration(old,sets);assert(migrated.presets.size()==141&&migrated.preset==studio_preset_id);{TextureRamQueryScope low(+[]()->std::uint64_t{return 0;});bool denied=false;try{read_export_configuration(data,sets);}catch(const std::length_error &){denied=true;}assert(!denied);}}
  const auto rejects=[&](const QJsonObject &bad){bool rejected=false;try{read_export_configuration(bad,sets);}catch(const std::invalid_argument &){rejected=true;}assert(rejected);};
  for(int test=0;test<7;++test){auto bad=json;if(test==0)bad["format"]=9;if(test==1)bad["size"]=500;if(test==2)bad["padding_width"]=-1;if(test==3)bad["preset"]=QUuid::createUuid().toString();if(test==4)bad["selected"]=QJsonArray{QUuid::createUuid().toString()};if(test==5)bad["directory"]="../relative";if(test==6){auto ps=bad["presets"].toArray();auto p=ps[0].toObject();auto packed=p["packed"].toObject();packed["sources"]=QJsonArray{0,1,99};p["packed"]=packed;ps[0]=p;bad["presets"]=ps;}rejects(bad);}
  // Invalid encodings cannot represent JPEG32: reject unknown enum, object, bool,

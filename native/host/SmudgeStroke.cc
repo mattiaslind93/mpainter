@@ -1,6 +1,6 @@
 #include "TextureExtent.hh"
 #include "SmudgeStroke.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "SmudgeCapture.hh"
 #include "PaintRecording.hh"
 #include <cmath>
@@ -63,7 +63,7 @@ const SmudgePayload &SmudgeCarry::evaluated()const{
  std::call_once(once_,[this]{++local_paint_materializations;PaintRecordingScope cpu(false);const auto &now=current->evaluated();auto result=std::make_shared<SmudgePayload>(now);for(int c=0;c<5;++c)if(!result->channels[c].empty())for(int y=0;y<result->side;++y)for(int x=0;x<result->side;++x){const auto i=std::size_t(y)*result->side+x;const auto carried=previous->sample(c,2*(x+.5)/result->side-1,2*(y+.5)/result->side-1);const float weight=pickup*now.pickup[i];for(int k=0;k<4;++k)result->channels[c][i][k]=std::lerp(carried[k],now.channels[c][i][k],weight);}result_=std::move(result);});return *result_;
 }
 std::shared_ptr<SmudgePayload> capture_brush_payload(const TilePaintPixels &pixels,const PaintPixels::Stamp &stamp,int resolution,AdjustmentPaintSource adjustment){
- if(stamp.surface)require_texture_ram(resource_product(stamp.surface->triangles.size(),sizeof(PaintPixels::SurfaceTriangle)),"Smudge surface snapshot");
+
  if(!record_gpu_paint){if(adjustment)throw std::logic_error("Adjustment sources require GPU authoring");return capture(pixels,stamp,resolution);}
  auto result=std::make_shared<SmudgePayload>();result->side=payload_side(stamp,resolution);result->recipe=std::make_shared<SmudgeCapture>(pixels,stamp,resolution,std::move(adjustment));return result;
 }

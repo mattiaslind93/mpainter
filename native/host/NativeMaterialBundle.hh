@@ -1,5 +1,5 @@
 #pragma once
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "TextureResource.hh"
 #include "NativeMaterialImageVariantMetadata.hh"
 #include <QByteArray>
@@ -20,7 +20,7 @@ struct NativeMaterialImageReference {
   NativeMaterialImageSourceKind source=NativeMaterialImageSourceKind::File;
   std::vector<TextureSourceFile> tiles;
   void validate() const {
-    require_texture_ram(resource_product(resource_sum(image.size(),filename.size()),16),"Native image reference text");
+
     if(image.isEmpty()||image.toUtf8().size()>255||image.contains(QChar::Null)||filename.isEmpty()||filename=="."||filename==".."||filename.contains('/')||filename.contains('\\')||filename.contains(QChar::Null))throw std::invalid_argument("Invalid native material image reference");
     if(sha256.size()!=64||!std::all_of(sha256.begin(),sha256.end(),[](QChar c){return (c>='0'&&c<='9')||(c>='a'&&c<='f');}))throw std::invalid_argument("Invalid native material image hash");
     if(source==NativeMaterialImageSourceKind::File){if(!tiles.empty())throw std::invalid_argument("Single-file native reference has tiled metadata");}
@@ -50,7 +50,7 @@ inline QByteArray native_material_bundle_bytes(const QByteArray &blend,const std
   }
   metadata=resource_sum(metadata,resource_product(preview_png.size(),4));
   if(variant)metadata=resource_sum(metadata,native_image_variant_provenance_bytes(*variant));
-  require_texture_ram(resource_sum(resource_product(blend.size(),2),metadata),"Native material bundle encode");
+
   const bool tiled=std::any_of(images.begin(),images.end(),[](const auto &image){return image.source==NativeMaterialImageSourceKind::Tiled;});
   QJsonArray references;QStringList names;
   for(const auto &image:images){image.validate();if(names.contains(image.image))throw std::invalid_argument("Duplicate native image name");names.append(image.image);QJsonObject row{{"image",image.image},{"sha256",image.sha256},{"filename",image.filename}};if(tiled){row["source"]=image.source==NativeMaterialImageSourceKind::Tiled?"TILED":"FILE";if(image.source==NativeMaterialImageSourceKind::Tiled)row["tiles"]=texture_sources_json(image.tiles,false);}references.append(row);}
@@ -75,7 +75,7 @@ inline QByteArray native_material_bundle_preview(const QByteArray &bytes)
   if(bytes.size()<24)throw std::invalid_argument("Truncated native material bundle");
   const auto size=qFromBigEndian<quint64>(bytes.constData()+8),blend=qFromBigEndian<quint64>(bytes.constData()+16);
   if(!size||!blend||size>quint64(bytes.size()-24)||blend!=quint64(bytes.size()-24)-size)throw std::invalid_argument("Invalid native material bundle lengths");
-  require_texture_ram(resource_product(size,8),"Native preview manifest decode");
+
   QJsonParseError error;const auto doc=QJsonDocument::fromJson(QByteArray::fromRawData(bytes.constData()+24,qsizetype(size)),&error);const auto o=doc.object();
   if(error.error!=QJsonParseError::NoError||!doc.isObject()||(o["version"]!=1&&o["version"]!=2&&o["version"]!=3))throw std::invalid_argument("Invalid native material bundle manifest");
   if(o["version"]==3)(void)native_material_bundle_image_references(o);
@@ -92,7 +92,7 @@ inline std::optional<NativeImageVariantProvenance> native_material_bundle_proven
   if(bytes.size()<24)throw std::invalid_argument("Truncated native material bundle");
   const auto size=qFromBigEndian<quint64>(bytes.constData()+8),blend=qFromBigEndian<quint64>(bytes.constData()+16);
   if(!size||!blend||size>quint64(bytes.size()-24)||blend!=quint64(bytes.size()-24)-size)throw std::invalid_argument("Invalid native material bundle lengths");
-  require_texture_ram(resource_product(size,4),"Native variant manifest decode");
+
   QJsonParseError error;const auto doc=QJsonDocument::fromJson(bytes.sliced(24,qsizetype(size)),&error);const auto o=doc.object();
   if(error.error!=QJsonParseError::NoError||!doc.isObject()||(o["version"]!=1&&o["version"]!=2&&o["version"]!=3))throw std::invalid_argument("Invalid native material bundle manifest");
   if(o["version"]==1){if(o.contains("image_variant"))throw std::invalid_argument("Native image variant requires manifest version 2");return {};}
@@ -103,7 +103,7 @@ inline std::optional<NativeImageVariantProvenance> native_material_bundle_proven
 // Source preparation needs only typed references, never another copy of blend.
 inline std::vector<NativeMaterialImageReference> native_material_bundle_image_manifest(const QByteArray &bytes){
  if(!bytes.startsWith(QByteArrayView("MFPNAT1\n",8)))return {};
- (void)native_material_bundle_provenance(bytes);const auto size=qFromBigEndian<quint64>(bytes.constData()+8);require_texture_ram(resource_product(size,4),"Native image manifest decode");QJsonParseError error;const auto document=QJsonDocument::fromJson(QByteArray::fromRawData(bytes.constData()+24,qsizetype(size)),&error);if(error.error!=QJsonParseError::NoError||!document.isObject())throw std::invalid_argument("Invalid native image manifest");return native_material_bundle_image_references(document.object());
+ (void)native_material_bundle_provenance(bytes);const auto size=qFromBigEndian<quint64>(bytes.constData()+8);QJsonParseError error;const auto document=QJsonDocument::fromJson(QByteArray::fromRawData(bytes.constData()+24,qsizetype(size)),&error);if(error.error!=QJsonParseError::NoError||!document.isObject())throw std::invalid_argument("Invalid native image manifest");return native_material_bundle_image_references(document.object());
 }
 inline NativeMaterialBundle read_native_material_bundle(const QByteArray &bytes)
 {
@@ -111,13 +111,13 @@ inline NativeMaterialBundle read_native_material_bundle(const QByteArray &bytes)
   if(bytes.size()<24)throw std::invalid_argument("Truncated native material bundle");
   const auto manifest_size=qFromBigEndian<quint64>(bytes.constData()+8),blend_size=qFromBigEndian<quint64>(bytes.constData()+16);
   if(!manifest_size||!blend_size||manifest_size>quint64(bytes.size()-24)||blend_size!=quint64(bytes.size()-24)-manifest_size)throw std::invalid_argument("Invalid native material bundle lengths");
-  require_texture_ram(resource_product(manifest_size,4),"Native material manifest decode");
+
   QJsonParseError error;const auto doc=QJsonDocument::fromJson(bytes.sliced(24,qsizetype(manifest_size)),&error);const auto data=doc.object();
   if(error.error!=QJsonParseError::NoError||!doc.isObject()||(data["version"]!=1&&data["version"]!=2&&data["version"]!=3)||!data["images"].isArray())throw std::invalid_argument("Invalid native material bundle manifest");
   if(data["version"]==1&&data.contains("image_variant"))throw std::invalid_argument("Native image variant requires bundle manifest version 2");
   if(data["version"]==2&&(data.size()!=(data.contains("preview_png")?4:3)||!data["image_variant"].isObject()))throw std::invalid_argument("Invalid native image variant bundle manifest");
   if(data["version"]==3&&data.size()!=2+int(data.contains("preview_png"))+int(data.contains("image_variant")))throw std::invalid_argument("Invalid native tiled bundle manifest");
-  require_texture_ram(resource_sum(resource_product(manifest_size,4),resource_product(data["images"].toArray().size(),sizeof(NativeMaterialImageReference)+4*sizeof(void *))),"Native material image descriptors");
+
   NativeMaterialBundle result;result.external=true;QStringList names;
   if(data["version"]==2||(data["version"]==3&&data.contains("image_variant"))){if(!data["image_variant"].isObject())throw std::invalid_argument("Invalid native tiled variant provenance");read_native_image_variant_provenance(data["image_variant"].toObject());}
   result.images=native_material_bundle_image_references(data);

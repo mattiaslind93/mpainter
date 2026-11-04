@@ -1,5 +1,5 @@
 #include "SpsmReader.hh"
-#include "../host/ResourceBudget.hh"
+#include "../host/ResourceAvailability.hh"
 #include <hdf5.h>
 #include <algorithm>
 #include <atomic>
@@ -94,10 +94,10 @@ void parser_tests() {
   rejects([&] { preset.blob({UINT64_MAX, 1}); });
   for (std::size_t i = 0; i < writer.bytes.size(); ++i)
     rejects([&] { parse_preset(std::span(writer.bytes).first(i)); });
-  rejects([&] { parse_preset(writer.bytes, {16}); }, "RAM budget");
+  require(!parse_preset(writer.bytes,{}).nodes.empty(),"Valid source rejected by former configured limit");
   {
     bts::TextureRamQueryScope ram([]() -> std::uint64_t { return 32; });
-    rejects([&] { parse_preset(writer.bytes); }, "RAM budget");
+    require(!parse_preset(writer.bytes).nodes.empty(),"Valid source rejected by RAM telemetry");
   }
   auto corrupted = writer.bytes; corrupted.push_back(0); rejects([&] { parse_preset(corrupted); }, "trailing");
   corrupted = writer.bytes; corrupted[12] = 255; rejects([&] { parse_preset(corrupted); }, "unknown wire tag");
@@ -134,7 +134,7 @@ void parser_tests() {
     const auto at = random % mutated.size();
     random = random * 1664525 + 1013904223; mutated[at] = random >> 24;
     try {
-      const auto parsed = parse_preset(mutated, {8 * 1024 * 1024});
+      const auto parsed = parse_preset(mutated);
       for (const auto &node : parsed.nodes)
         require(node.offset < node.end && node.end <= mutated.size(), "mutation escaped source span");
     }
@@ -178,7 +178,7 @@ void hdf_tests() {
   const auto archive = read_archive(good);
   require(archive.presets.size() == 1 && archive.datasets.size() == 2 && archive.payload_bytes_read == bytes.size(), "lazy resource read policy failed");
   require(archive.datasets.back().size == (std::uint64_t(1) << 34), "64-bit resource descriptor lost");
-  rejects([&] { read_archive(good, {16}); }, "RAM budget");
+  read_archive(good,{});
   auto mutate = [&](std::string_view name, auto setup, std::string_view reason) {
     const auto path = temp.path / (std::string(name) + ".spsm");
     const auto file = H5Fcreate(path.string().c_str(), H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT); write_preset(file, bytes);

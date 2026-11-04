@@ -1,5 +1,5 @@
 #pragma once
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "BrushSettings.hh"
 #include "RibbonSettings.hh"
 #include "Symmetry.hh"
@@ -28,7 +28,7 @@ struct SurfacePath {
     symmetry.validate();if(ribbon.enabled)ribbon.validate();if(filled&&ribbon.enabled)throw std::invalid_argument("A path cannot be both Filled and Ribbon");
     const auto fail=[](){throw std::invalid_argument("Invalid surface path");};
     if(id.size()!=36||name.empty()||name.find(char(0))!=std::string::npos||points.size()<2)fail();
-    require_texture_ram(resource_sum(resource_product(points.size(),sizeof(SurfacePathPoint)*2),resource_product(name.size(),8)),"Surface path points");
+
     for(int i=0;i<36;++i){if(i==8||i==13||i==18||i==23){if(id[i]!='-')fail();}else if(!((id[i]>='0'&&id[i]<='9')||(id[i]>='a'&&id[i]<='f')))fail();}
     const auto range=[&](double value,double low,double high){if(!std::isfinite(value)||value<low||value>high)fail();};
     for(const auto &point:points){double normal=0;for(int c=0;c<3;++c){range(point.position[c],-1e12,1e12);range(point.normal[c],-1,1);normal+=point.normal[c]*point.normal[c];}if(normal<.99||normal>1.01)fail();for(double uv:point.uv)range(uv,-10000,10000);range(point.pressure,0,1);for(const auto &tangent:{point.tangent_in,point.tangent_out}){double length=0,dot=0;for(int c=0;c<3;++c){range(tangent[c],-1e12,1e12);length+=tangent[c]*tangent[c];dot+=tangent[c]*point.normal[c];}if(point.custom&&std::abs(dot)>1e-5*std::max(1.,std::sqrt(length)))throw std::invalid_argument("Path handles must lie in their vertex normal plane");}}

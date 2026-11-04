@@ -45,7 +45,7 @@ inline std::uint64_t native_image_variant_provenance_bytes(const NativeImageVari
 inline QJsonObject native_image_variant_provenance_json(const NativeImageVariantProvenance &value){
   if(value.original_id.isNull()||value.operations.empty())throw std::invalid_argument("Native image variant has no original Reset source/operation");
   native_image_variant_metadata::sha256(value.original_sha256);
-  require_texture_ram(native_image_variant_provenance_bytes(value),"Native image variant provenance");
+
   QJsonArray operations;
   for(const auto &op:value.operations){native_image_variant_metadata::operation(op);operations.append(QJsonObject{{"binding",native_image_binding_json(op.binding)},{"replacement_sha256",op.replacement_sha256},{"source_space",op.source_space},{"source_space_policy",op.source_space_policy},{"precision_policy",op.precision_policy}});}
   return {{"version",1},{"original_id",value.original_id.toString(QUuid::WithoutBraces)},{"original_sha256",value.original_sha256},{"operations",operations}};
@@ -55,9 +55,9 @@ inline NativeImageVariantProvenance read_native_image_variant_provenance(const Q
   keys(o,{"version","original_id","original_sha256","operations"});
   if(integer(o["version"])!=1||!o["operations"].isArray()||o["operations"].toArray().isEmpty())invalid();
   NativeImageVariantProvenance value;value.original_id=QUuid(text(o["original_id"]));value.original_sha256=text(o["original_sha256"]);
-  const auto operations=o["operations"].toArray();require_texture_ram(resource_product(operations.size(),sizeof(NativeImageVariantOperation)+512),"Native image variant provenance decode");
+  const auto operations=o["operations"].toArray();
   auto used=resource_sum(1024,resource_product(operations.size(),sizeof(NativeImageVariantOperation)+512));
-  for(const auto &entry:operations){if(!entry.isObject())invalid();const auto op=entry.toObject();keys(op,{"binding","replacement_sha256","source_space","source_space_policy","precision_policy"});if(!op["binding"].isObject())invalid();NativeImageVariantOperation decoded{read_native_image_binding(op["binding"].toObject()),text(op["replacement_sha256"]),text(op["source_space"]),text(op["source_space_policy"]),text(op["precision_policy"])};used=resource_sum(used,native_image_variant_metadata::operation_bytes(decoded));require_texture_ram(used,"Native image variant aggregate metadata decode");value.operations.push_back(std::move(decoded));}
+  for(const auto &entry:operations){if(!entry.isObject())invalid();const auto op=entry.toObject();keys(op,{"binding","replacement_sha256","source_space","source_space_policy","precision_policy"});if(!op["binding"].isObject())invalid();NativeImageVariantOperation decoded{read_native_image_binding(op["binding"].toObject()),text(op["replacement_sha256"]),text(op["source_space"]),text(op["source_space_policy"]),text(op["precision_policy"])};used=resource_sum(used,native_image_variant_metadata::operation_bytes(decoded));value.operations.push_back(std::move(decoded));}
   native_image_variant_provenance_json(value);return value;
 }
 }

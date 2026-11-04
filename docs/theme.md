@@ -1,23 +1,26 @@
-# Dark interface
+# Turquoise Dark
 
-`native/host/Theme.hh` owns the semantic color tokens. `Theme.cc` installs the
-Fusion palette and application QSS before any splash, workspace or dialog is
-created. Widget-specific geometry/state rules use `theme::qss()` placeholders;
-custom painters use the same tokens. The approved logo supplies `#62C7D4`;
-neutral and status colors reuse the local `inputs/mattias-tech-design` skill
-tokens. Its surface/raised roles map to Canvas/Surface in this existing workbench.
+The source is `assets/theme/Turquoise_Dark.xml`, supplied by Mattias from Blender 5.1. `Theme.hh` maps the XML to Qt palette and QSS roles. `Theme.cc` applies the palette before splash and supplies widget-specific rules.
 
-Do not introduce local literal interface colors. Run
-`python3 scripts/host/check-theme-colors.py` when editing widgets. Material colors,
-color-wheel samples, normal/ID channels, black–white value ramps, and diagnostic
-pixel fixtures represent image data and must retain their meaning. They are not
-recolored by the UI theme.
+| Qt token | Blender source | RGB |
+| --- | --- | --- |
+| Canvas | Outliner and asset browser region | #282828 |
+| Surface / Header | Properties region and header | #424242 |
+| Panel | panel_back and panel_header | #3d3d3d |
+| Raised | wcol_regular.inner | #585858 |
+| Border | wcol_regular.outline | #373737 |
+| Input | wcol_text.inner | #1f1f1f |
+| Number | wcol_num.inner | #595959 |
+| Accent / Selection | wcol_tool.inner_sel | #22947d |
+| ListSelection | outliner.selected_highlight | #33524b |
+| Text / Heading | panel_text / text_hi | #e6e6e6 / #ffffff |
+| ScrollHandle / ScrollHover | wcol_scroll.item / inner_sel | #676767 / #b3b3b3 |
+| Tab / TabText | wcol_tab.inner / text | #2b2b2b / #989898 |
+| MenuBar | topbar.header | #232323 |
+| Status | statusbar.header | #303030 |
 
-`bts-theme-tests` checks actual Qt dialog/list/scroll rendering and inherited
-palettes; it is part of `bts-cpu-check`. Linux GUI checks must run in an isolated
-Xvfb session, with isolated XDG settings and no Wayland connection.
+Opaque Qt surfaces use the RGB component of Blender's RGBA colors. Palette selections use the opaque tool selection color; list rows use the Outliner selection. Image and material pixels are not interface colors. Startup branding remains the approved artwork.
 
-New projects select the bundled CC0 `studio.exr`, with background opacity 100%
-and blur 0%, facing the studio at rotation 0°. Saved projects and explicit project templates retain their settings.
-Both Linux packaging steps require the pinned HDRI and its CC0 notice via
-`scripts/check-environment.py`; see `NOTICE.md` for provenance and checksum.
+Run `scripts/host/check-theme-colors.py` for source mapping and literal-color checks. UI tests must run in bts-build under `env -u WAYLAND_DISPLAY xvfb-run -a`, never on the desktop display.
+
+The private-Xvfb UI capture is in `docs/parity/validation/mask-generators-ui.png`. It was visually compared with the supplied Blender reference; `theme-image-colors.json` records exact RGB pixel counts for corresponding interface roles. The asset layout and rendered scene are intentionally not pixel-matched.

@@ -31,20 +31,27 @@ for path in (root / 'native/host').iterdir():
     for token in re.findall(r'@([A-Za-z]+)@', path.read_text()):
         if token not in colors:
             raise SystemExit(f'{path.name}: unknown QSS token {token}')
-def luminance(value):
-    values = [int(value[i:i+2], 16) / 255 for i in (1, 3, 5)]
-    linear = [v / 12.92 if v <= .04045 else ((v + .055) / 1.055) ** 2.4 for v in values]
-    return sum(v * w for v, w in zip(linear, (.2126, .7152, .0722)))
-def contrast(a, b):
-    high, low = sorted((luminance(colors[a]), luminance(colors[b])), reverse=True)
-    return (high + .05) / (low + .05)
-pairs = [(fg, bg, 4.5) for fg in ('Text', 'Heading', 'Warning', 'Error', 'Success')
-         for bg in ('Canvas', 'Surface', 'Raised', 'Hover')]
-pairs += [('Muted', bg, 4.5) for bg in ('Canvas', 'Surface', 'Raised')]
-pairs += [('Heading', 'Selection', 4.5), ('Text', 'Selection', 4.5), ('OnAccent', 'Accent', 4.5)]
-pairs += [(fg, bg, 3) for fg in ('Accent', 'Border') for bg in ('Canvas', 'Surface', 'Raised')]
-for foreground, background, minimum in pairs:
-    ratio = contrast(foreground, background)
-    if ratio < minimum:
-        raise SystemExit(f'{foreground}/{background}: {ratio:.2f}:1 < {minimum}:1')
-print(f'Theme contrast passed: {len(pairs)} text/control pairs (not a full accessibility audit).')
+# Exact source colors take precedence over the previous theme's contrast targets.
+import xml.etree.ElementTree as ET
+xml = ET.parse(root / 'assets/theme/Turquoise_Dark.xml')
+ui = xml.find('.//ThemeUserInterface')
+source_roles = {
+    'Canvas': (xml.find('.//ThemeOutliner/space/ThemeSpaceGeneric'), 'back'),
+    'Surface': (xml.find('.//ThemeProperties/space/ThemeSpaceGeneric'), 'back'),
+    'Panel': (ui, 'panel_back'),
+    'Raised': (ui.find('./wcol_regular/ThemeWidgetColors'), 'inner'),
+    'Border': (ui.find('./wcol_regular/ThemeWidgetColors'), 'outline'),
+    'Input': (ui.find('./wcol_text/ThemeWidgetColors'), 'inner'),
+    'Number': (ui.find('./wcol_num/ThemeWidgetColors'), 'inner'),
+    'Accent': (ui.find('./wcol_tool/ThemeWidgetColors'), 'inner_sel'),
+    'Text': (ui, 'panel_text'),
+    'ListSelection': (xml.find('.//ThemeOutliner'), 'selected_highlight'),
+    'ScrollHandle': (ui.find('./wcol_scroll/ThemeWidgetColors'), 'item'),
+    'ScrollHover': (ui.find('./wcol_scroll/ThemeWidgetColors'), 'inner_sel'),
+    'Tab': (ui.find('./wcol_tab/ThemeWidgetColors'), 'inner'),
+    'TabText': (ui.find('./wcol_tab/ThemeWidgetColors'), 'text'),
+    'AxisX': (ui, 'axis_x'), 'AxisY': (ui, 'axis_y'), 'AxisZ': (ui, 'axis_z'),
+}
+for token, (node, attribute) in source_roles.items():
+    assert colors[token].lower() == node.get(attribute)[:7].lower(), token
+print(f'Turquoise Dark source mapping passed: {len(source_roles)} exact role colors.')

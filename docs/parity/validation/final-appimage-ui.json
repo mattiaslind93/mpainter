@@ -1,0 +1,23 @@
+{
+  "async_open": "pass",
+  "mask_generators": [
+    "Oxide Flecks",
+    "Exposed Edges",
+    "Crevice Sediment",
+    "Organic Growth",
+    "Ground Contact",
+    "Surface Scuffs",
+    "Gravity Streaks",
+    "Settled Dust",
+    "Height Fade",
+    "Curvature Ridge"
+  ],
+  "cycles": [
+    "Cycles / OPTIX\nRendering Done"
+  ],
+  "painting_restored": true,
+  "display": ":100",
+  "launcher": "final AppImage",
+  "pid": 2793739,
+  "appimage_sha256": "7823a85003885fc5279563e7ece86fb48aa04213fb7b1961275f7e40066ad334"
+}

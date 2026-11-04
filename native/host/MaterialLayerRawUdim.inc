@@ -3,7 +3,7 @@ std::shared_ptr<const FillTexture> udim_filter_source(bNodeTree &tree,const std:
  auto *n=bke::node_find_node_by_name(tree,prefix+"Representation");
  if(!n||!STREQ(n->idname,"ShaderNodeValue")||n->id||(n->flag&NODE_MUTED)||!n->prop||n->prop->type!=IDP_GROUP||BLI_listbase_count(&n->prop->data.group)!=1)throw std::invalid_argument("Raw UDIM provenance is missing");
  auto *p=IDP_GetPropertyFromGroup(n->prop,"source");if(!p||p->type!=IDP_STRING||p->len<1||!IDP_string_get(p)||IDP_string_get(p)[p->len-1])throw std::invalid_argument("Raw UDIM provenance changed");
- require_texture_ram(resource_product(p->len,8),"Raw UDIM graph metadata");QJsonParseError error;const auto json=QJsonDocument::fromJson(QByteArray::fromRawData(IDP_string_get(p),p->len-1),&error);
+ QJsonParseError error;const auto json=QJsonDocument::fromJson(QByteArray::fromRawData(IDP_string_get(p),p->len-1),&error);
  if(error.error!=QJsonParseError::NoError||!json.isObject())throw std::invalid_argument("Invalid raw UDIM metadata");auto source=read_fill_texture_json(json.object());
  if(!source->raw||!source->tiles||fill_texture_json(source).toObject()!=json.object())throw std::invalid_argument("Unsupported raw UDIM graph provenance");return source;
 }

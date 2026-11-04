@@ -7,7 +7,7 @@
 #include <cstdio>
 int main(){
  using namespace bts;using namespace bake_samples_fixture;
- ResourceBudget budget;budget.available_ram=1ULL<<30;budget.available_vram=1ULL<<30;budget.vram_known=true;
+ ResourceAvailability budget;budget.available_ram=1ULL<<30;budget.available_vram=1ULL<<30;budget.vram_known=true;
  for(bool inward:{false,true}){
   const auto clamped=reference(256,inward);
   for(int rays:{16,17,128,256,511,512}){

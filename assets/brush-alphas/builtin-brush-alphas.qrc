@@ -1,0 +1,8 @@
+<RCC><qresource prefix="/builtin-brush-alphas">
+ <file>alpha_chalk_charcoal.png</file>
+ <file>alpha_dirt_grime.png</file>
+ <file>alpha_pores_dots.png</file>
+ <file>alpha_rust_pitting.png</file>
+ <file>alpha_scratches.png</file>
+ <file>alpha_stitch_seam.png</file>
+</qresource></RCC>

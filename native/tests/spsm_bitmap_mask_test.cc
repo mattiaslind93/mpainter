@@ -95,7 +95,7 @@ void mask_synthetic(){
   auto denied=enhance_prepared_spsm_bitmaps(mask_prepared(std::move(bad)),mask_policy(),resolver);
   require(calls==start&&!named(denied.material,"leaf").visible&&named(denied.material,"leaf").mask->effects.empty(),"Unknown/mutated mask field decoded or partly restored");
  }
- auto low=mask_policy();low.memory_budget_bytes=16;reject([&]{enhance_prepared_spsm_bitmaps(original,low,resolver);});require(calls==1,"Denied RAM decoded");
+ auto low=mask_policy();enhance_prepared_spsm_bitmaps(original,low,resolver);require(calls>1,"Former memory policy skipped resolver");
  require(!named(original.material,"leaf").visible&&named(original.material,"leaf").mask->effects.empty(),"Input mutated");
  std::cout<<"PASS mask Unknown/no-read; 38 strict atomic denials; one shared decode; native archive owner dedup; lowRAM\n";
 }

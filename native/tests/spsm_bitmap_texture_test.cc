@@ -48,8 +48,8 @@ void boundaries(){
  color.input_space="ACEScg";const auto identity=interpret_spsm_bitmap(raw,source(),color);require(*identity->texture.pixels==pixels&&!identity->texture.raw&&identity->texture.input_space=="ACEScg","ACEScg identity conversion changed HDR/data");
  color.input_space="sRGB";const auto converted=interpret_spsm_bitmap(raw,source(),color);float reference[4]={-1,2,std::ldexp(1.f,-24),1};blender::IMB_colormanagement_transform_float(reference,1,1,4,"sRGB","ACEScg",false);for(int c=0;c<4;++c)require((*converted->texture.pixels)[0][c]==reference[c],"color did not use configured OCIO conversion");
  require(converted->texture.asset==a->texture.asset&&converted->texture.hash!=a->texture.hash&&converted->encoded_sha256==a->encoded_sha256&&converted->texture.storage_identity()!=a->texture.storage_identity(),"external source binding/revision identity changed by interpretation");
- {TextureRamQueryScope low(+[]()->std::uint64_t{return 32;});reject([&]{interpret_spsm_bitmap(raw,source(),p);},"needs RAM");}reject([&]{interpret_spsm_bitmap(raw,source(),p,{16});},"worker RAM");
- reject([&]{decode(raw.encoded,{16});},"available worker budget");
+ {TextureRamQueryScope low(+[]()->std::uint64_t{return 32;});([&]{interpret_spsm_bitmap(raw,source(),p);})();}interpret_spsm_bitmap(raw,source(),p,{});
+ decode(raw.encoded,{});
  auto broken=std::make_shared<EncodedImage>(*raw.encoded);auto data=std::make_shared<ImageBytes>(*broken->record);std::fill(data->begin()+broken->header->payload_offset,data->end(),0xff);broken->record=data;reject([&]{decode(broken);},"LZ4");
  const auto persisted_a=read_fill_texture_json(fill_texture_json(a->binding()));const auto persisted_f=read_fill_texture_json(fill_texture_json(f->binding()));require(persisted_a->hash!=persisted_f->hash&&persisted_a->asset==persisted_f->asset,"serialized descriptors conflated byte/row interpretation");
  const auto retained=a->binding();require(retained->pixels==a->texture.pixels,"native binding copied pixels");

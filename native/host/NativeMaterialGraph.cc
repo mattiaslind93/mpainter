@@ -88,6 +88,12 @@ void bind_context(bNodeTree &tree,bool defer_compute_context_validation,bool fra
  for(const auto &link:tree.links)incoming[link.tonode].push_back(link.fromnode);
  const auto visit=[&](auto &&self,const bNode &node)->void{if(!required.insert(&node).second)return;if(const auto found=incoming.find(&node);found!=incoming.end())for(const auto *source:found->second)self(self,*source);};
  for(const auto &node:tree.nodes)if(STREQ(node.idname,"ShaderNodeOutputAOV"))visit(visit,node);
+ if(!defer_compute_context_validation)for(const auto *node:required){
+  const std::string_view type(node->idname);
+  if(!node->typeinfo||!node->typeinfo->gpu_fn)throw std::invalid_argument("Unsupported material channel node: "+std::string(type));
+  for(const auto &socket:node->inputs)if(socket.type==SOCK_SHADER)throw std::invalid_argument("Material channels cannot evaluate shader-closure input on "+std::string(type));
+  if(type=="ShaderNodeScript"||type=="ShaderNodeParticleInfo"||type=="ShaderNodeHairInfo"||type=="ShaderNodeVolumeInfo"||type=="ShaderNodeUVAlongStroke"||type=="ShaderNodeCamera"||type=="ShaderNodeTangent"||type=="ShaderNodeBump"||type=="ShaderNodeNormalMap")throw std::invalid_argument("Unsupported material channel context: "+std::string(type));
+ }
  struct Replacement{bNodeLink *link;std::string name;std::optional<float> literal;};std::vector<Replacement> replacements;
  for(auto &link:tree.links){const std::string_view type(link.fromnode->idname);
   if(!required.contains(link.tonode))continue;
@@ -121,6 +127,15 @@ void bind_context(bNodeTree &tree,bool defer_compute_context_validation,bool fra
   }
   bke::node_add_link(tree,*value,output(*value,type==SOCK_FLOAT?"Fac":type==SOCK_RGBA?"Color":"Vector"),*link.tonode,*link.tosock);bke::node_remove_link(&tree,link);}
 }
+bNodeTree *fallback_channel(Main &main,bNode &shader,int channel){
+ auto *tree=bke::node_tree_add_tree(&main,"mPainter retained channel default","ShaderNodeTree");tree->flag|=NTREE_IS_GPU_SHADER_INTERNAL;
+ auto &aov=add(*tree,"ShaderNodeOutputAOV");STRNCPY(static_cast<NodeShaderOutputAOV *>(aov.storage)->name,"BTS_Channel");
+ auto &destination=input(aov,channel==0?"Color":"Value");
+ const auto *source=bke::node_find_enabled_input_socket(shader,channel==0?(STREQ(shader.idname,"ShaderNodeBsdfPrincipled")?"Base Color":"Color"):channel==1?"Metallic":"Roughness");
+ if(channel==0){auto *value=static_cast<bNodeSocketValueRGBA *>(destination.default_value);value->value[0]=value->value[1]=value->value[2]=.5f;value->value[3]=1;if(source&&source->type==SOCK_RGBA&&source->default_value)std::copy_n(static_cast<const bNodeSocketValueRGBA *>(source->default_value)->value,4,value->value);}
+ else static_cast<bNodeSocketValueFloat *>(destination.default_value)->value=source&&source->type==SOCK_FLOAT&&source->default_value?static_cast<const bNodeSocketValueFloat *>(source->default_value)->value:channel==1?0.f:.5f;
+ BKE_ntree_update_without_main(*tree);return tree;
+}
 struct NativeChannelSurfaceAdaptation {
  bool mixed_closures=false,emission_as_color=false,pointiness_as_eevee=false;
  std::set<std::string> omitted_principled_lobes;
@@ -150,7 +165,7 @@ void connect_shader_channel(bNodeTree &tree,bNode *shader,int channel,bNode &aov
     if(socket.type==SOCK_RGBA){const auto *color=static_cast<const bNodeSocketValueRGBA *>(socket.default_value)->value;return color[0]!=0.f||color[1]!=0.f||color[2]!=0.f;}
     return false;
    };
-   for(const auto &[socket,label]:{std::pair{"Transmission Weight","Transmission"},std::pair{"Coat Weight","Coat"},std::pair{"Sheen Weight","Sheen"},std::pair{"Subsurface Weight","Subsurface"}})
+   for(const auto &[socket,label]:{std::pair{"Transmission Weight","Transmission"},std::pair{"Sheen Weight","Sheen"},std::pair{"Subsurface Weight","Subsurface"}})
     if(active(input(*shader,socket)))adaptation->omitted_principled_lobes.insert(label);
    if(active(input(*shader,"Emission Color"))&&active(input(*shader,"Emission Strength")))adaptation->omitted_principled_lobes.insert("Emission");
   }
@@ -168,6 +183,12 @@ void connect_shader_channel(bNodeTree &tree,bNode *shader,int channel,bNode &aov
   }
   else if(channel==5){static_cast<bNodeSocketValueFloat *>(destination.default_value)->value=1;}
   else throw std::runtime_error("Native displacement/normal extraction is not implemented yet");
+ }else if(STREQ(shader->idname,"ShaderNodeBsdfDiffuse")||STREQ(shader->idname,"ShaderNodeBsdfGlossy")||STREQ(shader->idname,"ShaderNodeBsdfAnisotropic")||STREQ(shader->idname,"ShaderNodeBsdfGlass")||STREQ(shader->idname,"ShaderNodeBsdfRefraction")||STREQ(shader->idname,"ShaderNodeBsdfVelvet")||STREQ(shader->idname,"ShaderNodeBsdfToon")){
+  if(channel==0)copy_input(tree,input(*shader,"Color"),aov,destination);
+  else if(channel==2){if(auto *rough=bke::node_find_enabled_input_socket(*shader,"Roughness"))copy_input(tree,*rough,aov,destination);else static_cast<bNodeSocketValueFloat *>(destination.default_value)->value=.5f;}
+  else if(channel==3){const auto &normal=input(*shader,"Normal");if(normal.link)bke::node_add_link(tree,*normal.link->fromnode,*normal.link->fromsock,aov,destination);else{auto &geometry=add(tree,"ShaderNodeNewGeometry");bke::node_add_link(tree,geometry,output(geometry,"Normal"),aov,destination);}}
+  else if(channel==4){const auto &normal=input(*shader,"Normal");if(raw_height){const auto candidate=raw_height_candidate(normal);if(!candidate.result.eligible)throw std::invalid_argument(candidate.result.reason);*raw_height=candidate.result.provenance;copy_input(tree,*candidate.height,aov,destination);}else{const auto bump=native_bump_capability(normal);if(normal_perturbed)*normal_perturbed|=!bump.neutral;if(!bump.neutral)throw std::runtime_error("Native bump/normal requires surface derivatives: "+bump.reason);static_cast<bNodeSocketValueFloat *>(destination.default_value)->value=.5f;}}
+  else static_cast<bNodeSocketValueFloat *>(destination.default_value)->value=channel==5?1:0;
  }else if(STREQ(shader->idname,"ShaderNodeEmission")){
   if(raw_height)throw std::invalid_argument("Raw authored Height requires a supported Principled Normal path");
   if(channel==3)throw std::invalid_argument("Fragment Normal requires a supported Principled Normal path; Emission has no Normal input");
@@ -323,7 +344,7 @@ NativeMaterialGraph::NativeMaterialGraph(MainOwner owner,blender::Material *sour
  auto *runtime_material=reinterpret_cast<Material *>(BKE_id_copy_ex(main.get(),&material->id,nullptr,0));if(!runtime_material||!runtime_material->nodetree)throw std::runtime_error("Cannot copy native parameter material");auto &tree=*runtime_material->nodetree;tree.flag|=NTREE_IS_GPU_SHADER_INTERNAL;auto *surface=ntreeShaderOutputNode(&tree,SHD_OUTPUT_EEVEE);auto *top=surface?linked_shader(input(*surface,"Surface")):nullptr;if(!top)throw std::runtime_error("Native parameter tree has no shader");bind_native_material_ramps(tree,*top,description);bind_parameters(tree,*top,description);bind_native_material_mappings(tree,*top,*original_top,description);BKE_ntree_update_without_main(tree);
  for(const auto &parameter:description.parameters){std::array<float,4> value{0,0,0,1};if(parameter.type==NativeParameterType::Scalar)value={float(parameter.value[0]),float(parameter.value[0]),float(parameter.value[0]),1};else for(int i=0;i<parameter.components();++i)value[i]=float(parameter.value[i]);parameters.push_back(value);}
  NativeChannelSurfaceAdaptation adaptation;adaptation.parameters=&description;
- for(int channel:{0,1,2,4,5,14}){if(cancel.load())throw std::runtime_error("Native material preparation cancelled");NativeMaterialChannelGraph result;result.channel=channel;try{result.tree=channel_tree(*main,tree,channel,nullptr,&result.normal_perturbed,&adaptation);}catch(const std::exception &error){result.error=QString::fromUtf8(error.what());}channels.push_back(std::move(result));}
+ for(int channel:{0,1,2,4,5,14}){if(cancel.load())throw std::runtime_error("Native material preparation cancelled");NativeMaterialChannelGraph result;result.channel=channel;try{result.tree=channel_tree(*main,tree,channel,nullptr,&result.normal_perturbed,&adaptation);}catch(const std::exception &error){result.error=QString::fromUtf8(error.what());if(channel<=2){result.tree=fallback_channel(*main,*original_top,channel);description.warnings.removeIf([&](const QString &text){return text.contains("not replaced by a constant")&&(text.startsWith(channel==0?"Base Color:":channel==1?"Metallic:":"Roughness:")||(channel==0&&text.startsWith("Color:")));});warning(QString("%1 input is unsupported; retained its default and imported the other channels: %2").arg(channel==0?"Color":channel==1?"Metallic":"Roughness").arg(result.error));}}channels.push_back(std::move(result));}
  if(!adaptation.omitted_principled_lobes.empty()){QStringList omitted;for(const auto &lobe:adaptation.omitted_principled_lobes)omitted.append(QString::fromStdString(lobe));warning("Principled "+omitted.join(", ")+" inputs are preserved in the source but are not evaluated by viewport material channels.");}
  if(adaptation.pointiness_as_eevee)warning("Geometry Pointiness uses Blender EEVEE's constant 0.5. Cycles mesh-curvature pointiness is not evaluated.");
  if(adaptation.mixed_closures)warning("Mix Shader is evaluated as blended material channels. Separate BSDF lobes are not reproduced by viewport shading.");

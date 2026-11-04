@@ -16,7 +16,7 @@ struct LayerMaterialInput {
  std::array<double,2> tiling{1,1},offset{};double rotation=0;
  void validate()const{
   if(name.empty())throw std::invalid_argument("Invalid material input identity");
-  require_texture_ram(resource_product(resource_sum(name.size(),resource.size()),8),"Material input label and resource text");
+
   for(int c=0;c<4;++c)if(const auto v=values.base_color[c];!std::isfinite(v)||v<(c==3?0:-65504)||v>(c==3?1:65504))throw std::invalid_argument("Invalid material color");
   for(float v:{values.metallic,values.roughness,values.ambient_occlusion})if(!std::isfinite(v)||v<0||v>1)throw std::invalid_argument("Material scalar must lie in 0..1");
   for(float v:values.normal)if(!std::isfinite(v)||v< -1||v>1)throw std::invalid_argument("Invalid material normal");

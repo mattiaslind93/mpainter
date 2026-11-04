@@ -1,5 +1,5 @@
 #pragma once
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include <algorithm>
 #include <array>
 #include <bit>
@@ -24,7 +24,7 @@ class NativeMaterialObjectTable {
   explicit NativeMaterialObjectTable(std::vector<NativeMaterialObject> objects){
     const auto rows=resource_product(objects.size(),stride);
     if(rows>std::uint64_t(std::numeric_limits<int>::max()))throw std::length_error("Native object table exceeds shader signed-index storage");
-    require_texture_ram(resource_sum(resource_product(objects.size(),sizeof(NativeMaterialObject)),resource_product(rows,sizeof(Row))),"Native object context table");rows_.reserve(std::size_t(rows));
+    rows_.reserve(std::size_t(rows));
     std::sort(objects.begin(),objects.end(),[](const auto &a,const auto &b){return a.owner<b.owner;});
     std::uint32_t previous=0;
     const auto finite=[](const auto &values){for(float value:values)if(!std::isfinite(value))return false;return true;};

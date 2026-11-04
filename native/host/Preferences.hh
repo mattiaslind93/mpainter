@@ -17,10 +17,5 @@ struct ReferenceImagePreferences {
 };
 ReferenceImagePreferences load_reference_image_preferences();
 void save_reference_image_preferences(const ReferenceImagePreferences &preferences);
-struct ViewportMemoryPreferences {bool automatic=true;int megabytes=512;int decode_megabytes=0;};
-// Runtime readers never acquire QSettings' file/global synchronization locks.
-ViewportMemoryPreferences viewport_memory_preferences();
-void preview_viewport_memory_preferences(bool automatic,int megabytes);
-void preview_texture_loading_budget(int megabytes);
 void show_preferences(QWidget *parent,const QString &shelf,bool project_open,ViewportClipping current,std::function<void(ViewportClipping)> preview);
 }

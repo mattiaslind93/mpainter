@@ -95,7 +95,7 @@ struct PresetInspection {
   bool native_import_available = false;
   bool rendered = false;
 };
-struct InspectOptions {std::uint64_t memory_budget_bytes = 0;};
+struct InspectOptions {};
 class Inspection {
  public:
   const Archive &source() const {return *source_;}

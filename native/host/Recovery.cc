@@ -1,4 +1,4 @@
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "Recovery.hh"
 #include <QDateTime>
 #include <QDialog>
@@ -26,7 +26,7 @@ void RecoveryStore::record(const QUuid &project,const QString &snapshot,const QS
   const auto project_text=project.toString(QUuid::WithoutBraces),time=QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs),name=file.fileName();
   const auto characters=resource_sum(source.size(),resource_sum(name.size(),resource_sum(project_text.size(),time.size())));
   // JSON may escape one UTF-16 code unit as six ASCII bytes, alongside its Qt copy.
-  require_texture_ram(resource_sum(resource_product(characters,sizeof(QChar)+6),5*sizeof(QJsonValue)),"Recovery manifest JSON serialization");
+
   const auto bytes=QJsonDocument(QJsonObject{{"schema",1},{"project",project_text},{"source",source},{"snapshot",name},{"time",time}}).toJson(QJsonDocument::Compact);QSaveFile manifest(snapshot+".json");manifest.setDirectWriteFallback(false);if(!manifest.open(QIODevice::WriteOnly)||manifest.write(bytes)!=bytes.size()||!manifest.commit())throw std::runtime_error("Cannot commit recovery manifest");
 }
 std::vector<RecoveryEntry> RecoveryStore::entries() const {
@@ -35,7 +35,7 @@ std::vector<RecoveryEntry> RecoveryStore::entries() const {
     try {
       const QFileInfo info(manifest);const auto size=info.size();
       if(info.isFile()&&!info.isSymLink()&&info.canonicalPath()==canonical&&size>=0&&std::uint64_t(size)<=std::uint64_t(QByteArray::maxSize())&&manifest.open(QIODevice::ReadOnly)){
-        require_texture_ram(resource_product(std::uint64_t(size),3),"Recovery manifest JSON decoding");
+
         const auto bytes=manifest.read(size);QJsonParseError error;
         if(bytes.size()==size&&manifest.atEnd()&&!bytes.contains('\0')){
           const auto document=QJsonDocument::fromJson(bytes,&error);

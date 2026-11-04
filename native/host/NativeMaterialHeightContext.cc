@@ -41,7 +41,7 @@ std::map<std::uint32_t,NativeMaterialGpuContext> prepare_native_height_context(
   std::vector<std::pair<ModifierData *,ModifierMode>> modes;std::vector<MeshState> texspaces;
   ~Suppressed(){for(const auto &saved:texspaces){saved.mesh->texspace_flag=saved.flag;std::copy_n(saved.location.data(),3,saved.mesh->texspace_location);std::copy_n(saved.size.data(),3,saved.mesh->texspace_size);}for(const auto &[modifier,mode]:modes)modifier->mode=mode;}
  } suppressed;
- require_texture_ram(resource_sum(resource_product(modifier_count,sizeof(decltype(suppressed.modes)::value_type)),resource_product(meshes.size(),sizeof(Suppressed::MeshState))),"Pending native Height context metadata");
+
  suppressed.modes.reserve(modifier_count);suppressed.texspaces.reserve(meshes.size());
  for(auto *mesh:meshes){Suppressed::MeshState saved; saved.mesh=mesh;saved.flag=mesh->texspace_flag;std::copy_n(mesh->texspace_location,3,saved.location.data());std::copy_n(mesh->texspace_size,3,saved.size.data());suppressed.texspaces.push_back(saved);}
  for(auto &object:main.objects)for(auto &modifier:object.modifiers)suppressed.modes.emplace_back(&modifier,modifier.mode);

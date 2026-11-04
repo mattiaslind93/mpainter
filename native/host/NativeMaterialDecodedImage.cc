@@ -1,6 +1,6 @@
 #include "NativeMaterialDecodedImage.hh"
 #include "NativeMaterialImageSource.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "BKE_image.hh"
 #include "BKE_main.hh"
 #include "BLI_listbase.h"
@@ -49,14 +49,14 @@ NativeMaterialDecodedImage decode_native_material_image_tile(const blender::Main
    if(!header||header->x<=0||header->y<=0)fail("Cannot read native image dimensions");
    // A decoder may retain both RGBA byte (4) and float (16) planes while
    // normalization allocates another RGBA float plane (16): 36 bytes/texel.
-   require_texture_ram(resource_product(resource_product(header->x,header->y),36),"Native raw decode and RGBA float normalization");
+
   }
   // NoColorspaceConvert leaves an explicit actual float-buffer space even for
   // EXR. Ordinary BKE decoding may already convert float data and clear its tag;
   // using the original file tag on that buffer would apply a second transform.
   auto raw=read(ImBufFlags::ByteData|ImBufFlags::FloatData|ImBufFlags::NoColorspaceConvert|alpha);
   if(!raw||(!raw->float_data()&&!raw->byte_data()))fail("Cannot decode native image");
-  require_texture_ram(resource_product(resource_product(raw->x,raw->y),36),"Decoded image and normalized RGBA peak");
+
   const bool floating=raw->float_data()!=nullptr;
   const auto *actual_space=floating?raw->float_buffer.colorspace:raw->byte_buffer.colorspace;
   if(!actual_space)throw std::runtime_error("Native image has no explicit decoded color space");

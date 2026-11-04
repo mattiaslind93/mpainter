@@ -20,7 +20,7 @@ BlendAssetLibrary inspect_blend_asset_library(const QString &selected,std::stop_
  catalogs.catalog_tree()->foreach_item([&](const blender::asset_system::AssetCatalogTreeItem &catalog){result.catalogs.insert(QString::fromStdString(catalog.get_catalog_id().str()),QString::fromStdString(catalog.catalog_path().str()));});
  std::uint64_t memory=0;
  for(const auto &file:files){check();++result.files;if(progress)progress(QString("Reading %1/%2 — %3").arg(result.files).arg(files.size()).arg(QDir(result.root).relativeFilePath(file)));
-  try{for(auto entry:BlendLibraryIndex{}.read(file,stop)){check();const auto path=result.catalogs.value(entry.catalog_id);memory+=entry.preview.sizeInBytes()+entry.name.size()*2+entry.description.size()*2+sizeof(BlendLibraryMaterial);require_texture_ram(memory,"Asset Library metadata");result.materials.push_back({file,QDir(result.root).relativeFilePath(file),path,std::move(entry)});}}
+  try{for(auto entry:BlendLibraryIndex{}.read(file,stop)){check();const auto path=result.catalogs.value(entry.catalog_id);memory+=entry.preview.sizeInBytes()+entry.name.size()*2+entry.description.size()*2+sizeof(BlendLibraryMaterial);result.materials.push_back({file,QDir(result.root).relativeFilePath(file),path,std::move(entry)});}}
   catch(const std::length_error &){throw;}
   catch(const std::exception &error){check();result.errors.append(QDir(result.root).relativeFilePath(file)+": "+QString::fromUtf8(error.what()));}
  }

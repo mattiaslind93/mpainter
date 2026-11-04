@@ -1,6 +1,7 @@
 #include "WorkspaceShell.hh"
 #include "LayerStackList.hh"
 #include "AssetApplyProgress.hh"
+#include "AssetThumbnail.hh"
 #include "AssetApplicationTarget.hh"
 #include "SmartMaterialPreset.hh"
 #include <QApplication>
@@ -60,5 +61,8 @@ int bts::run_asset_workspace_drop_test(const QString &directory){
  // Shared geometry publication used by viewport drops, within one candidate.
  auto previous=set;TextureDocument::add_fill(set);const auto added=set.selected_layer;constrain_asset_insertion(set,previous,"Right mesh",set.layers.back().id,true);assert(TextureDocument::layer(set,added).geometry.includes("Right mesh"));assert(!TextureDocument::layer(set,added).geometry.includes("Left mesh"));assert(TextureDocument::layer(set,base.id).geometry.includes("Left mesh"));
  auto *progress=new AssetApplyProgress(&shell);shell.statusBar()->addPermanentWidget(progress);assert(progress->begin(material.name));progress->stage("Evaluate channels",1);capture("08-workspace-progress");progress->completed=[&](const QString &error,bool success){if(!success)shell.set_error_status(error);};progress->fail("Invalid source graph (regression fixture)");assert(!progress->active()&&!QApplication::overrideCursor());capture("09-workspace-error");
+ // This CPU-only entry point returns before BlenderHost shutdown. Join the
+ // shelf worker while QApplication and its font/image services still exist.
+ stop_asset_thumbnail_jobs();
  std::puts("Workspace asset drop: actual Shelf MIME, top/middle/bottom insertion, smart folder, double-click, geometry constraint and visible progress/error PASS");return 0;
 }

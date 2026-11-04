@@ -1,4 +1,4 @@
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #pragma once
 
 #include <QJsonArray>
@@ -52,7 +52,7 @@ struct BlendMeshSelection {
     }
     BlendMeshSelection result;
     const auto read = [](const QJsonArray &entries, std::vector<std::string> &names) {
-      require_texture_ram(resource_product(entries.size(),sizeof(std::string)),"Blender library selection");
+
       for (const auto &entry : entries) {
         if (!entry.isString()) throw std::invalid_argument("Invalid Blender library entry name");
         names.push_back(entry.toString().toStdString());

@@ -13,7 +13,6 @@ struct SpsmBitmapLoweringPolicy {
   SpsmBitmapPolicy pixels;
   SpsmBitmapUV uv = SpsmBitmapUV::Unknown;
   SpsmBitmapSampling sampling = SpsmBitmapSampling::Unknown;
-  std::uint64_t memory_budget_bytes = 0;
   SpsmLevelsPolicy levels = SpsmLevelsPolicy::Unknown;
   SpsmMaskBitmapPolicy mask = SpsmMaskBitmapPolicy::Unknown;
 };

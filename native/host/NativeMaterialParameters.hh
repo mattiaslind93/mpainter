@@ -1,5 +1,5 @@
 #pragma once
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "NativeMaterialMapping.hh"
 #include "NativeMaterialHeightPolicy.hh"
 #include <QJsonArray>
@@ -57,7 +57,7 @@ struct NativeMaterialDescription {
   text(material);text(group);text(surface_type);for(const auto &value:node_types)text(value);for(const auto &value:warnings)text(value);
   for(const auto &p:parameters){text(p.identifier);text(p.name);text(p.source_node);text(p.source_socket);json_text(json_text,p.ramp);}
   // Query available memory once for the aggregate, never once per parameter.
-  require_texture_ram(resource_sum(bytes,resource_product(text_units,16)),"Native material description and text");
+
   std::set<QString> identifiers;for(const auto &p:parameters){p.validate();if(!identifiers.insert(p.identifier).second)throw std::invalid_argument("Duplicate native material input identifier");}
  }
 };

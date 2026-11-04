@@ -1,0 +1,2561 @@
+{
+    "native_thumbnails": {
+        "normal_material_imports": [
+            {
+                "material": "image-normal",
+                "native": false,
+                "normal_channel_range": 0.2931050658226013,
+                "normal_texture": true,
+                "preview_center": [
+                    30,
+                    97,
+                    107
+                ],
+                "render_completion": {
+                    "queued_shaders": 0,
+                    "queued_textures": 0,
+                    "ready": true,
+                    "sample_count": 12,
+                    "samples": 12,
+                    "sampling_finished": true,
+                    "viewport_sampling_finished": true
+                },
+                "shader": {
+                    "DefaultMaterial": {
+                        "bump_distance": 0.0010000000474974513,
+                        "normal_intensity": 1,
+                        "openpbr": {
+                            "backend": "Principled compatibility subset, not OpenPBR BSDF conformance",
+                            "installed": false,
+                            "links": {
+                                "Alpha": [
+                                ],
+                                "Anisotropic": [
+                                ],
+                                "Base Color": [
+                                    "__BTS_BaseMix0",
+                                    "Color"
+                                ],
+                                "Coat IOR": [
+                                ],
+                                "Coat Roughness": [
+                                ],
+                                "Coat Tint": [
+                                ],
+                                "Coat Weight": [
+                                ],
+                                "Diffuse Roughness": [
+                                ],
+                                "Emission Color": [
+                                ],
+                                "Emission Strength": [
+                                ],
+                                "IOR": [
+                                ],
+                                "Sheen Roughness": [
+                                ],
+                                "Sheen Tint": [
+                                ],
+                                "Sheen Weight": [
+                                ],
+                                "Specular IOR Level": [
+                                ],
+                                "Specular Tint": [
+                                ],
+                                "Subsurface Anisotropy": [
+                                ],
+                                "Subsurface Radius": [
+                                ],
+                                "Subsurface Scale": [
+                                ],
+                                "Subsurface Weight": [
+                                ],
+                                "Thin Film IOR": [
+                                ],
+                                "Thin Film Thickness": [
+                                ],
+                                "Thin Wall": [
+                                ],
+                                "Transmission Weight": [
+                                ]
+                            },
+                            "sockets": {
+                                "Alpha": [
+                                    1
+                                ],
+                                "Anisotropic": [
+                                    0
+                                ],
+                                "Base Color": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Coat IOR": [
+                                    1.5
+                                ],
+                                "Coat Roughness": [
+                                    0.029999999329447746
+                                ],
+                                "Coat Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Coat Weight": [
+                                    0
+                                ],
+                                "Diffuse Roughness": [
+                                    0
+                                ],
+                                "Emission Color": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Emission Strength": [
+                                    0
+                                ],
+                                "IOR": [
+                                    1.5
+                                ],
+                                "Sheen Roughness": [
+                                    0.5
+                                ],
+                                "Sheen Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Sheen Weight": [
+                                    0
+                                ],
+                                "Specular IOR Level": [
+                                    0.5
+                                ],
+                                "Specular Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Subsurface Anisotropy": [
+                                    0
+                                ],
+                                "Subsurface Radius": [
+                                    0.6857361197471619,
+                                    0.2548108994960785,
+                                    0.12951120734214783
+                                ],
+                                "Subsurface Scale": [
+                                    0.004999999888241291
+                                ],
+                                "Subsurface Weight": [
+                                    0
+                                ],
+                                "Thin Film IOR": [
+                                    1.3300000429153442
+                                ],
+                                "Thin Film Thickness": [
+                                    0
+                                ],
+                                "Thin Wall": [
+                                    false
+                                ],
+                                "Transmission Weight": [
+                                    0
+                                ]
+                            },
+                            "subsurface_method": 6
+                        }
+                    }
+                },
+                "world_normal": {
+                    "artist_normal_enabled": true,
+                    "completed_tiles": 0,
+                    "cycles_entry_epoch": "2",
+                    "cycles_pair_ready": false,
+                    "dispatches": "0",
+                    "enabled": false,
+                    "error": "",
+                    "full_targets": false,
+                    "geometry_revision": "2",
+                    "gpu_handles": [
+                        "0",
+                        "0"
+                    ],
+                    "gpu_tile_maps": [
+                        "0",
+                        "0"
+                    ],
+                    "layer_bump_enabled": false,
+                    "material_uid": "148",
+                    "normal_layer_tiles": 0,
+                    "pending": false,
+                    "private_cpu_buffers": 0,
+                    "private_images": 0,
+                    "programs": 0,
+                    "publication_generation": "0",
+                    "published_source_signature": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    "rendered_tiles": "0",
+                    "route": "layered-tangent-normal",
+                    "target_tiles": 0
+                }
+            },
+            {
+                "material": "procedural-bump",
+                "native": true,
+                "normal_channel_range": 0.08466517925262451,
+                "normal_texture": false,
+                "preview_center": [
+                    55,
+                    132,
+                    145
+                ],
+                "render_completion": {
+                    "queued_shaders": 0,
+                    "queued_textures": 0,
+                    "ready": true,
+                    "sample_count": 12,
+                    "samples": 12,
+                    "sampling_finished": true,
+                    "viewport_sampling_finished": true
+                },
+                "shader": {
+                    "DefaultMaterial": {
+                        "bump_distance": 0.0010000000474974513,
+                        "normal_intensity": 1,
+                        "openpbr": {
+                            "backend": "Principled compatibility subset, not OpenPBR BSDF conformance",
+                            "installed": false,
+                            "links": {
+                                "Alpha": [
+                                ],
+                                "Anisotropic": [
+                                ],
+                                "Base Color": [
+                                    "__BTS_BaseMix0",
+                                    "Color"
+                                ],
+                                "Coat IOR": [
+                                ],
+                                "Coat Roughness": [
+                                ],
+                                "Coat Tint": [
+                                ],
+                                "Coat Weight": [
+                                ],
+                                "Diffuse Roughness": [
+                                ],
+                                "Emission Color": [
+                                ],
+                                "Emission Strength": [
+                                ],
+                                "IOR": [
+                                ],
+                                "Sheen Roughness": [
+                                ],
+                                "Sheen Tint": [
+                                ],
+                                "Sheen Weight": [
+                                ],
+                                "Specular IOR Level": [
+                                ],
+                                "Specular Tint": [
+                                ],
+                                "Subsurface Anisotropy": [
+                                ],
+                                "Subsurface Radius": [
+                                ],
+                                "Subsurface Scale": [
+                                ],
+                                "Subsurface Weight": [
+                                ],
+                                "Thin Film IOR": [
+                                ],
+                                "Thin Film Thickness": [
+                                ],
+                                "Thin Wall": [
+                                ],
+                                "Transmission Weight": [
+                                ]
+                            },
+                            "sockets": {
+                                "Alpha": [
+                                    1
+                                ],
+                                "Anisotropic": [
+                                    0
+                                ],
+                                "Base Color": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Coat IOR": [
+                                    1.5
+                                ],
+                                "Coat Roughness": [
+                                    0.029999999329447746
+                                ],
+                                "Coat Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Coat Weight": [
+                                    0
+                                ],
+                                "Diffuse Roughness": [
+                                    0
+                                ],
+                                "Emission Color": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Emission Strength": [
+                                    0
+                                ],
+                                "IOR": [
+                                    1.5
+                                ],
+                                "Sheen Roughness": [
+                                    0.5
+                                ],
+                                "Sheen Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Sheen Weight": [
+                                    0
+                                ],
+                                "Specular IOR Level": [
+                                    0.5
+                                ],
+                                "Specular Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Subsurface Anisotropy": [
+                                    0
+                                ],
+                                "Subsurface Radius": [
+                                    0.6857361197471619,
+                                    0.2548108994960785,
+                                    0.12951120734214783
+                                ],
+                                "Subsurface Scale": [
+                                    0.004999999888241291
+                                ],
+                                "Subsurface Weight": [
+                                    0
+                                ],
+                                "Thin Film IOR": [
+                                    1.3300000429153442
+                                ],
+                                "Thin Film Thickness": [
+                                    0
+                                ],
+                                "Thin Wall": [
+                                    false
+                                ],
+                                "Transmission Weight": [
+                                    0
+                                ]
+                            },
+                            "subsurface_method": 6
+                        }
+                    }
+                },
+                "warnings": [
+                    "Thin Wall: input type is not editable yet",
+                    "Normal: linked ShaderNodeBump is retained, not replaced by a constant"
+                ],
+                "world_normal": {
+                    "artist_normal_enabled": false,
+                    "completed_tiles": 1,
+                    "cycles_entry_epoch": "4",
+                    "cycles_pair_ready": false,
+                    "dispatches": "1",
+                    "enabled": true,
+                    "error": "",
+                    "full_targets": false,
+                    "geometry_revision": "3",
+                    "gpu_handles": [
+                        "0",
+                        "0"
+                    ],
+                    "gpu_tile_maps": [
+                        "0",
+                        "0"
+                    ],
+                    "index_uploads": 1,
+                    "layer_bump_enabled": true,
+                    "material_uid": "252",
+                    "normal_layer_tiles": 1,
+                    "object_uploads": 0,
+                    "pending": false,
+                    "private_cpu_buffers": 0,
+                    "private_images": 0,
+                    "programs": 1,
+                    "publication_generation": "1",
+                    "published_source_signature": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    "rendered_tiles": "1",
+                    "route": "layered-tangent-normal",
+                    "source_policy": "none",
+                    "target_tiles": 1,
+                    "vertex_uploads": 2
+                },
+                "world_normal_error": "",
+                "world_normal_tree": true
+            },
+            {
+                "material": "bump-normal-chain",
+                "native": true,
+                "normal_channel_range": 0.26480865478515625,
+                "normal_texture": false,
+                "preview_center": [
+                    55,
+                    132,
+                    145
+                ],
+                "render_completion": {
+                    "queued_shaders": 0,
+                    "queued_textures": 0,
+                    "ready": true,
+                    "sample_count": 12,
+                    "samples": 12,
+                    "sampling_finished": true,
+                    "viewport_sampling_finished": true
+                },
+                "shader": {
+                    "DefaultMaterial": {
+                        "bump_distance": 0.0010000000474974513,
+                        "normal_intensity": 1,
+                        "openpbr": {
+                            "backend": "Principled compatibility subset, not OpenPBR BSDF conformance",
+                            "installed": false,
+                            "links": {
+                                "Alpha": [
+                                ],
+                                "Anisotropic": [
+                                ],
+                                "Base Color": [
+                                    "__BTS_BaseMix0",
+                                    "Color"
+                                ],
+                                "Coat IOR": [
+                                ],
+                                "Coat Roughness": [
+                                ],
+                                "Coat Tint": [
+                                ],
+                                "Coat Weight": [
+                                ],
+                                "Diffuse Roughness": [
+                                ],
+                                "Emission Color": [
+                                ],
+                                "Emission Strength": [
+                                ],
+                                "IOR": [
+                                ],
+                                "Sheen Roughness": [
+                                ],
+                                "Sheen Tint": [
+                                ],
+                                "Sheen Weight": [
+                                ],
+                                "Specular IOR Level": [
+                                ],
+                                "Specular Tint": [
+                                ],
+                                "Subsurface Anisotropy": [
+                                ],
+                                "Subsurface Radius": [
+                                ],
+                                "Subsurface Scale": [
+                                ],
+                                "Subsurface Weight": [
+                                ],
+                                "Thin Film IOR": [
+                                ],
+                                "Thin Film Thickness": [
+                                ],
+                                "Thin Wall": [
+                                ],
+                                "Transmission Weight": [
+                                ]
+                            },
+                            "sockets": {
+                                "Alpha": [
+                                    1
+                                ],
+                                "Anisotropic": [
+                                    0
+                                ],
+                                "Base Color": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Coat IOR": [
+                                    1.5
+                                ],
+                                "Coat Roughness": [
+                                    0.029999999329447746
+                                ],
+                                "Coat Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Coat Weight": [
+                                    0
+                                ],
+                                "Diffuse Roughness": [
+                                    0
+                                ],
+                                "Emission Color": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Emission Strength": [
+                                    0
+                                ],
+                                "IOR": [
+                                    1.5
+                                ],
+                                "Sheen Roughness": [
+                                    0.5
+                                ],
+                                "Sheen Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Sheen Weight": [
+                                    0
+                                ],
+                                "Specular IOR Level": [
+                                    0.5
+                                ],
+                                "Specular Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Subsurface Anisotropy": [
+                                    0
+                                ],
+                                "Subsurface Radius": [
+                                    0.6857361197471619,
+                                    0.2548108994960785,
+                                    0.12951120734214783
+                                ],
+                                "Subsurface Scale": [
+                                    0.004999999888241291
+                                ],
+                                "Subsurface Weight": [
+                                    0
+                                ],
+                                "Thin Film IOR": [
+                                    1.3300000429153442
+                                ],
+                                "Thin Film Thickness": [
+                                    0
+                                ],
+                                "Thin Wall": [
+                                    false
+                                ],
+                                "Transmission Weight": [
+                                    0
+                                ]
+                            },
+                            "subsurface_method": 6
+                        }
+                    }
+                },
+                "warnings": [
+                    "Thin Wall: input type is not editable yet",
+                    "Normal: linked ShaderNodeBump is retained, not replaced by a constant"
+                ],
+                "world_normal": {
+                    "artist_normal_enabled": false,
+                    "completed_tiles": 1,
+                    "cycles_entry_epoch": "6",
+                    "cycles_pair_ready": false,
+                    "dispatches": "1",
+                    "enabled": true,
+                    "error": "",
+                    "full_targets": false,
+                    "geometry_revision": "3",
+                    "gpu_handles": [
+                        "0",
+                        "0"
+                    ],
+                    "gpu_tile_maps": [
+                        "0",
+                        "0"
+                    ],
+                    "index_uploads": 1,
+                    "layer_bump_enabled": true,
+                    "material_uid": "381",
+                    "normal_layer_tiles": 1,
+                    "object_uploads": 1,
+                    "pending": false,
+                    "private_cpu_buffers": 0,
+                    "private_images": 0,
+                    "programs": 1,
+                    "publication_generation": "1",
+                    "published_source_signature": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    "rendered_tiles": "1",
+                    "route": "layered-tangent-normal",
+                    "source_policy": "none",
+                    "target_tiles": 1,
+                    "vertex_uploads": 2
+                },
+                "world_normal_error": "",
+                "world_normal_tree": true
+            },
+            {
+                "coat_disabled_cleanly": true,
+                "coat_save_open": true,
+                "material": "coat-normal",
+                "native": true,
+                "normal_texture": false,
+                "preview_center": [
+                    55,
+                    132,
+                    145
+                ],
+                "render_completion": {
+                    "queued_shaders": 0,
+                    "queued_textures": 0,
+                    "ready": true,
+                    "sample_count": 12,
+                    "samples": 12,
+                    "sampling_finished": true,
+                    "viewport_sampling_finished": true
+                },
+                "shader": {
+                    "DefaultMaterial": {
+                        "bump_distance": 0.0010000000474974513,
+                        "normal_intensity": 1,
+                        "openpbr": {
+                            "backend": "Principled compatibility subset, not OpenPBR BSDF conformance",
+                            "installed": false,
+                            "links": {
+                                "Alpha": [
+                                ],
+                                "Anisotropic": [
+                                ],
+                                "Base Color": [
+                                    "__BTS_BaseMix0",
+                                    "Color"
+                                ],
+                                "Coat IOR": [
+                                ],
+                                "Coat Roughness": [
+                                ],
+                                "Coat Tint": [
+                                ],
+                                "Coat Weight": [
+                                ],
+                                "Diffuse Roughness": [
+                                ],
+                                "Emission Color": [
+                                ],
+                                "Emission Strength": [
+                                ],
+                                "IOR": [
+                                ],
+                                "Sheen Roughness": [
+                                ],
+                                "Sheen Tint": [
+                                ],
+                                "Sheen Weight": [
+                                ],
+                                "Specular IOR Level": [
+                                ],
+                                "Specular Tint": [
+                                ],
+                                "Subsurface Anisotropy": [
+                                ],
+                                "Subsurface Radius": [
+                                ],
+                                "Subsurface Scale": [
+                                ],
+                                "Subsurface Weight": [
+                                ],
+                                "Thin Film IOR": [
+                                ],
+                                "Thin Film Thickness": [
+                                ],
+                                "Thin Wall": [
+                                ],
+                                "Transmission Weight": [
+                                ]
+                            },
+                            "sockets": {
+                                "Alpha": [
+                                    1
+                                ],
+                                "Anisotropic": [
+                                    0
+                                ],
+                                "Base Color": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Coat IOR": [
+                                    1.5
+                                ],
+                                "Coat Roughness": [
+                                    0.029999999329447746
+                                ],
+                                "Coat Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Coat Weight": [
+                                    1
+                                ],
+                                "Diffuse Roughness": [
+                                    0
+                                ],
+                                "Emission Color": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Emission Strength": [
+                                    0
+                                ],
+                                "IOR": [
+                                    1.5
+                                ],
+                                "Sheen Roughness": [
+                                    0.5
+                                ],
+                                "Sheen Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Sheen Weight": [
+                                    0
+                                ],
+                                "Specular IOR Level": [
+                                    0.5
+                                ],
+                                "Specular Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Subsurface Anisotropy": [
+                                    0
+                                ],
+                                "Subsurface Radius": [
+                                    0.6857361197471619,
+                                    0.2548108994960785,
+                                    0.12951120734214783
+                                ],
+                                "Subsurface Scale": [
+                                    0.004999999888241291
+                                ],
+                                "Subsurface Weight": [
+                                    0
+                                ],
+                                "Thin Film IOR": [
+                                    1.3300000429153442
+                                ],
+                                "Thin Film Thickness": [
+                                    0
+                                ],
+                                "Thin Wall": [
+                                    false
+                                ],
+                                "Transmission Weight": [
+                                    0
+                                ]
+                            },
+                            "subsurface_method": 6
+                        }
+                    }
+                },
+                "warnings": [
+                    "Thin Wall: input type is not editable yet",
+                    "Coat Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant"
+                ],
+                "world_normal": {
+                    "artist_normal_enabled": false,
+                    "completed_tiles": 0,
+                    "cycles_entry_epoch": "8",
+                    "cycles_pair_ready": false,
+                    "dispatches": "0",
+                    "enabled": false,
+                    "error": "",
+                    "full_targets": false,
+                    "geometry_revision": "2",
+                    "gpu_handles": [
+                        "0",
+                        "0"
+                    ],
+                    "gpu_tile_maps": [
+                        "0",
+                        "0"
+                    ],
+                    "layer_bump_enabled": true,
+                    "material_uid": "507",
+                    "normal_layer_tiles": 0,
+                    "pending": false,
+                    "private_cpu_buffers": 0,
+                    "private_images": 0,
+                    "programs": 0,
+                    "publication_generation": "0",
+                    "published_source_signature": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    "rendered_tiles": "0",
+                    "route": "layered-tangent-normal",
+                    "source_policy": "none",
+                    "target_tiles": 0
+                },
+                "world_normal_error": "",
+                "world_normal_tree": false
+            },
+            {
+                "material": "object-normal",
+                "native": true,
+                "normal_texture": false,
+                "preview_center": [
+                    55,
+                    132,
+                    145
+                ],
+                "render_completion": {
+                    "queued_shaders": 0,
+                    "queued_textures": 0,
+                    "ready": true,
+                    "sample_count": 12,
+                    "samples": 12,
+                    "sampling_finished": true,
+                    "viewport_sampling_finished": true
+                },
+                "shader": {
+                    "DefaultMaterial": {
+                        "bump_distance": 0.0010000000474974513,
+                        "normal_intensity": 1,
+                        "openpbr": {
+                            "backend": "Principled compatibility subset, not OpenPBR BSDF conformance",
+                            "installed": false,
+                            "links": {
+                                "Alpha": [
+                                ],
+                                "Anisotropic": [
+                                ],
+                                "Base Color": [
+                                    "__BTS_BaseMix0",
+                                    "Color"
+                                ],
+                                "Coat IOR": [
+                                ],
+                                "Coat Roughness": [
+                                ],
+                                "Coat Tint": [
+                                ],
+                                "Coat Weight": [
+                                ],
+                                "Diffuse Roughness": [
+                                ],
+                                "Emission Color": [
+                                ],
+                                "Emission Strength": [
+                                ],
+                                "IOR": [
+                                ],
+                                "Sheen Roughness": [
+                                ],
+                                "Sheen Tint": [
+                                ],
+                                "Sheen Weight": [
+                                ],
+                                "Specular IOR Level": [
+                                ],
+                                "Specular Tint": [
+                                ],
+                                "Subsurface Anisotropy": [
+                                ],
+                                "Subsurface Radius": [
+                                ],
+                                "Subsurface Scale": [
+                                ],
+                                "Subsurface Weight": [
+                                ],
+                                "Thin Film IOR": [
+                                ],
+                                "Thin Film Thickness": [
+                                ],
+                                "Thin Wall": [
+                                ],
+                                "Transmission Weight": [
+                                ]
+                            },
+                            "sockets": {
+                                "Alpha": [
+                                    1
+                                ],
+                                "Anisotropic": [
+                                    0
+                                ],
+                                "Base Color": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Coat IOR": [
+                                    1.5
+                                ],
+                                "Coat Roughness": [
+                                    0.029999999329447746
+                                ],
+                                "Coat Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Coat Weight": [
+                                    0
+                                ],
+                                "Diffuse Roughness": [
+                                    0
+                                ],
+                                "Emission Color": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Emission Strength": [
+                                    0
+                                ],
+                                "IOR": [
+                                    1.5
+                                ],
+                                "Sheen Roughness": [
+                                    0.5
+                                ],
+                                "Sheen Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Sheen Weight": [
+                                    0
+                                ],
+                                "Specular IOR Level": [
+                                    0.5
+                                ],
+                                "Specular Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Subsurface Anisotropy": [
+                                    0
+                                ],
+                                "Subsurface Radius": [
+                                    0.6857361197471619,
+                                    0.2548108994960785,
+                                    0.12951120734214783
+                                ],
+                                "Subsurface Scale": [
+                                    0.004999999888241291
+                                ],
+                                "Subsurface Weight": [
+                                    0
+                                ],
+                                "Thin Film IOR": [
+                                    1.3300000429153442
+                                ],
+                                "Thin Film Thickness": [
+                                    0
+                                ],
+                                "Thin Wall": [
+                                    false
+                                ],
+                                "Transmission Weight": [
+                                    0
+                                ]
+                            },
+                            "subsurface_method": 6
+                        }
+                    }
+                },
+                "warnings": [
+                    "Thin Wall: input type is not editable yet",
+                    "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant"
+                ],
+                "world_normal": {
+                    "artist_normal_enabled": false,
+                    "completed_tiles": 1,
+                    "cycles_entry_epoch": "3",
+                    "cycles_pair_ready": false,
+                    "dispatches": "1",
+                    "enabled": true,
+                    "error": "",
+                    "full_targets": false,
+                    "geometry_revision": "3",
+                    "gpu_handles": [
+                        "0",
+                        "0"
+                    ],
+                    "gpu_tile_maps": [
+                        "0",
+                        "0"
+                    ],
+                    "index_uploads": 1,
+                    "layer_bump_enabled": true,
+                    "material_uid": "781",
+                    "normal_layer_tiles": 1,
+                    "object_uploads": 1,
+                    "pending": false,
+                    "private_cpu_buffers": 0,
+                    "private_images": 0,
+                    "programs": 2,
+                    "publication_generation": "1",
+                    "published_source_signature": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    "rendered_tiles": "1",
+                    "route": "layered-tangent-normal",
+                    "source_policy": "none",
+                    "target_tiles": 1,
+                    "vertex_uploads": 1
+                },
+                "world_normal_error": "",
+                "world_normal_tree": true
+            },
+            {
+                "material": "world-normal",
+                "native": true,
+                "normal_texture": false,
+                "preview_center": [
+                    55,
+                    132,
+                    145
+                ],
+                "render_completion": {
+                    "queued_shaders": 0,
+                    "queued_textures": 0,
+                    "ready": true,
+                    "sample_count": 12,
+                    "samples": 12,
+                    "sampling_finished": true,
+                    "viewport_sampling_finished": true
+                },
+                "shader": {
+                    "DefaultMaterial": {
+                        "bump_distance": 0.0010000000474974513,
+                        "normal_intensity": 1,
+                        "openpbr": {
+                            "backend": "Principled compatibility subset, not OpenPBR BSDF conformance",
+                            "installed": false,
+                            "links": {
+                                "Alpha": [
+                                ],
+                                "Anisotropic": [
+                                ],
+                                "Base Color": [
+                                    "__BTS_BaseMix0",
+                                    "Color"
+                                ],
+                                "Coat IOR": [
+                                ],
+                                "Coat Roughness": [
+                                ],
+                                "Coat Tint": [
+                                ],
+                                "Coat Weight": [
+                                ],
+                                "Diffuse Roughness": [
+                                ],
+                                "Emission Color": [
+                                ],
+                                "Emission Strength": [
+                                ],
+                                "IOR": [
+                                ],
+                                "Sheen Roughness": [
+                                ],
+                                "Sheen Tint": [
+                                ],
+                                "Sheen Weight": [
+                                ],
+                                "Specular IOR Level": [
+                                ],
+                                "Specular Tint": [
+                                ],
+                                "Subsurface Anisotropy": [
+                                ],
+                                "Subsurface Radius": [
+                                ],
+                                "Subsurface Scale": [
+                                ],
+                                "Subsurface Weight": [
+                                ],
+                                "Thin Film IOR": [
+                                ],
+                                "Thin Film Thickness": [
+                                ],
+                                "Thin Wall": [
+                                ],
+                                "Transmission Weight": [
+                                ]
+                            },
+                            "sockets": {
+                                "Alpha": [
+                                    1
+                                ],
+                                "Anisotropic": [
+                                    0
+                                ],
+                                "Base Color": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Coat IOR": [
+                                    1.5
+                                ],
+                                "Coat Roughness": [
+                                    0.029999999329447746
+                                ],
+                                "Coat Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Coat Weight": [
+                                    0
+                                ],
+                                "Diffuse Roughness": [
+                                    0
+                                ],
+                                "Emission Color": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Emission Strength": [
+                                    0
+                                ],
+                                "IOR": [
+                                    1.5
+                                ],
+                                "Sheen Roughness": [
+                                    0.5
+                                ],
+                                "Sheen Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Sheen Weight": [
+                                    0
+                                ],
+                                "Specular IOR Level": [
+                                    0.5
+                                ],
+                                "Specular Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Subsurface Anisotropy": [
+                                    0
+                                ],
+                                "Subsurface Radius": [
+                                    0.6857361197471619,
+                                    0.2548108994960785,
+                                    0.12951120734214783
+                                ],
+                                "Subsurface Scale": [
+                                    0.004999999888241291
+                                ],
+                                "Subsurface Weight": [
+                                    0
+                                ],
+                                "Thin Film IOR": [
+                                    1.3300000429153442
+                                ],
+                                "Thin Film Thickness": [
+                                    0
+                                ],
+                                "Thin Wall": [
+                                    false
+                                ],
+                                "Transmission Weight": [
+                                    0
+                                ]
+                            },
+                            "subsurface_method": 6
+                        }
+                    }
+                },
+                "warnings": [
+                    "Thin Wall: input type is not editable yet",
+                    "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant"
+                ],
+                "world_normal": {
+                    "artist_normal_enabled": false,
+                    "completed_tiles": 1,
+                    "cycles_entry_epoch": "5",
+                    "cycles_pair_ready": false,
+                    "dispatches": "1",
+                    "enabled": true,
+                    "error": "",
+                    "full_targets": false,
+                    "geometry_revision": "3",
+                    "gpu_handles": [
+                        "0",
+                        "0"
+                    ],
+                    "gpu_tile_maps": [
+                        "0",
+                        "0"
+                    ],
+                    "index_uploads": 1,
+                    "layer_bump_enabled": true,
+                    "material_uid": "909",
+                    "normal_layer_tiles": 1,
+                    "object_uploads": 1,
+                    "pending": false,
+                    "private_cpu_buffers": 0,
+                    "private_images": 0,
+                    "programs": 2,
+                    "publication_generation": "1",
+                    "published_source_signature": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    "rendered_tiles": "1",
+                    "route": "layered-tangent-normal",
+                    "source_policy": "none",
+                    "target_tiles": 1,
+                    "vertex_uploads": 1
+                },
+                "world_normal_error": "",
+                "world_normal_tree": true
+            },
+            {
+                "material": "diffuse-normal",
+                "native": true,
+                "normal_texture": false,
+                "preview_center": [
+                    56,
+                    125,
+                    137
+                ],
+                "render_completion": {
+                    "queued_shaders": 0,
+                    "queued_textures": 0,
+                    "ready": true,
+                    "sample_count": 12,
+                    "samples": 12,
+                    "sampling_finished": true,
+                    "viewport_sampling_finished": true
+                },
+                "shader": {
+                    "DefaultMaterial": {
+                        "bump_distance": 0.0010000000474974513,
+                        "normal_intensity": 1,
+                        "openpbr": {
+                            "backend": "Principled compatibility subset, not OpenPBR BSDF conformance",
+                            "installed": false,
+                            "links": {
+                                "Alpha": [
+                                ],
+                                "Anisotropic": [
+                                ],
+                                "Base Color": [
+                                    "__BTS_BaseMix0",
+                                    "Color"
+                                ],
+                                "Coat IOR": [
+                                ],
+                                "Coat Roughness": [
+                                ],
+                                "Coat Tint": [
+                                ],
+                                "Coat Weight": [
+                                ],
+                                "Diffuse Roughness": [
+                                ],
+                                "Emission Color": [
+                                ],
+                                "Emission Strength": [
+                                ],
+                                "IOR": [
+                                ],
+                                "Sheen Roughness": [
+                                ],
+                                "Sheen Tint": [
+                                ],
+                                "Sheen Weight": [
+                                ],
+                                "Specular IOR Level": [
+                                ],
+                                "Specular Tint": [
+                                ],
+                                "Subsurface Anisotropy": [
+                                ],
+                                "Subsurface Radius": [
+                                ],
+                                "Subsurface Scale": [
+                                ],
+                                "Subsurface Weight": [
+                                ],
+                                "Thin Film IOR": [
+                                ],
+                                "Thin Film Thickness": [
+                                ],
+                                "Thin Wall": [
+                                ],
+                                "Transmission Weight": [
+                                ]
+                            },
+                            "sockets": {
+                                "Alpha": [
+                                    1
+                                ],
+                                "Anisotropic": [
+                                    0
+                                ],
+                                "Base Color": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Coat IOR": [
+                                    1.5
+                                ],
+                                "Coat Roughness": [
+                                    0.029999999329447746
+                                ],
+                                "Coat Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Coat Weight": [
+                                    0
+                                ],
+                                "Diffuse Roughness": [
+                                    0
+                                ],
+                                "Emission Color": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Emission Strength": [
+                                    0
+                                ],
+                                "IOR": [
+                                    1.5
+                                ],
+                                "Sheen Roughness": [
+                                    0.5
+                                ],
+                                "Sheen Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Sheen Weight": [
+                                    0
+                                ],
+                                "Specular IOR Level": [
+                                    0.5
+                                ],
+                                "Specular Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Subsurface Anisotropy": [
+                                    0
+                                ],
+                                "Subsurface Radius": [
+                                    0.6857361197471619,
+                                    0.2548108994960785,
+                                    0.12951120734214783
+                                ],
+                                "Subsurface Scale": [
+                                    0.004999999888241291
+                                ],
+                                "Subsurface Weight": [
+                                    0
+                                ],
+                                "Thin Film IOR": [
+                                    1.3300000429153442
+                                ],
+                                "Thin Film Thickness": [
+                                    0
+                                ],
+                                "Thin Wall": [
+                                    false
+                                ],
+                                "Transmission Weight": [
+                                    0
+                                ]
+                            },
+                            "subsurface_method": 6
+                        }
+                    }
+                },
+                "warnings": [
+                    "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+                    "Surface ShaderNodeBsdfDiffuse requires explicit shader-channel extraction"
+                ],
+                "world_normal": {
+                    "artist_normal_enabled": false,
+                    "completed_tiles": 1,
+                    "cycles_entry_epoch": "7",
+                    "cycles_pair_ready": false,
+                    "dispatches": "1",
+                    "enabled": true,
+                    "error": "",
+                    "full_targets": false,
+                    "geometry_revision": "3",
+                    "gpu_handles": [
+                        "0",
+                        "0"
+                    ],
+                    "gpu_tile_maps": [
+                        "0",
+                        "0"
+                    ],
+                    "index_uploads": 1,
+                    "layer_bump_enabled": true,
+                    "material_uid": "1037",
+                    "normal_layer_tiles": 1,
+                    "object_uploads": 1,
+                    "pending": false,
+                    "private_cpu_buffers": 0,
+                    "private_images": 0,
+                    "programs": 2,
+                    "publication_generation": "1",
+                    "published_source_signature": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    "rendered_tiles": "1",
+                    "route": "layered-tangent-normal",
+                    "source_policy": "none",
+                    "target_tiles": 1,
+                    "vertex_uploads": 1
+                },
+                "world_normal_error": "",
+                "world_normal_tree": true
+            },
+            {
+                "material": "unsupported-normal",
+                "native": true,
+                "normal_texture": false,
+                "preview_center": [
+                    55,
+                    132,
+                    145
+                ],
+                "render_completion": {
+                    "queued_shaders": 0,
+                    "queued_textures": 0,
+                    "ready": true,
+                    "sample_count": 12,
+                    "samples": 12,
+                    "sampling_finished": true,
+                    "viewport_sampling_finished": true
+                },
+                "shader": {
+                    "DefaultMaterial": {
+                        "bump_distance": 0.0010000000474974513,
+                        "normal_intensity": 1,
+                        "openpbr": {
+                            "backend": "Principled compatibility subset, not OpenPBR BSDF conformance",
+                            "installed": false,
+                            "links": {
+                                "Alpha": [
+                                ],
+                                "Anisotropic": [
+                                ],
+                                "Base Color": [
+                                    "__BTS_BaseMix0",
+                                    "Color"
+                                ],
+                                "Coat IOR": [
+                                ],
+                                "Coat Roughness": [
+                                ],
+                                "Coat Tint": [
+                                ],
+                                "Coat Weight": [
+                                ],
+                                "Diffuse Roughness": [
+                                ],
+                                "Emission Color": [
+                                ],
+                                "Emission Strength": [
+                                ],
+                                "IOR": [
+                                ],
+                                "Sheen Roughness": [
+                                ],
+                                "Sheen Tint": [
+                                ],
+                                "Sheen Weight": [
+                                ],
+                                "Specular IOR Level": [
+                                ],
+                                "Specular Tint": [
+                                ],
+                                "Subsurface Anisotropy": [
+                                ],
+                                "Subsurface Radius": [
+                                ],
+                                "Subsurface Scale": [
+                                ],
+                                "Subsurface Weight": [
+                                ],
+                                "Thin Film IOR": [
+                                ],
+                                "Thin Film Thickness": [
+                                ],
+                                "Thin Wall": [
+                                ],
+                                "Transmission Weight": [
+                                ]
+                            },
+                            "sockets": {
+                                "Alpha": [
+                                    1
+                                ],
+                                "Anisotropic": [
+                                    0
+                                ],
+                                "Base Color": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Coat IOR": [
+                                    1.5
+                                ],
+                                "Coat Roughness": [
+                                    0.029999999329447746
+                                ],
+                                "Coat Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Coat Weight": [
+                                    0
+                                ],
+                                "Diffuse Roughness": [
+                                    0
+                                ],
+                                "Emission Color": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Emission Strength": [
+                                    0
+                                ],
+                                "IOR": [
+                                    1.5
+                                ],
+                                "Sheen Roughness": [
+                                    0.5
+                                ],
+                                "Sheen Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Sheen Weight": [
+                                    0
+                                ],
+                                "Specular IOR Level": [
+                                    0.5
+                                ],
+                                "Specular Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Subsurface Anisotropy": [
+                                    0
+                                ],
+                                "Subsurface Radius": [
+                                    0.6857361197471619,
+                                    0.2548108994960785,
+                                    0.12951120734214783
+                                ],
+                                "Subsurface Scale": [
+                                    0.004999999888241291
+                                ],
+                                "Subsurface Weight": [
+                                    0
+                                ],
+                                "Thin Film IOR": [
+                                    1.3300000429153442
+                                ],
+                                "Thin Film Thickness": [
+                                    0
+                                ],
+                                "Thin Wall": [
+                                    false
+                                ],
+                                "Transmission Weight": [
+                                    0
+                                ]
+                            },
+                            "subsurface_method": 6
+                        }
+                    }
+                },
+                "warnings": [
+                    "Thin Wall: input type is not editable yet",
+                    "Normal input was retained but cannot be evaluated: Fragment attribute has no supplied UV/object/view binding: BTS_Coord_Reflection"
+                ],
+                "world_normal": {
+                    "artist_normal_enabled": false,
+                    "completed_tiles": 0,
+                    "cycles_entry_epoch": "9",
+                    "cycles_pair_ready": false,
+                    "dispatches": "0",
+                    "enabled": false,
+                    "error": "",
+                    "full_targets": false,
+                    "geometry_revision": "2",
+                    "gpu_handles": [
+                        "0",
+                        "0"
+                    ],
+                    "gpu_tile_maps": [
+                        "0",
+                        "0"
+                    ],
+                    "layer_bump_enabled": false,
+                    "material_uid": "1165",
+                    "normal_layer_tiles": 0,
+                    "pending": false,
+                    "private_cpu_buffers": 0,
+                    "private_images": 0,
+                    "programs": 0,
+                    "publication_generation": "0",
+                    "published_source_signature": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    "rendered_tiles": "0",
+                    "route": "layered-tangent-normal",
+                    "source_policy": "none",
+                    "target_tiles": 0
+                },
+                "world_normal_error": "Fragment attribute has no supplied UV/object/view binding: BTS_Coord_Reflection",
+                "world_normal_tree": true
+            },
+            {
+                "coat_disabled_cleanly": true,
+                "coat_save_open": true,
+                "material": "constant-coat",
+                "native": true,
+                "normal_texture": false,
+                "preview_center": [
+                    55,
+                    132,
+                    145
+                ],
+                "render_completion": {
+                    "queued_shaders": 0,
+                    "queued_textures": 0,
+                    "ready": true,
+                    "sample_count": 12,
+                    "samples": 12,
+                    "sampling_finished": true,
+                    "viewport_sampling_finished": true
+                },
+                "shader": {
+                    "DefaultMaterial": {
+                        "bump_distance": 0.0010000000474974513,
+                        "normal_intensity": 1,
+                        "openpbr": {
+                            "backend": "Principled compatibility subset, not OpenPBR BSDF conformance",
+                            "installed": false,
+                            "links": {
+                                "Alpha": [
+                                ],
+                                "Anisotropic": [
+                                ],
+                                "Base Color": [
+                                    "__BTS_BaseMix0",
+                                    "Color"
+                                ],
+                                "Coat IOR": [
+                                ],
+                                "Coat Roughness": [
+                                ],
+                                "Coat Tint": [
+                                ],
+                                "Coat Weight": [
+                                ],
+                                "Diffuse Roughness": [
+                                ],
+                                "Emission Color": [
+                                ],
+                                "Emission Strength": [
+                                ],
+                                "IOR": [
+                                ],
+                                "Sheen Roughness": [
+                                ],
+                                "Sheen Tint": [
+                                ],
+                                "Sheen Weight": [
+                                ],
+                                "Specular IOR Level": [
+                                ],
+                                "Specular Tint": [
+                                ],
+                                "Subsurface Anisotropy": [
+                                ],
+                                "Subsurface Radius": [
+                                ],
+                                "Subsurface Scale": [
+                                ],
+                                "Subsurface Weight": [
+                                ],
+                                "Thin Film IOR": [
+                                ],
+                                "Thin Film Thickness": [
+                                ],
+                                "Thin Wall": [
+                                ],
+                                "Transmission Weight": [
+                                ]
+                            },
+                            "sockets": {
+                                "Alpha": [
+                                    1
+                                ],
+                                "Anisotropic": [
+                                    0
+                                ],
+                                "Base Color": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Coat IOR": [
+                                    1.5
+                                ],
+                                "Coat Roughness": [
+                                    0.029999999329447746
+                                ],
+                                "Coat Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Coat Weight": [
+                                    1
+                                ],
+                                "Diffuse Roughness": [
+                                    0
+                                ],
+                                "Emission Color": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Emission Strength": [
+                                    0
+                                ],
+                                "IOR": [
+                                    1.5
+                                ],
+                                "Sheen Roughness": [
+                                    0.5
+                                ],
+                                "Sheen Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Sheen Weight": [
+                                    0
+                                ],
+                                "Specular IOR Level": [
+                                    0.5
+                                ],
+                                "Specular Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Subsurface Anisotropy": [
+                                    0
+                                ],
+                                "Subsurface Radius": [
+                                    0.6857361197471619,
+                                    0.2548108994960785,
+                                    0.12951120734214783
+                                ],
+                                "Subsurface Scale": [
+                                    0.004999999888241291
+                                ],
+                                "Subsurface Weight": [
+                                    0
+                                ],
+                                "Thin Film IOR": [
+                                    1.3300000429153442
+                                ],
+                                "Thin Film Thickness": [
+                                    0
+                                ],
+                                "Thin Wall": [
+                                    false
+                                ],
+                                "Transmission Weight": [
+                                    0
+                                ]
+                            },
+                            "subsurface_method": 6
+                        }
+                    }
+                },
+                "warnings": [
+                    "Thin Wall: input type is not editable yet"
+                ],
+                "world_normal": {
+                    "artist_normal_enabled": false,
+                    "completed_tiles": 0,
+                    "cycles_entry_epoch": "11",
+                    "cycles_pair_ready": false,
+                    "dispatches": "0",
+                    "enabled": false,
+                    "error": "",
+                    "full_targets": false,
+                    "geometry_revision": "2",
+                    "gpu_handles": [
+                        "0",
+                        "0"
+                    ],
+                    "gpu_tile_maps": [
+                        "0",
+                        "0"
+                    ],
+                    "layer_bump_enabled": true,
+                    "material_uid": "1290",
+                    "normal_layer_tiles": 0,
+                    "pending": false,
+                    "private_cpu_buffers": 0,
+                    "private_images": 0,
+                    "programs": 0,
+                    "publication_generation": "0",
+                    "published_source_signature": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    "rendered_tiles": "0",
+                    "route": "layered-tangent-normal",
+                    "source_policy": "none",
+                    "target_tiles": 0
+                },
+                "world_normal_error": "",
+                "world_normal_tree": false
+            },
+            {
+                "material": "unsupported-color",
+                "native": true,
+                "normal_texture": false,
+                "preview_center": [
+                    55,
+                    132,
+                    145
+                ],
+                "render_completion": {
+                    "queued_shaders": 0,
+                    "queued_textures": 0,
+                    "ready": true,
+                    "sample_count": 12,
+                    "samples": 12,
+                    "sampling_finished": true,
+                    "viewport_sampling_finished": true
+                },
+                "shader": {
+                    "DefaultMaterial": {
+                        "bump_distance": 0.0010000000474974513,
+                        "normal_intensity": 1,
+                        "openpbr": {
+                            "backend": "Principled compatibility subset, not OpenPBR BSDF conformance",
+                            "installed": false,
+                            "links": {
+                                "Alpha": [
+                                ],
+                                "Anisotropic": [
+                                ],
+                                "Base Color": [
+                                    "__BTS_BaseMix0",
+                                    "Color"
+                                ],
+                                "Coat IOR": [
+                                ],
+                                "Coat Roughness": [
+                                ],
+                                "Coat Tint": [
+                                ],
+                                "Coat Weight": [
+                                ],
+                                "Diffuse Roughness": [
+                                ],
+                                "Emission Color": [
+                                ],
+                                "Emission Strength": [
+                                ],
+                                "IOR": [
+                                ],
+                                "Sheen Roughness": [
+                                ],
+                                "Sheen Tint": [
+                                ],
+                                "Sheen Weight": [
+                                ],
+                                "Specular IOR Level": [
+                                ],
+                                "Specular Tint": [
+                                ],
+                                "Subsurface Anisotropy": [
+                                ],
+                                "Subsurface Radius": [
+                                ],
+                                "Subsurface Scale": [
+                                ],
+                                "Subsurface Weight": [
+                                ],
+                                "Thin Film IOR": [
+                                ],
+                                "Thin Film Thickness": [
+                                ],
+                                "Thin Wall": [
+                                ],
+                                "Transmission Weight": [
+                                ]
+                            },
+                            "sockets": {
+                                "Alpha": [
+                                    1
+                                ],
+                                "Anisotropic": [
+                                    0
+                                ],
+                                "Base Color": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Coat IOR": [
+                                    1.5
+                                ],
+                                "Coat Roughness": [
+                                    0.029999999329447746
+                                ],
+                                "Coat Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Coat Weight": [
+                                    0
+                                ],
+                                "Diffuse Roughness": [
+                                    0
+                                ],
+                                "Emission Color": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Emission Strength": [
+                                    0
+                                ],
+                                "IOR": [
+                                    1.5
+                                ],
+                                "Sheen Roughness": [
+                                    0.5
+                                ],
+                                "Sheen Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Sheen Weight": [
+                                    0
+                                ],
+                                "Specular IOR Level": [
+                                    0.5
+                                ],
+                                "Specular Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Subsurface Anisotropy": [
+                                    0
+                                ],
+                                "Subsurface Radius": [
+                                    0.6857361197471619,
+                                    0.2548108994960785,
+                                    0.12951120734214783
+                                ],
+                                "Subsurface Scale": [
+                                    0.004999999888241291
+                                ],
+                                "Subsurface Weight": [
+                                    0
+                                ],
+                                "Thin Film IOR": [
+                                    1.3300000429153442
+                                ],
+                                "Thin Film Thickness": [
+                                    0
+                                ],
+                                "Thin Wall": [
+                                    false
+                                ],
+                                "Transmission Weight": [
+                                    0
+                                ]
+                            },
+                            "subsurface_method": 6
+                        }
+                    }
+                },
+                "warnings": [
+                    "Thin Wall: input type is not editable yet",
+                    "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+                    "Color input is unsupported; retained its default and imported the other channels: Native Geometry True Normal requires a geometric-normal binding; the shading-normal atlas does not supply it"
+                ],
+                "world_normal": {
+                    "artist_normal_enabled": false,
+                    "completed_tiles": 1,
+                    "cycles_entry_epoch": "3",
+                    "cycles_pair_ready": false,
+                    "dispatches": "1",
+                    "enabled": true,
+                    "error": "",
+                    "full_targets": false,
+                    "geometry_revision": "3",
+                    "gpu_handles": [
+                        "0",
+                        "0"
+                    ],
+                    "gpu_tile_maps": [
+                        "0",
+                        "0"
+                    ],
+                    "index_uploads": 1,
+                    "layer_bump_enabled": true,
+                    "material_uid": "1559",
+                    "normal_layer_tiles": 1,
+                    "object_uploads": 1,
+                    "pending": false,
+                    "private_cpu_buffers": 0,
+                    "private_images": 0,
+                    "programs": 2,
+                    "publication_generation": "1",
+                    "published_source_signature": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    "rendered_tiles": "1",
+                    "route": "layered-tangent-normal",
+                    "source_policy": "none",
+                    "target_tiles": 1,
+                    "vertex_uploads": 1
+                },
+                "world_normal_error": "",
+                "world_normal_tree": true
+            },
+            {
+                "material": "unsupported-closure-color",
+                "native": true,
+                "normal_texture": false,
+                "preview_center": [
+                    55,
+                    132,
+                    145
+                ],
+                "render_completion": {
+                    "queued_shaders": 0,
+                    "queued_textures": 0,
+                    "ready": true,
+                    "sample_count": 12,
+                    "samples": 12,
+                    "sampling_finished": true,
+                    "viewport_sampling_finished": true
+                },
+                "shader": {
+                    "DefaultMaterial": {
+                        "bump_distance": 0.0010000000474974513,
+                        "normal_intensity": 1,
+                        "openpbr": {
+                            "backend": "Principled compatibility subset, not OpenPBR BSDF conformance",
+                            "installed": false,
+                            "links": {
+                                "Alpha": [
+                                ],
+                                "Anisotropic": [
+                                ],
+                                "Base Color": [
+                                    "__BTS_BaseMix0",
+                                    "Color"
+                                ],
+                                "Coat IOR": [
+                                ],
+                                "Coat Roughness": [
+                                ],
+                                "Coat Tint": [
+                                ],
+                                "Coat Weight": [
+                                ],
+                                "Diffuse Roughness": [
+                                ],
+                                "Emission Color": [
+                                ],
+                                "Emission Strength": [
+                                ],
+                                "IOR": [
+                                ],
+                                "Sheen Roughness": [
+                                ],
+                                "Sheen Tint": [
+                                ],
+                                "Sheen Weight": [
+                                ],
+                                "Specular IOR Level": [
+                                ],
+                                "Specular Tint": [
+                                ],
+                                "Subsurface Anisotropy": [
+                                ],
+                                "Subsurface Radius": [
+                                ],
+                                "Subsurface Scale": [
+                                ],
+                                "Subsurface Weight": [
+                                ],
+                                "Thin Film IOR": [
+                                ],
+                                "Thin Film Thickness": [
+                                ],
+                                "Thin Wall": [
+                                ],
+                                "Transmission Weight": [
+                                ]
+                            },
+                            "sockets": {
+                                "Alpha": [
+                                    1
+                                ],
+                                "Anisotropic": [
+                                    0
+                                ],
+                                "Base Color": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Coat IOR": [
+                                    1.5
+                                ],
+                                "Coat Roughness": [
+                                    0.029999999329447746
+                                ],
+                                "Coat Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Coat Weight": [
+                                    0
+                                ],
+                                "Diffuse Roughness": [
+                                    0
+                                ],
+                                "Emission Color": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Emission Strength": [
+                                    0
+                                ],
+                                "IOR": [
+                                    1.5
+                                ],
+                                "Sheen Roughness": [
+                                    0.5
+                                ],
+                                "Sheen Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Sheen Weight": [
+                                    0
+                                ],
+                                "Specular IOR Level": [
+                                    0.5
+                                ],
+                                "Specular Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Subsurface Anisotropy": [
+                                    0
+                                ],
+                                "Subsurface Radius": [
+                                    0.6857361197471619,
+                                    0.2548108994960785,
+                                    0.12951120734214783
+                                ],
+                                "Subsurface Scale": [
+                                    0.004999999888241291
+                                ],
+                                "Subsurface Weight": [
+                                    0
+                                ],
+                                "Thin Film IOR": [
+                                    1.3300000429153442
+                                ],
+                                "Thin Film Thickness": [
+                                    0
+                                ],
+                                "Thin Wall": [
+                                    false
+                                ],
+                                "Transmission Weight": [
+                                    0
+                                ]
+                            },
+                            "subsurface_method": 6
+                        }
+                    }
+                },
+                "warnings": [
+                    "Thin Wall: input type is not editable yet",
+                    "Normal: linked ShaderNodeNormalMap is retained, not replaced by a constant",
+                    "Color input is unsupported; retained its default and imported the other channels: Material channels cannot evaluate shader-closure input on ShaderNodeShaderToRGB"
+                ],
+                "world_normal": {
+                    "artist_normal_enabled": false,
+                    "completed_tiles": 1,
+                    "cycles_entry_epoch": "5",
+                    "cycles_pair_ready": false,
+                    "dispatches": "1",
+                    "enabled": true,
+                    "error": "",
+                    "full_targets": false,
+                    "geometry_revision": "3",
+                    "gpu_handles": [
+                        "0",
+                        "0"
+                    ],
+                    "gpu_tile_maps": [
+                        "0",
+                        "0"
+                    ],
+                    "index_uploads": 1,
+                    "layer_bump_enabled": true,
+                    "material_uid": "1689",
+                    "normal_layer_tiles": 1,
+                    "object_uploads": 1,
+                    "pending": false,
+                    "private_cpu_buffers": 0,
+                    "private_images": 0,
+                    "programs": 2,
+                    "publication_generation": "1",
+                    "published_source_signature": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    "rendered_tiles": "1",
+                    "route": "layered-tangent-normal",
+                    "source_policy": "none",
+                    "target_tiles": 1,
+                    "vertex_uploads": 1
+                },
+                "world_normal_error": "",
+                "world_normal_tree": true
+            },
+            {
+                "material": "Brand Test - Turquoise Copper Noise",
+                "native": true,
+                "normal_texture": false,
+                "preview_center": [
+                    147,
+                    103,
+                    87
+                ],
+                "render_completion": {
+                    "queued_shaders": 0,
+                    "queued_textures": 0,
+                    "ready": true,
+                    "sample_count": 12,
+                    "samples": 12,
+                    "sampling_finished": true,
+                    "viewport_sampling_finished": true
+                },
+                "shader": {
+                    "DefaultMaterial": {
+                        "bump_distance": 0.0010000000474974513,
+                        "normal_intensity": 1,
+                        "openpbr": {
+                            "backend": "Principled compatibility subset, not OpenPBR BSDF conformance",
+                            "installed": false,
+                            "links": {
+                                "Alpha": [
+                                ],
+                                "Anisotropic": [
+                                ],
+                                "Base Color": [
+                                    "__BTS_BaseMix0",
+                                    "Color"
+                                ],
+                                "Coat IOR": [
+                                ],
+                                "Coat Roughness": [
+                                ],
+                                "Coat Tint": [
+                                ],
+                                "Coat Weight": [
+                                ],
+                                "Diffuse Roughness": [
+                                ],
+                                "Emission Color": [
+                                ],
+                                "Emission Strength": [
+                                ],
+                                "IOR": [
+                                ],
+                                "Sheen Roughness": [
+                                ],
+                                "Sheen Tint": [
+                                ],
+                                "Sheen Weight": [
+                                ],
+                                "Specular IOR Level": [
+                                ],
+                                "Specular Tint": [
+                                ],
+                                "Subsurface Anisotropy": [
+                                ],
+                                "Subsurface Radius": [
+                                ],
+                                "Subsurface Scale": [
+                                ],
+                                "Subsurface Weight": [
+                                ],
+                                "Thin Film IOR": [
+                                ],
+                                "Thin Film Thickness": [
+                                ],
+                                "Thin Wall": [
+                                ],
+                                "Transmission Weight": [
+                                ]
+                            },
+                            "sockets": {
+                                "Alpha": [
+                                    1
+                                ],
+                                "Anisotropic": [
+                                    0
+                                ],
+                                "Base Color": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Coat IOR": [
+                                    1.5
+                                ],
+                                "Coat Roughness": [
+                                    0.029999999329447746
+                                ],
+                                "Coat Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Coat Weight": [
+                                    0
+                                ],
+                                "Diffuse Roughness": [
+                                    0
+                                ],
+                                "Emission Color": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Emission Strength": [
+                                    0
+                                ],
+                                "IOR": [
+                                    1.5
+                                ],
+                                "Sheen Roughness": [
+                                    0.5
+                                ],
+                                "Sheen Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Sheen Weight": [
+                                    0
+                                ],
+                                "Specular IOR Level": [
+                                    0.5
+                                ],
+                                "Specular Tint": [
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                ],
+                                "Subsurface Anisotropy": [
+                                    0
+                                ],
+                                "Subsurface Radius": [
+                                    0.6857361197471619,
+                                    0.2548108994960785,
+                                    0.12951120734214783
+                                ],
+                                "Subsurface Scale": [
+                                    0.004999999888241291
+                                ],
+                                "Subsurface Weight": [
+                                    0
+                                ],
+                                "Thin Film IOR": [
+                                    1.3300000429153442
+                                ],
+                                "Thin Film Thickness": [
+                                    0
+                                ],
+                                "Thin Wall": [
+                                    false
+                                ],
+                                "Transmission Weight": [
+                                    0
+                                ]
+                            },
+                            "subsurface_method": 6
+                        }
+                    }
+                },
+                "warnings": [
+                    "Thin Wall: input type is not editable yet"
+                ],
+                "world_normal": {
+                    "artist_normal_enabled": false,
+                    "completed_tiles": 0,
+                    "cycles_entry_epoch": "7",
+                    "cycles_pair_ready": false,
+                    "dispatches": "0",
+                    "enabled": false,
+                    "error": "",
+                    "full_targets": false,
+                    "geometry_revision": "2",
+                    "gpu_handles": [
+                        "0",
+                        "0"
+                    ],
+                    "gpu_tile_maps": [
+                        "0",
+                        "0"
+                    ],
+                    "layer_bump_enabled": true,
+                    "material_uid": "1810",
+                    "normal_layer_tiles": 0,
+                    "pending": false,
+                    "private_cpu_buffers": 0,
+                    "private_images": 0,
+                    "programs": 0,
+                    "publication_generation": "0",
+                    "published_source_signature": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    "rendered_tiles": "0",
+                    "route": "layered-tangent-normal",
+                    "source_policy": "none",
+                    "target_tiles": 0
+                },
+                "world_normal_error": "",
+                "world_normal_tree": false
+            }
+        ],
+        "renderer": "NVIDIA GeForce RTX 3090/PCIe/SSE2",
+        "visible_windows": 0
+    }
+}

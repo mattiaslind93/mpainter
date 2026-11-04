@@ -63,13 +63,12 @@ bts.event.DISPATCHER.connect_strong(bts.event.ProjectSaved,lambda event:received
     bts::PythonUi ui(&window,[](const auto &,const auto &){});
     {
       bts::TextureRamQueryScope empty([]()->std::uint64_t{return 0;});
-      bool rejected=false;try{ui.call("ui.create",{{"kind","menu"},{"title","test"},{"owner","test"},{"object_name","oom_test"}});}catch(const std::length_error &){rejected=true;}assert(rejected);
-      rejected=false;try{console.notify("ProjectSaved",{{"sequence",3000}});}catch(const std::length_error &){rejected=true;}assert(rejected);
-      rejected=false;try{console.output("must not be appended");}catch(const std::length_error &){rejected=true;}assert(rejected);
-      run("try:\n _bts_host.call('echo','{\"payload\":\"data\"}')\nexcept MemoryError:\n pass\nelse:\n raise AssertionError('Missing RAM admission')");
+      ui.call("ui.create",{{"kind","menu"},{"title","test"},{"owner","test"},{"object_name","oom_test"}});
+      console.notify("ProjectSaved",{{"sequence",3000}});console.output("Available memory does not block output");
+      run("_bts_host.call('echo','{\"payload\":\"data\"}')");
     }
     const auto stack=bts::resource_stack_range();assert(stack.high>stack.low);
     bool rejected=false;try{bts::require_resource_stack(stack.high-stack.low,"Stack test");}catch(const std::length_error &){rejected=true;}assert(rejected);
   }
-  Py_Finalize();std::puts("Python resources: 3 MiB JSON, 96 KiB edit, 256 children, 48 levels, 600 handles, 256 callbacks, 3000 events and full text; RAM/stack refusal PASS");
+  Py_Finalize();std::puts("Python resources: 3 MiB JSON, 96 KiB edit, 256 children, 48 levels, 600 handles, 256 callbacks, 3000 events and full text; low-RAM admission and actual stack safety PASS");
 }

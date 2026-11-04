@@ -51,8 +51,15 @@ inline void apply_blend_material_channels(TextureLayer &layer,const MaterialValu
  for(int channel:{0,1,2}){fill_channel_texture(fill,channel)=mapping?fill_channel_texture(*mapping,channel):nullptr;fill.alpha_mask[channel]=false;}
  fill.atom=false;validate_fill_projection(fill);
  layer.values.base_color=values.base_color;layer.values.metallic=values.metallic;layer.values.roughness=values.roughness;
+ const bool normal=mapping&&bool(fill_channel_texture(*mapping,3));
+ if(normal){fill_channel_texture(fill,3)=fill_channel_texture(*mapping,3);fill.alpha_mask[3]=false;layer.values.normal=values.normal;layer.channels[3]=true;}
  const bool bump=mapping&&bool(fill_channel_texture(*mapping,4));
  if(bump){fill_channel_texture(fill,4)=fill_channel_texture(*mapping,4);fill.alpha_mask[4]=false;fill.bump_bias=mapping->bump_bias;layer.values.bump=values.bump;layer.channels[4]=true;}
- validate_fill_projection(fill);layer.fill=std::move(fill);if(fresh){layer.channels={true,true,true,false,bump};layer.ao_enabled=false;layer.displacement.enabled=false;}
+ validate_fill_projection(fill);layer.fill=std::move(fill);if(fresh){layer.channels={true,true,true,normal,bump};layer.ao_enabled=false;layer.displacement.enabled=false;}
 }
+inline void apply_blend_material_channels(TextureSet &set,TextureLayer &layer,const MaterialValues &values,const FillProjection *mapping,bool fresh){
+ apply_blend_material_channels(layer,values,mapping,fresh);
+ if(mapping&&fill_channel_texture(*mapping,3))set.channels[3]=true;
+}
+
 }

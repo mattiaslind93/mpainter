@@ -48,9 +48,9 @@ int main(){
   {TextureRamQueryScope query([]()->std::uint64_t{return 16ULL*1024*1024*1024;});
    const auto previous_valid=texture_vram_query_valid.exchange(false);
    const auto previous_vram=texture_free_vram.exchange(2ULL*1024*1024*1024);
-   budget=texture_memory_budget_bytes("displacement-test");assert(budget==8ULL*1024*1024*1024);
-   texture_vram_query_valid=true;assert(texture_memory_budget_bytes("displacement-test-vram")==1024ULL*1024*1024);
-   texture_free_vram=512ULL*1024*1024;assert(texture_memory_budget_bytes("displacement-test-pressure")==256ULL*1024*1024);
+   budget=ResourceAvailability{}.ram();assert(budget==16ULL*1024*1024*1024);
+   texture_vram_query_valid=true;assert(ResourceAvailability{}.vram()==2048ULL*1024*1024);
+   texture_free_vram=512ULL*1024*1024;assert(ResourceAvailability{}.vram()==512ULL*1024*1024);
    texture_vram_query_valid=previous_valid;texture_free_vram=previous_vram;
   }
   std::cout<<"Separate displacement/bump data, scalar masks/blends/visibility/COW, schema47+legacy46, archive role10, pathv3+legacyv2, old ten-plane effects, and displacement effects passed; bake_budget_mib="<<(budget/1048576)<<"\n";

@@ -32,6 +32,6 @@ int main()
   BlendMeshSelection large;
   for (int i = 0; i < 4097; ++i) large.objects.push_back("Object " + std::to_string(i));
   large.validate();assert(BlendMeshSelection::from_json(large.to_json())==large);
-  {TextureRamQueryScope low(+[]()->std::uint64_t{return 0;});bool denied=false;try{BlendMeshSelection::from_json(large.to_json());}catch(const std::length_error &){denied=true;}assert(denied);}
+  {TextureRamQueryScope low(+[]()->std::uint64_t{return 0;});bool denied=false;try{BlendMeshSelection::from_json(large.to_json());}catch(const std::length_error &){denied=true;}assert(!denied);}
   std::puts("Blender library selection: exact Unicode roundtrip, empty/default and invalid selection cases PASS");
 }

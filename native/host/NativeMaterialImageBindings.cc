@@ -1,5 +1,5 @@
 #include "NativeMaterialImageBindings.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "SceneSnapshot.hh"
 #include "BKE_node_runtime.hh"
 #include <QCoreApplication>
@@ -61,7 +61,7 @@ NativeImageBindingInventory native_material_image_bindings(const blender::Materi
   auto *output=native_material_output(const_cast<Material &>(material));if(!material.nodetree||!output)throw std::invalid_argument("Native source has no material output");
   std::vector<Edge> work;std::set<QString> visited,bindings;std::set<const bNodeTree *> checked_trees;
   std::uint64_t used=0;
-  const auto admit=[&](std::uint64_t bytes){used=resource_sum(used,bytes);require_texture_ram(used,"Native image binding traversal metadata");};
+  const auto admit=[&](std::uint64_t bytes){used=resource_sum(used,bytes);};
   const auto push=[&](Edge value){
     if(checked_trees.insert(value.tree).second){value.tree->ensure_topology_cache();if(value.tree->has_available_link_cycle())throw std::invalid_argument("Cyclic native image dependency links");}
     admit(resource_sum(sizeof(Edge)+128,resource_product(value.path.size(),sizeof(NativeImageGroupStep)+sizeof(Context)+64)));

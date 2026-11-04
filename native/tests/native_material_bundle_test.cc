@@ -10,6 +10,6 @@ int main(){
  auto utf8_names=images;utf8_names[0].image=QString(127,QChar(0x00e9))+"a";assert(utf8_names[0].image.toUtf8().size()==255);assert(read_native_material_bundle(native_material_bundle_bytes(blend,utf8_names)).images[0].image==utf8_names[0].image);utf8_names[0].image=QString(128,QChar(0x00e9));assert(rejects([&]{native_material_bundle_bytes(blend,utf8_names);}));
  auto long_names=images;long_names[0].filename=QString(5000,'p')+".exr";
  const auto long_bundle=native_material_bundle_bytes(blend,long_names);assert(read_native_material_bundle(long_bundle).images[0].filename==long_names[0].filename);
- {TextureRamQueryScope low([]()->std::uint64_t{return 1024;});bool denied=false;try{long_names[0].validate();}catch(const std::length_error &){denied=true;}assert(denied);denied=false;try{read_native_material_bundle(long_bundle);}catch(const std::length_error &){denied=true;}assert(denied);}
+ {TextureRamQueryScope low([]()->std::uint64_t{return 1024;});bool denied=false;try{long_names[0].validate();}catch(const std::length_error &){denied=true;}assert(!denied);denied=false;try{read_native_material_bundle(long_bundle);}catch(const std::length_error &){denied=true;}assert(!denied);}
  bad=long_names;bad[0].filename=QString::fromUtf8("bad\0name",8);assert(rejects([&]{native_material_bundle_bytes(blend,bad);}));
 }

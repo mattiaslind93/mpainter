@@ -1,0 +1,25 @@
+{
+    "buffers_released_between_maps": true,
+    "maps": [
+        {
+            "bit_exact": true,
+            "constrained_batches": 49,
+            "cpu_max_error": 0,
+            "pixels": 16777216,
+            "reference_batches": 1,
+            "resolution": 4096,
+            "simulated_available_vram": 16777216
+        },
+        {
+            "bit_exact": true,
+            "constrained_batches": 193,
+            "cpu_max_error": 0,
+            "pixels": 67108864,
+            "reference_batches": 2,
+            "resolution": 8192,
+            "simulated_available_vram": 16777216
+        }
+    ],
+    "renderer": "NVIDIA GeForce RTX 3090/PCIe/SSE2",
+    "visible_windows": 0
+}

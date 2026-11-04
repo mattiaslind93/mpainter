@@ -1,5 +1,5 @@
 #pragma once
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 
 namespace bts {
 // Sparse page keys contain two 16-bit page coordinates, each covering 64 texels.

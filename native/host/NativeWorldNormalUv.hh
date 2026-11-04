@@ -1,7 +1,7 @@
 #pragma once
 #include "NativeFragmentGeometry.hh"
 #include "NativeMaterialFragmentGpuCompiler.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "BLI_kdopbvh.hh"
 #include <algorithm>
 #include <array>
@@ -25,7 +25,7 @@ inline void require_native_world_unique_uv(const NativeFragmentGeometry &geometr
  std::size_t count=0;for(const auto &stream:geometry.streams())if(std::any_of(stream.requests.begin(),stream.requests.end(),[](const auto &r){return r.kind==NativeFragmentUvKind::DefaultRender;}))count=resource_sum(count,geometry.vertices(&stream-geometry.streams().data()).size()/3);
  if(count>std::size_t(std::numeric_limits<int>::max()))throw std::length_error("Native world UV admission exceeds Blender BVH index API");
  // Triangle table plus BVH nodes, temporary range traversal and allocator credit.
- ResourceBudget{}.require(resource_product(count,sizeof(NativeWorldUvTriangle)+256),0,"Native world UV overlap admission");
+
  std::vector<NativeWorldUvTriangle> triangles;triangles.reserve(count);
  for(std::size_t i=0;i<geometry.streams().size();++i){const auto &stream=geometry.streams()[i];if(!std::any_of(stream.requests.begin(),stream.requests.end(),[](const auto &r){return r.kind==NativeFragmentUvKind::DefaultRender;}))continue;const auto vertices=geometry.vertices(i);for(std::size_t j=0;j<vertices.size();j+=3){if(cancel.load())throw std::runtime_error("Native world geometry cancelled");triangles.push_back({vertices[j].raster_uv,vertices[j+1].raster_uv,vertices[j+2].raster_uv});}}
  if(triangles.empty())throw std::invalid_argument("Native world geometry has no target UV triangles");

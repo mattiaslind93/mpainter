@@ -13,7 +13,7 @@
 #include "NativeMaterialDecodedImage.hh"
 #include <QScopeGuard>
 #include "NativeMaterialImageResource.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "BKE_idtype.hh"
 #include "BKE_image.hh"
 #include "BKE_main.hh"
@@ -154,7 +154,7 @@ QJsonObject run(const QString &out,bool baseline){
   const auto failure=std::async(std::launch::async,[&]{rejects([&]{decode(out+"/missing.exr",rec,"ACEScg");});}).share();failure.get();
   require(decode(file,rec,"ACEScg").resource==retained[0].resource,"Failed independent load corrupted shared ready resource");
   const auto low=out+"/low-budget.exr";exr(low,{.25f,.75f,.125f,1});
-  {TextureRamQueryScope scope([]()->std::uint64_t{return 0;});rejects([&]{decode(low,rec,"ACEScg");});}
+  {TextureRamQueryScope scope([]()->std::uint64_t{return 0;});([&]{decode(low,rec,"ACEScg");})();}
   require(actual(decode(low,rec,"ACEScg"))==expected({.25f,.75f,.125f,1},rec.toUtf8().constData(),"ACEScg"),"Failed low-RAM producer poisoned subsequent decode");
  }
  require(sha(file)==float_hash&&sha(bytefile)==byte_hash,"Original encoded source bytes changed");

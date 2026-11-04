@@ -63,6 +63,7 @@ class BlenderHost {
 
   // One-time initialization of an empty factory workspace, before GPU/workers.
   void initialize_empty_workspace_working_space();
+  void release_bake_scratch();
   void with_gpu(const std::function<void()> &);
   void initialize_gpu(QOpenGLWidget &surface);
   void initialize_gpu(QOpenGLContext &,QSurface &,unsigned framebuffer);

@@ -5,7 +5,7 @@
 #include "NativeMaterialMappingCompatibility.hh"
 #include "NativeMaterialImageUpload.hh"
 #include "NativeMaterialSharedGpuImages.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "NativeMaterialRamp.hh"
 #include "NativeMaterialMappingValidation.hh"
 #include "NativeMaterialInstance.hh"
@@ -24,14 +24,14 @@
 namespace bts {
 void NativeMaterialGpuLibrary::install(std::string resource,std::string hash,std::shared_ptr<NativeMaterialGraph> graph){
  if(resource.empty()||hash.empty()||!graph)throw std::invalid_argument("Invalid native material source identity");
- require_texture_ram(resource_product(resource_sum(resource.size(),hash.size()),8),"Native material resource and content-key text");
+
  require_native_source_policy(graph->description);
  const auto canonical=native_world_normal_surface_identity(native_vector_math_mapping_layout_key(graph->resource_content_hash.empty()?hash:graph->resource_content_hash,graph->description),graph->world_normal_surface_contract);const auto alias=native_world_normal_surface_identity(native_vector_math_mapping_layout_key(hash,graph->description),graph->world_normal_surface_contract);auto shared=content_[canonical].lock();if(!shared){shared=std::make_shared<Entry>();shared->graph=std::move(graph);shared->image_requests=native_material_image_upload_requests(*shared->graph);shared->content_hash=canonical;shared->cache_identity=resource;for(const auto &channel:shared->graph->channels)if(channel.tree)shared->dependencies[channel.channel]=native_material_dependencies(*channel.tree,shared->graph->description.parameters.size());
   if(shared->graph->world_normal_tree&&shared->graph->world_normal_error.isEmpty())try{shared->world_dependencies=native_material_dependencies(*shared->graph->world_normal_tree,shared->graph->parameters.size());shared->world_layout=native_world_normal_source_request({shared->graph,shared->graph->world_normal_tree});auto images=NativeFragmentImageContext::capture({shared->graph,shared->graph->world_normal_tree});shared->world_image_required=!images.bindings().empty();shared->world_image_signature=images.signature();}catch(const std::exception &error){shared->world_error=QString::fromUtf8(error.what());}
   shared->revision=++clock_;content_[canonical]=shared;}content_[alias]=shared;
  resources_.insert_or_assign(std::move(resource),std::move(shared));std::erase_if(content_,[](const auto &entry){return entry.second.expired();});
 }
-void NativeMaterialGpuLibrary::alias(const std::string &source,const std::string &destination){if(destination.empty())throw std::invalid_argument("Invalid native material alias");require_texture_ram(resource_product(destination.size(),8),"Native material alias text");const auto found=resources_.find(source);if(found==resources_.end())throw std::invalid_argument("Native material alias source is missing");resources_.insert_or_assign(destination,found->second);}
+void NativeMaterialGpuLibrary::alias(const std::string &source,const std::string &destination){if(destination.empty())throw std::invalid_argument("Invalid native material alias");const auto found=resources_.find(source);if(found==resources_.end())throw std::invalid_argument("Native material alias source is missing");resources_.insert_or_assign(destination,found->second);}
 void NativeMaterialGpuLibrary::retain_alias_from(const NativeMaterialGpuLibrary &other,const std::string &key){const auto found=other.resources_.find(key);if(found==other.resources_.end())throw std::logic_error("Frozen native source alias missing");resources_[key]=found->second;}
 void NativeMaterialGpuLibrary::register_content_alias(const std::string &resource,const std::string &hash){if(hash.empty())throw std::invalid_argument("Missing native content alias");const auto source=resources_.find(resource);if(source==resources_.end())throw std::invalid_argument("Native content alias source is missing");const auto alias=native_world_normal_surface_identity(native_vector_math_mapping_layout_key(hash,source->second->graph->description),source->second->graph->world_normal_surface_contract);const auto known=content_.find(alias);if(known!=content_.end())if(auto shared=known->second.lock();shared&&shared!=source->second)throw std::invalid_argument("Native content alias already identifies another source");content_[alias]=source->second;}
 void NativeMaterialGpuLibrary::erase(const std::string &key){resources_.erase(key);std::erase_if(content_,[](const auto &entry){return entry.second.expired();});}
@@ -43,6 +43,7 @@ std::vector<int> NativeMaterialGpuLibrary::view_channels(const std::string &key)
 std::vector<int> NativeMaterialGpuLibrary::view_channels(const std::string &key,const NativeMaterialDescription &instance)const{std::vector<int> result;for(int channel:effective_channels(key,instance))if(dependencies(key,channel,instance).view)result.push_back(channel);return result;}
 const NativeMaterialGpuLibrary::Entry &NativeMaterialGpuLibrary::entry(const std::string &key)const{const auto found=resources_.find(key);if(found==resources_.end())throw std::runtime_error("Native material source is not prepared yet");return *found->second;}
 std::uint64_t NativeMaterialGpuLibrary::revision(const std::string &key)const{return entry(key).revision;}
+const NativeMaterialGraph &NativeMaterialGpuLibrary::source_graph(const std::string &key)const{return *entry(key).graph;}
 const NativeMaterialDescription &NativeMaterialGpuLibrary::description(const std::string &key)const{return entry(key).graph->description;}
 bool NativeMaterialGpuLibrary::height_ready(const std::string &key)const{return bool(entry(key).height);}
 std::vector<int> NativeMaterialGpuLibrary::effective_channels(const std::string &key,const NativeMaterialDescription &instance)const{
@@ -104,7 +105,7 @@ void NativeMaterialGpuLibrary::probe_height(const std::string &key,const NativeM
  static_assert(std::is_trivially_copyable_v<FillSurfacePoint>);
  constexpr auto words=sizeof(FillSurfacePoint)/sizeof(std::uint32_t),texels=(words+3)/4;
  std::array<std::uint32_t,texels*4> packed{};std::memcpy(packed.data(),&point,sizeof(point));
- const auto bytes=resource_sum(sizeof(packed),sizeof(float)*4);ResourceBudget{}.require(bytes,bytes,"Pending native Height admission textures");
+ const auto bytes=resource_sum(sizeof(packed),sizeof(float)*4);
  // Private regression fault point. It runs only for this new isolated policy
  // preparation; ordinary native rendering never consults it.
  if(qEnvironmentVariableIntValue("BTS_NATIVE_HEIGHT_FAIL_PROBE_ALLOCATION")==1)throw std::runtime_error("Injected pending native Height probe allocation failure");
@@ -151,7 +152,7 @@ std::string NativeMaterialGpuLibrary::signature(const std::string &key,int chann
  std::string value;if(channel==4&&instance.height_policy!=NativeHeightPolicy::None){static constexpr char domain[]="\0BTS:authored-height-raw-v1\0";value.append(domain,sizeof(domain)-1);}value+=source.cache_identity;value.append(reinterpret_cast<const char *>(&source.revision),sizeof(source.revision));for(auto index:dependencies(key,channel,instance).parameters){const auto &parameter=instance.parameters[index];for(int c=0;c<parameter.components();++c){const float encoded=float(parameter.value[c]);value.append(reinterpret_cast<const char *>(&encoded),sizeof(encoded));}if(parameter.mapping_transform_supported()){for(const auto &row:parameter.mapping_transform.rows())value.append(reinterpret_cast<const char *>(row.data()),sizeof(row));}if(!parameter.ramp.isEmpty()){const auto ramp=QJsonDocument(parameter.ramp).toJson(QJsonDocument::Compact);value.append(ramp.constData(),ramp.size());}}return value;
 }
 bool NativeMaterialGpuLibrary::world_normal_uses_object(const std::string &key)const{return entry(key).world_dependencies.object;}
-bool NativeMaterialGpuLibrary::world_normal_perturbed(const std::string &key)const{return entry(key).graph->world_normal_perturbed;}
+bool NativeMaterialGpuLibrary::world_normal_perturbed(const std::string &key)const{return entry(key).graph->world_normal_perturbed&&entry(key).graph->world_normal_error.isEmpty()&&entry(key).world_error.isEmpty();}
 NativeWorldNormalContextState NativeMaterialGpuLibrary::world_normal_context_state(const std::string &key)const{
  const auto &s=entry(key);if(!s.graph->world_normal_tree||!s.world_error.isEmpty()||!s.graph->world_normal_error.isEmpty())return NativeWorldNormalContextState::Unsupported;
  if(s.world_image_required&&s.world_prepared&&!s.world_image_readiness.ready())return NativeWorldNormalContextState::PendingImages;

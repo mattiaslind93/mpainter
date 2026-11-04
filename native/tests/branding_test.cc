@@ -1,4 +1,5 @@
 #include "Branding.hh"
+#include "Theme.hh"
 #include <QApplication>
 #include <QTemporaryDir>
 #include <QMainWindow>
@@ -17,7 +18,7 @@ int main(int argc,char **argv){
   assert(portrait.pixelColor(231*scale,1*scale)==QColor(Qt::magenta));
   assert(portrait.pixelColor(939*scale,441*scale)==QColor(Qt::magenta));
   for(int y=443*scale;y<portrait.height();++y)for(int x=0;x<portrait.width();++x)
-   assert(portrait.pixelColor(x,y)==QColor("#111315"));
+   assert(portrait.pixelColor(x,y)==QColor(bts::theme::Canvas));
  }
  // Edge markers catch any second crop of the already framed source.
  fixture.fill(Qt::magenta);
@@ -29,7 +30,7 @@ int main(int argc,char **argv){
   for(const QPoint point:{QPoint(232,220),QPoint(937,220),QPoint(585,2),QPoint(585,440)})
    assert(framed.pixelColor(point*scale)==QColor(Qt::green));
  }
- for(int scale:{1,2}){const auto image=bts::compose_splash(temp.filePath("missing.png"),{.5,.5},scale);assert(!image.isNull());assert(image.size()==QSize(940*scale,529*scale));assert(image.pixelColor(10*scale,10*scale)==QColor("#111315"));}
+ for(int scale:{1,2}){const auto image=bts::compose_splash(temp.filePath("missing.png"),{.5,.5},scale);assert(!image.isNull());assert(image.size()==QSize(940*scale,529*scale));assert(image.pixelColor(10*scale,10*scale)==QColor(bts::theme::Canvas));}
  QMainWindow window;bts::add_product_about(&window);
  assert(window.findChild<QAction *>("downloadFreeMaterialsHelp"));
  auto *about=window.findChild<QAction *>("aboutMPainter");assert(about);bool seen=false;

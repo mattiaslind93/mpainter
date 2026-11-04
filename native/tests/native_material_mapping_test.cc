@@ -44,6 +44,6 @@ int main(){
  assert(!read_native_mapping_attribute("BTS_Param0",1));for(const char *invalid:{"BTS_Map","BTS_Map_0","BTS_Map0_3","BTS_Map1_0","BTS_Map-1_0","BTS_Map0_00","BTS_Map0x_0"})assert(rejects([&]{read_native_mapping_attribute(invalid,1);}));assert(rejects([&]{native_mapping_attribute(0,3);}));
  assert(native_mapping_parameter_rows(17,false)==17&&native_mapping_parameter_rows(17,true)==68);
  if(sizeof(std::size_t)==sizeof(std::uint64_t)){bool overflow=false;try{native_mapping_parameter_rows(std::numeric_limits<std::size_t>::max(),true);}catch(const std::overflow_error &){overflow=true;}assert(overflow);}
- {TextureRamQueryScope memory(scarce_memory);bool denied=false;try{instance.validate();}catch(const std::length_error &){denied=true;}assert(denied);}
+ {TextureRamQueryScope memory(scarce_memory);bool denied=false;try{instance.validate();}catch(const std::length_error &){denied=true;}assert(!denied);}
  std::cout<<"Native linked Mapping: typed v3, exact v2 identity/reset, source COW, explicit direct bases, finite float32 and checked dynamic rows PASS\n";
 }

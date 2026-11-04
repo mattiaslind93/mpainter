@@ -79,7 +79,7 @@ static StudioAsset snapshot_single_source(const blender::Image &image,const Nati
 {
  using namespace blender;
  const auto *packed=selected.packed;const auto source=selected.path;const QFileInfo original(source);QString filename=selected.filename;if(filename.isEmpty()||filename=="."||filename=="..")filename="image.bin";
- require_texture_ram(resource_product(filename.size(),16),"Native source filename");if(filename.contains('/')||filename.contains('\\')||filename.contains(QChar::Null))throw std::invalid_argument("Invalid native source filename");
+ if(filename.contains('/')||filename.contains('\\')||filename.contains(QChar::Null))throw std::invalid_argument("Invalid native source filename");
  const qint64 size=packed?packed->size:original.size();if(size<=0||(!packed&&(!original.isFile()||!original.isReadable())))throw std::runtime_error(native_material_image_source_error(image,source.toStdString(),"encoded source image is missing",packed!=nullptr));
  QString hash;if(packed){QCryptographicHash digest(QCryptographicHash::Sha256);for(qint64 offset=0;offset<size;offset+=4*1024*1024){if(cancel.load())throw std::runtime_error("Native image snapshot cancelled");const auto count=std::min<qint64>(4*1024*1024,size-offset);digest.addData(QByteArrayView(static_cast<const char *>(packed->data)+offset,count));}hash=QString::fromLatin1(digest.result().toHex());}else hash=hash_texture_file(source,&cancel);
  const auto cache=qEnvironmentVariable("BTS_RESOURCE_CACHE",QStandardPaths::writableLocation(QStandardPaths::CacheLocation)+"/resources");const auto folder=QDir(cache).filePath(hash);if(!QDir().mkpath(folder))throw std::runtime_error("Cannot create native encoded-image cache");const auto destination=QDir(folder).filePath(filename);

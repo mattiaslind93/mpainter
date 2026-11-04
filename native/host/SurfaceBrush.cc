@@ -1,4 +1,4 @@
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "SurfaceBrush.hh"
 #include <algorithm>
 #include <cmath>
@@ -104,7 +104,7 @@ std::shared_ptr<const PaintPixels::SurfaceFootprint> connected_footprint(const M
       float3 closest;closest_on_tri_to_point_v3(closest,center,world[0],world[1],world[2]);
       if(math::distance_squared(closest,center)>search_radius*search_radius)continue;
       intersects=true;
-      if((result->triangles.size()&4095)==0)require_texture_ram(resource_product(result->triangles.size()+4096,sizeof(PaintPixels::SurfaceTriangle)),"Connected brush surface");
+
       PaintPixels::SurfaceTriangle triangle;
       const auto n=face_normal(face);triangle.normal={n.x,n.y,n.z};triangle.bounded_depth=primary[face]!=epoch;
       for(int i=0;i<3;++i) {

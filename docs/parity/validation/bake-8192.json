@@ -1,0 +1,63 @@
+{
+    "all_maps_bit_exact_against_actual_VRAM": true,
+    "analytical_checks_per_map": 27,
+    "compared_maps": [
+        {
+            "compared_bytes": 1073741824,
+            "pixel_hash": "193cd9c1339d0383",
+            "role": 0,
+            "udim": 1001
+        },
+        {
+            "compared_bytes": 1073741824,
+            "pixel_hash": "193cd9c1339d0383",
+            "role": 1,
+            "udim": 1001
+        },
+        {
+            "compared_bytes": 1073741824,
+            "pixel_hash": "357cd9c1339d0383",
+            "role": 2,
+            "udim": 1001
+        },
+        {
+            "compared_bytes": 1073741824,
+            "pixel_hash": "b27cd9c1339d0383",
+            "role": 3,
+            "udim": 1001
+        },
+        {
+            "compared_bytes": 1073741824,
+            "pixel_hash": "357cd9c1339d0383",
+            "role": 4,
+            "udim": 1001
+        },
+        {
+            "compared_bytes": 1073741824,
+            "pixel_hash": "13b79704c098d09b",
+            "role": 5,
+            "udim": 1001
+        },
+        {
+            "compared_bytes": 1073741824,
+            "pixel_hash": "b27cd9c1339d0383",
+            "role": 6,
+            "udim": 1001
+        }
+    ],
+    "completed": 7,
+    "disk_cache_failure_completed": 7,
+    "elapsed_ms": 291197,
+    "exact_undo_redo": true,
+    "native_auto_bake": true,
+    "native_mesh_bake_job": true,
+    "peak_rss_bytes": 17189875712,
+    "per_map_gpu_with_CPU_fallback": true,
+    "renderer": "NVIDIA GeForce RTX 3090/PCIe/SSE2",
+    "resolution": 8192,
+    "retained_bytes": 7516192768,
+    "roles": 7,
+    "simulated_available_vram_bytes": 16777216,
+    "udim_tiles": 1,
+    "visible_windows": 0
+}

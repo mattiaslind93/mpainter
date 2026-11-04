@@ -1,5 +1,5 @@
 #pragma once
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #if defined(__linux__) || defined(__APPLE__)
 # include <pthread.h>
 #endif

@@ -31,13 +31,13 @@ inline QJsonObject verify_native_fragment_normal_graph(){
  using native_fragment_normal_test::detail::reachable;
  require(QCoreApplication::instance()&&QThread::currentThread()==QCoreApplication::instance()->thread(),"Normal graph regression requires the initialized application owner");
   require(!blender::GPU_context_active_get(),"CPU-only test acquired a GPU context");const auto compiles=blender::GPU_pass_global_compilation_count();std::atomic_bool cancel=false;QJsonArray cases;
-  for(Kind kind:{Kind::Unlinked,Kind::ActiveBump,Kind::NormalMap,Kind::Combined,Kind::Grouped,Kind::Ramp,Kind::Emission,Kind::UnsupportedSurface,Kind::UnsupportedContext}){
+  for(Kind kind:{Kind::Unlinked,Kind::ActiveBump,Kind::NormalMap,Kind::Combined,Kind::Grouped,Kind::Ramp,Kind::Emission,Kind::DiffuseSurface,Kind::UnsupportedContext}){
    // Snapshot the exact owned source before extraction. A separately prepared
    // ordinary graph is the independent default capabilities/parameters oracle.
    auto detached=work([&]{return fixture(kind);});const auto before=source_state(*detached.material->nodetree);const auto before_hash=hash(before);
    auto ordinary=work([&]{return finish_native_material_source(fixture(kind),cancel);});const auto expected=native_material_description_json(ordinary->description);const auto values=ordinary->parameters;const auto ordinary_source=source_state(*ordinary->material->nodetree);
    require(std::find(ordinary->description.channels.begin(),ordinary->description.channels.end(),3)==ordinary->description.channels.end(),"Ordinary source advertised Normal3");
-   const bool eligible=kind!=Kind::Emission&&kind!=Kind::UnsupportedSurface&&kind!=Kind::UnsupportedContext;bool rejected=false,api_returned=false;QString reason;QJsonObject result;
+   const bool eligible=kind!=Kind::Emission&&kind!=Kind::UnsupportedContext;bool rejected=false,api_returned=false;QString reason;QJsonObject result;
    try {
     auto prepared=work([&]{return prepare_native_fragment_normal(std::move(detached),cancel);});api_returned=true;require(eligible,"Unsupported fragment Normal source admitted");auto &graph=*prepared.source;
     require(graph.main&&graph.material&&prepared.tree&&prepared.tree!=graph.material->nodetree,"Private owned AOV tree missing");require(blender::BLI_findindex(&graph.main->nodetrees,&prepared.tree->id)>=0,"Normal AOV tree is not owned by the detached Main");
@@ -52,7 +52,7 @@ inline QJsonObject verify_native_fragment_normal_graph(){
     for(const auto *node:nodes){if(STREQ(node->idname,"ShaderNodeBump")){++bumps;require(socket(*const_cast<blender::bNode *>(node),"Height",true).link,"Active Bump lost its authored Height");}if(STREQ(node->idname,"ShaderNodeNormalMap"))++maps;if(STREQ(node->idname,"ShaderNodeValToRGB")){++ramps;require(node->custom2==blender::GPU_HOSTED_RAMP_TAG,"Existing native editable-ramp adapter was lost");}if(STREQ(node->idname,"ShaderNodeAttribute")){const auto *name=static_cast<const blender::NodeShaderAttribute *>(node->storage)->name;geometry+=STREQ(name,"BTS_Geometry_Normal");parameters+=std::string_view(name).starts_with("BTS_Param");mapping_rows+=std::string_view(name).starts_with(native_mapping_attribute_prefix);}}
     const int expected_bumps=(kind==Kind::ActiveBump||kind==Kind::Combined||kind==Kind::Grouped||kind==Kind::Ramp)?1:0,expected_maps=(kind==Kind::NormalMap||kind==Kind::Combined||kind==Kind::Grouped)?1:0;
     require(bumps==expected_bumps&&maps==expected_maps,"Actual Bump/Normal Map chain was omitted or duplicated");
-    if(kind==Kind::Unlinked)require(geometry==1&&STREQ(color.link->fromnode->idname,"ShaderNodeAttribute"),"Unlinked Normal used socket default instead of geometry");
+    if(kind==Kind::Unlinked||kind==Kind::DiffuseSurface)require(geometry==1&&STREQ(color.link->fromnode->idname,"ShaderNodeAttribute"),"Unlinked Normal used socket default instead of geometry");
     else require(STREQ(color.link->fromsock->identifier,"Normal"),"World Normal was encoded or inverted into a scalar surrogate");
     if(kind==Kind::ActiveBump||kind==Kind::Combined){require(parameters>=2&&mapping_rows>=3,"Normal path lost existing parameter/Mapping adapters");for(const auto *node:nodes)if(STREQ(node->idname,"ShaderNodeBump")){require(node->custom1==1&&static_cast<const blender::bNodeSocketValueFloat *>(socket(*const_cast<blender::bNode *>(node),"Distance",true).default_value)->value==-.7f&&static_cast<const blender::bNodeSocketValueFloat *>(socket(*const_cast<blender::bNode *>(node),"Filter Width",true).default_value)->value==2,"Bump controls were interpreted as raw H or changed");}}
     if(kind==Kind::Ramp)require(ramps==1&&parameters>=1&&mapping_rows>=3,"Normal path lost existing ramp/parameter/Mapping bindings");

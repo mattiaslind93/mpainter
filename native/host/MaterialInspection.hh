@@ -86,6 +86,7 @@ class MaterialInspection {
   // capture path. Geometry tags invalidate even when owner properties match.
   void refresh_native_world_objects(bool owner_revision,bool geometry_revision=false);
   void initialize_gpu_programs(); // GPU owner; opt-in large programs can remain pending.
+  std::uint64_t release_bake_scratch();
   void poll_gpu_programs(); // Nonblocking pair/retired drain; never full begin_frame.
   bool gpu_programs_pending()const;
   ~MaterialInspection();

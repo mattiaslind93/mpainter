@@ -1,0 +1,27 @@
+# Two adjacent quads share a mesh edge but have separated UV islands.
+mtllib uv_padding_seam.mtl
+o SeamPlane
+v -1 -1 0
+v 0 -1 0
+v 1 -1 0
+v -1 1 0
+v 0 1 0
+v 1 1 0
+vt 0.05 0.05
+vt 0.45 0.05
+vt 0.45 0.95
+vt 0.05 0.95
+vt 0.55 0.05
+vt 0.95 0.05
+vt 0.95 0.95
+vt 0.55 0.95
+usemtl SphereSurface
+f 1/1 2/2 5/3 4/4
+f 2/5 3/6 6/7 5/8
+o Witness
+v 1.8 -0.5 0
+v 2.5 -0.5 0
+v 2.5 0.5 0
+v 1.8 0.5 0
+usemtl CubeSurface
+f 7/1 8/2 9/3 10/4

@@ -22,7 +22,7 @@
 namespace bts {namespace {
 QString text(const QJsonObject &data,const char *key){
  if(!data[key].isString()||data[key].toString().contains(QChar(0)))throw std::invalid_argument("Invalid UI text");
- const auto value=data[key].toString();require_texture_ram(resource_product(value.size(),sizeof(QChar)),"Extension UI text");return value;
+ const auto value=data[key].toString();return value;
 }
 void require_document_text(const QString &value){if(value.size()>=std::numeric_limits<int>::max())throw std::length_error("Text exceeds Qt document character indexing capacity");}
 }
@@ -31,11 +31,11 @@ struct PythonUi::Impl {
  QMainWindow *window;Notify notify;QMap<QString,Item> items;QByteArray initial;QPointer<QToolBar> plugins;
  explicit Impl(QMainWindow *parent,Notify events):window(parent),notify(std::move(events)),initial(parent->saveState()){}
  QObject *object(const QString &id){if(id=="main")return window;const auto found=items.find(id);if(found==items.end()||!found->object)throw std::invalid_argument("UI handle has been deleted or is unknown");return found->object;}
- QString add(QObject *value,const QString &owner,const QString &parent,QObject *attachment=nullptr,bool owned=true){require_texture_ram(resource_sum(sizeof(Item),sizeof(QString)),"Extension UI handle");const auto id=QUuid::createUuid().toString(QUuid::WithoutBraces);items[id]={value,owner,parent,attachment,owned};return id;}
+ QString add(QObject *value,const QString &owner,const QString &parent,QObject *attachment=nullptr,bool owned=true){const auto id=QUuid::createUuid().toString(QUuid::WithoutBraces);items[id]={value,owner,parent,attachment,owned};return id;}
  void name(QObject *value,const QJsonObject &data){const auto name=text(data,"object_name");static const QRegularExpression valid("^[A-Za-z_][A-Za-z0-9_.:-]*$");if(!valid.match(name).hasMatch()||(window->findChild<QObject *>(name)&&window->findChild<QObject *>(name)!=value))throw std::invalid_argument("UI object_name must be unique and contain letters, digits, _, ., : or -");value->setObjectName(name);}
  QWidget *widget(const QJsonObject &spec,QWidget *parent){
   require_resource_stack(sizeof(QWidget)+sizeof(QVBoxLayout)+sizeof(QJsonObject)+sizeof(QJsonArray)+4*sizeof(QString),"Extension UI widget nesting");
-  require_texture_ram(sizeof(QWidget)+sizeof(QVBoxLayout),"Extension UI widget");const auto type=text(spec,"type");QWidget *result=nullptr;
+  const auto type=text(spec,"type");QWidget *result=nullptr;
   if(type=="panel"){auto *panel=new QWidget(parent);auto *layout=new QVBoxLayout(panel);if(!spec["children"].isArray()){delete panel;throw std::invalid_argument("Panel children must be an array");}try{for(const auto &entry:spec["children"].toArray()){if(!entry.isObject())throw std::invalid_argument("Invalid child widget");layout->addWidget(widget(entry.toObject(),panel));}layout->addStretch();}catch(...){delete panel;throw;}result=panel;}
   else if(type=="label"){auto *label=new QLabel(text(spec,"text"),parent);label->setWordWrap(true);result=label;}
   else if(type=="edit"){const auto contents=text(spec,"text");require_document_text(contents);auto *edit=new QLineEdit(parent);edit->setMaxLength(std::numeric_limits<int>::max());edit->setText(contents);result=edit;}
@@ -57,7 +57,7 @@ QJsonValue PythonUi::call(const QString &operation,const QJsonObject &data){auto
  if(operation=="ui.set_layout"){const auto qt=QByteArray::fromBase64(text(data,"qt").toLatin1()),workspace=QByteArray::fromBase64(text(data,"workspace").toLatin1());const auto before=s.window->saveState();if(!s.window->restoreState(qt))throw std::invalid_argument("Invalid Qt layout state");if(auto *shell=dynamic_cast<WorkspaceShell *>(s.window);shell&&!shell->restore_layout(workspace)){s.window->restoreState(before);throw std::invalid_argument("Invalid workspace layout state");}return true;}
  if(operation=="ui.reset_layout"){s.window->restoreState(s.initial);if(auto *shell=dynamic_cast<WorkspaceShell *>(s.window))shell->reset_reference_layout();return true;}
  if(operation=="ui.create"){
-  require_texture_ram(sizeof(Impl::Item)+sizeof(QObject),"Extension UI element");
+
   const auto kind=text(data,"kind"),owner=text(data,"owner"),parent=data.value("parent").toString("main");auto *container=s.object(parent);std::unique_ptr<QObject> pending;QObject *attachment=nullptr;
   if(kind=="dock"){auto dock=std::make_unique<QDockWidget>(text(data,"title"),s.window);s.name(dock.get(),data);if(!data["widget"].isObject())throw std::invalid_argument("Dock requires a widget description");dock->setWidget(s.widget(data["widget"].toObject(),dock.get()));s.window->addDockWidget(Qt::RightDockWidgetArea,dock.get());for(auto *menu:s.window->menuBar()->findChildren<QMenu *>())if(menu->title()=="Views"){menu->addAction(dock->toggleViewAction());break;}pending=std::move(dock);}
   else if(kind=="menu"){auto menu=std::make_unique<QMenu>(text(data,"title"),s.window);s.name(menu.get(),data);if(auto *outer=qobject_cast<QMenu *>(container))outer->addMenu(menu.get());else if(container==s.window)s.window->menuBar()->addMenu(menu.get());else throw std::invalid_argument("Menu parent must be main window or menu");pending=std::move(menu);}

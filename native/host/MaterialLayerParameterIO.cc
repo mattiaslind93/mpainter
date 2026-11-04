@@ -34,9 +34,9 @@ using OriginalIndex=std::map<std::string,const MaterialParameterOriginal *>;
 OriginalIndex validate(const MaterialLayerParameters &v){
  context(v.working_space,v.scene_linear_to_xyz);shader_json(v.shader);
  if(v.name.isEmpty()||v.name.contains(QChar(0))||v.tiles.empty())invalid("Missing parameter package identity/tiles");
- require_texture_ram(resource_sum(resource_product(v.name.size()+v.working_space.size(),8),resource_product(v.originals.size(),sizeof(MaterialParameterOriginal))),"Layering parameter metadata");
+
  std::set<int> tiles;for(const auto &[tile,size]:v.tiles){if(tile<1001||tile>9999||size[0]<1||size[1]<1)invalid("Invalid parameter destination tile");tiles.insert(tile);}
- OriginalIndex originals;std::map<QString,qint64> content;std::uint64_t file_bytes=0;for(const auto &original:v.originals){file_bytes=resource_sum(file_bytes,resource_product(original.files.size(),sizeof(MaterialParameterFile)+128));for(const auto &file:original.files)file_bytes=resource_sum(file_bytes,resource_product(resource_sum(file.descriptor.filename.size(),file.descriptor.path.size()),16));}require_texture_ram(file_bytes,"Parameter original descriptors");
+ OriginalIndex originals;std::map<QString,qint64> content;std::uint64_t file_bytes=0;for(const auto &original:v.originals){file_bytes=resource_sum(file_bytes,resource_product(original.files.size(),sizeof(MaterialParameterFile)+128));for(const auto &file:original.files)file_bytes=resource_sum(file_bytes,resource_product(resource_sum(file.descriptor.filename.size(),file.descriptor.path.size()),16));}
  for(const auto &original:v.originals){if(original.asset.isNull()||!originals.emplace(id(original.asset).toStdString(),&original).second)invalid("Duplicate/invalid parameter resource identity");std::vector<TextureSourceFile> files;
   for(const auto &file:original.files){files.push_back(file.descriptor);if(!file.bytes.isEmpty()&&file.bytes.size()!=file.descriptor.size)invalid("Original byte size differs from its descriptor");const auto [at,fresh]=content.emplace(file.descriptor.sha256,file.descriptor.size);if(!fresh&&at->second!=file.descriptor.size)invalid("Conflicting original size for one checksum");}validate_texture_sources(files);
  }
@@ -69,7 +69,7 @@ void copy_original(const MaterialParameterFile &source,const QString &path,const
  QBuffer buffer;QFile input(source.descriptor.path);QIODevice *stream=&input;if(!source.bytes.isEmpty()){buffer.setData(source.bytes);stream=&buffer;}
  if(!stream->open(QIODevice::ReadOnly))invalid("Cannot read original parameter source");if(stream->size()!=source.descriptor.size)invalid("Original parameter source changed size");
  QSaveFile output(path);if(!output.open(QIODevice::WriteOnly))invalid("Cannot stage parameter payload");QCryptographicHash hash(QCryptographicHash::Sha256);qint64 total=0;
- require_texture_ram(4*1024*1024,"Parameter source transfer chunk");
+
  while(!stream->atEnd()){check_cancel(cancel);const auto chunk=stream->read(4*1024*1024);if(chunk.isEmpty())invalid("Cannot read complete parameter source");hash.addData(chunk);if(output.write(chunk)!=chunk.size())invalid("Cannot write parameter payload");total+=chunk.size();}
  if(total!=source.descriptor.size||QString::fromLatin1(hash.result().toHex())!=source.descriptor.sha256)invalid("Original parameter checksum changed");check_cancel(cancel);if(!output.commit())invalid("Cannot commit staged parameter payload");
 }
@@ -102,11 +102,11 @@ void write_material_layer_parameter_package(const QString &directory,const Mater
  const auto manifest=material_layer_parameters_json(v);check_cancel(cancel);QFileInfo destination(directory);if(!destination.isAbsolute()||destination.exists()||destination.fileName().isEmpty())invalid("Choose a new absolute parameter package directory");QDir parent(destination.absolutePath());if(!parent.exists())invalid("Parameter package parent is missing");
  QTemporaryDir staging(parent.filePath(".bts-parameters-XXXXXX"));if(!staging.isValid()||!QDir(staging.path()).mkdir("payloads"))invalid("Cannot create parameter staging directory");const auto paths=payload_layout(v);std::set<QString> written;
  for(const auto &original:v.originals)for(const auto &file:original.files)if(written.insert(file.descriptor.sha256).second)copy_original(file,QDir(staging.path()).filePath(paths.at(file.descriptor.sha256)),cancel);
- const auto bytes=QJsonDocument(manifest).toJson(QJsonDocument::Indented);require_texture_ram(resource_product(bytes.size(),3),"Parameter manifest encoding");QSaveFile json(QDir(staging.path()).filePath("parameters.json"));if(!json.open(QIODevice::WriteOnly)||json.write(bytes)!=bytes.size()||!json.commit())invalid("Cannot write parameter manifest");check_cancel(cancel);
+ const auto bytes=QJsonDocument(manifest).toJson(QJsonDocument::Indented);QSaveFile json(QDir(staging.path()).filePath("parameters.json"));if(!json.open(QIODevice::WriteOnly)||json.write(bytes)!=bytes.size()||!json.commit())invalid("Cannot write parameter manifest");check_cancel(cancel);
  if(!parent.rename(staging.path(),destination.absoluteFilePath()))invalid("Cannot publish parameter package");staging.setAutoRemove(false);
 }
 MaterialLayerParameters read_material_layer_parameter_package(const QString &directory,const std::atomic_bool &cancel){
- QDir root(directory);if(!root.isAbsolute()||root.canonicalPath().isEmpty())invalid("Parameter package directory is missing");const auto path=contained_file(root,"parameters.json");QFile input(path);if(!input.open(QIODevice::ReadOnly))invalid("Cannot read parameter manifest");require_texture_ram(resource_product(input.size(),8),"Parameter manifest decode");QJsonParseError error;const auto json=QJsonDocument::fromJson(input.readAll(),&error);if(error.error!=QJsonParseError::NoError||!json.isObject())invalid("Invalid parameter JSON");auto result=read_material_layer_parameters_json(json.object());
+ QDir root(directory);if(!root.isAbsolute()||root.canonicalPath().isEmpty())invalid("Parameter package directory is missing");const auto path=contained_file(root,"parameters.json");QFile input(path);if(!input.open(QIODevice::ReadOnly))invalid("Cannot read parameter manifest");QJsonParseError error;const auto json=QJsonDocument::fromJson(input.readAll(),&error);if(error.error!=QJsonParseError::NoError||!json.isObject())invalid("Invalid parameter JSON");auto result=read_material_layer_parameters_json(json.object());
  std::map<QString,QString> checked;
  for(auto &original:result.originals)for(auto &file:original.files){check_cancel(cancel);const auto path=contained_file(root,file.descriptor.path);if(QFileInfo(path).size()!=file.descriptor.size)invalid("Parameter payload size differs");auto [at,fresh]=checked.emplace(file.descriptor.sha256,path);if(!fresh&&at->second!=path)invalid("One parameter encoding has multiple payloads");if(fresh&&hash_texture_file(path,&cancel)!=file.descriptor.sha256)invalid("Parameter payload checksum differs");file.descriptor.path=path;}
  return result;

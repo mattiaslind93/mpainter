@@ -84,7 +84,7 @@ void choose_flattened_export(QWidget *parent,TextureSet source,const std::vector
   std::jthread worker([&]{try{EditTiming timing("BTS_FLATTEN_EXPORT_MS");
    std::uint64_t packets=0;
    const auto capture=[&](const QUuid &layer,int channel,int tile,int width,int height,bool mask,bool contextual){
-    const auto bytes=std::uint64_t(width)*height*16,budget=flatten_safe_ram_bytes();if(bytes>budget)throw std::length_error("Flatten export buffer needs "+std::to_string((bytes+1048575)/1048576)+" MiB; safe available RAM budget "+std::to_string((budget+1048575)/1048576)+" MiB");
+
     FlattenImage image{width,height,std::make_shared<std::vector<FillTexture::Pixel>>(std::size_t(width)*height)};
     for(int y=0;y<height&&!wait.cancelled;y+=256)for(int x=0;x<width&&!wait.cancelled;x+=256){
      LayerCaptureRequest request{layer,channel,tile,x,y,std::min(256,width-x),std::min(256,height-y),width,height,mask,contextual};

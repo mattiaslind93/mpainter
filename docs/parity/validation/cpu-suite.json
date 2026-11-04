@@ -1,0 +1,926 @@
+[
+  {
+    "test": "bts-adjustment-paint-plan-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-alpha-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-anchor-reference-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-anchor-validity-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-ao-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-asset-dragdrop-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-asset-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-bake-match-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-bake-preferences-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-bake-quality-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-bake-source-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-baked-map-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-baking-ui-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-blend-families-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-blend-selection-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-branding-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-brush-bounds-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-brush-preset-catalog-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-brush-preset-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-brush-preset-thumbnail-stroke-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-brush-preview-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-bump-migration-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-camera-pose-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-channel-configuration-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-channel-precision-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-clone-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-color-default-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-color-selection-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-compare-mask-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-composite-memory-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-custom-channel-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-cylindrical-projection-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-derived-output-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-direction-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-disk-scratch-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-displacement-bake-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-displacement-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-display-post-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-document-edit-commit-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-dynamic-resolution-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-dynamic-stroke-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-edit-state-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-erase-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-export-config-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-export-naming-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-export-packing-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-file-dialog-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-fill-channel-texture-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-fill-effect-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-fill-projection-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-fill-symmetry-document-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-fill-symmetry-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-fill-texture-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-filled-path-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-filter-effect-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-flatten-layer-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-folder-composition-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-folder-mask-target-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-fragment-tangents-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-generator-surface-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-geometry-mask-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-gpu-bake-bvh-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-gpu-program-warmup-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-gpu-stack-plan-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-height-neutral-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-height-normal-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-history-codec-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-history-memory-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-hybrid-normal-to-bump-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-image-sequence-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-input-space-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-instance-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-jitter-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-layer-api-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-layer-channel-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-layer-drop-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-lazy-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-lens-projection-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-levels-components-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-levels-mix-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-levels-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-levels-ui-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-linear-color-transform-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-map-import-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-mask-copy-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-mask-effect-path-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-mask-effect-stack-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-mask-generator-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-mask-preset-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-mask-replace-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-mask-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-material-layering-authoring-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-material-layering-document-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-material-layering-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-material-projection-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-mesh-displacement-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-mesh-map-storage-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-mesh-map-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-native-cycles-publication-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-native-cycles-revisions-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-native-height-image-reference-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-native-height-image-retention-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-native-height-policy-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-native-image-panel-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-native-image-variant-metadata-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-native-material-bundle-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-native-material-edit-diff-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-native-material-fill-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-native-material-mapping-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-native-material-object-table-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-native-material-parameters-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-native-material-projection-context-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-native-material-source-policy-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-nested-mask-model-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-normal-mix-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-normal-vector-blend-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-numeric-locale-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-openpbr-import-policy-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-openpbr-materialx-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-openpbr-parameter-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-openpbr-usd-resource-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-openpbr-usd-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-owner-worker-job-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-paint-effect-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-paint-source-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-paint-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-painter-workflow-document-ui-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-painter-workflow-ui-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-panel-scroll-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-path-curve-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-physical-scale-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-planar-projection-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-polygon-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-project-save-safety-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-project-template-shader-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-project-template-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-projection-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-property-composite-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-property-latency-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-quick-mask-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-reference-image-data-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-reference-image-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-rename-ui-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-requested-features-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-resource-budget-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-resource-caps-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-ribbon-archive-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-ribbon-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-scene-bridge-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-scene-formats-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-session-guard-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-set-assignment-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-shader-document-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-shader-instance-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-skew-archive-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-skew-correction-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-skew-field-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-smart-mask-model-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-smart-material-preset-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-smudge-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-spherical-projection-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-spmsk-embedded-bitmap-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-spsm-application-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-spsm-asset-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-spsm-bitmap-options-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-spsm-native-lowering-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-stencil-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-straight-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-stroke-archive-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-stroke-history-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-stroke-spline-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-stroke-transfer-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-subsurface-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-surface-path-archive-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-surface-path-effect-archive-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-surface-path-raster-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-surface-path-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-symmetry-intersection-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-symmetry-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-temporary-ink-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-texture-extent-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-texture-io-await-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-texture-residency-policy-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-texture-resource-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-texture-set-selection-ui-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-theme-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-tile-resolution-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-trackball-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-ui-stall-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-usd-preset-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-usd-scene-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-uv-contour-overlay-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-uv-transfer-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-uv-view-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-viewport-draw-guard-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-viewport-preferences-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-warp-geometry-instance-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-warp-geometry-io-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-warp-geometry-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-warp-grid-tests",
+    "returncode": 0
+  },
+  {
+    "test": "bts-file-dialog-persistence",
+    "returncode": 0
+  },
+  {
+    "test": "bts-file-dialog-state-write",
+    "returncode": 0
+  },
+  {
+    "test": "bts-file-dialog-state-read",
+    "returncode": 0
+  },
+  {
+    "test": "bts-file-dialog-plain-qt",
+    "returncode": 0
+  },
+  {
+    "test": "verify-gpu-only-paths.py",
+    "returncode": 0
+  },
+  {
+    "test": "verify-save-scheduling.py",
+    "returncode": 0
+  },
+  {
+    "test": "verify-endurance-guard.py",
+    "returncode": 0
+  },
+  {
+    "test": "test-session-guard.py",
+    "returncode": 0
+  },
+  {
+    "test": "test-cpu-test-plan.py",
+    "returncode": 0
+  },
+  {
+    "test": "verify-smart-mask-paths.py",
+    "returncode": 0
+  },
+  {
+    "test": "verify-smart-material-paths.py",
+    "returncode": 0
+  },
+  {
+    "test": "bts-cycles-live-manifest",
+    "returncode": 0
+  },
+  {
+    "test": "bts-cycles-integrated-snapshot",
+    "returncode": 0
+  },
+  {
+    "test": "bts-cycles-captured-revision-admission",
+    "returncode": 0
+  },
+  {
+    "test": "cycles-live-burst-classifier-cpu",
+    "returncode": 0
+  },
+  {
+    "test": "cycles-live-burst-snapshot-admission-cpu",
+    "returncode": 0
+  },
+  {
+    "test": "cycles-displacement-profile-admission-cpu",
+    "returncode": 0
+  },
+  {
+    "test": "cycles-displacement-candidate-admission-cpu",
+    "returncode": 0
+  },
+  {
+    "test": "native-height-verifier-admission-cpu",
+    "returncode": 0
+  },
+  {
+    "test": "native-material-projection-admission-cpu",
+    "returncode": 0
+  },
+  {
+    "test": "interactive-brush-gpu-transport-source-cpu",
+    "returncode": 0
+  },
+  {
+    "test": "material-layer-parameter-packet-cpu",
+    "returncode": 0
+  },
+  {
+    "test": "material-layer-surface-causal-cpu",
+    "returncode": 0
+  },
+  {
+    "test": "eevee-completion-observation-values-cpu",
+    "returncode": 0
+  },
+  {
+    "test": "bts-requested-features-native",
+    "returncode": 0
+  },
+  {
+    "test": "bts-export-files",
+    "returncode": 0
+  },
+  {
+    "test": "bts-asset-dragdrop-workspace",
+    "returncode": 0
+  },
+  {
+    "test": "bts-workspace-shutdown-ui",
+    "returncode": 0
+  },
+  {
+    "test": "bts-native-material-ui",
+    "returncode": 0
+  },
+  {
+    "test": "bts-texture-import-files",
+    "returncode": 0
+  },
+  {
+    "test": "bts-skew-rays",
+    "returncode": 0
+  }
+]

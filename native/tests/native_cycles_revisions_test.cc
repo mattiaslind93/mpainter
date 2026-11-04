@@ -1,6 +1,6 @@
 #include "NativeCyclesRevisions.hh"
 #include "NativeCyclesPublication.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include <array>
 #include <cstdlib>
 #include <iostream>
@@ -107,6 +107,8 @@ void owner_lifetime(){
  }
 }
 void prepared_publication(){
+ // Prepared publication must not introduce a memory-admission dependency.
+ TextureRamQueryScope available([]()->std::uint64_t{return 0;});
  const auto id=identity();NativeCyclesRevision a,b;native_cycles_require(a,9,5,true);native_cycles_require(b,9,5,true);a.wanted=b.wanted=10;
  require(accepts(a,id,id)&&accepts(b,id,id),"Commit fixture preflight failed");
  std::array<int,4> storage{};auto ptr=[&](int n){return reinterpret_cast<blender::ImBuf *>(&storage[n]);};
@@ -118,9 +120,6 @@ void prepared_publication(){
  publish_native_cycles_cache(rows,ids,attempted,[&](auto image,int,auto *value,auto **old){*old=cache[image-1];cache[image-1]=value;deny_allocations=true;return true;},[&](auto){++notifications;});
  native_cycles_commit_revision(a,6);native_cycles_commit_revision(b,6);deny_allocations=false;
  require(a.published==6&&b.published==6&&a.wanted==10&&b.wanted==10&&notifications==2,"Prepared commit lied about latest GPU revision");
- std::uint64_t (*previous)()=texture_ram_query;texture_ram_query=+[]()->std::uint64_t{return 32;};bool rejected=false;
- try{ResourceBudget{}.require(17,0,"Synthetic metadata admission");}catch(const std::length_error&){rejected=true;}texture_ram_query=previous;
- require(rejected,"Dynamic RAM admission ignored actual available memory");
 }
 }
 int main(){try{monotonic_and_floor();complete_identity();pause_and_drain();recorded_error_boundary();owner_lifetime();prepared_publication();std::cout<<"Native Cycles captured revisions: monotonic identity/epochs/floors, pause drain, recorded-error boundary, owner keepers and preallocated partial-failure commit PASS\n";return 0;}catch(const char *error){deny_allocations=false;std::cerr<<error<<'\n';return 1;}catch(const std::exception &error){deny_allocations=false;std::cerr<<error.what()<<'\n';return 1;}}

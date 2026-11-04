@@ -1,4 +1,4 @@
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "ResourceMonitor.hh"
 #include "Performance.hh"
 #include "FillTextureIO.hh"
@@ -49,8 +49,8 @@ void ResourceMonitor::refresh(bool library,bool project){
    // Project replacements get a new immutable identity. Old packed bytes remain
    // available to existing history entries and to Save immediately after Undo.
    if(asset.scope==AssetScope::Project)asset.id=QUuid::createUuid();
-   if(asset.usages.contains("texture")){ready.color=decode_fill_texture(asset);allocation=2*decoded_bytes(*ready.color);ResourceBudget{}.require(resource_sum(decoded,allocation),0,"Decoded resource update batch");ready.raw=decode_fill_texture(asset,true);}
-   else if(asset.usages.contains("alpha")||asset.usages.contains("environment")){auto bitmap=read_bitmap_alpha_bytes(asset.bytes,asset.name);allocation=std::uint64_t(bitmap->pixels.size())*sizeof(float);ResourceBudget{}.require(resource_sum(decoded,allocation),0,"Decoded resource update batch");if(asset.usages.contains("alpha")){BrushAlpha alpha;alpha.kind=AlphaKind::Bitmap;alpha.bitmap=bitmap;asset.alpha=alpha;}}
+   if(asset.usages.contains("texture")){ready.color=decode_fill_texture(asset);allocation=2*decoded_bytes(*ready.color);ready.raw=decode_fill_texture(asset,true);}
+   else if(asset.usages.contains("alpha")||asset.usages.contains("environment")){auto bitmap=read_bitmap_alpha_bytes(asset.bytes,asset.name);allocation=std::uint64_t(bitmap->pixels.size())*sizeof(float);if(asset.usages.contains("alpha")){BrushAlpha alpha;alpha.kind=AlphaKind::Bitmap;alpha.bitmap=bitmap;asset.alpha=alpha;}}
    else throw std::runtime_error("External updates currently support image resources only");
    decoded+=allocation;batch.updates.push_back(std::move(ready));
   }catch(const std::exception &e){batch.messages.append(label+": "+QString::fromUtf8(e.what())+"; retained imported version.");}}

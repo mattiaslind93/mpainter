@@ -1,5 +1,5 @@
 #include "OpenPbrMaterialX.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "OpenPbrReferenceData.hh"
 #include <QCryptographicHash>
 #include <MaterialXCore/Document.h>
@@ -37,5 +37,5 @@ int main(int argc,char **argv){QCoreApplication app(argc,argv);assert(QCryptogra
  OpenPbrMaterialX large;large.tiles.clear();for(int tile=1001;tile<=2000;++tile)large.tiles.insert(tile);
  const auto large_bytes=openpbr_materialx_document(large);auto large_doc=mx::createDocument();mx::readFromXmlString(large_doc,large_bytes.toStdString());const auto tile_values=large_doc->getGeomInfo("StudioGeometry")->getGeomProp("udimset")->getValue()->asA<mx::StringVec>();assert(tile_values.size()==1000&&tile_values.front()=="1001"&&tile_values.back()=="2000");
  for(int outside:{1000,2001}){auto bad=large;bad.tiles.insert(outside);rejected([&]{openpbr_materialx_document(bad);});}
- {TextureRamQueryScope low_memory(+[]()->std::uint64_t{return 1024;});bool denied=false;try{openpbr_materialx_document(large);}catch(const std::length_error &){denied=true;}assert(denied);}
+ {TextureRamQueryScope low_memory(+[]()->std::uint64_t{return 1024;});bool denied=false;try{openpbr_materialx_document(large);}catch(const std::length_error &){denied=true;}assert(!denied);}
  std::puts("OpenPBR MaterialX 1.1.1: official 1.39.4 semantic validation, all 37 parameters including full-model fields, locale-safe floats, shared image bindings, explicit color spaces/raw scalars, UDIM, bump without normal files, signed displacement subtraction/enable, XML escaping, relative paths and bundled license PASS; metadata transport only");}

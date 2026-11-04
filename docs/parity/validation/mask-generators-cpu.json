@@ -1,0 +1,72 @@
+[
+    {
+        "fill_and_folder": true,
+        "invert_difference": 13533.911717653275,
+        "maximum": 0.8056125640869141,
+        "minimum": 0,
+        "name": "Oxide Flecks"
+    },
+    {
+        "fill_and_folder": true,
+        "invert_difference": 4389.371771633625,
+        "maximum": 1,
+        "minimum": 0.0722627341747284,
+        "name": "Exposed Edges"
+    },
+    {
+        "fill_and_folder": true,
+        "invert_difference": 11980.37739956379,
+        "maximum": 1,
+        "minimum": 0.31194746494293213,
+        "name": "Crevice Sediment"
+    },
+    {
+        "fill_and_folder": true,
+        "invert_difference": 12652.704630285501,
+        "maximum": 0.8866978883743286,
+        "minimum": 0,
+        "name": "Organic Growth"
+    },
+    {
+        "fill_and_folder": true,
+        "invert_difference": 14222.23085179925,
+        "maximum": 1,
+        "minimum": 0,
+        "name": "Ground Contact"
+    },
+    {
+        "fill_and_folder": true,
+        "invert_difference": 7747.11283826828,
+        "maximum": 1,
+        "minimum": 0.04001587629318237,
+        "name": "Surface Scuffs"
+    },
+    {
+        "fill_and_folder": true,
+        "invert_difference": 12861.03841495514,
+        "maximum": 0.4829599857330322,
+        "minimum": 0,
+        "name": "Gravity Streaks"
+    },
+    {
+        "fill_and_folder": true,
+        "invert_difference": 13531.263411939144,
+        "maximum": 1,
+        "minimum": 0,
+        "name": "Settled Dust"
+    },
+    {
+        "fill_and_folder": true,
+        "invert_difference": 10430.640151977539,
+        "maximum": 0.999962329864502,
+        "minimum": 3.764033317565918e-05,
+        "name": "Height Fade"
+    },
+    {
+        "fill_and_folder": true,
+        "invert_difference": 1638.400390625,
+        "maximum": 0.550000011920929,
+        "minimum": 0.550000011920929,
+        "name": "Curvature Ridge"
+    }
+]

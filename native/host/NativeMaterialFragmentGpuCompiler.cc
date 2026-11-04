@@ -17,7 +17,7 @@
 #include "BKE_image_gpu_override.hh"
 #include "DNA_userdef_types.h"
 #include "DNA_image_types.h"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "BKE_colorband.hh"
 #include "BKE_main.hh"
 #include "BKE_node.hh"
@@ -135,11 +135,12 @@ void inspect(Compilation &c){
   if(type=="ShaderNodeVectorTransform"){const auto *transform=static_cast<const NodeShaderVectTransform *>(node->storage);require(transform&&transform->convert_from==transform->convert_to,"Fragment phase1 vector transform requires unavailable object/view matrices");}
   if(type=="ShaderNodeNormalMap"){
    const auto *normal=static_cast<const NodeShaderNormalMap *>(node->storage);
-   require(normal&&normal->space==SHD_SPACE_TANGENT,"Fragment Normal Map requires tangent space; object/world spaces are not bound");
+   require(normal&&(normal->space==SHD_SPACE_TANGENT||normal->space==SHD_SPACE_OBJECT||normal->space==SHD_SPACE_WORLD),"Unsupported Normal Map space");
+   if(normal->space==SHD_SPACE_OBJECT){require(c.layout.resident_object_context&&c.layout.resident_raster_origin,"Object Normal Map requires captured object matrices");c.diagnostic.object_matrices_context=true;}
    require((node->custom1&1)==0,"Fragment Normal Map alternate derivative basis is unsupported; original custom1 is unchanged");
    require(normal->convention==SHD_NORMAL_MAP_CONVENTION_OPENGL||normal->convention==SHD_NORMAL_MAP_CONVENTION_DIRECTX,"Fragment Normal Map convention is unsupported");
    require(normal->base==SHD_NORMAL_MAP_BASE_ORIGINAL||normal->base==SHD_NORMAL_MAP_BASE_DISPLACED,"Fragment Normal Map base is unsupported");
-   require(c.layout.tangent_stream&&c.layout.uv_name==normal->uv_map,"Fragment Normal Map needs its exact named UV/CD_TANGENT stream");
+   if(normal->space==SHD_SPACE_TANGENT)require(c.layout.tangent_stream&&c.layout.uv_name==normal->uv_map,"Fragment Normal Map needs its exact named UV/CD_TANGENT stream");
    ++c.diagnostic.normal_maps;
   }
   if(type=="ShaderNodeTexImage"||type=="ShaderNodeTexEnvironment"){
@@ -293,7 +294,7 @@ NativeFragmentLayout native_world_normal_source_request(const PreparedNativeFrag
  std::optional<std::string> uv;std::set<const bNode *> visited;std::vector<const bNode *> pending;
  for(const auto &node:prepared.tree->nodes)if(STREQ(node.idname,"ShaderNodeOutputAOV"))pending.push_back(&node);
  while(!pending.empty()){const auto *node=pending.back();pending.pop_back();if(!visited.insert(node).second)continue;for(const auto &link:prepared.tree->links)if(link.tonode==node)pending.push_back(link.fromnode);
-  if(STREQ(node->idname,"ShaderNodeNormalMap")){const auto *settings=static_cast<const NodeShaderNormalMap *>(node->storage);require(settings,"Native Normal Map settings are missing");const std::string name=settings->uv_map;require(!uv||*uv==name,"Native world Normal currently requires one shared source tangent UV");uv=name;}}
+  if(STREQ(node->idname,"ShaderNodeNormalMap")){const auto *settings=static_cast<const NodeShaderNormalMap *>(node->storage);require(settings,"Native Normal Map settings are missing");if(settings->space!=SHD_SPACE_TANGENT)continue;const std::string name=settings->uv_map;require(!uv||*uv==name,"Native world Normal currently requires one shared source tangent UV");uv=name;}}
  c.layout.uv_name=uv.value_or("");c.layout.default_image_uv=NativeFragmentImageContext::capture(prepared).requires_default_uv();inspect(c);c.layout.generated_stream=c.diagnostic.generated_context;c.layout.resident_view_context=c.diagnostic.view_context;c.layout.resident_baked_ao_context=c.diagnostic.baked_ao_context;return c.layout;
 }
 NativeFragmentLayout native_world_normal_source_layout(const PreparedNativeFragmentNormal &prepared,const NativeFragmentGeometry *supplied,const NativeMaterialViewContext *view,const NativeMaterialBakedAoContext *ao){
@@ -320,7 +321,7 @@ NativeFragmentFacingGeometry prepare_native_fragment_facing(std::span<const Nati
   if(!std::isfinite(area)||area==0)return -1;return (area>0?2:0)+front[triangle];
  };
  std::array<std::size_t,4> counts{},next{};for(std::size_t i=0;i<front.size();++i)if(const int group=group_index(i);group>=0)counts[group]+=3;
- const auto bytes=resource_sum(resource_product(vertices.size(),sizeof(NativeFragmentVertex)),4*sizeof(NativeFragmentFacingBatch));ResourceBudget{}.require(bytes,0,"Native fragment cached facing geometry");
+ const auto bytes=resource_sum(resource_product(vertices.size(),sizeof(NativeFragmentVertex)),4*sizeof(NativeFragmentFacingBatch));
  NativeFragmentFacingGeometry result;result.vertices.resize(counts[0]+counts[1]+counts[2]+counts[3]);result.batches.reserve(4);std::size_t first=0;
  for(int i=0;i<4;++i){next[i]=first;if(counts[i])result.batches.push_back({unsigned(first),unsigned(counts[i]),bool((i>=2)!=(i%2!=0))});first+=counts[i];}
  // Two passes and one vertex allocation: stable within each of <=4 groups.
@@ -361,7 +362,7 @@ NativeMaterialFragmentGpuGeometry::NativeMaterialFragmentGpuGeometry(std::shared
  const auto metadata=resource_sum(sizeof(Impl),resource_sum(resource_product(streams.size(),sizeof(Impl::Stream)),resource_sum(resource_product(objects.size(),sizeof(Impl::Object)+sizeof(bool)),resource_product(ranges.size(),sizeof(std::uint32_t)+sizeof(Impl::Tile)))));
  // Existing immutable CPU geometry is already resident, so admit additional
  // staging/metadata only. IBO's documented no-copy optimization is not implemented.
- const auto staging=resource_sum(gpu_bytes,metadata);ResourceBudget{}.require(staging,gpu_bytes,"Cached native fragment geometry upload");
+ const auto staging=resource_sum(gpu_bytes,metadata);
  State state;GLint held_vao=0,held_array=0;glGetIntegerv(GL_VERTEX_ARRAY_BINDING,&held_vao);glGetIntegerv(GL_ARRAY_BUFFER_BINDING,&held_array);GLuint upload_vao=0;glGenVertexArrays(1,&upload_vao);require(upload_vao!=0,"Resident upload VAO allocation failed");glBindVertexArray(upload_vao);const auto restore_upload=qScopeGuard([&]{glBindVertexArray(held_vao);glBindBuffer(GL_ARRAY_BUFFER,held_array);glDeleteVertexArrays(1,&upload_vao);});
  s.source=std::move(source);s.streams.resize(streams.size());s.objects.reserve(objects.size());s.object_uploaded.resize(objects.size(),false);s.range_order.resize(ranges.size());s.tiles.reserve(ranges.size());
  s.indices.reset(GPU_indexbuf_build_from_memory(GPU_PRIM_TRIS,indices.data(),int(indices.size()),0,index_max,false));require(bool(s.indices),"Resident fragment index allocation failed");GPU_indexbuf_use(s.indices.get());++s.diagnostic.index_uploads;
@@ -384,9 +385,9 @@ struct NativeMaterialFragmentGpuProgram::Impl {
 NativeMaterialFragmentGpuProgram::NativeMaterialFragmentGpuProgram(PreparedNativeFragmentNormal prepared,NativeFragmentLayout layout):impl_(std::make_unique<Impl>()){
  using namespace blender;auto &s=*impl_;s.compilation.prepared=std::move(prepared);s.compilation.layout=std::move(layout);inspect(s.compilation);s.images=NativeFragmentImageContext::capture(s.compilation.prepared);s.owner();
  s.material=GPU_material_from_callbacks(GPU_MAT_EEVEE,construct,codegen,&s.compilation);require(s.compilation.error.empty(),s.compilation.error);require(s.material&&GPU_material_status(s.material)==GPU_MAT_SUCCESS,"Native fragment Normal shader compilation failed");
- const auto rows=std::max<std::uint64_t>(1,native_mapping_parameter_rows(s.compilation.count,s.compilation.diagnostic.mapping_rows)),bytes=resource_product(rows,sizeof(s.values[0]));require(bytes<=GPU_max_storage_buffer_size(),"Fragment parameter rows exceed SSBO limit");ResourceBudget{}.require(bytes,bytes,"Native fragment parameters");s.values.resize(rows);s.parameters=GPU_storagebuf_create_ex(bytes,s.values.data(),GPU_USAGE_DYNAMIC,"Native fragment parameters");require(s.parameters,"Cannot allocate fragment parameters");
- if(s.compilation.layout.fill_projection){ResourceBudget{}.require(sizeof(s.projection_rows),sizeof(s.projection_rows),"Native fragment Fill projection");s.projection=GPU_storagebuf_create_ex(sizeof(s.projection_rows),s.projection_rows.data(),GPU_USAGE_DYNAMIC,"Native fragment Fill projection");require(s.projection,"Cannot allocate fragment Fill projection");}
- if(s.compilation.diagnostic.normal_maps&&!s.compilation.layout.resident_raster_origin){ObjectInfos empty{};ResourceBudget{}.require(sizeof(empty),sizeof(empty),"Native fragment ObjectInfos");s.object_infos=GPU_storagebuf_create_ex(sizeof(empty),&empty,GPU_USAGE_DYNAMIC,"Native fragment actual ObjectInfos");require(s.object_infos,"Cannot allocate fragment ObjectInfos");}
+ const auto rows=std::max<std::uint64_t>(1,native_mapping_parameter_rows(s.compilation.count,s.compilation.diagnostic.mapping_rows)),bytes=resource_product(rows,sizeof(s.values[0]));require(bytes<=GPU_max_storage_buffer_size(),"Fragment parameter rows exceed SSBO limit");s.values.resize(rows);s.parameters=GPU_storagebuf_create_ex(bytes,s.values.data(),GPU_USAGE_DYNAMIC,"Native fragment parameters");require(s.parameters,"Cannot allocate fragment parameters");
+ if(s.compilation.layout.fill_projection){s.projection=GPU_storagebuf_create_ex(sizeof(s.projection_rows),s.projection_rows.data(),GPU_USAGE_DYNAMIC,"Native fragment Fill projection");require(s.projection,"Cannot allocate fragment Fill projection");}
+ if(s.compilation.diagnostic.normal_maps&&!s.compilation.layout.resident_raster_origin){ObjectInfos empty{};s.object_infos=GPU_storagebuf_create_ex(sizeof(empty),&empty,GPU_USAGE_DYNAMIC,"Native fragment actual ObjectInfos");require(s.object_infos,"Cannot allocate fragment ObjectInfos");}
 }
 NativeMaterialFragmentGpuProgram::~NativeMaterialFragmentGpuProgram()=default;
 void NativeMaterialFragmentGpuProgram::validate_images()const{impl_->owner();validate_retained_fragment_textures(impl_->material,impl_->images);}
@@ -406,7 +407,7 @@ void NativeMaterialFragmentGpuProgram::draw(blender::gpu::Texture *target,std::s
   for(float x:physical->world_to_object)require(std::isfinite(x),"Nonfinite fragment world-to-object matrix");
  }
  for(const auto &row:values)for(float x:row)require(std::isfinite(x),"Nonfinite fragment parameter");for(const auto &m:mappings)m.validate();
- ResourceBudget{}.require(resource_product(source.size(),2*sizeof(NativeFragmentVertex)),0,"Native fragment mesh upload");
+
  // Diagnostic callers can provide raw mesh corners too. Repair directions in
  // a private copy; collapse only triangles with nonfinite raster/position data.
  std::vector<NativeFragmentVertex> repaired(source.begin(),source.end());
@@ -441,8 +442,7 @@ void NativeMaterialFragmentGpuProgram::draw_tile(blender::gpu::Texture *target,c
  const auto matches=[&](const NativeFragmentGeometryStream &stream){return std::any_of(stream.requests.begin(),stream.requests.end(),[&](const auto &r){return s.compilation.layout.uv_name.empty()?r.kind==NativeFragmentUvKind::DefaultRender:r.kind==NativeFragmentUvKind::Named&&r.name==s.compilation.layout.uv_name;});};
  require(std::any_of(g.source->streams().begin(),g.source->streams().end(),matches),"Resident geometry has no exact logical source UV request for this program");
  const auto at=std::lower_bound(g.tiles.begin(),g.tiles.end(),tile,[](const auto &t,int number){return t.number<number;});
- std::optional<ResourceBudget> matrix_budget;std::uint64_t new_matrix_bytes=0;
- if(s.compilation.diagnostic.object_matrices_context&&at!=g.tiles.end()&&at->number==tile)for(std::size_t i=at->first;i<std::size_t(at->first)+at->count;++i){const auto &range=g.source->ranges()[g.range_order[i]];const auto &stream=g.source->streams()[range.stream];if(!matches(stream))continue;const auto owner=stream.object;g.object_matrices.prepare(owner,[&]{const auto matrices=native_fragment_image_object_matrices(g.source->objects()[owner],g.source->object_infos(owner));if(!matrix_budget)matrix_budget.emplace();new_matrix_bytes=resource_sum(new_matrix_bytes,sizeof(matrices));matrix_budget->require(new_matrix_bytes,new_matrix_bytes,"Native fragment BOX owner matrices");ObjectMatrices const *data=&matrices;std::shared_ptr<gpu::StorageBuf> buffer(GPU_storagebuf_create_ex(sizeof(matrices),data,GPU_USAGE_STATIC,"Native fragment actual BOX ObjectMatrices"),GPU_storagebuf_free);require(bool(buffer),"Resident BOX owner matrix allocation failed");g.diagnostic.storage_bytes=resource_sum(g.diagnostic.storage_bytes,sizeof(matrices));return buffer;});}
+ if(s.compilation.diagnostic.object_matrices_context&&at!=g.tiles.end()&&at->number==tile)for(std::size_t i=at->first;i<std::size_t(at->first)+at->count;++i){const auto &range=g.source->ranges()[g.range_order[i]];const auto &stream=g.source->streams()[range.stream];if(!matches(stream))continue;const auto owner=stream.object;g.object_matrices.prepare(owner,[&]{const auto matrices=native_fragment_image_object_matrices(g.source->objects()[owner],g.source->object_infos(owner));ObjectMatrices const *data=&matrices;std::shared_ptr<gpu::StorageBuf> buffer(GPU_storagebuf_create_ex(sizeof(matrices),data,GPU_USAGE_STATIC,"Native fragment actual BOX ObjectMatrices"),GPU_storagebuf_free);require(bool(buffer),"Resident BOX owner matrix allocation failed");g.diagnostic.storage_bytes=resource_sum(g.diagnostic.storage_bytes,sizeof(matrices));return buffer;});}
  auto *shader=GPU_material_get_shader(s.material);require(shader,"Resident fragment shader missing");bool changed=!std::equal(values.begin(),values.end(),s.values.begin());std::copy(values.begin(),values.end(),s.values.begin());if(s.compilation.diagnostic.mapping_rows)for(std::size_t i=0;i<count;++i){const auto rows=(mappings.empty()?NativeMaterialMapping{}:mappings[i]).rows();for(int j=0;j<3;++j){auto &v=s.values[count+3*i+j];changed|=v!=rows[j];v=rows[j];}}if(changed)GPU_storagebuf_update(s.parameters,s.values.data());
  if(projection)require(s.compilation.layout.fill_projection,"Native fragment program has no Fill projection binding");
  if(s.projection){const auto rows=projection?projection->encoded():NativeMaterialProjection::Rows{};if(rows!=s.projection_rows){s.projection_rows=rows;GPU_storagebuf_update(s.projection,s.projection_rows.data());}}

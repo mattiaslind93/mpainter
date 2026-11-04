@@ -1,0 +1,270 @@
+[
+  {
+    "file": "intern/cycles/blender/image.cpp",
+    "same": true
+  },
+  {
+    "file": "intern/cycles/blender/image.h",
+    "same": true
+  },
+  {
+    "file": "intern/cycles/blender/session.cpp",
+    "same": true
+  },
+  {
+    "file": "intern/cycles/blender/shader.cpp",
+    "same": true
+  },
+  {
+    "file": "intern/cycles/blender/sync.cpp",
+    "same": true
+  },
+  {
+    "file": "intern/cycles/blender/viewport.cpp",
+    "same": true
+  },
+  {
+    "file": "intern/cycles/blender/viewport.h",
+    "same": true
+  },
+  {
+    "file": "intern/cycles/device/cuda/device_impl.cpp",
+    "same": true
+  },
+  {
+    "file": "intern/cycles/kernel/device/cuda/CMakeLists.txt",
+    "same": true
+  },
+  {
+    "file": "intern/cycles/scene/image.cpp",
+    "same": true
+  },
+  {
+    "file": "intern/cycles/scene/image.h",
+    "same": true
+  },
+  {
+    "file": "intern/cycles/scene/shader.cpp",
+    "same": true
+  },
+  {
+    "file": "intern/cycles/scene/svm.cpp",
+    "same": true
+  },
+  {
+    "file": "source/blender/blenkernel/CMakeLists.txt",
+    "same": true
+  },
+  {
+    "file": "source/blender/blenkernel/intern/appdir.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/blenkernel/intern/blendfile.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/blenkernel/intern/image.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/blenkernel/intern/image_gpu.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/blenkernel/intern/node_tree_update.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/draw/DRW_engine.hh",
+    "same": true
+  },
+  {
+    "file": "source/blender/draw/engines/eevee/eevee_instance.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/draw/engines/eevee/eevee_material.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/draw/engines/eevee/eevee_shadow.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/draw/engines/eevee/eevee_subsurface.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/draw/intern/draw_context.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/draw/intern/draw_gpu_context.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/draw/intern/draw_pass.hh",
+    "same": true
+  },
+  {
+    "file": "source/blender/editors/uvedit/uvedit_unwrap_ops.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/gpu/CMakeLists.txt",
+    "same": true
+  },
+  {
+    "file": "source/blender/gpu/GPU_init_exit.hh",
+    "same": true
+  },
+  {
+    "file": "source/blender/gpu/intern/gpu_context.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/gpu/intern/gpu_framebuffer.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/gpu/intern/gpu_init_exit.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/gpu/intern/gpu_material.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/gpu/intern/gpu_pass.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/gpu/intern/gpu_shader.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/gpu/intern/gpu_state.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/gpu/intern/gpu_storage_buffer.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/gpu/intern/gpu_storage_buffer_private.hh",
+    "same": true
+  },
+  {
+    "file": "source/blender/gpu/intern/gpu_texture.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/gpu/intern/gpu_texture_mipmap.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/gpu/intern/gpu_viewport.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/gpu/opengl/gl_context.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/gpu/opengl/gl_context.hh",
+    "same": true
+  },
+  {
+    "file": "source/blender/gpu/opengl/gl_shader_interface.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/gpu/opengl/gl_state.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/gpu/opengl/gl_state.hh",
+    "same": true
+  },
+  {
+    "file": "source/blender/gpu/opengl/gl_storage_buffer.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/gpu/opengl/gl_storage_buffer.hh",
+    "same": true
+  },
+  {
+    "file": "source/blender/gpu/opengl/gl_texture.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/gpu/shaders/material/gpu_shader_material_normal_map.glsl",
+    "same": true
+  },
+  {
+    "file": "source/blender/imbuf/intern/filter.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/imbuf/intern/openexr/openexr_api.cpp",
+    "same": true
+  },
+  {
+    "file": "source/blender/io/usd/intern/usd_reader_xform.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/nodes/shader/nodes/node_shader_color_ramp.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/nodes/shader/nodes/node_shader_normal_map.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/render/RE_bake.h",
+    "same": true
+  },
+  {
+    "file": "source/blender/render/RE_texture_margin.h",
+    "same": true
+  },
+  {
+    "file": "source/blender/render/intern/bake.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/render/intern/texture_margin.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/windowmanager/WM_api.hh",
+    "same": true
+  },
+  {
+    "file": "source/blender/windowmanager/intern/wm_files.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/windowmanager/intern/wm_init_exit.cc",
+    "same": true
+  },
+  {
+    "file": "source/blender/windowmanager/intern/wm_window.cc",
+    "same": true
+  },
+  {
+    "file": "source/creator/CMakeLists.txt",
+    "same": true
+  },
+  {
+    "file": "source/creator/creator.cc",
+    "same": true
+  },
+  {
+    "file": "source/creator/creator_intern.h",
+    "same": true
+  }
+]

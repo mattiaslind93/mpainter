@@ -38,8 +38,7 @@ inline QByteArray encode_uniform_mask32(float mask,const std::atomic_bool &cance
                                   "Surface fixture mask outside 0..1");
  // Same bounded float-image staging as parameter Export, with no GPU readback
  // or production compositor. R is authoritative; G/B=0 and alpha=1 explicitly.
- require_texture_ram(resource_product(surface_fixture_size*surface_fixture_size,48),
-                     "Surface fixture literal float mask encode/verify");
+
  Buffer image(IMB_allocImBuf(surface_fixture_size,surface_fixture_size,ImBufFlags::FloatData),IMB_freeImBuf);
  if(!image)throw std::bad_alloc();auto *pixels=image->float_data_for_write();
  require(pixels&&image->channels==4,"Surface fixture requires actual RGBA float storage");
@@ -58,7 +57,7 @@ inline QByteArray encode_uniform_mask32(float mask,const std::atomic_bool &cance
  require(!bytes.is_empty(),"Surface fixture float EXR encoding failed");
  require((image->flags&ImBufFlags::AlphaChannelPacked)!=ImBufFlags::Zero,
          "Surface fixture encode alpha policy differs");
- require_texture_ram(resource_product(bytes.size(),2),"Surface fixture encoded mask bytes");
+
  const QByteArray result(reinterpret_cast<const char *>(bytes.data()),bytes.size());
  // This is an explicit fixture self-check, not a source/mask shader oracle.
  // HALF absence is checked after actual EXR decode, not inferred from values

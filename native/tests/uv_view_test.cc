@@ -1,4 +1,5 @@
 #include "UvView.hh"
+#include "Theme.hh"
 
 #include <QApplication>
 #include <QImage>
@@ -56,7 +57,7 @@ int main(int argc, char **argv)
     for (int x = 0; x < image.width(); ++x) {
       const QRgb pixel = image.pixel(x, y);
       if (qRed(pixel) > 200 && qGreen(pixel) < 80 && qBlue(pixel) < 80) { before_x += x; ++before_n; }
-      if (qRed(pixel) > 210 && qGreen(pixel) > 40 && qGreen(pixel) < 80 && qBlue(pixel) > 100 && qBlue(pixel) < 140) ++marker;
+      if (QColor::fromRgba(pixel) == QColor(bts::theme::Error)) ++marker;
     }
   }
   assert(marker >= 8 && before_n > 10);

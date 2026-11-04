@@ -103,14 +103,14 @@ class SourceGpuTap final {
   // instead of involving Blender's global RGB-to-luminance conversion.
   auto *socket=&pd149_test::output(*from,selected.socket.c_str());if(selected.scalar&&socket->type!=SOCK_FLOAT){auto *split=bke::node_add_node(nullptr,*tree_,UString("ShaderNodeSeparateXYZ"));require(split,"Source scalar AOV split missing");bke::node_add_link(*tree_,*from,*socket,*split,pd149_test::input(*split,"Vector"));from=split;socket=&pd149_test::output(*split,"X");}
   bke::node_add_link(*tree_,*from,*socket,*aov,pd149_test::input(*aov,selected.scalar?"Value":"Color"));BKE_ntree_update_without_main(*tree_);
-  ResourceBudget{}.require(0,resource_product(resource_product(width,height),16),"Source diagnostic RGBA32F target");
+
   program_=std::make_unique<NativeMaterialGpuProgram>(*tree_,0,selected.scalar?1:0);target_.reset(GPU_texture_create_2d("Source diagnostic output",width,height,1,gpu::TextureFormat::SFLOAT_32_32_32_32,GPU_TEXTURE_USAGE_GENERAL,nullptr));require(bool(target_),"Source diagnostic target missing");check();
  }
  public:
  ~SourceGpuTap(){if(owner_!=std::this_thread::get_id()||GPU_context_active_get()!=context_)qFatal("Source diagnostic GPU objects survived owner cleanup");target_.reset();program_.reset();tree_.reset();}
  std::vector<std::array<float,4>> sample(int tile,const std::array<float,9> &scene_to_ap1={1,0,0,0,1,0,0,0,1}){
   check();NativeMaterialGpuContext context;context.tile=tile;context.color_to_aces=scene_to_ap1;program_->dispatch(target_.get(),{},context,{0,0,width_,height_});GPU_memory_barrier(GPU_BARRIER_TEXTURE_UPDATE);
-  ResourceBudget{}.require(resource_product(resource_product(resource_product(width_,height_),16),2),0,"Source diagnostic raw readback and result");auto *raw=static_cast<float *>(GPU_texture_read(target_.get(),GPU_DATA_FLOAT,0));require(raw,"Source diagnostic readback missing");const auto release=qScopeGuard([&]{MEM_delete(raw);});std::vector<std::array<float,4>> result(std::size_t(width_)*height_);std::memcpy(result.data(),raw,result.size()*sizeof(result[0]));check();return result;
+  auto *raw=static_cast<float *>(GPU_texture_read(target_.get(),GPU_DATA_FLOAT,0));require(raw,"Source diagnostic readback missing");const auto release=qScopeGuard([&]{MEM_delete(raw);});std::vector<std::array<float,4>> result(std::size_t(width_)*height_);std::memcpy(result.data(),raw,result.size()*sizeof(result[0]));check();return result;
  }
 };
 }

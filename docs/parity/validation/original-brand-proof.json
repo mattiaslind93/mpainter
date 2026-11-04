@@ -1,0 +1,189 @@
+{
+  "material": "Brand Test - Turquoise Copper Noise",
+  "native": true,
+  "normal_texture": false,
+  "preview_center": [
+    147,
+    103,
+    87
+  ],
+  "render_completion": {
+    "queued_shaders": 0,
+    "queued_textures": 0,
+    "ready": true,
+    "sample_count": 12,
+    "samples": 12,
+    "sampling_finished": true,
+    "viewport_sampling_finished": true
+  },
+  "shader": {
+    "DefaultMaterial": {
+      "bump_distance": 0.0010000000474974513,
+      "normal_intensity": 1,
+      "openpbr": {
+        "backend": "Principled compatibility subset, not OpenPBR BSDF conformance",
+        "installed": false,
+        "links": {
+          "Alpha": [],
+          "Anisotropic": [],
+          "Base Color": [
+            "__BTS_BaseMix0",
+            "Color"
+          ],
+          "Coat IOR": [],
+          "Coat Roughness": [],
+          "Coat Tint": [],
+          "Coat Weight": [],
+          "Diffuse Roughness": [],
+          "Emission Color": [],
+          "Emission Strength": [],
+          "IOR": [],
+          "Sheen Roughness": [],
+          "Sheen Tint": [],
+          "Sheen Weight": [],
+          "Specular IOR Level": [],
+          "Specular Tint": [],
+          "Subsurface Anisotropy": [],
+          "Subsurface Radius": [],
+          "Subsurface Scale": [],
+          "Subsurface Weight": [],
+          "Thin Film IOR": [],
+          "Thin Film Thickness": [],
+          "Thin Wall": [],
+          "Transmission Weight": []
+        },
+        "sockets": {
+          "Alpha": [
+            1
+          ],
+          "Anisotropic": [
+            0
+          ],
+          "Base Color": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "Coat IOR": [
+            1.5
+          ],
+          "Coat Roughness": [
+            0.029999999329447746
+          ],
+          "Coat Tint": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "Coat Weight": [
+            0
+          ],
+          "Diffuse Roughness": [
+            0
+          ],
+          "Emission Color": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "Emission Strength": [
+            0
+          ],
+          "IOR": [
+            1.5
+          ],
+          "Sheen Roughness": [
+            0.5
+          ],
+          "Sheen Tint": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "Sheen Weight": [
+            0
+          ],
+          "Specular IOR Level": [
+            0.5
+          ],
+          "Specular Tint": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "Subsurface Anisotropy": [
+            0
+          ],
+          "Subsurface Radius": [
+            0.6857361197471619,
+            0.2548108994960785,
+            0.12951120734214783
+          ],
+          "Subsurface Scale": [
+            0.004999999888241291
+          ],
+          "Subsurface Weight": [
+            0
+          ],
+          "Thin Film IOR": [
+            1.3300000429153442
+          ],
+          "Thin Film Thickness": [
+            0
+          ],
+          "Thin Wall": [
+            false
+          ],
+          "Transmission Weight": [
+            0
+          ]
+        },
+        "subsurface_method": 6
+      }
+    }
+  },
+  "warnings": [
+    "Thin Wall: input type is not editable yet"
+  ],
+  "world_normal": {
+    "artist_normal_enabled": false,
+    "completed_tiles": 0,
+    "cycles_entry_epoch": "7",
+    "cycles_pair_ready": false,
+    "dispatches": "0",
+    "enabled": false,
+    "error": "",
+    "full_targets": false,
+    "geometry_revision": "2",
+    "gpu_handles": [
+      "0",
+      "0"
+    ],
+    "gpu_tile_maps": [
+      "0",
+      "0"
+    ],
+    "layer_bump_enabled": true,
+    "material_uid": "1810",
+    "normal_layer_tiles": 0,
+    "pending": false,
+    "private_cpu_buffers": 0,
+    "private_images": 0,
+    "programs": 0,
+    "publication_generation": "0",
+    "published_source_signature": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "rendered_tiles": "0",
+    "route": "layered-tangent-normal",
+    "source_policy": "none",
+    "target_tiles": 0
+  },
+  "world_normal_error": "",
+  "world_normal_tree": false,
+  "source_file": "/mnt/mpainter-phase1/build/brand-resume/procedural.blend",
+  "binary_sha256": "8ad2ba17a5609439148ab7ef1c0d8711f339c67f76e06914862ddb6b46d32c4d"
+}

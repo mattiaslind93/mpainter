@@ -1,4 +1,4 @@
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "SceneBridge.hh"
 #include <QDir>
 #include <QStandardPaths>
@@ -50,12 +50,12 @@ std::string stage_image(const aiTexture &texture, ConvertedScene &result, const 
   if (texture.mHeight) extension = "png";
   const QString path = result.directory->filePath(QString("embedded-%1.%2").arg(index).arg(extension));
   if (!texture.mHeight) {
-    require_texture_ram(texture.mWidth, "Embedded compressed scene image");
+
     write_bytes(path, reinterpret_cast<const char *>(texture.pcData), texture.mWidth);
   }
   else {
     const auto pixels = resource_product(texture.mWidth, texture.mHeight);
-    require_texture_ram(resource_product(pixels, 8), "Embedded scene image conversion");
+
     if (texture.mWidth > unsigned(std::numeric_limits<int>::max()) || texture.mHeight > unsigned(std::numeric_limits<int>::max()))
       throw std::runtime_error("Embedded scene image dimensions exceed QImage capacity");
     QImage image(int(texture.mWidth), int(texture.mHeight), QImage::Format_RGBA8888);
@@ -85,7 +85,7 @@ std::unique_ptr<ConvertedScene> convert_mesh_scene(const std::string &path, bool
     throw std::invalid_argument("Select a readable Collada or glTF scene");
   const auto original_size = source.size();
   const auto original_time = source.lastModified();
-  require_texture_ram(resource_product(source.size(), 2), "Scene source reader");
+
   Assimp::Importer importer;
   importer.SetPropertyBool(AI_CONFIG_IMPORT_COLLADA_USE_COLLADA_NAMES, true);
   const auto *scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_ValidateDataStructure);
@@ -97,9 +97,7 @@ std::unique_ptr<ConvertedScene> convert_mesh_scene(const std::string &path, bool
     vertices = resource_sum(vertices, scene->mMeshes[i]->mNumVertices);
     faces = resource_sum(faces, scene->mMeshes[i]->mNumFaces);
   }
-  ResourceBudget{}.require(resource_sum(resource_product(vertices, sizeof(aiVector3D) * 4),
-      resource_product(faces, sizeof(aiFace) + 3 * sizeof(unsigned))),
-      resource_product(faces, 3 * 8 * sizeof(float)), "Converted scene geometry");
+
   auto result = std::make_unique<ConvertedScene>();
   const auto root = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + "/mPainter/import-cache";
   if (!QDir().mkpath(root)) throw std::runtime_error("Cannot create private scene import cache");

@@ -49,7 +49,7 @@ class GpuPaintPages {
   Texture reusable{nullptr,GPU_texture_free};
   while((pages_.size()+1)*page_bytes>budget){
    auto victim=lru_.end();for(auto i=lru_.rbegin();i!=lru_.rend();++i)if(!pinned_.contains(*i)){victim=std::prev(i.base());break;}
-   if(victim==lru_.end()){if(!budget_override_&&memory_budget_.admit_active((pages_.size()+1)*page_bytes,pages_.size()*page_bytes))break;throw std::length_error("GPU brush page cache cannot fit the active dependency pages in available memory");}
+   if(victim==lru_.end())break;
    if(!reusable)reusable=std::move(pages_.at(*victim).image);
    pages_.erase(*victim);lru_.erase(victim);++evicted_;
   }
@@ -66,9 +66,9 @@ class GpuPaintPages {
   struct Unpin{std::set<std::string> &keys;const std::string &key;~Unpin(){keys.erase(key);}} unpin{coverage_pinned_,key};
   auto found=coverage_.find(key);if(found==coverage_.end()){
    if(performance::Clock::now()>=deadline)return nullptr;
-   const auto bytes=std::uint64_t(size)*size*16,free=texture_free_vram.load(),budget=free?(coverage_bytes_+free)/8:texture_available_ram_bytes()/32;
+   const auto bytes=std::uint64_t(size)*size*16,free=texture_free_vram.load(),budget=resource_sum(coverage_bytes_,(texture_vram_query_valid.load()||free!=0)?free:texture_available_ram_bytes());
    while(coverage_bytes_+bytes>budget&&!coverage_.empty()){auto victim=coverage_.end();for(auto i=coverage_.begin();i!=coverage_.end();++i)if(!coverage_pinned_.contains(i->first)&&(victim==coverage_.end()||i->second.used<victim->second.used))victim=i;if(victim==coverage_.end())break;coverage_bytes_-=victim->second.bytes;coverage_.erase(victim);}
-   if(coverage_bytes_+bytes>budget)throw std::length_error("Quick Mask GPU source exceeds available memory budget");
+
    Texture image(GPU_texture_create_2d("BTS shared Quick Mask brush source",size,size,1,gpu::TextureFormat::SFLOAT_32_32_32_32,GPU_TEXTURE_USAGE_GENERAL,nullptr),GPU_texture_free);if(!image)throw std::bad_alloc();const float empty[4]={};GPU_texture_clear(image.get(),GPU_DATA_FLOAT,empty);
    found=coverage_.try_emplace(key).first;found->second.image=std::move(image);found->second.bytes=bytes;coverage_bytes_+=bytes;++coverage_allocations_;
   }

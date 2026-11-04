@@ -1,4 +1,4 @@
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #pragma once
 #include <algorithm>
 #include <array>
@@ -14,7 +14,7 @@ namespace bts {
 struct RibbonImage {
   int width=0,height=0;std::string name;
   std::vector<std::array<float,4>> pixels;
-  void validate()const{if(width<1||height<1||pixels.size()!=std::size_t(width)*height||name.empty())throw std::invalid_argument("Invalid ribbon image dimensions or storage");require_texture_ram(resource_product(name.size(),8),"Ribbon image label text");for(const auto &pixel:pixels){for(float v:pixel)if(!std::isfinite(v)||std::abs(v)>65504)throw std::invalid_argument("Invalid ribbon image value");if(pixel[3]<0||pixel[3]>1)throw std::invalid_argument("Invalid ribbon image coverage");}}
+  void validate()const{if(width<1||height<1||pixels.size()!=std::size_t(width)*height||name.empty())throw std::invalid_argument("Invalid ribbon image dimensions or storage");for(const auto &pixel:pixels){for(float v:pixel)if(!std::isfinite(v)||std::abs(v)>65504)throw std::invalid_argument("Invalid ribbon image value");if(pixel[3]<0||pixel[3]>1)throw std::invalid_argument("Invalid ribbon image coverage");}}
   std::array<float,4> sample(double u,double v)const{const double x=std::clamp(u,0.,1.)*width-.5,y=std::clamp(v,0.,1.)*height-.5;const int ix=int(std::floor(x)),iy=int(std::floor(y));const auto at=[&](int a,int b){auto p=pixels[std::size_t(std::clamp(b,0,height-1))*width+std::clamp(a,0,width-1)];for(int c=0;c<3;++c)p[c]*=p[3];return p;};const auto a=at(ix,iy),b=at(ix+1,iy),c=at(ix,iy+1),d=at(ix+1,iy+1);std::array<float,4> p;for(int k=0;k<4;++k)p[k]=std::lerp(std::lerp(a[k],b[k],float(x-ix)),std::lerp(c[k],d[k],float(x-ix)),float(y-iy));if(p[3]>1e-8f)for(int k=0;k<3;++k)p[k]/=p[3];return p;}
 };
 inline std::shared_ptr<const RibbonImage> default_ribbon_image(){static const auto image=[](){auto p=std::make_shared<RibbonImage>();p->width=128;p->height=32;p->name="Chevron trim";p->pixels.resize(128*32);for(int y=0;y<32;++y)for(int x=0;x<128;++x){const bool edge=y<3||y>=29;const int chevron=(x+std::abs(y-16)*2)%32;auto &v=p->pixels[y*128+x];v=edge?std::array<float,4>{.03,.06,.09,1}:chevron<12?std::array<float,4>{.85,.33,.025,1}:std::array<float,4>{.08,.17,.25,1};if(x<8)v={.7,.04,.02,1};if(x>=120)v={.03,.5,.14,1};}return p;}();return image;}

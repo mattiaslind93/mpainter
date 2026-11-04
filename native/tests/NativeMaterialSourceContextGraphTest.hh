@@ -35,11 +35,12 @@ inline QJsonObject verify_native_material_source_context_graph(){
   const auto proof=work([&]{
    DetachedNativeMaterial source;source.main={BKE_main_new(),BKE_main_free};IMB_colormanagement_working_space_init_default(source.main.get());source.material=BKE_material_add(source.main.get(),"No Texture Coordinate source");auto &tree=*source.material->nodetree;
    auto *value=bke::node_add_node(nullptr,tree,UString(test.type));auto *pbr=bke::node_add_node(nullptr,tree,UString("ShaderNodeBsdfPrincipled"));auto *out=bke::node_add_node(nullptr,tree,UString("ShaderNodeOutputMaterial"));
+   const std::array<float,4> retained_color{.17f,.39f,.61f,1.f};std::copy(retained_color.begin(),retained_color.end(),static_cast<bNodeSocketValueRGBA *>(socket(*pbr,"Base Color",true).default_value)->value);
    bke::node_add_link(tree,*value,socket(*value,test.output,false),*pbr,socket(*pbr,"Base Color",true));bke::node_add_link(tree,*pbr,socket(*pbr,"BSDF",false),*out,socket(*out,"Surface",true));BKE_ntree_update_after_single_tree_change(*source.main,tree);
    for(const auto &node:tree.nodes)require(!STREQ(node.idname,"ShaderNodeTexCoord"),"No-TexCoord fixture contains a coordinate node");
    const auto original=source_state(tree);std::atomic_bool cancel=false;auto graph=finish_native_material_source(std::move(source),cancel);
    require(graph->original_inputs_preserved&&source_state(*graph->material->nodetree)==original,"Context preparation modified source nodes/defaults/links");
-   const auto channel=std::find_if(graph->channels.begin(),graph->channels.end(),[](const auto &c){return c.channel==0;});require(channel!=graph->channels.end()&&bool(channel->tree)==test.supported,"Context channel admission differs");
+   const auto channel=std::find_if(graph->channels.begin(),graph->channels.end(),[](const auto &c){return c.channel==0;});require(channel!=graph->channels.end()&&channel->tree&&channel->error.isEmpty()==test.supported,"Context channel support/fallback diagnostic differs");
    // A rejected Color dependency cannot disable independent literal PBR data.
    for(int id:{1,2}){const auto other=std::find_if(graph->channels.begin(),graph->channels.end(),[&](const auto &c){return c.channel==id;});require(other!=graph->channels.end()&&other->tree,"Unavailable context removed independent PBR channels");}
    QJsonObject result{{"node",test.type},{"output",test.output},{"supported",test.supported},{"source_preserved",true},{"texture_coordinate_nodes",0}};
@@ -53,7 +54,16 @@ inline QJsonObject verify_native_material_source_context_graph(){
      bool retained=false;for(auto &node:channel->tree->nodes)if(STREQ(node.idname,"ShaderNodeBevel")){retained=true;require(!socket(node,"Normal",true).link&&node.custom1==4,"Implicit Bevel Normal/samples changed instead of retaining Blender's node");}
      require(retained,"EEVEE Bevel was replaced with a fabricated normal");result["eevee_input_normal_passthrough"]=true;result["cycles_ray_rounded_bevel_evaluated"]=false;result["warning"]=warning;
     }
-   }else{require(channel->error.contains(test.attribute),"Unavailable context has an unrelated diagnostic");result["reason"]=channel->error;}
+   }else{
+    require(channel->error.contains(test.attribute),"Unavailable context has an unrelated diagnostic");
+    require(std::any_of(graph->description.warnings.begin(),graph->description.warnings.end(),[&](const QString &warning){return warning.startsWith("Color input is unsupported;")&&warning.contains("retained its default")&&warning.contains(test.attribute);}),"Unsupported context fallback was not disclosed to the user");
+    require(BLI_listbase_count(&channel->tree->nodes)==1&&BLI_listbase_is_empty(&channel->tree->links),"Unsupported color context retained executable nodes");
+    auto &aov=*static_cast<bNode *>(channel->tree->nodes.first);require(STREQ(aov.idname,"ShaderNodeOutputAOV"),"Unsupported color fallback has no channel output");
+    const auto *color=static_cast<const bNodeSocketValueRGBA *>(socket(aov,"Color",true).default_value);
+    require(color&&std::equal(retained_color.begin(),retained_color.end(),color->value),"Unsupported color fallback lost the original Principled default");
+    const auto d=native_material_dependencies(*channel->tree,graph->parameters.size());require(!d.surface&&!d.object&&!d.view&&!d.ao&&!d.uv&&!d.facing,"Constant fallback retained unsupported context dependencies");
+    result["reason"]=channel->error;result["original_default_fallback"]=true;
+   }
    return result;
   });cases.append(proof);
  }

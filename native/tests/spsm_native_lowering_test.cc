@@ -4,7 +4,7 @@
 #include "MaskPresetTextures.hh"
 #include <QBuffer>
 #include "SpsmNativeSemantics.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "SpatialOracleScope.hh"
 #include "GpuLayerEffects.hh"
 #include <bit>
@@ -66,7 +66,7 @@ void synthetic(){
  auto rebased=spsm_material_for_destination(mapped,legacy_destination);require(rebased.set.layers[0].blending[4]==LayerBlend::LinearDodge&&std::abs(rebased.set.layers[0].values.bump-.2f)<1e-6f&&mapped.material.set.layers[0].blending[4]==LayerBlend::SignedAddition,"legacy signed addition did not become signed-domain Add");bool bad_destination=false;legacy_destination.bump_origin=.25f;try{spsm_material_for_destination(prepared,legacy_destination);}catch(const s::Error &){bad_destination=true;}require(bad_destination&&legacy_destination.bump_origin==.25f,"unsupported destination coordinate mutated or accepted");legacy_destination.bump_origin=0;
  auto unsupported=prepared;unsupported.material.set.layers[0].blending[4]=LayerBlend::Multiply;bool bad_blend=false;try{spsm_material_for_destination(unsupported,legacy_destination);}catch(const s::Error &){bad_blend=true;}require(bad_blend&&unsupported.material.set.layers[0].blending[4]==LayerBlend::Multiply,"unsupported signed-domain blend silently adapted");
  Builder duplicate;auto dup=duplicate.layer("dup",{duplicate.fill({duplicate.uniform(128,{.2f,.2f,.2f}),duplicate.uniform(128,{.9f,.9f,.9f})})});auto du=prepare_spsm_material(sem::inspect_archive(duplicate.archive(duplicate.folder("root",{dup}))));require(named(du,"dup").visible&&has(du,"duplicate-source-channel"),"duplicate channel overwrote first");
- bool denied=false;try{prepare_spsm_material(sem::Inspection(original),{16,{}});}catch(const s::Error &){denied=true;}require(denied,"low lowering budget accepted");{TextureRamQueryScope ram([]()->std::uint64_t{return 32;});denied=false;try{prepare_spsm_material(sem::Inspection(original),{1024*1024,{}});}catch(const s::Error &){denied=true;}require(denied,"explicit lowering budget bypassed available RAM");}
+ bool denied=false;try{prepare_spsm_material(sem::Inspection(original),{});}catch(const s::Error &){denied=true;}require(!denied,"Low telemetry blocked lowering");{TextureRamQueryScope ram([]()->std::uint64_t{return 32;});denied=false;try{prepare_spsm_material(sem::Inspection(original),{});}catch(const s::Error &){denied=true;}require(!denied,"Low telemetry blocked lowering");}
  Builder malformed;auto invalid=malformed.layer("invalid",{malformed.fill({malformed.uniform(128,{.2f,.2f,.2f},std::numeric_limits<float>::quiet_NaN())})});denied=false;try{prepare_spsm_material(sem::inspect_archive(malformed.archive(malformed.folder("root",{invalid}))));}catch(const s::Error &){denied=true;}require(denied,"nonfinite opacity accepted");
  Builder nul;auto nul_label=nul.layer(std::string("invalid\0label",13),{nul.fill({nul.uniform(128,{.2f,.2f,.2f})})});denied=false;try{prepare_spsm_material(sem::inspect_archive(nul.archive(nul.folder("root",{nul_label}))));}catch(const s::Error &){denied=true;}require(denied,"native-unserializable NUL label accepted");
  Builder bounds;auto too_big=bounds.layer("range",{bounds.fill({bounds.uniform(128,{2,2,2}),bounds.uniform(1,{70000,0,0})})});auto range=prepare_spsm_material(sem::inspect_archive(bounds.archive(bounds.folder("root",{too_big}))),color_policy());require(named(range,"range").visible&&has(range,"native-scalar-domain")&&has(range,"native-color-domain"),"native serialization domains silently clamped/overflowed");

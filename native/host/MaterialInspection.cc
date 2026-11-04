@@ -42,6 +42,7 @@
 #include "NativeCyclesImages.hh"
 #include "NativeCyclesPublication.hh"
 #include "NativeMaterialParameters.hh"
+#include "NativeMaterialCoat.hh"
 #include "NativeMaterialHeightResource.hh"
 #include "NativeMaterialProjectionParameters.hh"
 #include "NativeMaterialGpuProgram.hh"
@@ -149,6 +150,7 @@ struct Binding {
   NativeWorldNormalObjectObserver world_object_context;
   bool world_objects_dirty=false,world_view_dirty=false;NativeWorldNormalContextRoute world_context;
   NativeMaterialBakedAoContext world_ao;NativeBakedAoLease world_ao_lease;int world_ao_tile=0;
+  std::string coat_signature;
   std::string world_source_uv,world_resource;bool world_generated=false;std::uint64_t world_source_revision=0;
   std::array<std::shared_ptr<gpu::Texture>,2> world_scratch;
   std::string world_signature,world_published_source_signature,world_error;
@@ -558,7 +560,7 @@ struct MaterialInspection::Impl {
     const auto plan=native_world_normal_plan(set,perturbed);
     // Retire the former single-layer world override, including restored projects.
     if(binding.world_normal_enabled){auto &socket=output(*binding.world_normal_enabled,"Value");if(static_cast<const bNodeSocketValueFloat *>(socket.default_value)->value!=0){scalar(*binding.material->nodetree,socket,0);BKE_ntree_update_after_single_tree_change(*binding.owner_main,*binding.material->nodetree);DEG_id_tag_update_ex(binding.owner_main,&binding.material->id,ID_RECALC_SHADING);}}
-    if(binding.world_images_full){for(int side=0;side<2;++side){native_world_normal_placeholder(*binding.world_normal_images[side]);cycles.changed(*binding.world_normal_images[side],set.material_session_uid,side?NativeCyclesImageRole::NativeWorldBack:NativeCyclesImageRole::NativeWorldFront);}binding.world_images_full=false;binding.world_scratch={};}
+    if(binding.world_images_full){for(int side=0;side<2;++side){native_world_normal_placeholder(*binding.world_normal_images[side]);}binding.world_images_full=false;binding.world_scratch={};}
     gpu_preview.clear_native_normals(set.id);binding.world_layers_ready.clear();binding.world_tiles.clear();binding.world_set.reset();binding.world_error.clear();binding.world_tile=0;
     if(!plan.eligible){if(binding.world_geometry_job)binding.world_geometry_job->cancelled=true;binding.world_geometry_job.reset();binding.world_error=plan.reason.toStdString();if(!binding.world_error.empty())gpu_preview.set_native_normal_error(source.id,binding.world_error);return;}
     try{
@@ -608,7 +610,7 @@ struct MaterialInspection::Impl {
         const auto atlas=set.projection_tiles.contains(tile)?set.projection_tiles.at(tile):set.projection_geometry;
         if(fill_surface_projection(layer->fill)&&!atlas)return false;
         const auto projection=native_material_projection(layer->fill,atlas.get(),set);
-        ResourceBudget{}.require(0,resource_product(resource_product(set.width(tile),set.rows(tile)),16),"Native tangent Normal layer");
+
         std::shared_ptr<gpu::Texture> target(GPU_texture_create_2d("Native tangent Normal layer",set.width(tile),set.rows(tile),1,gpu::TextureFormat::SFLOAT_32_32_32_32,GPU_TEXTURE_USAGE_GENERAL,nullptr),GPU_texture_free);if(!target)throw std::bad_alloc();
         library.render_world_normal(part.resource,*layer->fill.native_material,*binding.world_geometry,tile,target.get(),nullptr,library.world_normal_uv(part.resource),view?&*view:nullptr,ao?&*ao:nullptr,true,projection.get());
         gpu_preview.set_native_normal(set.id,part.layer,tile,std::move(target));binding.world_layers_ready.insert({part.layer,tile});++binding.world_rendered_tiles;
@@ -642,6 +644,7 @@ struct MaterialInspection::Impl {
   }
   void invalidate(std::uint32_t uid){gpu_queued.erase(uid);gpu_stack_queued.erase(uid);if(auto found=bindings.find(uid);found!=bindings.end()){found->second.mask_async_layer={};found->second.gpu_uniform_values={};found->second.gpu_stack_active={};found->second.gpu_unbound_waiting={};found->second.gpu_stack_set.reset();}if(pending&&pending->result.uid==uid)pending.reset();++generation[uid];queued.erase(uid);if(job.valid()&&running_uid==uid&&cancel)cancel->store(true);}
 };
+std::uint64_t MaterialInspection::release_bake_scratch(){return impl_->gpu_preview.release_bake_scratch();}
 void MaterialInspection::publish_native_material_preview(const std::string &resource,const std::string &hash){impl_->gpu_preview.publish_native_material_preview(resource,hash);}
 void MaterialInspection::prepare_native_material(std::string resource,std::string content,std::shared_ptr<NativeMaterialGraph> graph){impl_->gpu_preview.prepare_native_material(std::move(resource),std::move(content),std::move(graph));}
 void MaterialInspection::cancel_native_preparation(const std::string &resource){impl_->gpu_preview.cancel_native_preparation(resource);}
@@ -818,7 +821,7 @@ bool MaterialInspection::set_geometry_visibility(Main &main,const TextureSet *se
     bke::node_add_link(tree,texture,output(texture,"Color"),enabled,input(enabled,0));bke::node_add_link(tree,enabled,output(enabled,"Value"),mix,input(mix,0));
   }
   if(binding.geometry_visibility_key!=key){
-    const bool tiled=set->tiles!=std::set<int>{1001};const bool mesh=layer.geometry.type==0&&!layer.geometry.meshes.empty();if(mesh)require_texture_ram(set->evaluation_texels()*16,"Geometry visibility");
+    const bool tiled=set->tiles!=std::set<int>{1001};const bool mesh=layer.geometry.type==0&&!layer.geometry.meshes.empty();
     const auto width=[&](int tile){return mesh?set->width(tile):2;};const auto height=[&](int tile){return mesh?set->rows(tile):2;};const float zero[4]={0,0,0,1};
     Image *image=nullptr;if(texture.id){if(GS(texture.id->name)!=ID_IM)throw std::runtime_error("Geometry visibility image type changed");image=reinterpret_cast<Image *>(texture.id);bool same=(image->source==IMA_SRC_TILED)==tiled;std::size_t count=0;for(const ImageTile &tile:image->tiles){++count;if(!set->tiles.contains(tile.tile_number))same=false;}if(count!=set->tiles.size())same=false;for(int tile:set->tiles)if(same){ImageUser user{};user.tile=tile;auto *buffer=BKE_image_acquire_ibuf(image,&user,nullptr);same=buffer&&buffer->x==width(tile)&&buffer->y==height(tile)&&buffer->float_data();if(buffer)BKE_image_release_ibuf(image,buffer,nullptr);}if(!same)image=nullptr;}
     if(!image){image=native_generated_image(&main,width(1001),height(1001),"BTS Geometry Visibility",32,1,IMA_GENTYPE_BLANK,zero,false,true,tiled);if(!image)throw std::runtime_error("Cannot allocate geometry visibility image");image->alpha_mode=IMA_ALPHA_CHANNEL_PACKED;
@@ -889,7 +892,7 @@ std::vector<MaterialParameterMaskCapture> MaterialInspection::capture_material_l
   for(int tile:set.tiles){ImageGpuTileRegion region;if(!BKE_image_gpu_override_tile_region(image,tile,region)||region.width!=set.width(tile)||region.height!=set.rows(tile))throw std::invalid_argument("Opacity tile dimensions/publication differ from the selected set");bytes=resource_sum(bytes,resource_product(resource_product(region.width,region.height),16));targets.push_back({image,texture,region,stack,tile});}
  }
  // All roles/tiles are admitted before retaining the first native allocation.
- require_texture_ram(resource_product(bytes,3),"Parameter opacity capture/encoding");std::vector<MaterialParameterMaskCapture> result;
+ std::vector<MaterialParameterMaskCapture> result;
  for(const auto &target:targets){const auto &r=target.region;result.push_back({target.stack,target.tile,r.width,r.height,readback.images().size()});readback.submit_native(target.image->id.session_uid,target.tile,target.texture,r.x,r.y,r.layer,r.width,r.height);}
  return result;
 }
@@ -1206,7 +1209,7 @@ bool MaterialInspection::update_pixels(Main &main,const TextureSet &set,int reso
     auto *surface=native_principled_surface(*binding.material);
     if(!height_node||!surface)throw std::runtime_error("Native world Normal shader endpoints are missing");
     install_native_world_normal_shader(main,tree,set,binding.world_normal_images,binding.world_normal_enabled,*height_node,*surface);
-    for(int side=0;side<2;++side){native_world_normal_placeholder(*binding.world_normal_images[side]);impl_->cycles.changed(*binding.world_normal_images[side],uid,side?NativeCyclesImageRole::NativeWorldBack:NativeCyclesImageRole::NativeWorldFront);}
+    for(int side=0;side<2;++side){native_world_normal_placeholder(*binding.world_normal_images[side]);}
     shader_changed=true;
   }
   if(binding.tile_sizes!=target_sizes){if(binding.margin_job){binding.margin_job->cancelled=true;binding.margin_job.reset();}binding.margins_ready=false;if(binding.padding)impl_->gpu_preview.set_padding_geometry(uid,{},{});}
@@ -1249,6 +1252,15 @@ bool MaterialInspection::shader_parameters(Main &main,const TextureSet &set){
   update("__BTS_PaintNormal","Strength",set.shader_parameters.normal_intensity);update("__BTS_AOMaterial","Factor",set.shader_parameters.ao_intensity);
   if(binding.resolution||!set.material_layering.enabled){if(const auto sources=impl_->layering_sources.images(set.material_layering))changed|=binding.layered_shader.apply(main,*binding.material,set.material_layering,set.shader_parameters.normal_intensity,set.shader_parameters.ao_intensity,binding.layering_directx,*sources);else impl_->layering_sources_pending=true;}
   if(set.shader_parameters.openpbr)changed|=apply_openpbr_shader(main,*binding.material,set.shader_parameters.openpbr,impl_->subsurface_enabled);
+  if(!set.material_layering.enabled){
+   auto &library=impl_->gpu_preview.native_world_sources();const TextureLayer *coat=nullptr;
+   for(const auto &layer:evaluation_layers(set))if(layer.visible&&layer.kind==LayerKind::Fill&&layer.channels[0]&&layer.opacity[0]>0){if(layer.fill.native_material&&library.contains(layer.fill.material_resource))coat=&layer;else coat=nullptr;}
+   const auto signature=coat?coat->fill.material_resource+QJsonDocument(native_material_description_json(*coat->fill.native_material)).toJson(QJsonDocument::Compact).toStdString()+std::to_string(coat->opacity[0]):std::string{};
+   if(signature!=binding.coat_signature){
+    if(auto *surface=native_principled_surface(*binding.material))changed|=apply_native_material_coat(main,tree,*surface,coat?&library.source_graph(coat->fill.material_resource):nullptr,coat?coat->fill.native_material.get():nullptr,coat?coat->opacity[0]:0.f);
+    binding.coat_signature=signature;
+   }
+  }
   if(changed){BKE_ntree_update_after_single_tree_change(main,tree);DEG_id_tag_update_ex(&main,&binding.material->id,ID_RECALC_SHADING);DEG_id_tag_update_ex(&main,&tree.id,ID_RECALC_NTREE_OUTPUT);}return changed;
 }
 bool MaterialInspection::openpbr_reapply_is_stable(Main &main,std::uint32_t uid){const auto found=impl_->bindings.find(uid);if(found==impl_->bindings.end())return true;auto &b=found->second;return !apply_openpbr_shader(main,*b.material,b.shader_parameters.openpbr,impl_->subsurface_enabled);}
@@ -1392,7 +1404,7 @@ NativeSourceEditBatch MaterialInspection::prepare_native_source_edits(std::span<
  std::uint64_t bytes=resource_product(edits.size(),sizeof(Patch)+2*sizeof(Impl::Request));
  for(const auto &[uid,request]:impl_->gpu_stack_queued)bytes=resource_sum(bytes,resource_sum(sizeof(Impl::Request),resource_product(request.set.layers.size(),sizeof(TextureLayer))));
  bytes=resource_sum(bytes,resource_product(resource_sum(impl_->generation.size(),resource_sum(impl_->queued.size(),resource_sum(impl_->gpu_queued.size(),resource_sum(impl_->failures.size(),impl_->failed_channels.size())))),sizeof(Impl::Request)));
- require_texture_ram(bytes,"Atomic native image queue metadata");
+
  auto plan=std::make_shared<Plan>();plan->generation=impl_->generation;plan->queued=impl_->queued;plan->gpu_queued=impl_->gpu_queued;plan->gpu_stack_queued=impl_->gpu_stack_queued;plan->failures=impl_->failures;plan->failed_channels=impl_->failed_channels;plan->patches.reserve(edits.size());
  std::set<std::uint32_t> seen;
  for(const auto &edit:edits){
@@ -1543,7 +1555,10 @@ bool MaterialInspection::Impl::prepare_layer_sources(bool allow_upload,bool fram
 bool MaterialInspection::prepare_material_layer_sources(bool allow_upload){return impl_->prepare_layer_sources(allow_upload,false);}
 void MaterialInspection::upload_staging_images(bool allow_gpu_compute,bool input_active){performance::Scope timing_all("upload_staging_images");impl_->collect_projection_geometry();
   if(allow_gpu_compute&&!input_active)impl_->gpu_preview.step_native_preparations();
-  for(auto &[uid,binding]:impl_->bindings)for(int side=0;side<2;++side)if(auto *image=binding.world_normal_images[side]){const auto target=BKE_image_gpu_override_texture(image);if(!target.texture||!*target.texture){native_world_normal_placeholder(*image);binding.world_images_full=false;if(binding.world_normal_enabled)scalar(*binding.material->nodetree,output(*binding.world_normal_enabled,"Value"),0);impl_->cycles.changed(*image,uid,side?NativeCyclesImageRole::NativeWorldBack:NativeCyclesImageRole::NativeWorldFront);}}
+  // Disabled private world inputs are neutral placeholders, not completed
+  // authored images. The full-resolution layered normal is mirrored through
+  // composite channel 3; never register these 1x1 sentinels as Cycles products.
+  for(auto &[uid,binding]:impl_->bindings)for(int side=0;side<2;++side)if(auto *image=binding.world_normal_images[side]){const auto target=BKE_image_gpu_override_texture(image);if(!target.texture||!*target.texture){native_world_normal_placeholder(*image);binding.world_images_full=false;if(binding.world_normal_enabled)scalar(*binding.material->nodetree,output(*binding.world_normal_enabled,"Value"),0);}}
   for(auto &[uid,binding]:impl_->bindings){
     const bool busy=input_active||impl_->queued.contains(uid)||impl_->gpu_queued.contains(uid)||impl_->gpu_stack_queued.contains(uid)||(impl_->pending&&impl_->pending->result.uid==uid)||(impl_->job.valid()&&impl_->running_uid==uid);
     for(int c=0;c<17;++c)if(auto *image=composite_image(binding,c))BKE_image_gpu_suspend_mipmaps(image,busy);
@@ -1668,6 +1683,19 @@ bool MaterialInspection::sync_cycles_images(Main &main,bool active){
    std::fwrite(detail.data(),1,detail.size(),stderr);std::fputc('\n',stderr);
   });};
  if(!active){impl_->cycles_entry_requested=false;impl_->cycles_preparation_failed=false;impl_->cycles_preparation_error.clear();impl_->cycles_error_reported=false;return mirror(false);}
+ // Packing a generated composite changes its persisted source to FILE.
+ // Restore only exact, local binding-owned packed targets; imported texture
+ // inputs (including Coat images) are not part of this registry. Keep the
+ // existing CPU cache and GPU allocation, which already contain the pixels.
+ for(auto &[uid,binding]:impl_->bindings)for(int c=0;c<17;++c){
+  if(!cycles_shader_channel(binding,c))continue;auto *image=composite_image(binding,c);
+  if(!image||image->source!=IMA_SRC_FILE||!image->packedfiles.first||image->alpha_mode!=IMA_ALPHA_CHANNEL_PACKED||!ELEM(image->type,IMA_TYPE_IMAGE,IMA_TYPE_UV_TEST))continue;
+  if(binding.owner_main!=&main||BLI_findindex(&main.images,image)<0||ID_IS_LINKED(&image->id)||ID_IS_OVERRIDE_LIBRARY(&image->id)||(image->id.tag&(ID_TAG_NO_MAIN|ID_TAG_LOCALIZED|ID_TAG_COPIED_ON_EVAL|ID_TAG_MISSING)))continue;
+  const auto *node=composite_texture(binding,c);const auto *tile=static_cast<const ImageTile *>(image->tiles.first);
+  if(!node||node->id!=&image->id||BLI_listbase_count(&image->tiles)!=1||!tile||tile->tile_number!=1001||tile->gen_x<1||tile->gen_y<1)continue;
+  image->source=IMA_SRC_GENERATED;DEG_id_tag_update_ex(&main,&image->id,ID_RECALC_SOURCE);
+  std::printf("BTS_CYCLES_RESTORE_PACKED_TARGET uid=%u channel=%d image=%s width=%d height=%d retained_storage=1\n",uid,c,image->id.name+2,tile->gen_x,tile->gen_y);
+ }
  if(!impl_->cycles_entry_requested){
   impl_->cycles_entry_requested=true;impl_->cycles_error_reported=false;
   for(auto &[uid,binding]:impl_->bindings)for(int c=0;c<17;++c){
@@ -1700,8 +1728,8 @@ bool MaterialInspection::sync_cycles_images(Main &main,bool active){
    }else{
     // Genuine CPU-owned legacy images retain Blender's normal upload path.
     // No layer evaluation, author-page readback or CPU composition occurs here.
-    ResourceBudget budget;int total_kb=0,free_kb=0;if(!GPU_type_matches(GPU_DEVICE_SOFTWARE,GPU_OS_ANY,GPU_DRIVER_ANY)&&GPU_mem_stats_supported())GPU_mem_stats_get(&total_kb,&free_kb);
-    budget.vram_known=coherent_vram_report(total_kb,free_kb);budget.available_vram=budget.vram_known?std::uint64_t(free_kb)*1024:0;budget.require(0,bytes,"Cycles full-resolution GPU image");
+    ResourceAvailability budget;int total_kb=0,free_kb=0;if(!GPU_type_matches(GPU_DEVICE_SOFTWARE,GPU_OS_ANY,GPU_DRIVER_ANY)&&GPU_mem_stats_supported())GPU_mem_stats_get(&total_kb,&free_kb);
+    budget.vram_known=coherent_vram_report(total_kb,free_kb);budget.available_vram=budget.vram_known?std::uint64_t(free_kb)*1024:0;
     BKE_image_get_gpu_material_texture(image,nullptr,false);if(image->source==IMA_SRC_TILED)BKE_image_get_gpu_material_texture(image,nullptr,true);
    }
    const auto allocated=BKE_image_gpu_override_texture(image);if(!allocated.texture||!*allocated.texture)throw std::runtime_error("Native allocation returned no full-resolution GPU storage");

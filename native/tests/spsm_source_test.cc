@@ -18,7 +18,7 @@ using namespace bts;
 namespace {
 void require(bool yes,const char *message){if(!yes)throw std::runtime_error(message);}
 template<class F>void reject(F f,std::string_view why){try{f();}catch(const std::exception &e){if(std::string_view(e.what()).find(why)!=std::string_view::npos)return;throw std::runtime_error(std::string("Unexpected rejection: ")+e.what());}throw std::runtime_error("Unsafe preparation accepted");}
-StudioAsset asset(const QString &path){QFile file(path);require(file.open(QIODevice::ReadOnly),"fixture open failed");require_texture_ram(resource_product(file.size(),2),"SPSM test original read");StudioAsset a;a.filename=QFileInfo(path).fileName();a.name=QFileInfo(path).completeBaseName();a.path=path;a.usages={"smartmaterial"};a.bytes=file.readAll();require(a.bytes.size()==file.size(),"fixture read truncated");return a;}
+StudioAsset asset(const QString &path){QFile file(path);require(file.open(QIODevice::ReadOnly),"fixture open failed");StudioAsset a;a.filename=QFileInfo(path).fileName();a.name=QFileInfo(path).completeBaseName();a.path=path;a.usages={"smartmaterial"};a.bytes=file.readAll();require(a.bytes.size()==file.size(),"fixture read truncated");return a;}
 StudioAsset worker(StudioAsset a){require(hydrate_spsm_asset(a),"worker unexpectedly deferred preparation");return a;}
 QString file_hash(const QString &path){QFile f(path);require(f.open(QIODevice::ReadOnly),"source cache open failed");QCryptographicHash h(QCryptographicHash::Sha256);require(h.addData(&f),"source cache checksum failed");return QString::fromLatin1(h.result().toHex());}
 void run(const QString &fixtures){
@@ -68,11 +68,11 @@ void run(const QString &fixtures){
  auto normalized=std::async(std::launch::async,worker,catalog).get();require(prepared_spsm_source(normalized)==prepared_spsm_source(retained.front()),"cached worker did not reuse verified SHA");
  require(catalog.bytes.constData()==incoming&&catalog.bytes.constData()!=normalized.bytes.constData(),"reload fixture did not retain independent catalog buffer");
  {TextureRamQueryScope no_ram(+[]()->std::uint64_t{return 0;});require(hydrate_spsm_asset(catalog)&&catalog.bytes.constData()==normalized.bytes.constData()&&catalog.hash()==normalized.hash(),"cached worker failed to register independent catalog buffer for GUI");}
- // Corrupt source and denied RAM fail visibly on workers and leave no pending
+ // Corrupt sources fail visibly on workers and leave no pending
  // poison entry: retry still reports the original cause rather than deadlock.
  StudioAsset corrupt;corrupt.filename="corrupt.spsm";corrupt.name="Corrupt";corrupt.usages={"smartmaterial"};corrupt.bytes="not an HDF5 source";
  for(int i=0;i<2;++i)reject([&]{std::async(std::launch::async,worker,corrupt).get();},"HDF5");
- auto denied=corrupt;denied.bytes+="different key";reject([&]{std::async(std::launch::async,[denied]()mutable{TextureRamQueryScope low(+[]()->std::uint64_t{return 32;});return worker(denied);}).get();},"needs RAM");
+ {TextureRamQueryScope low(+[]()->std::uint64_t{return 32;});auto accepted=std::async(std::launch::async,worker,retained.front()).get();require(hydrate_spsm_asset(accepted),"RAM telemetry blocked an existing valid source");}
  auto unknown=retained.front();unknown.search_terms={"spsm:policy:unverified-procedural-fallback=yes"};reject([&]{std::async(std::launch::async,worker,unknown).get();},"Unsupported");
  auto nul=retained.front();nul.search_terms={QString("spsm:policy:uniform-input=ACEScg")+QChar::Null+"ignored"};reject([&]{std::async(std::launch::async,worker,nul).get();},"NUL");
  auto empty=retained.front();empty.search_terms={"spsm:policy:uniform-input="};reject([&]{std::async(std::launch::async,worker,empty).get();},"Invalid");

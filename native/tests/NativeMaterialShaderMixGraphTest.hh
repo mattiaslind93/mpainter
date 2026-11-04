@@ -69,7 +69,9 @@ inline QJsonArray verify_native_shader_mix_graph(){
   else if(control[0])static_cast<bNodeSocketValueFloat *>(socket(*pbr,control,true).default_value)->value=.5f;
   bke::node_add_link(tree,*pbr,socket(*pbr,"BSDF",false),*out,socket(*out,"Surface",true));BKE_ntree_update_after_single_tree_change(*source.main,tree);std::atomic_bool cancel=false;auto graph=finish_native_material_source(std::move(source),cancel);
   const bool warned=std::any_of(graph->description.warnings.begin(),graph->description.warnings.end(),[](const QString &warning){return warning.contains("not evaluated by viewport material channels");});
-  if(warned!=bool(control[0]))throw std::runtime_error(std::string("Principled capability warning differs for control: ")+control);
+  const bool coat=STREQ(control,"Coat Weight")||STREQ(control,"linked-coat");
+  if(warned!=(bool(control[0])&&!coat))throw std::runtime_error(std::string("Principled capability warning differs for control: ")+control);
+  if(coat){const auto &weight=socket(*pbr,"Coat Weight",true);require(STREQ(control,"linked-coat")?bool(weight.link):static_cast<const bNodeSocketValueFloat *>(weight.default_value)->value==.5f,"Supported Coat source was removed instead of retained for the live shader");}
   return QJsonObject{{"principled_control",control},{"omitted_lobe_warning",warned}};
  }));
  results.append(work([]{

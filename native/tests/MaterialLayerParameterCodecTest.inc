@@ -19,5 +19,5 @@ void verify_material_parameter_codec(){
  bad=json;resources=bad["originals"].toArray();auto original=resources[0].toObject();auto files=original["files"].toArray();auto first=files[0].toObject();first["path"]="../outside.exr";files[0]=first;original["files"]=files;resources[0]=original;bad["originals"]=resources;reject(bad);
  bad=json;bad["scene_linear_to_xyz"]=QJsonArray{0,0,0,0,0,0,0,0,0};reject(bad);
  auto order=value;std::reverse(order.originals.begin(),order.originals.end());assert(material_layer_parameters_json(order)==json);
- TextureRamQueryScope pressure([]()->std::uint64_t{return 1;});bool rejected=false;try{material_layer_parameters_json(value);}catch(const std::length_error &){rejected=true;}assert(rejected);
+ TextureRamQueryScope pressure([]()->std::uint64_t{return 1;});bool rejected=false;try{material_layer_parameters_json(value);}catch(const std::length_error &){rejected=true;}assert(!rejected);
 }

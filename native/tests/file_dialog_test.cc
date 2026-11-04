@@ -44,6 +44,7 @@ void browser_modes(QApplication &app,const QString &root){
  QSet<QByteArray> hashes;
  for(const auto &name:names){const auto icon=dialog->iconProvider()->icon(QFileInfo(directory+"/"+name));assert(!icon.isNull());const auto image=icon.pixmap(32,32).toImage().convertToFormat(QImage::Format_RGBA8888);assert(!image.isNull());bool nonempty=false;for(int y=0;y<image.height();++y)for(int x=0;x<image.width();++x)nonempty|=qAlpha(image.pixel(x,y))!=0;assert(nonempty);const auto bytes=QByteArray(reinterpret_cast<const char *>(image.constBits()),image.sizeInBytes());assert(!hashes.contains(QCryptographicHash::hash(bytes,QCryptographicHash::Sha256)));hashes.insert(QCryptographicHash::hash(bytes,QCryptographicHash::Sha256));}
  assert(!dialog->iconProvider()->icon(QFileInfo(directory+"/folder")).isNull());
+ assert(bts::browser_file_type("material.sbsar")==bts::BrowserFileType::MaterialArchive);
  assert(bts::browser_file_type("UPPER.EXR")==bts::BrowserFileType::Image);assert(bts::browser_file_type("s.blend.gz")==bts::BrowserFileType::Blend);assert(bts::browser_file_type("mesh.usdz")==bts::BrowserFileType::Object);
  struct DecoderGate {std::mutex mutex;std::condition_variable ready;bool released=false;std::atomic<int> blocked=0;std::atomic<bool> timed_out=false;};
  auto gate=std::make_shared<DecoderGate>();

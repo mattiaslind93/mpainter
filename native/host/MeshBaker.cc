@@ -1,8 +1,8 @@
 #include "TextureExtent.hh"
 #include "MeshBaker.hh"
+#include "GpuBakeRays.hh"
 #include "TextureMemory.hh"
 #include "MeshBakeFilter.hh"
-#include "GpuBakeRays.hh"
 #include <algorithm>
 #include <cstdio>
 #include <numbers>
@@ -60,22 +60,17 @@ DisplacementBakePlan displacement_bake_plan(const SceneSnapshot &snapshot,const 
   result.bytes=resource_sum(working_bytes,resource_sum(atlas_bytes,temporary));
   result.bytes=resource_sum(result.bytes,resource_product(resource_sum(snapshot.uv_triangles.size(),result.triangles),sizeof(UvFaceTriangle)));
   if(settings.enabled[int(MeshMapRole::AmbientOcclusion)]||settings.enabled[int(MeshMapRole::Thickness)])result.bytes=resource_sum(result.bytes,bake_ray_tree_bytes(result.triangles));
-  require_texture_ram(result.bytes,"Expanded displacement bake geometry, atlases and ray buffers");
+
   return result;
 }
 void apply_bake_displacement(SceneSnapshot &snapshot,std::vector<MeshBakeInput> &inputs,const MeshBakeSettings &settings,std::uint64_t expanded_triangles){
-  const ResourceBudget split_memory;
+  const ResourceAvailability split_memory;
   std::vector<UvFaceTriangle> triangles;triangles.reserve(std::size_t(expanded_triangles));
   for(const auto &tri:snapshot.uv_triangles){const auto uid=snapshot.materials.at(tri.material).session_id;const auto field=settings.displacement.find(uid);if(field==settings.displacement.end()||field->second.strength<=0){triangles.push_back(tri);continue;}BakeTri source;for(int k=0;k<3;++k){source.corners[k].position=tri.positions[k];source.corners[k].uv=tri.corners[k];source.corners[k].normal=tri.has_normals?tri.normals[k]:std::array<float,3>{0,0,1};}for(const auto &part:displace_bake_mesh({source},field->second,split_memory)){auto out=tri;out.has_normals=true;for(int k=0;k<3;++k){out.positions[k]=part.corners[k].position;out.corners[k]=part.corners[k].uv;out.normals[k]=part.corners[k].normal;}triangles.push_back(out);}}
   snapshot.uv_triangles=std::move(triangles);if(!snapshot.uv_triangles.empty()){snapshot.minimum=snapshot.maximum=snapshot.uv_triangles.front().positions[0];snapshot.has_bounds=true;for(const auto &tri:snapshot.uv_triangles)for(const auto &p:tri.positions)for(int a=0;a<3;++a){snapshot.minimum[a]=std::min(snapshot.minimum[a],p[a]);snapshot.maximum[a]=std::max(snapshot.maximum[a],p[a]);}}
   for(auto &input:inputs){const auto field=settings.displacement.find(input.material_uid);if(field==settings.displacement.end()||field->second.strength<=0||!input.atlas)continue;auto atlas=std::make_shared<FillSurfaceAtlas>(*input.atlas);for(auto &[tile,points]:atlas->tiles){const int width=atlas->resolution,height=atlas->height?atlas->height:atlas->resolution;auto &curve=atlas->curvature[tile];if(curve.size()!=points.size())curve.assign(points.size(),0);const int tu=(tile-1001)%10,tv=(tile-1001)/10;for(int y=0;y<height;++y)for(int x=0;x<width;++x){auto &point=points[std::size_t(y)*width+x];if(!point.valid)continue;const float u=(x+.5f)/width+tu,v=(y+.5f)/height+tv;BakeCorner corner;corner.position=point.position;corner.normal=point.normal;corner.uv={u,v};bake_displace_corner(corner,field->second);point.position=corner.position;curve[std::size_t(y)*width+x]+=bake_cavity(field->second,u,v);}for(int y=1;y<height-1;++y)for(int x=1;x<width-1;++x){auto &point=points[std::size_t(y)*width+x];const auto &left=points[std::size_t(y)*width+x-1],&right=points[std::size_t(y)*width+x+1],&down=points[std::size_t(y-1)*width+x],&up=points[std::size_t(y+1)*width+x];if(!point.valid||!left.valid||!right.valid||!down.valid||!up.valid)continue;const std::array<float,3> e1{right.position[0]-left.position[0],right.position[1]-left.position[1],right.position[2]-left.position[2]},e2{up.position[0]-down.position[0],up.position[1]-down.position[1],up.position[2]-down.position[2]},n{e1[1]*e2[2]-e1[2]*e2[1],e1[2]*e2[0]-e1[0]*e2[2],e1[0]*e2[1]-e1[1]*e2[0]};float length=0,alignment=0;for(int a=0;a<3;++a){length+=n[a]*n[a];alignment+=n[a]*point.normal[a];}length=std::sqrt(length);if(length<1e-8f)continue;for(int a=0;a<3;++a)point.normal[a]=(alignment<0?-n[a]:n[a])/length;}}input.atlas=std::move(atlas);}
 }
-void precompute_gpu_rays(const SceneSnapshot &snapshot,const std::vector<MeshBakeInput> &inputs,MeshBakeSettings &settings){
-  if(!settings.with_gpu||(!settings.enabled[int(MeshMapRole::AmbientOcclusion)]&&!settings.enabled[int(MeshMapRole::Thickness)]))return;
-  double extent=0;for(int i=0;i<3;++i)extent=std::max(extent,double(snapshot.maximum[i]-snapshot.minimum[i]));extent=std::max(extent,1e-5);
-  std::vector<std::array<std::array<float,3>,3>> triangles;triangles.reserve(snapshot.uv_triangles.size());for(const auto &tri:snapshot.uv_triangles)triangles.push_back(tri.positions);
-  settings.with_gpu([&]{for(const auto &input:inputs)for(const auto &[tile,points]:input.atlas->tiles){if(settings.enabled[int(MeshMapRole::AmbientOcclusion)])settings.gpu_ao[input.material_uid][tile]=gpu_bake_cosine_occlusion(triangles,points,settings.rays,float(extent));if(settings.enabled[int(MeshMapRole::Thickness)])settings.gpu_thickness[input.material_uid][tile]=gpu_bake_cosine_occlusion(triangles,points,settings.rays,float(extent*.1),true);}});
-}
+
 
 }
 MeshBakeJob::MeshBakeJob(SceneSnapshot snapshot,std::vector<MeshBakeInput> inputs,MeshBakeSettings settings)
@@ -89,22 +84,32 @@ MeshBakeJob::MeshBakeJob(std::shared_ptr<const SceneSnapshot> source,std::vector
   const auto output_bytes=resource_product(resource_product(settings.resolution,settings.rows()),16);
   const auto sampled_bytes=resource_product(output_bytes,resource_product(settings.sampling,settings.sampling));
   const auto working_bytes=std::max(resource_sum(sampled_bytes,output_bytes),resource_product(output_bytes,4));
-  require_texture_ram(working_bytes,"Mesh bake working buffers");
-  if(displaced(settings)){const auto plan=displacement_bake_plan(*source,inputs,settings,working_bytes);auto mutated=std::make_shared<SceneSnapshot>(*source);apply_bake_displacement(*mutated,inputs,settings,plan.triangles);try{precompute_gpu_rays(*mutated,inputs,settings);}catch(const std::exception &error){std::fprintf(stderr,"BTS_BAKE_GPU_RAYS_FAILED %s\n",error.what());settings.gpu_ao.clear();settings.gpu_thickness.clear();}source=std::move(mutated);}
+
+  if(displaced(settings)){const auto plan=displacement_bake_plan(*source,inputs,settings,working_bytes);auto mutated=std::make_shared<SceneSnapshot>(*source);apply_bake_displacement(*mutated,inputs,settings,plan.triangles);source=std::move(mutated);}
   worker_=std::jthread([this,source=std::move(source),inputs=std::move(inputs),settings,working_bytes]{
     try{const auto &snapshot=*source;
       std::optional<RayScene> scene;if(settings.enabled[int(MeshMapRole::AmbientOcclusion)]||settings.enabled[int(MeshMapRole::Thickness)])scene.emplace(snapshot,settings);double extent=0,radius_squared=0;std::array<double,3> center;for(int i=0;i<3;++i){const double size=snapshot.maximum[i]-snapshot.minimum[i];extent=std::max(extent,size);radius_squared+=size*size*.25;center[i]=(snapshot.maximum[i]+snapshot.minimum[i])*.5;}extent=std::max(extent,1e-5);const double diameter=std::max(2*std::sqrt(radius_squared),1e-5);int task=0;
       for(const auto &input:inputs){MeshBakeResult output;output.material_uid=input.material_uid;
         for(int role=0;role<7;++role)if(settings.enabled[role]){if(cancelled)throw std::runtime_error("Bake cancelled");MeshMap map;map.name=std::string(mesh_map_names[role])+" "+input.name;
-          for(const auto &[tile,surface]:input.atlas->tiles){require_texture_ram(working_bytes,"Mesh bake working buffers");current=task;rows=0;const int resolution=settings.resolution*settings.sampling,height=settings.rows()*settings.sampling;std::vector<float> pixels(std::size_t(resolution)*height*4,0);const auto curvature=input.atlas->curvature.find(tile);float curvature_scale=0.15f;if(curvature!=input.atlas->curvature.end()){std::vector<float> mags;mags.reserve(curvature->second.size()/4);for(float value:curvature->second)if(std::abs(value)>1e-4f)mags.push_back(std::abs(value));if(!mags.empty()){const std::size_t idx=std::min(mags.size()-1,std::size_t(mags.size()*0.97));std::nth_element(mags.begin(),mags.begin()+idx,mags.end());curvature_scale=std::max(0.15f,mags[idx]);}}
+          for(const auto &[tile,surface]:input.atlas->tiles){current=task;rows=0;std::printf("BTS_BAKE_TASK uid=%u tile=%d role=%d width=%d height=%d scratch_estimate=%llu available_ram=%llu\n",input.material_uid,tile,role,settings.resolution,settings.rows(),(unsigned long long)working_bytes,(unsigned long long)texture_available_ram_bytes());const int resolution=settings.resolution*settings.sampling,height=settings.rows()*settings.sampling;std::vector<float> gpu_values;
+            const bool ray_map=role==int(MeshMapRole::AmbientOcclusion)||role==int(MeshMapRole::Thickness);
+            if(ray_map&&settings.with_gpu&&settings.matched_objects.empty()&&settings.ignore_backface_objects.empty()){
+              std::string gpu_error;GpuBakeRayStats stats;
+              const bool success=request_gpu([&]{gpu_values=gpu_bake_cosine_occlusion(scene->triangles,surface,settings.rays,float(extent*(role==int(MeshMapRole::Thickness)?.1:1.)),role==int(MeshMapRole::Thickness),&stats,nullptr,float(extent*1e-5));},settings.with_gpu,gpu_error);
+              if(cancelled)throw std::runtime_error("Bake cancelled");
+              if(success){++gpu_maps;std::printf("BTS_BAKE_GPU_MAP uid=%u tile=%d role=%d batches=%llu buffers_released=1\n",input.material_uid,tile,role,(unsigned long long)stats.batches);}
+              else{gpu_values.clear();cpu_fallback=true;std::fprintf(stderr,"BTS_BAKE_GPU_FALLBACK uid=%u tile=%d role=%d reason=%s; continuing full-resolution CPU bake\n",input.material_uid,tile,role,gpu_error.c_str());}
+            }
+            if(ray_map&&gpu_values.empty())++cpu_ray_maps;
+            std::vector<float> pixels(std::size_t(resolution)*height*4,0);const auto curvature=input.atlas->curvature.find(tile);float curvature_scale=0.15f;if(curvature!=input.atlas->curvature.end()){std::vector<float> mags;mags.reserve(curvature->second.size()/4);for(float value:curvature->second)if(std::abs(value)>1e-4f)mags.push_back(std::abs(value));if(!mags.empty()){const std::size_t idx=std::min(mags.size()-1,std::size_t(mags.size()*0.97));std::nth_element(mags.begin(),mags.begin()+idx,mags.end());curvature_scale=std::max(0.15f,mags[idx]);}}
             threading::parallel_for(IndexRange(height),4,[&](const IndexRange range){for(int y:range){if(cancelled)return;for(int x=0;x<resolution;++x){const auto index=std::size_t(y)*resolution+x;const auto &point=surface[index];if(!point.valid)continue;float rgb[3]{0,0,0};switch(MeshMapRole(role)){
               case MeshMapRole::Normal:std::copy_n(point.baked_normal.begin(),3,rgb);break;
               case MeshMapRole::WorldNormal:for(int i=0;i<3;++i)rgb[i]=point.normal[i]*.5f+.5f;break;
               case MeshMapRole::Id:if(settings.external_source)std::copy_n(point.source_color.begin(),3,rgb);else std::copy_n(input.source_material.base_color.begin(),3,rgb);break;
-              case MeshMapRole::AmbientOcclusion:if(const auto gpu=settings.gpu_ao.find(input.material_uid);gpu!=settings.gpu_ao.end())if(const auto tile_ao=gpu->second.find(tile);tile_ao!=gpu->second.end()&&tile_ao->second.size()==surface.size()){rgb[0]=rgb[1]=rgb[2]=tile_ao->second[index];break;}rgb[0]=rgb[1]=rgb[2]=ray_average(*scene,point,settings.rays,float(extent),float(extent*1e-5),false,std::uint32_t(index));break;
+              case MeshMapRole::AmbientOcclusion:if(!gpu_values.empty()){rgb[0]=rgb[1]=rgb[2]=gpu_values[index];break;}rgb[0]=rgb[1]=rgb[2]=ray_average(*scene,point,settings.rays,float(extent),float(extent*1e-5),false,std::uint32_t(index));break;
               case MeshMapRole::Curvature:rgb[0]=rgb[1]=rgb[2]=curvature==input.atlas->curvature.end()?.5f:std::clamp(.5f+.5f*curvature->second[index]/curvature_scale,0.f,1.f);break;
               case MeshMapRole::Position:for(int i=0;i<3;++i)rgb[i]=float(std::clamp((point.position[i]-center[i])/diameter+.5,0.,1.));break;
-              case MeshMapRole::Thickness:if(const auto gpu=settings.gpu_thickness.find(input.material_uid);gpu!=settings.gpu_thickness.end())if(const auto tile_ao=gpu->second.find(tile);tile_ao!=gpu->second.end()&&tile_ao->second.size()==surface.size()){rgb[0]=rgb[1]=rgb[2]=tile_ao->second[index];break;}rgb[0]=rgb[1]=rgb[2]=ray_average(*scene,point,settings.rays,float(extent*.1),float(extent*1e-5),true,std::uint32_t(index));break;
+              case MeshMapRole::Thickness:if(!gpu_values.empty()){rgb[0]=rgb[1]=rgb[2]=gpu_values[index];break;}rgb[0]=rgb[1]=rgb[2]=ray_average(*scene,point,settings.rays,float(extent*.1),float(extent*1e-5),true,std::uint32_t(index));break;
             }auto *pixel=pixels.data()+index*4;std::copy_n(rgb,3,pixel);pixel[3]=1;}++rows;}});
             if(cancelled)throw std::runtime_error("Bake cancelled");
             if(role==int(MeshMapRole::Thickness)){float low=1,high=0;for(std::size_t i=0;i<surface.size();++i)if(surface[i].valid){low=std::min(low,pixels[i*4]);high=std::max(high,pixels[i*4]);}if(high-low>1e-7f)for(std::size_t i=0;i<surface.size();++i)if(surface[i].valid)for(int c=0;c<3;++c)pixels[i*4+c]=(pixels[i*4+c]-low)/(high-low);}
@@ -114,6 +119,16 @@ MeshBakeJob::MeshBakeJob(std::shared_ptr<const SceneSnapshot> source,std::vector
       }
     }catch(const std::exception &exception){error=exception.what();result.clear();}finished.store(true,std::memory_order_release);
   });
+}
+bool MeshBakeJob::request_gpu(const std::function<void()> &work,const std::function<void(const std::function<void()> &)> &owner,std::string &error){
+ std::unique_lock lock(gpu_mutex_);if(cancelled)return false;gpu_complete_=false;
+ gpu_work_=[&]{try{owner(work);}catch(const std::exception &failure){error=failure.what();}catch(...){error="Unknown GPU failure";}};
+ gpu_ready_.wait(lock,[&]{return gpu_complete_||(cancelled&&!gpu_running_);});
+ if(cancelled){gpu_work_={};return false;}return error.empty();
+}
+void MeshBakeJob::process_gpu(){
+ std::function<void()> work;{std::lock_guard lock(gpu_mutex_);if(!gpu_work_)return;if(cancelled){gpu_work_={};gpu_ready_.notify_all();return;}gpu_running_=true;work=std::move(gpu_work_);}
+ work();{std::lock_guard lock(gpu_mutex_);gpu_running_=false;gpu_complete_=true;}gpu_ready_.notify_all();
 }
 MeshBakeJob::~MeshBakeJob(){cancel();if(worker_.joinable())worker_.join();}
 }

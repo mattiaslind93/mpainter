@@ -1,4 +1,4 @@
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "EvaluationScope.hh"
 #include "PaintPixels.hh"
 #include "HistoryPageStorage.hh"
@@ -295,7 +295,7 @@ PaintPixels::Bounds PaintPixels::stamp(int resolution,const Stamp &stamp) {
   // Every accepted stamp writes the caller's working copy. Publish only when its transaction
   // succeeds; callers can discard a partially allocated candidate on allocation failure.
   const auto pages=resource_product((box.x1-1)/page_side-box.x0/page_side+1,(box.y1-1)/page_side-box.y0/page_side+1);
-  require_texture_ram(resource_product(resource_product(pages,std::count(stamp.channels.begin(),stamp.channels.end(),true)),page_bytes),"CPU brush authored page allocation");
+
   resolution_=resolution;
   Bounds touched{resolution,resolution,0,0};
   for (int y=box.y0;y<box.y1;++y) for (int x=box.x0;x<box.x1;++x) {
@@ -352,7 +352,7 @@ PaintPixels::Bounds PaintPixels::stamp_surface(int resolution,const Stamp &stamp
   const auto scratch_per_texel=sizeof(float)+((stamp.projected||stamp.smudge||stamp.cloned)?sizeof(std::array<float,2>):0);
   const auto pages=resource_product((bounds.x1-1)/page_side-bounds.x0/page_side+1,(bounds.y1-1)/page_side-bounds.y0/page_side+1);
   const auto page_storage=resource_product(resource_product(pages,std::count(stamp.channels.begin(),stamp.channels.end(),true)),page_bytes);
-  require_texture_ram(resource_sum(resource_product(texels,scratch_per_texel),page_storage),"CPU surface stamp scratch and authored pages");
+
   std::vector<float> coverage(std::size_t(texels),0);
   std::vector<std::array<float,2>> source_coordinates;if(stamp.projected||stamp.smudge||stamp.cloned)source_coordinates.resize(coverage.size());
   for(const auto &tri:surface.triangles) {
@@ -500,7 +500,7 @@ void PaintPixels::assign_channel(int resolution,int channel,std::span<const floa
     bool covered=false;for(int y=py;y<std::min(py+page_side,resolution)&&!covered;++y)for(int x=px;x<std::min(px+page_side,resolution);++x)if(rgba[(std::size_t(y)*resolution+x)*4+3]!=0){covered=true;break;}
     if(covered)covered_pages=resource_sum(covered_pages,1);
   }
-  require_texture_ram(resource_product(covered_pages,page_bytes),"Imported paint pages");
+
   PaintPixels candidate=*this;candidate.channels_[channel].clear();candidate.hash_cache_[channel].reset();candidate.resolution_=resolution;
   for(int y=0;y<resolution;++y)for(int x=0;x<resolution;++x) {
     const auto offset=(std::size_t(y)*resolution+x)*4;
@@ -523,7 +523,7 @@ void PaintPixels::assign_page(int resolution,int channel,std::uint32_t key,std::
   if(recipe_)*this=materialized();
   const int px=int(key%65536)*page_side,py=int(key/65536)*page_side;if(channel<0||channel>=5||!valid_sparse_texture_extent(resolution,128,true)||(resolution_&&resolution_!=resolution)||px>=resolution||py>=resolution||pixels.size()!=page_side*page_side||channels_[channel].contains(key))throw std::invalid_argument("Invalid sparse stroke page");
   bool covered=false;for(const auto &pixel:pixels){if(!std::isfinite(pixel[3])||pixel[3]<0||pixel[3]>1)throw std::invalid_argument("Invalid sparse stroke coverage");for(int c=0;c<3;++c)if(!std::isfinite(pixel[c])||std::abs(pixel[c])>65504||(pixel[3]==0&&pixel[c]!=0))throw std::invalid_argument("Invalid sparse stroke value");covered|=pixel[3]>0;}
-  if(!covered)throw std::invalid_argument("Empty sparse stroke page");require_texture_ram(page_bytes,"Sparse paint page allocation");auto candidate=*this;candidate.resolution_=resolution;for(int y=0;y<page_side;++y)for(int x=0;x<page_side;++x){const auto &pixel=pixels[y*page_side+x];if(pixel[3]>0)candidate.writable(channel,px+x,py+y)=pixel;}*this=std::move(candidate);
+  if(!covered)throw std::invalid_argument("Empty sparse stroke page");auto candidate=*this;candidate.resolution_=resolution;for(int y=0;y<page_side;++y)for(int x=0;x<page_side;++x){const auto &pixel=pixels[y*page_side+x];if(pixel[3]>0)candidate.writable(channel,px+x,py+y)=pixel;}*this=std::move(candidate);
 }
 std::uint64_t PaintPixels::hash(int channel) const {
   if(recipe_){if(edit_storage_identity){std::uint64_t identity=14695981039346656037ull;for(const auto &[page,version]:recipe_->versions.at(channel)){identity^=page;identity*=1099511628211ull;identity^=version;identity*=1099511628211ull;}return identity;}return recipe_->evaluated().hash(channel);}

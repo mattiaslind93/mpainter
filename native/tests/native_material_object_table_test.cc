@@ -11,6 +11,6 @@ int main(){
   b.color[0]=.8;assert(NativeMaterialObjectTable({a,b}).hash()!=table.hash());
   const auto rejects=[](auto objects){try{NativeMaterialObjectTable value(objects);return false;}catch(const std::invalid_argument &){return true;}};
   assert(rejects(std::vector<NativeMaterialObject>{a,a}));a.owner=0;assert(rejects(std::vector<NativeMaterialObject>{a}));a.owner=1;a.world_to_object[0]=std::numeric_limits<float>::infinity();assert(rejects(std::vector<NativeMaterialObject>{a}));
-  {TextureRamQueryScope memory([]()->std::uint64_t{return 0;});bool denied=false;try{NativeMaterialObjectTable value({b});}catch(const std::length_error &){denied=true;}assert(denied);}
+  {TextureRamQueryScope memory([]()->std::uint64_t{return 0;});bool denied=false;try{NativeMaterialObjectTable value({b});}catch(const std::length_error &){denied=true;}assert(!denied);}
   NativeMaterialObjectTable empty({});assert(empty.size()==0);
 }

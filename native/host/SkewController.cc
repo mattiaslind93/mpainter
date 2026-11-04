@@ -1,5 +1,5 @@
 #include "Theme.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "SkewController.hh"
 #include "TextureMemory.hh"
 #include "SkewPanel.hh"
@@ -31,7 +31,7 @@ void append(SceneSnapshot &to,SceneSnapshot source){
  for(auto &t:source.uv_triangles){t.material+=offset;to.uv_triangles.push_back(std::move(t));}
  to.object_names.insert(source.object_names.begin(),source.object_names.end());to.object_vertex_counts.insert(source.object_vertex_counts.begin(),source.object_vertex_counts.end());to.mesh_objects+=source.mesh_objects;
  for(int c=0;c<3;++c){to.minimum[c]=to.has_bounds?std::min(to.minimum[c],source.minimum[c]):source.minimum[c];to.maximum[c]=to.has_bounds?std::max(to.maximum[c],source.maximum[c]):source.maximum[c];}to.has_bounds=true;
- require_texture_ram(resource_product(to.uv_triangles.size(),sizeof(UvFaceTriangle)),"Combined high meshes");
+
 }
 SkewBakeOptions skew_options(const QJsonObject &r){
  SkewBakeOptions o;o.resolution=r["resolution"].toInt(512);o.height=r["height"].toInt(o.resolution);o.sampling=r["sampling"].toInt(1);o.dilation=r["dilation"].toInt(32);o.diffusion=r["diffusion"].toBool();
@@ -185,7 +185,7 @@ void SkewController::poll(){performance::Scope timing("bake_result_poll");
     const auto &previous=doc->set(result.material).mesh_maps[result.role];
     if(previous){auto merged=*previous;merged.name=result.map.name;for(auto &[tile,plane]:result.map.tiles)merged.tiles[tile]=std::move(plane);result.map=std::move(merged);}
     std::uint64_t bytes=0;for(const auto &set:doc->texture_sets())for(int role=0;role<7;++role){const MeshMap *map=set.material_session_uid==result.material&&role==result.role?&result.map:set.mesh_maps[role]?&*set.mesh_maps[role]:nullptr;if(map)for(const auto &[tile,plane]:map->tiles)bytes+=std::uint64_t(plane.resolution)*plane.rows()*16;}
-    require_memory_budget(bytes,"Resulting mesh maps");
+
     bool different=!previous||previous->tiles.size()!=result.map.tiles.size();for(const auto &[tile,plane]:result.map.tiles)different|=!previous||!previous->tiles.contains(tile)||previous->tiles.at(tile).hash!=plane.hash;
     std::unique_ptr<TextureDocument> before;
     if(different&&result.manual){before=std::make_unique<TextureDocument>(*doc);auto recipe=before->bake_configuration();recipe["ui_mode"]=1;before->set_bake_configuration(recipe);}

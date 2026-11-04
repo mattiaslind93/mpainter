@@ -1,0 +1,59 @@
+{
+    "authored_paint_and_COW_history_preserved": true,
+    "bit_exact_after_rebuild": true,
+    "full_resolution_prefixes": true,
+    "layers": 5,
+    "renderer": "NVIDIA GeForce RTX 3090/PCIe/SSE2",
+    "repeats": [
+        {
+            "after": {
+                "free_kib": 19432256,
+                "total_kib": 25165824,
+                "tracked_texture_bytes": 0
+            },
+            "before": {
+                "free_kib": 19397440,
+                "total_kib": 25165824,
+                "tracked_texture_bytes": 0
+            },
+            "released_bytes": 33554496,
+            "repeat": 0,
+            "second_release_bytes": 0,
+            "sha256": "022a6d8291af6c33370033c2683b6fb204ec61a5010a428ede404677f3e0977a"
+        },
+        {
+            "after": {
+                "free_kib": 19432256,
+                "total_kib": 25165824,
+                "tracked_texture_bytes": 0
+            },
+            "before": {
+                "free_kib": 19397440,
+                "total_kib": 25165824,
+                "tracked_texture_bytes": 0
+            },
+            "released_bytes": 33554496,
+            "repeat": 1,
+            "second_release_bytes": 0,
+            "sha256": "022a6d8291af6c33370033c2683b6fb204ec61a5010a428ede404677f3e0977a"
+        },
+        {
+            "after": {
+                "free_kib": 19432256,
+                "total_kib": 25165824,
+                "tracked_texture_bytes": 0
+            },
+            "before": {
+                "free_kib": 19397440,
+                "total_kib": 25165824,
+                "tracked_texture_bytes": 0
+            },
+            "released_bytes": 33554496,
+            "repeat": 2,
+            "second_release_bytes": 0,
+            "sha256": "022a6d8291af6c33370033c2683b6fb204ec61a5010a428ede404677f3e0977a"
+        }
+    ],
+    "resolution": 1024,
+    "visible_windows": 0
+}

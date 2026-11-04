@@ -52,7 +52,7 @@ class GpuGeometryMask {
     if (!atlases_.contains(source.get())) {
       const auto needed = source->owners.size() * sizeof(std::uint32_t);
       const auto free = texture_free_vram.load();
-      const auto budget = free ? (used_ + free) / 4 : texture_available_ram_bytes() / 16;
+      const auto budget = free ? resource_sum(used_,free) : texture_available_ram_bytes();
       while (used_ + needed > budget) {
         auto victim = atlases_.end();
         for (auto it = atlases_.begin(); it != atlases_.end(); ++it)

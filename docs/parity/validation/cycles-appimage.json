@@ -1,0 +1,37 @@
+{
+  "pass": true,
+  "binary": "/mnt/mpainter-phase1/build/mpainter-test-sessions/parity-2793598/tmp/.mount_mPaintOCgMJn/mpainter",
+  "blender": "5.2.0 LTS",
+  "cycles_module": "/mnt/mpainter-phase1/build/mpainter-test-sessions/parity-2793598/tmp/.mount_mPaintOCgMJn/5.2/scripts/addons_core/cycles/__init__.py",
+  "renders": [
+    {
+      "device": "GPU",
+      "backend": "CUDA",
+      "devices": [
+        "NVIDIA GeForce RTX 3090"
+      ],
+      "samples": 8,
+      "render_seconds": 0.5080543620279059,
+      "image_bytes": 3629
+    },
+    {
+      "device": "GPU",
+      "backend": "OPTIX",
+      "devices": [
+        "NVIDIA GeForce RTX 3090"
+      ],
+      "samples": 8,
+      "render_seconds": 0.40946637094020844,
+      "image_bytes": 3629
+    }
+  ],
+  "appimage_sha256": "7823a85003885fc5279563e7ece86fb48aa04213fb7b1961275f7e40066ad334",
+  "pixel_comparison": {
+    "size": [
+      64,
+      64
+    ],
+    "rgba_byte_identical": true,
+    "png_metadata_may_differ": true
+  }
+}

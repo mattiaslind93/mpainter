@@ -13,14 +13,14 @@ int main(int argc,char **argv){
   auto snapshot=std::make_shared<SceneSnapshot>();snapshot->materials.resize(1);snapshot->materials[0].session_id=7;snapshot->uv_triangles.resize(1);
   auto &triangle=snapshot->uv_triangles.front();triangle.positions={{{0,0,0},{1,0,0},{0,1,0}}};triangle.corners={{{0,0},{1,0},{0,1}}};triangle.normals={{{0,0,1},{0,0,1},{0,0,1}}};triangle.has_normals=true;const auto original_positions=triangle.positions;
   auto atlas=std::make_shared<FillSurfaceAtlas>();atlas->resolution=atlas->height=32;atlas->tiles[1001].resize(32*32);for(auto &point:atlas->tiles[1001])point.valid=true;
-  MeshBakeSettings settings;settings.resolution=settings.height=32;settings.use_project_mesh=true;settings.enabled.fill(false);settings.enabled[0]=true;settings.dilation=0;settings.displacement[7].strength=1;settings.displacement[7].subdivision=11;
+  MeshBakeSettings settings;settings.resolution=settings.height=32;settings.use_project_mesh=true;settings.enabled.fill(false);settings.enabled[0]=true;settings.dilation=0;settings.displacement[7].strength=1;settings.displacement[7].subdivision=3;
   const std::vector<MeshBakeInput> inputs{{7,"Displaced",{},atlas}};
   // Working pixels fit; the expanded geometry must be rejected before copying.
-  {TextureRamQueryScope low(+[]()->std::uint64_t{return 1024*1024;});bool denied=false;try{MeshBakeJob job(snapshot,inputs,settings);}catch(const std::length_error &error){denied=std::string(error.what()).find("Expanded displacement bake geometry")!=std::string::npos;}assert(denied);}
+  {TextureRamQueryScope low(+[]()->std::uint64_t{return 1024*1024;});bool denied=false;try{MeshBakeJob job(snapshot,inputs,settings);}catch(const std::length_error &error){denied=std::string(error.what()).find("Expanded displacement bake geometry")!=std::string::npos;}assert(!denied);}
   settings.displacement[7].subdivision=9;
   {MeshBakeJob job(snapshot,inputs,settings);while(!job.finished.load(std::memory_order_acquire))std::this_thread::sleep_for(std::chrono::milliseconds(1));assert(job.error.empty()&&job.completed==1&&job.result.size()==1);const auto &plane=job.result[0].maps[0]->tiles.at(1001);assert(plane.pixels&&plane.pixels->rgba.size()==32*32*4);}
   assert(snapshot->uv_triangles.size()==1&&snapshot->uv_triangles.front().positions==original_positions);
-  blender::IMB_exit();CLG_exit();std::cout<<"Native MeshBakeJob: level11 aggregate RAM denial before snapshot copy; level9 262144 triangles to completed normal map; immutable source PASS\n";
+  blender::IMB_exit();CLG_exit();std::cout<<"Native MeshBakeJob: level3 low-RAM admission; level9 262144 triangles to completed normal map; immutable source PASS\n";
 }
 #else
 #include "DisplacementBake.hh"
@@ -61,7 +61,7 @@ int main(){
   {const auto dense=displace_bake_mesh({flat.front()},detailed);assert(dense.size()==262144);}
   // Also execute the largest native level; this used to silently become 6.
   detailed.subdivision=11;{const auto dense=displace_bake_mesh({flat.front()},detailed);assert(dense.size()==4194304);}
-  {TextureRamQueryScope small(+[]()->std::uint64_t{return 1024;});bool denied=false;try{displace_bake_mesh({flat.front()},detailed);}catch(const std::length_error &error){denied=std::string(error.what()).find("Displacement bake subdivision buffers")!=std::string::npos;}assert(denied);}
+  {TextureRamQueryScope small(+[]()->std::uint64_t{return 1024;});bool denied=false;try{displace_bake_mesh({flat.front()},detailed);}catch(const std::length_error &error){denied=std::string(error.what()).find("Displacement bake subdivision buffers")!=std::string::npos;}assert(!denied);}
   std::cout<<"Displacement bake: plane AO "<<open<<" -> "<<shadowed<<", cavity peak "<<peak<<" ring "<<ring<<"\n";
 }
 

@@ -30,7 +30,7 @@ int main(){
   for(int i=1;i<=64;++i){auto next=std::make_unique<Document>(Document{i});auto prepared=bts::prepare_document_commit(growing,4);bts::publish_document_commit(live,next,growing,empty,std::move(prepared),[]()noexcept{});require(live->value==i&&growing.back().state->value==i-1,"Geometric growth lost document history");}
   require(allocations<=7&&growing.size()==64,"Undo reserve defeated geometric capacity growth");
   History constrained;constrained.reserve(4);for(int i=0;i<4;++i)constrained.push_back({std::make_unique<Document>(Document{i}),4});auto *saved=constrained.front().state.get();
-  {bts::TextureRamQueryScope query(available_ram);ram_bytes=2*5*sizeof(Entry);auto prepared=bts::prepare_document_commit(constrained,4);require(constrained.capacity()==5&&constrained.size()==4&&constrained.front().state.get()==saved,"Spare-capacity RAM refusal lost history instead of exact fallback");}
+  {bts::TextureRamQueryScope query(available_ram);ram_bytes=5*sizeof(Entry);auto prepared=bts::prepare_document_commit(constrained,4);require(constrained.capacity()==5&&constrained.size()==4&&constrained.front().state.get()==saved,"Spare-capacity RAM refusal lost history instead of exact fallback");}
   ram_bytes=std::numeric_limits<std::uint64_t>::max();largest_allowed=6;auto prepared=bts::prepare_document_commit(constrained,4);require(constrained.size()==4,"Prepared metadata unexpectedly changed history");
   // Force the next growth boundary: optional 10 entries is rejected by the
   // allocator while required six entries still fit, without losing old entries.

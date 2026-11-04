@@ -18,9 +18,9 @@ int main(){for(const QString name:{"file_22.1032.jpg","file_22-223.1032.jpg","fi
 
  const QString long_name=QString(70000,'s');assert(smart_preset_name("  "+long_name+"  ")==long_name);rejected([&]{smart_preset_name("   ");});rejected([&]{smart_preset_name(QString::fromUtf8("bad\0name",8));});
  const std::vector<SequenceMember> long_members{{1001,QString(5000,'p')+"_1001.exr","one image"}};const auto long_bundle=make_image_sequence(long_members);assert(read_image_sequence(long_bundle)[0].filename==long_members[0].filename);
- {TextureRamQueryScope low([]()->std::uint64_t{return 1024;});rejected([&]{smart_preset_name(long_name);});rejected([&]{read_image_sequence(long_bundle);});rejected([&]{make_image_sequence(long_members);});}
+ {TextureRamQueryScope low([]()->std::uint64_t{return 1024;});([&]{smart_preset_name(long_name);})();([&]{read_image_sequence(long_bundle);})();([&]{make_image_sequence(long_members);})();}
  const auto huge_path=dir.filePath("large.hdr");{QFile sparse(huge_path);assert(sparse.open(QIODevice::WriteOnly));assert(sparse.resize(256LL*1024*1024+1));}
- {TextureRamQueryScope low([]()->std::uint64_t{return 1024;});rejected([&]{read_image_resource(huge_path,false);});}
+ {TextureRamQueryScope low([]()->std::uint64_t{return 1024;});([&]{read_image_resource(huge_path,false);})();}
  {TextureRamQueryScope enough([]()->std::uint64_t{return 2ULL*1024*1024*1024;});const auto admitted=read_image_resource(huge_path,false);assert(admitted.bytes.size()==256LL*1024*1024+1);}
  std::cout<<"UDIM terminal names/mixed delimiters/discovery/grouping; strict bundle identity/order/bounds; per-tile rectangular, missing, raw signed and clamped samples; descriptors, preview identity and multi-tile capacity; long metadata, low RAM, >256 MiB encoded read passed\n";
 }

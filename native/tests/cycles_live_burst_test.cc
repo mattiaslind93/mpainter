@@ -84,7 +84,7 @@ class CyclesLiveBurst final:public QObject {
  }
  bool full(const QString &name){
   require(!held_,"Full readback attempted during held drag");if(hashes_.contains(name))return true;
-  if(!readback_){const auto bytes=resource_product(resource_product(fixture_->resolution,fixture_->resolution),16*4);ResourceBudget{}.require(resource_sum(bytes,16ULL*1024*1024),bytes,"Burst post-gesture full tile witnesses");readback_=std::make_unique<GpuProjectReadback>();readback_stage_=name;
+  if(!readback_){const auto bytes=resource_product(resource_product(fixture_->resolution,fixture_->resolution),16*4);readback_=std::make_unique<GpuProjectReadback>();readback_stage_=name;
    fixture_->host->with_gpu([&]{for(int channel:{0,2})for(int tile:{1001,1002}){auto *image=fixture_->image(channel);const auto gpu=blender::BKE_image_gpu_override_texture(image);blender::ImageGpuTileRegion region;require(gpu.texture&&*gpu.texture&&blender::BKE_image_gpu_override_tile_region(image,tile,region),"Missing actual burst tile region");require(region.width==fixture_->resolution&&region.height==fixture_->resolution,"Wrong burst tile extent");readback_->submit(channel,tile,*gpu.texture,region.x,region.y,region.layer,region.width,region.height);}});return false;
   }
   require(readback_stage_==name,"Post-gesture stage changed mid-readback");bool ready=false;fixture_->host->with_gpu([&]{ready=readback_->poll();});if(!ready)return false;

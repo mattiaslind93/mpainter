@@ -1,5 +1,5 @@
 #include <QVarLengthArray>
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "TextureExtent.hh"
 #include "CustomChannel.hh"
 #include "TextureMemory.hh"
@@ -15,7 +15,7 @@ namespace {
 int integer(const QJsonValue &v,int low,int high){if(!v.isDouble()||v.toDouble()!=v.toInt(low-1)||v.toInt()<low||v.toInt()>high)invalid();return v.toInt();}
 float number(const QJsonValue &v,float low,float high){if(!v.isDouble()||!std::isfinite(v.toDouble())||v.toDouble()<low||v.toDouble()>high)invalid();return float(v.toDouble());}
 bool boolean(const QJsonValue &v){if(!v.isBool())invalid();return v.toBool();}
-QString name(const QJsonValue &v){if(!v.isString()||v.toString().trimmed().isEmpty()||v.toString().contains(QChar::Null))invalid();require_texture_ram(resource_product(v.toString().size(),8),"Custom channel name");return v.toString();}
+QString name(const QJsonValue &v){if(!v.isString()||v.toString().trimmed().isEmpty()||v.toString().contains(QChar::Null))invalid();return v.toString();}
 }
 QJsonArray custom_channels_json(const std::array<CustomChannel,custom_channel_count> &channels){QJsonArray result;for(const auto &channel:channels)result.append(QJsonObject{{"scattering",channel.scattering},{"present",channel.present},{"allocated",channel.allocated},{"name",QString::fromStdString(channel.name)},{"precision",int(channel.precision)}});return result;}
 std::array<CustomChannel,custom_channel_count> read_custom_channels(const QJsonValue &value){if(!value.isArray()||value.toArray().size()!=custom_channel_count)invalid();auto result=default_custom_channels();std::set<QString> names;bool scattering_seen=false;const auto data=value.toArray();for(int i=0;i<custom_channel_count;++i){if(!data[i].isObject())invalid();const auto o=data[i].toObject();auto &channel=result[i];channel.scattering=o.contains("scattering")?boolean(o["scattering"]):false;channel.present=boolean(o["present"]);channel.allocated=boolean(o["allocated"]);channel.name=name(o["name"]).toStdString();channel.precision=ChannelPrecision(integer(o["precision"],0,8));if(channel.scattering){if(scattering_seen||!channel.allocated||channel.name!="Scattering")invalid();scattering_seen=true;}if(channel.present&&!channel.allocated)invalid();if(channel.allocated&&!names.insert(QString::fromStdString(channel.name).toCaseFolded()).second)invalid();}return result;}
@@ -35,7 +35,7 @@ void TextureDocument::add_scattering_channel(TextureSet &set)
   for(auto &layer:candidate.layers){layer.users[slot].value=0;layer.users[slot].enabled=true;}
   set=std::move(candidate);
 }
-void TextureDocument::add_user_channel(TextureSet &set,int slot){auto &channel=set.users.at(slot);for(int other=0;other<custom_channel_count;++other)if(other!=slot&&set.users[other].allocated&&QString::fromStdString(set.users[other].name).compare(QString::fromStdString(channel.name),Qt::CaseInsensitive)==0)throw std::invalid_argument("Custom channel names must be distinct");const auto active=std::count_if(set.users.begin(),set.users.end(),[](const auto &user){return user.present;})+int(!channel.present);require_texture_ram(set.evaluation_texels()*(96+16*active+16*int(set.displacement.allocated)),"Custom channel images");if(!channel.allocated){for(auto &layer:set.layers)if(layer.kind==LayerKind::Fill)layer.users[slot].enabled=false;channel.allocated=true;}channel.present=true;}
+void TextureDocument::add_user_channel(TextureSet &set,int slot){auto &channel=set.users.at(slot);for(int other=0;other<custom_channel_count;++other)if(other!=slot&&set.users[other].allocated&&QString::fromStdString(set.users[other].name).compare(QString::fromStdString(channel.name),Qt::CaseInsensitive)==0)throw std::invalid_argument("Custom channel names must be distinct");const auto active=std::count_if(set.users.begin(),set.users.end(),[](const auto &user){return user.present;})+int(!channel.present);if(!channel.allocated){for(auto &layer:set.layers)if(layer.kind==LayerKind::Fill)layer.users[slot].enabled=false;channel.allocated=true;}channel.present=true;}
 void TextureDocument::rename_user_channel(TextureSet &set,int slot,const std::string &text){if(set.users.at(slot).scattering)throw std::invalid_argument("Built-in channel names are read-only");const auto label=name(QString::fromStdString(text)).trimmed();for(int i=0;i<custom_channel_count;++i)if(i!=slot&&set.users[i].allocated&&QString::fromStdString(set.users[i].name).compare(label,Qt::CaseInsensitive)==0)throw std::invalid_argument("Custom channel names must be distinct");set.users.at(slot).name=label.toStdString();}
 namespace {
 template<class Select> std::array<float,2> composite_scalar(const TextureSet &set,Select select,ChannelPrecision precision,int effect_channel,int x,int y,int tile,const QUuid *stop,std::array<float,3> *input,const QUuid *raw_layer=nullptr,const QUuid *prefix_stop=nullptr){int output_depth=0;struct Accumulator{float value=0,coverage=0;};QVarLengthArray<Accumulator,18> stack;stack.resize(18);std::fill(stack.begin(),stack.end(),Accumulator{});const auto &layers=evaluation_layers(set);auto folder_entries=folder_entry_plan(layers);const int first=precompose_evaluation_start(layers,stop,-1,raw_layer?raw_layer:prefix_stop);while(!folder_entries.empty()&&folder_entries.back().first<first)folder_entries.pop_back();for(int layer_number=first;layer_number<int(layers.size());++layer_number){
@@ -48,7 +48,7 @@ std::array<float,2> folder_prefix_displacement(const TextureSet &set,const QUuid
 std::array<float,2> TextureDocument::composite_user(const TextureSet &set,int slot,int x,int y,int tile,const QUuid *stop,std::array<float,3> *input){if(!set.users.at(slot).present)return {};return composite_scalar(set,[slot](const auto &layer)->const CustomLayer &{return layer.users[slot];},set.users[slot].precision,6+slot,x,y,tile,stop,input);}
 void TextureDocument::add_displacement_channel(TextureSet &set){
   const auto users=std::count_if(set.users.begin(),set.users.end(),[](const auto &channel){return channel.present;});
-  require_texture_ram(set.evaluation_texels()*(112+16*users),"Displacement images");
+
   if(!set.displacement.allocated){for(auto &layer:set.layers){layer.displacement.enabled=layer.kind!=LayerKind::Fill;if(layer.kind==LayerKind::Folder)layer.displacement.blending=LayerBlend::Passthrough;}set.displacement.allocated=true;}set.displacement.channel=true;
 }
 std::array<float,2> TextureDocument::composite_displacement(const TextureSet &set,int x,int y,int tile,const QUuid *stop,std::array<float,3> *input){if(!set.displacement.channel)return {};return composite_scalar(set,[](const auto &layer)->const CustomLayer &{return layer.displacement;},set.displacement.precision,displacement_effect_channel,x,y,tile,stop,input);}

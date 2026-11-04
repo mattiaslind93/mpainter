@@ -1,4 +1,4 @@
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "MeshExport.hh"
 #include "UsdMeshExport.hh"
 #include "UsdTextureBindings.hh"
@@ -57,7 +57,7 @@ NativeMeshExport::~NativeMeshExport()=default;
 std::shared_ptr<NativeMeshExport> NativeMeshExport::prepare(Main &live,Scene &scene,Depsgraph &graph,View3D *view,const SourceMeshMap &sources,const TextureDocument *document,const SceneSnapshot *geometry,const std::set<std::uint32_t> &active,bool recompute_normals){
  auto job=std::shared_ptr<NativeMeshExport>(new NativeMeshExport);auto &p=*job->impl_;
  p.displaced=document!=nullptr;p.recompute=recompute_normals;
- if(document){if(!geometry||active.empty())throw std::invalid_argument("No active displacement preview to export");std::uint64_t texels=0;for(const auto &set:document->texture_sets())if(active.contains(set.material_session_uid)){texels+=set.evaluation_texels();require_texture_ram(resource_product(texels,16),"Displacement export textures");p.surfaces.emplace(set.material_session_uid,Impl::Surface{set,std::make_shared<TexturePadding>(*geometry,set.material_session_uid)});}}
+ if(document){if(!geometry||active.empty())throw std::invalid_argument("No active displacement preview to export");std::uint64_t texels=0;for(const auto &set:document->texture_sets())if(active.contains(set.material_session_uid)){texels+=set.evaluation_texels();p.surfaces.emplace(set.material_session_uid,Impl::Surface{set,std::make_shared<TexturePadding>(*geometry,set.material_session_uid)});}}
  p.main=BKE_main_new();IMB_colormanagement_working_space_convert(p.main,&live);p.scene=BKE_scene_add(p.main,"Mesh export snapshot");p.scene->unit=scene.unit;
  auto *layer=BKE_view_layer_default_view(&scene);BKE_view_layer_synced_ensure(live,&scene,layer);
  std::map<const Material *,Material *> materials;
@@ -65,7 +65,7 @@ std::shared_ptr<NativeMeshExport> NativeMeshExport::prepare(Main &live,Scene &sc
   if(!BKE_base_is_visible(view,&base))continue;
   auto *evaluated=DEG_get_evaluated(&graph,base.object);if(evaluated->type!=OB_MESH||!(BKE_object_visibility(evaluated,DAG_EVAL_VIEWPORT)&OB_VISIBLE_SELF))continue;
   const Mesh *source=BKE_object_get_evaluated_mesh(evaluated);const auto found=sources.find(base.object->id.session_uid);if(!p.displaced&&found!=sources.end())source=found->second;if(!source)continue;
-  require_texture_ram(resource_sum(resource_product(resource_sum(p.vertices,source->verts_num),sizeof(float3)*3),resource_product(resource_sum(p.corners,source->corners_num),sizeof(int)*4+sizeof(float2))),"Mesh export snapshot");
+
   auto *mesh=reinterpret_cast<Mesh *>(BKE_id_copy(p.main,&source->id));
   auto &material_uids=p.mesh_materials[mesh];material_uids.resize(mesh->totcol);
   // Preserve the evaluated shading normals before freezing nonuniform transforms.
@@ -107,7 +107,7 @@ Mesh *displace_mesh(const Mesh &source,const std::vector<std::uint32_t> &materia
  for(const int face:faces.index_range()){const int slot=slots[face];const auto uid=slot>=0&&slot<int(materials.size())?materials[slot]:0;const auto set=sets.find(uid);
   for(int corner:faces[face]){const int original=corners[corner];float3 position=positions[original];if(set!=sets.end()){const auto &settings=set->second.displacement;const float height=displacement_sample(set->second,images.at(uid),uv[corner]);position+=normals[corner]*((height-settings.midlevel)*settings.strength);}
    VertexKey key{original,{}};for(int axis=0;axis<3;++axis){if(!std::isfinite(position[axis]))throw std::runtime_error("Non-finite displaced mesh position");key.position[axis]=position[axis]==0?0:std::bit_cast<std::uint32_t>(position[axis]);}
-   auto [it,inserted]=unique.try_emplace(key,int(points.size()));if(inserted){if(points.size()>=std::numeric_limits<int>::max())throw std::overflow_error("Displaced mesh vertex index cannot be represented by Blender");if((points.size()&4095)==0)require_texture_ram(resource_product(points.size()+4096,sizeof(VertexKey)+sizeof(float3)+sizeof(int)+4*sizeof(void*)),"Displaced export vertices");points.append(position);source_indices.append(original);}corner_vertices[corner]=it->second;
+   auto [it,inserted]=unique.try_emplace(key,int(points.size()));if(inserted){if(points.size()>=std::numeric_limits<int>::max())throw std::overflow_error("Displaced mesh vertex index cannot be represented by Blender");points.append(position);source_indices.append(original);}corner_vertices[corner]=it->second;
   }
  }
  auto *mesh=BKE_mesh_new_nomain_from_template(&source,points.size(),0,source.faces_num,source.corners_num);

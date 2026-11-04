@@ -1,5 +1,5 @@
 #pragma once
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include <limits>
 #include <algorithm>
 #include <array>
@@ -60,10 +60,10 @@ inline std::uint64_t bake_ray_tree_bytes(std::uint64_t triangles){
   const auto tree=resource_sum(resource_product(bake_ray_tree_nodes(triangles),128),128);
   return resource_sum(tree,resource_product(triangles,sizeof(std::array<std::array<float,3>,3>)+2*sizeof(std::uint32_t)));
 }
-inline std::vector<BakeTri> displace_bake_mesh(const std::vector<BakeTri> &source,const BakeDisplacement &field,const ResourceBudget &memory=ResourceBudget{}){
+inline std::vector<BakeTri> displace_bake_mesh(const std::vector<BakeTri> &source,const BakeDisplacement &field,const ResourceAvailability &memory=ResourceAvailability{}){
   if(field.subdivision<0||field.subdivision>11)throw std::invalid_argument("Bake subdivision is outside Blender's native 0..11 range");
   const auto plan=bake_subdivision_plan(source.size(),field.strength==0?0:field.subdivision);
-  memory.require(plan.peak_bytes,0,"Displacement bake subdivision buffers");
+
   if(field.strength==0)return source;
   std::vector<BakeTri> mesh=source;int level=field.subdivision;
   while(level>0){std::vector<BakeTri> next;next.reserve(std::size_t(resource_product(mesh.size(),4)));for(const auto &tri:mesh){const auto a=bake_midpoint(tri.corners[0],tri.corners[1]),b=bake_midpoint(tri.corners[1],tri.corners[2]),c=bake_midpoint(tri.corners[2],tri.corners[0]);next.push_back({tri.corners[0],a,c});next.push_back({tri.corners[1],b,a});next.push_back({tri.corners[2],c,b});next.push_back({a,b,c});}mesh.swap(next);--level;}

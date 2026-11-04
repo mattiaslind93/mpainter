@@ -103,7 +103,7 @@ QJsonArray prepare_native_material_images(NativeMaterialGraph &graph,const std::
    QElapsedTimer timer;timer.start();ImageUser user{};BKE_imageuser_default(&user);user.tile=tile.tile_number;
    bool reused=false;if(image.source==IMA_SRC_FILE&&image.type==IMA_TYPE_IMAGE){const auto found=std::find_if(graph.image_resources.begin(),graph.image_resources.end(),[&](const auto &entry){return entry.first==&image;});if(found==graph.image_resources.end()){auto resource=prepare_shared_native_image(*graph.main,image,cancel,reused);graph.image_resources.emplace_back(&image,std::move(resource));}else reused=true;}
    auto *buffer=BKE_image_acquire_ibuf(&image,&user,nullptr);if(!buffer)throw std::runtime_error(std::string(image.id.name+2)+": cannot decode native material tile "+std::to_string(tile.tile_number));const auto release=qScopeGuard([&]{BKE_image_release_ibuf(&image,buffer,nullptr);});
-   require_texture_ram(std::uint64_t(buffer->x)*buffer->y*16,"Native material decoded image safety margin");
+
    const bool explicit_decode=image.source==IMA_SRC_FILE&&image.type==IMA_TYPE_IMAGE;
    results.append(QJsonObject{{"image",QString::fromUtf8(image.id.name+2)},{"tile",tile.tile_number},{"width",buffer->x},{"height",buffer->y},{"float",buffer->float_data()!=nullptr},{"decode_ms",timer.nsecsElapsed()/1e6},{"shared_decoded_source",reused},
      {"explicit_graph_space_decode",explicit_decode},{"normalization_policy_version",explicit_decode?native_material_decode_policy_version:0},

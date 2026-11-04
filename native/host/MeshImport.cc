@@ -97,14 +97,14 @@ void check_cancelled(const std::stop_token cancellation)
 void check_index_count(std::uint64_t count,const char *label){
   if(count>std::uint64_t(std::numeric_limits<int>::max()))throw std::overflow_error(std::string(label)+" cannot be represented by Blender's signed mesh indices");
 }
-void require_mesh_memory(const ResourceBudget &budget,std::uint64_t vertices,std::uint64_t corners,
+void validate_mesh_storage(std::uint64_t vertices,std::uint64_t corners,
                          std::uint64_t triangles,std::uint64_t objects,std::uint64_t materials){
-  // Source mesh, parser/depsgraph scratch, complete UV snapshot and draw buffers.
+  // Detect overflow of representable mesh storage independently of current RAM.
   auto cpu=resource_sum(resource_product(vertices,64),resource_product(corners,64));
   cpu=resource_sum(cpu,resource_product(triangles,sizeof(UvFaceTriangle)));
   cpu=resource_sum(cpu,resource_product(objects,sizeof(Object)));
   cpu=resource_sum(cpu,resource_product(materials,sizeof(Material)));
-  budget.require(cpu,resource_product(triangles,3*(3+3+2)*sizeof(float)),"Mesh import and UV/viewport staging");
+
 }
 
 std::string utf8_path(const fs::path &path)
@@ -134,7 +134,7 @@ SourceFile source_file(const fs::path &path)
   if (error) {
     throw std::runtime_error("Cannot read mesh source size: " + utf8_path(path));
   }
-  require_texture_ram(bytes,"Mesh source reader");
+
   const fs::file_time_type modified = fs::last_write_time(path, error);
   if (error) {
     throw std::runtime_error("Cannot inspect mesh source: " + utf8_path(path));
@@ -177,7 +177,7 @@ void scan_lines(const SourceFile &source,
   if (!input) {
     throw std::runtime_error("Cannot open OBJ source: " + utf8_path(source.path));
   }
-  const ResourceBudget memory;
+
   std::string buffer,logical;
   std::uint64_t bytes=0;
   while (std::getline(input,buffer)) {
@@ -192,7 +192,7 @@ void scan_lines(const SourceFile &source,
     if (continued) {
       physical = physical.substr(0, physical.find_last_of('\\'));
     }
-    memory.require(resource_product(resource_sum(logical.size(),physical.size()+1),2),0,"OBJ logical line");
+
     logical.append(physical);
     if (continued) {
       logical += ' ';
@@ -223,7 +223,7 @@ SourceBudget inspect_source(const std::string &path, const std::stop_token cance
     throw std::invalid_argument("OBJ source must be an absolute UTF-8 path shorter than FILE_MAX");
   }
   SourceBudget budget;
-  const ResourceBudget memory;
+
   budget.files.push_back(source_file(source_path));
   std::size_t vertices = 0, uvs = 0, normals = 0, objects = 0, triangles = 0, line_corners = 0;
   std::set<std::string> materials, libraries;
@@ -256,7 +256,7 @@ SourceBudget inspect_source(const std::string &path, const std::stop_token cance
         budget.corners=resource_sum(budget.corners,corners);
         check_index_count(budget.corners,"Source polygon corners");
         triangles=resource_sum(triangles,corners > 2 ? corners - 2 : 0);
-        if((budget.polygons&4095)==0)require_mesh_memory(memory,vertices,budget.corners,triangles,objects,materials.size());
+        if((budget.polygons&4095)==0)validate_mesh_storage(vertices,budget.corners,triangles,objects,materials.size());
       }
       else {
         line_corners=resource_sum(line_corners,corners);
@@ -265,7 +265,7 @@ SourceBudget inspect_source(const std::string &path, const std::stop_token cance
     }
     else if (keyword == "usemtl") {
       materials.emplace(trim(line));
-      memory.require(resource_product(materials.size(),sizeof(Material)),0,"Source material names");
+
     }
     else if (keyword == "mtllib") {
       line = trim(line);
@@ -274,10 +274,10 @@ SourceBudget inspect_source(const std::string &path, const std::stop_token cance
         line.remove_suffix(1);
       }
       libraries.emplace(line);
-      memory.require(resource_product(libraries.size(),sizeof(SourceFile)),0,"Material library list");
+
     }
   });
-  require_mesh_memory(memory,vertices,budget.corners,triangles,objects,materials.size());
+  validate_mesh_storage(vertices,budget.corners,triangles,objects,materials.size());
   if (!budget.polygons) {
     throw std::runtime_error("OBJ source contains no polygon records");
   }
@@ -312,11 +312,11 @@ SourceBudget inspect_source(const std::string &path, const std::stop_token cance
     }
     SourceFile file = source_file(native_material_path);
     material_bytes=resource_sum(material_bytes,file.bytes);
-    memory.require(material_bytes,0,"Material libraries");
+
     scan_lines(file, cancellation, false, [&](std::string_view line) {
       if (take_word(line) == "newmtl") {
         material_definitions.emplace(trim(line));
-        memory.require(resource_product(material_definitions.size(),sizeof(Material)),0,"Material definitions");
+
       }
     });
     budget.files.push_back(std::move(file));
@@ -345,7 +345,7 @@ bool nondegenerate(const float3 &a, const float3 &b, const float3 &c)
 
 void validate_geometry(Main &main, ImportSummary &summary, const std::stop_token cancellation,bool mesh_objects_only=false)
 {
-  const ResourceBudget memory;
+
   std::size_t corners = 0, meshes_without_polygons = 0;
   Set<Material *> used_materials;
   std::map<Material *,std::set<int>> material_tiles;
@@ -366,7 +366,7 @@ void validate_geometry(Main &main, ImportSummary &summary, const std::stop_token
     corners += corner_verts.size();
 
 
-    require_mesh_memory(memory,summary.vertices,corners,summary.triangles,summary.objects,summary.materials.size());
+    validate_mesh_storage(summary.vertices,corners,summary.triangles,summary.objects,summary.materials.size());
 
     for (const float3 &position : positions) {
       if (!std::isfinite(position.x) || !std::isfinite(position.y) || !std::isfinite(position.z)) {
@@ -445,7 +445,7 @@ void validate_geometry(Main &main, ImportSummary &summary, const std::stop_token
     ++summary.polygon_meshes;
     summary.meshes_with_uvs += !uv_names.is_empty();
     const std::size_t triangles = std::size_t(corner_verts.size()) - 2 * mesh.faces_num;
-    require_mesh_memory(memory,summary.vertices,corners,resource_sum(summary.triangles,triangles),summary.objects,used_materials.size());
+    validate_mesh_storage(summary.vertices,corners,resource_sum(summary.triangles,triangles),summary.objects,used_materials.size());
     const Span<int3> tessellation = mesh.corner_tris();
     if (tessellation.size() != triangles) {
       throw std::runtime_error("OBJ polygon tessellation is incomplete");
@@ -523,7 +523,7 @@ struct PendingMeshProject::Impl {
 
 void PendingMeshProject::Impl::freeze_surface(bool cameras,std::stop_token cancellation,std::optional<double> frame,bool surface_objects_only)
 {
-  require_texture_ram(resource_product(BLI_listbase_count(&main->objects),sizeof(Object)),"Imported scene objects");
+
   // Keep the authored cage; viewport tessellation is owned by the application.
   for(Object &object:main->objects)if(auto *modifier=BKE_modifiers_findby_type(&object,eModifierType_Subsurf)){
     auto *subdivision=reinterpret_cast<SubsurfModifierData *>(modifier);subdivision->levels=0;subdivision->renderLevels=0;
@@ -602,8 +602,6 @@ std::unique_ptr<PendingMeshProject> PendingMeshProject::from_blend(
                                      std::pair{&selection.collections,&catalog.collections}})
     for(const auto &name:*chosen)if(!std::binary_search(available->begin(),available->end(),name))
       throw std::invalid_argument("Blender library entry no longer exists: "+name);
-  const auto available_ram=texture_available_ram_bytes();
-  if(!available_ram)throw std::runtime_error("Cannot determine available RAM for Blender library import");
   const auto source=source_file(native_path(path));
   auto pending=std::make_unique<Impl>();pending->live=&live;pending->main=BKE_main_new();
   IMB_colormanagement_working_space_convert(pending->main,&live);
@@ -641,7 +639,7 @@ std::unique_ptr<PendingMeshProject> PendingMeshProject::from_blend(
   if(BKE_reports_contain(&reports.list,RPT_ERROR))throw std::runtime_error("Blender reported an error while appending the selection");
   for(auto *object:selected)if(object->instance_collection)
     throw std::invalid_argument("Choose the source collection rather than an instanced collection object");
-  require_texture_ram(resource_product(selected.size(),sizeof(Object)),"Selected Blender objects");
+
   // Import the original mesh cage. Never execute source geometry-node graphs,
   // modifiers or retain external cache readers in a new painting project.
   for(Object &object:pending->main->objects){BKE_object_free_modifiers(&object,0);object.visibility_flag=eObject_VisibilityFlag(0);}
@@ -780,7 +778,7 @@ std::unique_ptr<PendingMeshProject> PendingMeshProject::from_usd(Main &live,cons
   }
   // Catmull-Clark produces one quad per original corner on its first step.
   // Check the aggregate before adoption, including n-gons and multiple objects.
-  std::uint64_t evaluated_triangles=0;for(Object &object:pending->main->objects){if(object.type!=OB_MESH)continue;const auto &mesh=*reinterpret_cast<Mesh *>(object.data);if(options.subdivision>0&&BKE_modifiers_findby_type(&object,eModifierType_Subsurf)){std::uint64_t faces=mesh.corners_num;for(int level=1;level<options.subdivision;++level)faces=resource_product(faces,4);evaluated_triangles=resource_sum(evaluated_triangles,resource_product(2,faces));}else evaluated_triangles=resource_sum(evaluated_triangles,std::uint64_t(mesh.corners_num)-2*mesh.faces_num);require_mesh_memory(ResourceBudget{},0,resource_product(evaluated_triangles,3),evaluated_triangles,0,0);}
+  std::uint64_t evaluated_triangles=0;for(Object &object:pending->main->objects){if(object.type!=OB_MESH)continue;const auto &mesh=*reinterpret_cast<Mesh *>(object.data);if(options.subdivision>0&&BKE_modifiers_findby_type(&object,eModifierType_Subsurf)){std::uint64_t faces=mesh.corners_num;for(int level=1;level<options.subdivision;++level)faces=resource_product(faces,4);evaluated_triangles=resource_sum(evaluated_triangles,resource_product(2,faces));}else evaluated_triangles=resource_sum(evaluated_triangles,std::uint64_t(mesh.corners_num)-2*mesh.faces_num);validate_mesh_storage(0,resource_product(evaluated_triangles,3),evaluated_triangles,0,0);}
 #ifdef BTS_WITH_MATERIALX
   try{
    const auto profiles=read_openpbr_usd_profiles(QString::fromStdString(pending->frozen_usd->path));

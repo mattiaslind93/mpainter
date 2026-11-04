@@ -1,0 +1,51 @@
+{
+  "comparison": "actual private-Xvfb UI against supplied turquoise-ref.png",
+  "colors": {
+    "Canvas": {
+      "hex": "#282828",
+      "mpainter_pixels": 365277,
+      "reference_pixels": 276633
+    },
+    "Surface": {
+      "hex": "#424242",
+      "mpainter_pixels": 349751,
+      "reference_pixels": 227658
+    },
+    "Button": {
+      "hex": "#585858",
+      "mpainter_pixels": 29743,
+      "reference_pixels": 5314
+    },
+    "Input": {
+      "hex": "#1f1f1f",
+      "mpainter_pixels": 44861,
+      "reference_pixels": 1276
+    },
+    "Accent": {
+      "hex": "#22947d",
+      "mpainter_pixels": 8869,
+      "reference_pixels": 1121
+    },
+    "ListSelection": {
+      "hex": "#33524b",
+      "mpainter_pixels": 21809,
+      "reference_pixels": 0
+    },
+    "MenuBar": {
+      "hex": "#232323",
+      "mpainter_pixels": 56130,
+      "reference_pixels": 38459
+    },
+    "Separator": {
+      "hex": "#161616",
+      "mpainter_pixels": 31376,
+      "reference_pixels": 28296
+    },
+    "ScrollHandle": {
+      "hex": "#676767",
+      "mpainter_pixels": 11094,
+      "reference_pixels": 214
+    }
+  },
+  "note": "UI layout and viewport lighting differ; matching theme roles are compared, not scene pixels."
+}

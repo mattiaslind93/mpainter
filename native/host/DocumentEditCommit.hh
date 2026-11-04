@@ -1,5 +1,5 @@
 #pragma once
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include <memory>
 #include <type_traits>
 #include <utility>
@@ -16,10 +16,10 @@ template<class History>auto prepare_document_commit(History &undo,std::uint32_t 
   auto growth=count;if(undo.capacity()&&undo.capacity()<=undo.max_size()/2)growth=std::max<std::uint64_t>(count,undo.capacity()*2);
   // Keep amortized vector growth without making optional spare capacity a
   // reason to reject an edit whose exact required metadata still fits.
-  if(growth>count&&resource_product(growth,sizeof(Entry))<=ResourceBudget{}.ram()){
+  if(growth>count&&resource_product(growth,sizeof(Entry))<=ResourceAvailability{}.ram()){
    try{undo.reserve(growth);return prepared;}catch(const std::bad_alloc &){}
   }
-  require_texture_ram(resource_product(count,sizeof(Entry)),"Undo entry metadata allocation");undo.reserve(count);
+  undo.reserve(count);
  }
  return prepared;
 }

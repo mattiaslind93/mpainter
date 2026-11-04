@@ -1,0 +1,26 @@
+{
+  "artifact": "/home/mlind/mpainter-work/dist/mPainter-0.9.0-alpha-linux-x86_64.AppImage",
+  "bytes": 423778808,
+  "sha256": "7823a85003885fc5279563e7ece86fb48aa04213fb7b1961275f7e40066ad334",
+  "runtime_executable_sha256": "b92130ae25d81b535bcc953702d6ba478ff787573b404b480a5a788c7b98663c",
+  "packaged_executable_sha256": "0645aff6ea8674cf1f1bb2d7419eb820f9a901b8ad7fe66302586d9e7cb85cf1",
+  "forbidden_driver_or_adobe_files": [],
+  "cycles_kernels": [
+    "kernel_compute_75.ptx.zst",
+    "kernel_optix.ptx.zst",
+    "kernel_optix_mnee.ptx.zst",
+    "kernel_optix_osl.ptx.zst",
+    "kernel_optix_osl_camera.ptx.zst",
+    "kernel_optix_osl_mnee.ptx.zst",
+    "kernel_optix_osl_services.ptx.zst",
+    "kernel_optix_osl_shader_raytrace.ptx.zst",
+    "kernel_optix_osl_volume.ptx.zst",
+    "kernel_optix_shader_raytrace.ptx.zst",
+    "kernel_sm_86.cubin.zst"
+  ],
+  "optix_license_files": [
+    "licenses/OptiX",
+    "licenses/OptiX/LICENSE.txt",
+    "licenses/OptiX/license_info.txt"
+  ]
+}

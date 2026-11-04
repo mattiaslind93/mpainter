@@ -118,7 +118,7 @@ void main(){ivec2 p=ivec2(gl_GlobalInvocationID.xy);if(any(greaterThanEqual(p,ca
  void submit(std::uint32_t uid,int tile,blender::gpu::Texture *texture,int x,int y,int layer,int width,int height){
   performance::Scope scope("save_gpu_readback_submit");
   if(!texture||width<1||height<1)throw std::invalid_argument("Invalid project readback image");
-  require_texture_ram(std::uint64_t(width)*height*16,"Project GPU readback");
+
   for(GLenum error=glGetError();error!=GL_NO_ERROR;error=glGetError())std::fprintf(stderr,"BTS_GPU_READBACK_PRIOR_GL_ERROR code=%u\n",unsigned(error));
   Image image;image.uid=uid;image.tile=tile;image.width=width;image.height=height;
   // Uninitialized allocation: page commitment is bounded by packet-sized copies

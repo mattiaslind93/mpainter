@@ -121,6 +121,7 @@ class GpuLayerPreview {
   void diagnose_pixel(const TextureSet &,int channel,int tile,int x,int y);
   // Ordinary reset preserves immutable adjustment histories; shutdown retires all GPU owners.
   void reset(bool terminal=false);
+  std::uint64_t release_bake_scratch();
  private:
   static void self_test();
   GpuPreviewUpdate update_tile(const TextureSet &,int,blender::gpu::Texture *,int,std::array<int,3>,bool prefix_only=false,const QUuid *query_layer=nullptr,bool query_source=false,const QUuid *query_effect=nullptr,bool thumbnail=false,bool raw_anchor=false,bool authored_ao_output=false);

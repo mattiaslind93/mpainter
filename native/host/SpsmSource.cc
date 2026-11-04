@@ -76,7 +76,7 @@ QString digest(const QByteArray &bytes){return QString::fromLatin1(QCryptographi
 QString file_digest(const QString &path,qsizetype size){
  QFile file(path);if(!file.open(QIODevice::ReadOnly)||file.size()!=size)return {};
  // Fixed streaming scratch size controls IO batching, not admitted file size.
- const auto scratch_size=std::min<qsizetype>(size,64*1024);require_texture_ram(std::uint64_t(scratch_size),"SPSM source checksum scratch");QByteArray scratch(scratch_size,Qt::Uninitialized);QCryptographicHash hash(QCryptographicHash::Sha256);
+ const auto scratch_size=std::min<qsizetype>(size,64*1024);QByteArray scratch(scratch_size,Qt::Uninitialized);QCryptographicHash hash(QCryptographicHash::Sha256);
  while(true){const auto n=file.read(scratch.data(),scratch.size());if(n<0)throw spsm::Error(("Cannot checksum SPSM cache: "+file.errorString()).toStdString());if(!n)break;hash.addData(QByteArrayView(scratch.constData(),n));}
  return QString::fromLatin1(hash.result().toHex());
 }
@@ -100,7 +100,7 @@ bool proved(const QString &path,const QString &sha,const FileFingerprint &f){
  if(!f.cacheable)return false;auto &s=state();const std::lock_guard lock(s.mutex);const auto it=s.files.find(path);return it!=s.files.end()&&it->second.sha==sha&&it->second.fingerprint==f;
 }
 void record_file(const QString &path,const QString &sha,const FileFingerprint &f){
- if(!f.cacheable)return;require_texture_ram(resource_sum(resource_product(resource_sum(path.size(),sha.size()),16),sizeof(FileProof)+128),"SPSM verified file identity");auto &s=state();const std::lock_guard lock(s.mutex);s.files[path]={sha,f};
+ if(!f.cacheable)return;auto &s=state();const std::lock_guard lock(s.mutex);s.files[path]={sha,f};
 }
 bool checksum_file(const QString &path,const QString &sha,qsizetype size,const FileFingerprint &before){
  if(before.bytes!=std::uint64_t(size)||file_digest(path,size)!=sha)return false;const auto after=fingerprint(path);if(!after||*after!=before)throw spsm::Error("SPSM source cache identity changed during checksum");record_file(path,sha,*after);return true;
@@ -134,7 +134,7 @@ std::shared_ptr<const QByteArray> intern_original(const QString &sha,const QByte
  auto &s=state();std::shared_ptr<const QByteArray> original;
  {const std::lock_guard lock(s.mutex);if(const auto it=s.originals.find(sha);it!=s.originals.end())original=it->second.lock();}
  if(original){if(*original!=bytes)throw spsm::Error("Verified SPSM SHA identity has conflicting original bytes");return original;}
- require_texture_ram(sizeof(QByteArray)+128,"SPSM original source owner");auto candidate=std::make_shared<const QByteArray>(bytes);
+ auto candidate=std::make_shared<const QByteArray>(bytes);
  {const std::lock_guard lock(s.mutex);auto &entry=s.originals[sha];if(auto existing=entry.lock())original=std::move(existing);else{entry=candidate;original=std::move(candidate);}}
  if(*original!=bytes)throw spsm::Error("Verified SPSM SHA identity has conflicting original bytes");return original;
 }
@@ -143,7 +143,7 @@ QString report(const PreparedSpsm &prepared,const QString &sha,const QString &sp
  QString text="Direct SPSM preparation (partial; appearance unverified)\nOriginal source SHA-256: "+sha+"\nOriginal cache: "+path+"\nUniform color policy: "+space+" -> ACEScg "+(space=="Linear Rec.709"?QString("(inferred default; source colorimetry unverified)"):QString("(explicit override; source colorimetry unverified)"))+"\n";
  text+="Bitmap policy: "+policy.bitmap_summary+"\nMesh-map policy: "+policy.mesh_map_summary+"\n";
  text+=QString("Native layers: %1; source streams retained: %2; assumptions: %3; omissions: %4\nNo compiled packages execute. Native generators and filters approximate recognized names and typed tweaks; unsupported subactions are omitted independently while authored visibility and supported base content are retained.\n\n").arg(prepared.material.set.layers.size()).arg(prepared.source->source().presets.size()).arg(assumptions).arg(omissions);
- for(const auto &d:prepared.diagnostics){const auto original_path=prepared.source->source().presets.at(d.preset).dataset+":"+prepared.diagnostic_path(d);const auto bytes=resource_sum(resource_sum(original_path.size(),d.code.size()),d.detail.size());require_texture_ram(resource_sum(resource_product(std::uint64_t(text.size()),4),resource_product(bytes,8)),"SPSM source report text");
+ for(const auto &d:prepared.diagnostics){const auto original_path=prepared.source->source().presets.at(d.preset).dataset+":"+prepared.diagnostic_path(d);const auto bytes=resource_sum(resource_sum(original_path.size(),d.code.size()),d.detail.size());
   text+=QString::fromStdString(original_path)+" ["+QString::fromUtf8(d.code.data(),qsizetype(d.code.size()))+"] "+(d.code=="uniform-color-policy"?QString("Source RGB uses explicit host policy %1 -> ACEScg; source colorimetry remains unverified").arg(space):QString::fromUtf8(d.detail.data(),qsizetype(d.detail.size())))+"\n";
  }return text;
 }
@@ -175,7 +175,7 @@ bool hydrate(StudioAsset &asset){
  if(auto ready=lookup(asset,policy)){bind_source(asset,ready);return true;}
  if(gui_thread())return false;
  if(asset.bytes.isEmpty())throw spsm::Error("SPSM original source bytes are empty");
- require_texture_ram(resource_sum(resource_product(resource_sum(asset.name.size(),policy.size()),16),sizeof(PreparedSpsmSource)+sizeof(State)+sizeof(std::promise<Source>)+256),"SPSM source preparation metadata");
+
  const auto sha=digest(asset.bytes),key=sha+":"+policy;auto &s=state();std::shared_future<Source> waiting;std::shared_ptr<std::promise<Source>> owner;
  Source cached;
  {const std::lock_guard lock(s.mutex);std::erase_if(s.ready,[](const auto &e){return e.second.expired();});std::erase_if(s.originals,[](const auto &e){return e.second.expired();});prune_buffers(s);if(const auto it=s.ready.find(key);it!=s.ready.end())cached=it->second.lock();
@@ -210,7 +210,7 @@ SpsmSourcePolicy parse_spsm_source_policy(const QStringList &tags){
  const QString prefix="spsm:policy:";
  for(const auto &tag:effective){
   if(tag.contains(QChar::Null))throw spsm::Error("NUL in SPSM policy tag");
-  require_texture_ram(resource_product(std::uint64_t(tag.size()),16),"SPSM policy text");
+
   if(!tag.startsWith(prefix))throw spsm::Error(("Unsupported SPSM policy tag: "+tag).toStdString());
   const auto equals=tag.indexOf('=',prefix.size());
   if(equals<0)throw spsm::Error(("Unsupported SPSM policy tag: "+tag).toStdString());

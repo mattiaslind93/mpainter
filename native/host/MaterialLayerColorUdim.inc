@@ -5,7 +5,7 @@ ColorUdimProvenance color_udim_source(bNodeTree &tree,const std::string &prefix)
  auto *n=bke::node_find_node_by_name(tree,prefix+"Representation");
  if(!n||!STREQ(n->idname,"ShaderNodeValue")||n->id||(n->flag&NODE_MUTED)||!n->prop||n->prop->type!=IDP_GROUP||BLI_listbase_count(&n->prop->data.group)!=1)throw std::invalid_argument("Linear Color UDIM provenance is missing");
  auto *p=IDP_GetPropertyFromGroup(n->prop,"source");if(!p||p->type!=IDP_STRING||p->len<1||!IDP_string_get(p)||IDP_string_get(p)[p->len-1])throw std::invalid_argument("Linear Color UDIM provenance changed");
- require_texture_ram(resource_product(p->len,8),"Linear Color UDIM graph metadata");QJsonParseError error;const auto json=QJsonDocument::fromJson(QByteArray::fromRawData(IDP_string_get(p),p->len-1),&error);
+ QJsonParseError error;const auto json=QJsonDocument::fromJson(QByteArray::fromRawData(IDP_string_get(p),p->len-1),&error);
  if(error.error!=QJsonParseError::NoError||!json.isObject())throw std::invalid_argument("Invalid linear Color UDIM metadata");const auto o=json.object();
  if(o.size()!=4||o["contract"]!="linear-color-udim-extend-float-bilinear-v1"||!o["encoded"].isBool()||!o["members"].isArray())throw std::invalid_argument("Unsupported linear Color UDIM provenance");
  const auto descriptor=read_fill_texture_json(o["source"]);if(!descriptor||descriptor->raw||!descriptor->tiles||fill_texture_json(descriptor)!=o["source"])throw std::invalid_argument("Linear Color UDIM source identity changed");

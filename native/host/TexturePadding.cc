@@ -1,5 +1,5 @@
 #include "TextureExtent.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include <atomic>
 #include "TexturePadding.hh"
 #include "Performance.hh"
@@ -41,14 +41,14 @@ struct TexturePadding::Impl {
   std::map<std::tuple<int,int,int,bool>,std::shared_ptr<const GpuMarginPlan>> gpu_margins;
   double extent=1;
   std::shared_ptr<FillSurfaceAtlas> atlas;
-  using BakePixels=std::unique_ptr<BakePixel[],void(*)(BakePixel *)>;
+  using BakePixels=ScratchVector<BakePixel>;
   BakePixels rasterize(int tile,int size,int rows=0) {
     if(!rows)rows=size;if(size<1||rows<1)throw std::invalid_argument("Native bake dimensions must be positive");resolution=size;height=rows;if(!mask_sizes.contains(tile)||mask_sizes[tile]!=std::pair{size,rows}){masks.erase(tile);mask_sizes[tile]={size,rows};}
-    const auto count=resource_product(size,rows);if(count>std::uint64_t(std::numeric_limits<int>::max()))throw std::length_error("Blender BakeTargets pixels_num exceeds signed-int indexing");require_texture_ram(resource_product(count,sizeof(BakePixel)+sizeof(char)),"Native bake UV raster");BakePixels pixels(MEM_new_array_uninitialized<BakePixel>(count,__func__),[](BakePixel *p){MEM_delete(p);});
+    const auto count=resource_product(size,rows);if(count>std::uint64_t(std::numeric_limits<int>::max()))throw std::length_error("Blender BakeTargets pixels_num exceeds signed-int indexing");BakePixels pixels(count);
     BakeImage image{};image.width=size;image.height=rows;image.tile_number=tile;image.uv_offset[0]=(tile-1001)%10;image.uv_offset[1]=(tile-1001)/10;
     Image *material_image=nullptr;BakeTargets targets{};targets.images=&image;targets.images_num=1;targets.material_to_image=&material_image;targets.materials_num=1;targets.pixels_num=int(count);
-    RE_bake_pixels_populate(mesh,pixels.get(),count,&targets,"UVMap");
-    if(!masks.contains(tile)){std::vector<char> mask(count,0);RE_bake_mask_fill(pixels.get(),count,mask.data());masks.emplace(tile,std::move(mask));}
+    RE_bake_pixels_populate(mesh,pixels.data(),count,&targets,"UVMap");
+    if(!masks.contains(tile)){std::vector<char> mask(count,0);RE_bake_mask_fill(pixels.data(),count,mask.data());masks.emplace(tile,std::move(mask));}
     return pixels;
   }
   ~Impl(){if(mesh)BKE_id_free(nullptr,mesh);if(cached_high_mesh)BKE_id_free(nullptr,cached_high_mesh);}
@@ -80,7 +80,7 @@ TexturePadding::TexturePadding(const SceneSnapshot &snapshot,std::uint32_t uid):
   std::vector<float3> custom_normals(faces.size()*3,float3(0));bool have_normals=false;for(std::size_t f=0;f<faces.size();++f)if(faces[f]->has_normals){have_normals=true;for(int c=0;c<3;++c)custom_normals[f*3+c]=float3(faces[f]->normals[c].data());}if(have_normals)bke::mesh_set_custom_normals(*mesh,MutableSpan<float3>(custom_normals.data(),custom_normals.size()));
 }
 const std::map<std::uint32_t,std::string> &TexturePadding::mesh_names() const{return impl_->object_names;}
-std::shared_ptr<const GeometryOwnershipTile> TexturePadding::mesh_ownership(int width,int tile,int height){if(!height)height=width;if(width<1||height<1)throw std::invalid_argument("Invalid geometry ownership dimensions");const auto required=std::uint64_t(width)*height*32,budget=texture_available_ram_bytes()/2;if(required>budget)throw std::length_error("Geometry ownership needs "+std::to_string((required+1048575)/1048576)+" MiB including raster scratch; available safe RAM "+std::to_string(budget/1048576)+" MiB");if(const auto found=impl_->ownership.find(tile);found!=impl_->ownership.end()&&found->second->width==width&&found->second->height==height)return found->second;auto atlas=std::make_shared<GeometryOwnershipTile>();atlas->width=width;atlas->height=height;atlas->owners.resize(std::size_t(width)*height,0);if(impl_->mesh){const auto pixels=impl_->rasterize(tile,width,height);const auto triangles=impl_->mesh->corner_tris();const auto vertices=impl_->mesh->corner_verts();for(std::size_t i=0;i<atlas->owners.size();++i){const auto primitive=pixels[i].primitive_id;if(primitive>=0&&primitive<triangles.size())atlas->owners[i]=std::uint32_t(impl_->vertex_sources[vertices[triangles[primitive][0]]]>>32);}}impl_->ownership[tile]=atlas;return atlas;}
+std::shared_ptr<const GeometryOwnershipTile> TexturePadding::mesh_ownership(int width,int tile,int height){if(!height)height=width;if(width<1||height<1)throw std::invalid_argument("Invalid geometry ownership dimensions");const auto required=std::uint64_t(width)*height*32,budget=texture_available_ram_bytes();if(const auto found=impl_->ownership.find(tile);found!=impl_->ownership.end()&&found->second->width==width&&found->second->height==height)return found->second;auto atlas=std::make_shared<GeometryOwnershipTile>();atlas->width=width;atlas->height=height;atlas->owners.resize(std::size_t(width)*height,0);if(impl_->mesh){const auto pixels=impl_->rasterize(tile,width,height);const auto triangles=impl_->mesh->corner_tris();const auto vertices=impl_->mesh->corner_verts();for(std::size_t i=0;i<atlas->owners.size();++i){const auto primitive=pixels[i].primitive_id;if(primitive>=0&&primitive<triangles.size())atlas->owners[i]=std::uint32_t(impl_->vertex_sources[vertices[triangles[primitive][0]]]>>32);}}impl_->ownership[tile]=atlas;return atlas;}
 namespace {
 void populate_mesh_curvature(const Mesh &mesh,double extent,const std::set<int> &tiles,FillSurfaceAtlas &atlas){
   const auto polygons=mesh.faces();const auto vertices=mesh.corner_verts();const auto positions=mesh.vert_positions();const auto face_normals=mesh.face_normals();
@@ -196,13 +196,13 @@ std::shared_ptr<const FillSurfaceAtlas> TexturePadding::projection_geometry(int 
   if(!height)height=resolution;
   if(!impl_->mesh)return {};
   if(resolution<1||height<1)throw std::length_error("Invalid projection geometry dimensions");
-  const auto required=std::uint64_t(resolution)*height*(tiles.size()*sizeof(FillSurfacePoint)+sizeof(BakePixel)),budget=texture_available_ram_bytes()/2;if(required>budget)throw std::length_error("Projection geometry needs "+std::to_string((required+1048575)/1048576)+" MiB; safe available RAM budget is "+std::to_string(budget/1048576)+" MiB");
+  const auto required=std::uint64_t(resolution)*height*(tiles.size()*sizeof(FillSurfacePoint)+sizeof(BakePixel)),budget=texture_available_ram_bytes();
   if(!impl_->atlas){impl_->atlas=std::make_shared<FillSurfaceAtlas>();impl_->atlas->resolution=resolution;impl_->atlas->height=height;impl_->atlas->extent=impl_->extent;}
   if(impl_->atlas->resolution!=resolution||impl_->atlas->height!=height){impl_->atlas=std::make_shared<FillSurfaceAtlas>();impl_->atlas->resolution=resolution;impl_->atlas->height=height;impl_->atlas->extent=impl_->extent;}
   for(int c=0;c<3;++c)impl_->atlas->center[c]=(impl_->source.minimum[c]+impl_->source.maximum[c])*.5;
   const auto triangles=impl_->mesh->corner_tris();const auto faces=impl_->mesh->corner_tri_faces();const auto vertices=impl_->mesh->corner_verts();const auto positions=impl_->mesh->vert_positions();const auto normals=impl_->mesh->corner_normals();
   for(int tile:tiles)if(!impl_->atlas->tiles.contains(tile)){
-    const auto pixels=impl_->rasterize(tile,resolution,height);std::vector<FillSurfacePoint> points(std::size_t(resolution)*height);
+    const auto pixels=impl_->rasterize(tile,resolution,height);ScratchVector<FillSurfacePoint> points(std::size_t(resolution)*height);
     for(std::size_t i=0;i<points.size();++i){const auto &pixel=pixels[i];if(pixel.primitive_id<0||pixel.primitive_id>=triangles.size())continue;const auto corners=triangles[pixel.primitive_id];float data[3][3];for(int k=0;k<3;++k)std::copy_n(&positions[vertices[corners[k]]].x,3,data[k]);auto &point=points[i];point.match_object=std::uint32_t(impl_->vertex_sources[vertices[corners[0]]]>>32);interp_barycentric_tri_v3(data,pixel.uv[0],pixel.uv[1],point.position.data());for(int k=0;k<3;++k)std::copy_n(&normals[corners[k]].x,3,data[k]);interp_barycentric_tri_v3(data,pixel.uv[0],pixel.uv[1],point.normal.data());normalize_v3(point.normal.data());double dx=0,dy=0;for(int k=0;k<3;++k)std::copy_n(&positions[vertices[corners[k]]].x,3,data[k]);for(int axis=0;axis<3;++axis){const double x=(data[0][axis]-data[2][axis])*pixel.du_dx+(data[1][axis]-data[2][axis])*pixel.dv_dx,y=(data[0][axis]-data[2][axis])*pixel.du_dy+(data[1][axis]-data[2][axis])*pixel.dv_dy;dx+=x*x;dy+=y*y;}point.footprint=float(std::sqrt(std::max(dx,dy)));point.valid=true;}
     impl_->atlas->tiles.emplace(tile,std::move(points));
   }
@@ -244,14 +244,14 @@ std::shared_ptr<const FillSurfaceAtlas> TexturePadding::project_source(const Sce
   const auto high_triangles=high_mesh->corner_tris();const auto high_faces=high_mesh->corner_tri_faces();const auto high_vertices=high_mesh->corner_verts();const auto high_positions=high_mesh->vert_positions();const auto high_normals=high_mesh->face_normals();const auto low_triangles=impl_->mesh->corner_tris();const auto low_vertices=impl_->mesh->corner_verts();const auto low_normals=impl_->mesh->vert_normals();const auto low_corner_normals=impl_->mesh->corner_normals();const auto high_corner_normals=high_mesh->corner_normals();const auto low_faces=impl_->mesh->corner_tri_faces();const auto low_face_normals=impl_->mesh->face_normals();
   std::vector<TangentFrame> high_frames,low_frames;
   if(transfer||options.per_fragment){if(transfer&&width!=height)throw std::invalid_argument("Stroke reprojection requires square tiles");if(transfer)transfer->resolution=width;for(const auto &triangle:high.uv_triangles)high_frames.push_back(uv_tangent_frame(triangle));const auto positions=impl_->mesh->vert_positions();const auto uv=impl_->mesh->attributes().lookup<float2>("UVMap",bke::AttrDomain::Corner);for(const auto &corners:low_triangles){UvFaceTriangle triangle;for(int k=0;k<3;++k){std::copy_n(&positions[low_vertices[corners[k]]].x,3,triangle.positions[k].begin());const auto value=uv.varray[corners[k]];triangle.corners[k]={value.x,value.y};}low_frames.push_back(uv_tangent_frame(triangle));}}
-  for(int tile:tiles){if(transfer)transfer->tiles[tile].resize(std::size_t(width)*height);auto low=impl_->rasterize(tile,width,height);const std::size_t count=std::size_t(width)*height;Impl::BakePixels projected(MEM_new_array_uninitialized<BakePixel>(count,__func__),[](BakePixel *p){MEM_delete(p);});for(std::size_t i=0;i<count;++i){projected[i]={};projected[i].primitive_id=-1;}
-    std::vector<std::array<float,3>> projection_normals;
+  for(int tile:tiles){if(transfer)transfer->tiles[tile].resize(std::size_t(width)*height);auto low=impl_->rasterize(tile,width,height);const std::size_t count=std::size_t(width)*height;Impl::BakePixels projected(count);for(std::size_t i=0;i<count;++i){projected[i]={};projected[i].primitive_id=-1;}
+    ScratchVector<std::array<float,3>> projection_normals;
     if(const auto region=options.regions.find(tile);region!=options.regions.end()){const auto &r=region->second;for(int y=0;y<height;++y)for(int x=0;x<width;++x)if(x<r.x0||x>=r.x1||y<r.y0||y>=r.y1)low[std::size_t(y)*width+x].primitive_id=-1;}
     if(options.skew_weight||options.skew_weight_at){projection_normals.resize(count);for(std::size_t i=0;i<count;++i){const int primitive=low[i].primitive_id;if(primitive<0)continue;const double u=(i%width+.5)/width,v=(i/width+.5)/height;float amount=0;if(options.skew_weight_at){const auto corners=low_triangles[primitive];const auto positions=impl_->mesh->vert_positions();float points[3][3];for(int k=0;k<3;++k)std::copy_n(&positions[low_vertices[corners[k]]].x,3,points[k]);std::array<float,3> point;interp_barycentric_tri_v3(points,low[i].uv[0],low[i].uv[1],point.data());const auto object=std::uint32_t(impl_->source.uv_triangles[low_faces[primitive]].vertex_ids[0]>>32);amount=options.skew_weight_at(tile,u,v,point,object);}else amount=options.skew_weight(tile,u,v);if(!std::isfinite(amount)||amount<=0)continue;const auto corners=low_triangles[primitive];float normals[3][3],average[3];for(int k=0;k<3;++k)std::copy_n(&low_normals[low_vertices[corners[k]]].x,3,normals[k]);interp_barycentric_tri_v3(normals,low[i].uv[0],low[i].uv[1],average);const auto face=low_face_normals[low_faces[primitive]];projection_normals[i]=skew_projection_normal({average[0],average[1],average[2]},{face.x,face.y,face.z},amount);}}
     static_assert(sizeof(std::array<float,3>)==3*sizeof(float));
     const auto *override_normals=projection_normals.empty()?nullptr:reinterpret_cast<const float (*)[3]>(projection_normals.data());
-    if(!RE_bake_pixels_populate_from_objects(impl_->mesh,low.get(),projected.get(),&source,1,count,options.use_cage,float(front),options.use_cage?0.f:float(front+rear),identity,identity,cage_mesh.get(),override_normals))throw std::runtime_error("Native high-poly ray projection failed");
-    auto &points=impl_->atlas->tiles.at(tile);std::vector<float> tangent_normals(count*3,0);
+    if(!RE_bake_pixels_populate_from_objects(impl_->mesh,low.data(),projected.data(),&source,1,count,options.use_cage,float(front),options.use_cage?0.f:float(front+rear),identity,identity,cage_mesh.get(),override_normals))throw std::runtime_error("Native high-poly ray projection failed");
+    auto &points=impl_->atlas->tiles.at(tile);ScratchVector<float> tangent_normals(count*3,0);
     for(std::size_t i=0;i<count;++i){auto &point=points[i];if(!point.valid||low[i].primitive_id<0||projected[i].primitive_id<0){point.valid=false;continue;}const auto &hit=projected[i];const auto corners=high_triangles[hit.primitive_id];const auto normal=high_normals[high_faces[hit.primitive_id]];float direction[3];
       if(options.use_cage){float positions[3][3],origin[3];const auto low_corners=low_triangles[low[i].primitive_id];for(int k=0;k<3;++k)std::copy_n(&cage_mesh->vert_positions()[low_vertices[low_corners[k]]].x,3,positions[k]);interp_barycentric_tri_v3(positions,low[i].uv[0],low[i].uv[1],origin);sub_v3_v3v3(direction,point.position.data(),origin);}
       else if(override_normals&&!is_zero_v3(override_normals[i])){copy_v3_v3(direction,override_normals[i]);negate_v3(direction);}
@@ -262,7 +262,7 @@ std::shared_ptr<const FillSurfaceAtlas> TexturePadding::project_source(const Sce
       float positions[3][3];for(int k=0;k<3;++k)std::copy_n(&high_positions[high_vertices[corners[k]]].x,3,positions[k]);interp_barycentric_tri_v3(positions,hit.uv[0],hit.uv[1],point.position.data());for(int k=0;k<3;++k)std::copy_n(&high_corner_normals[corners[k]].x,3,positions[k]);interp_barycentric_tri_v3(positions,hit.uv[0],hit.uv[1],point.normal.data());normalize_v3(point.normal.data());for(int c=0;c<3;++c)tangent_normals[i*3+c]=point.normal[c]; // Native tangent conversion compresses signed world vectors itself.
       const auto material=high.uv_triangles[hit.primitive_id].material;std::copy_n(high.materials.at(material).values.base_color.begin(),3,point.source_color.begin());
     }
-    const eBakeNormalSwizzle swizzle[3]={R_BAKE_POSX,options.directx?R_BAKE_NEGY:R_BAKE_POSY,R_BAKE_POSZ};if(options.per_fragment){for(std::size_t i=0;i<count;++i)if(points[i].valid){const auto primitive=low[i].primitive_id;const auto corners=low_triangles[primitive];float normals[3][3],normal[3];for(int k=0;k<3;++k)std::copy_n(&low_corner_normals[corners[k]].x,3,normals[k]);interp_barycentric_tri_v3(normals,low[i].uv[0],low[i].uv[1],normal);const auto frame=fragment_tangent_frame(low_frames.at(primitive),{normal[0],normal[1],normal[2]});auto value=fragment_world_to_tangent(frame,{tangent_normals[i*3],tangent_normals[i*3+1],tangent_normals[i*3+2]});normalize_v3(value.data());if(options.directx)value[1]=-value[1];for(int c=0;c<3;++c)tangent_normals[i*3+c]=value[c]*.5f+.5f;}}else RE_bake_normal_world_to_tangent(low.get(),count,3,tangent_normals.data(),impl_->mesh,swizzle,identity);for(std::size_t i=0;i<count;++i)if(points[i].valid)std::copy_n(tangent_normals.data()+i*3,3,points[i].baked_normal.begin());
+    const eBakeNormalSwizzle swizzle[3]={R_BAKE_POSX,options.directx?R_BAKE_NEGY:R_BAKE_POSY,R_BAKE_POSZ};if(options.per_fragment){for(std::size_t i=0;i<count;++i)if(points[i].valid){const auto primitive=low[i].primitive_id;const auto corners=low_triangles[primitive];float normals[3][3],normal[3];for(int k=0;k<3;++k)std::copy_n(&low_corner_normals[corners[k]].x,3,normals[k]);interp_barycentric_tri_v3(normals,low[i].uv[0],low[i].uv[1],normal);const auto frame=fragment_tangent_frame(low_frames.at(primitive),{normal[0],normal[1],normal[2]});auto value=fragment_world_to_tangent(frame,{tangent_normals[i*3],tangent_normals[i*3+1],tangent_normals[i*3+2]});normalize_v3(value.data());if(options.directx)value[1]=-value[1];for(int c=0;c<3;++c)tangent_normals[i*3+c]=value[c]*.5f+.5f;}}else RE_bake_normal_world_to_tangent(low.data(),count,3,tangent_normals.data(),impl_->mesh,swizzle,identity);for(std::size_t i=0;i<count;++i)if(points[i].valid)std::copy_n(tangent_normals.data()+i*3,3,points[i].baked_normal.begin());
   }
   if(curvature)populate_mesh_curvature(*high_mesh,impl_->extent,tiles,*impl_->atlas);
   return impl_->atlas;
@@ -273,7 +273,7 @@ std::shared_ptr<TexturePadding> TexturePadding::clone() const{performance::Scope
 std::uint64_t TexturePadding::invocation_count(){return padding_invocations.load();}
 std::vector<unsigned char> TexturePadding::uv_coverage(int resolution,int tile,int height){
   if(!height)height=resolution;
-  if(resolution<1||height<1)throw std::invalid_argument("Invalid export UV resolution");const auto count=resource_product(resolution,height);require_texture_ram(count,"Export UV coverage");std::vector<unsigned char> result(count,0);if(!impl_->mesh)return result;
+  if(resolution<1||height<1)throw std::invalid_argument("Invalid export UV resolution");const auto count=resource_product(resolution,height);std::vector<unsigned char> result(count,0);if(!impl_->mesh)return result;
   if(!impl_->mask_sizes.contains(tile)||impl_->mask_sizes[tile]!=std::pair{resolution,height}||!impl_->masks.contains(tile))impl_->rasterize(tile,resolution,height);const auto &mask=impl_->masks.at(tile);if(mask.size()!=count)throw std::runtime_error("Export UV mask size mismatch");for(std::size_t i=0;i<count;++i)result[i]=mask[i]!=0;return result;
 }
 std::shared_ptr<const GpuMarginPlan> TexturePadding::gpu_margin_plan(int width,int height,int tile,bool adjacent){
@@ -292,7 +292,7 @@ void TexturePadding::apply(ImBuf &buffer,int tile,bool adjacent)
   if(!impl_->mesh)return;
   if(buffer.y<1||buffer.x<1||!buffer.float_data())throw std::runtime_error("Invalid native padding buffer");
   if(!impl_->mask_sizes.contains(tile)||impl_->mask_sizes[tile]!=std::pair{buffer.x,buffer.y})impl_->rasterize(tile,buffer.x,buffer.y);
-  const std::size_t count=resource_product(buffer.x,buffer.y);require_texture_ram(count,"Export dilation mask");
+  const std::size_t count=resource_product(buffer.x,buffer.y);
   auto found=impl_->masks.find(tile);
   if(found==impl_->masks.end()) {
     impl_->rasterize(tile,buffer.x,buffer.y);found=impl_->masks.find(tile);

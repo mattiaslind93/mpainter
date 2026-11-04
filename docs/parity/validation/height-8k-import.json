@@ -1,0 +1,101 @@
+{
+    "all_pixels_exact": true,
+    "blocked": false,
+    "channel_precision": "L32F",
+    "composite_samples": [
+        {
+            "coverage": 1,
+            "expected": -0.4998779296875,
+            "value": -0.4998779296875,
+            "x": 1,
+            "y": 1
+        },
+        {
+            "coverage": 1,
+            "expected": -0.25,
+            "value": -0.25,
+            "x": 2048,
+            "y": 1
+        },
+        {
+            "coverage": 1,
+            "expected": 0,
+            "value": 0,
+            "x": 4096,
+            "y": 1
+        },
+        {
+            "coverage": 1,
+            "expected": 0.499755859375,
+            "value": 0.499755859375,
+            "x": 8190,
+            "y": 1
+        },
+        {
+            "coverage": 1,
+            "expected": -0.4998779296875,
+            "value": -0.4998779296875,
+            "x": 1,
+            "y": 4096
+        },
+        {
+            "coverage": 1,
+            "expected": -0.25,
+            "value": -0.25,
+            "x": 2048,
+            "y": 4096
+        },
+        {
+            "coverage": 1,
+            "expected": 0,
+            "value": 0,
+            "x": 4096,
+            "y": 4096
+        },
+        {
+            "coverage": 1,
+            "expected": 0.499755859375,
+            "value": 0.499755859375,
+            "x": 8190,
+            "y": 4096
+        },
+        {
+            "coverage": 1,
+            "expected": -0.4998779296875,
+            "value": -0.4998779296875,
+            "x": 1,
+            "y": 8190
+        },
+        {
+            "coverage": 1,
+            "expected": -0.25,
+            "value": -0.25,
+            "x": 2048,
+            "y": 8190
+        },
+        {
+            "coverage": 1,
+            "expected": 0,
+            "value": 0,
+            "x": 4096,
+            "y": 8190
+        },
+        {
+            "coverage": 1,
+            "expected": 0.499755859375,
+            "value": 0.499755859375,
+            "x": 8190,
+            "y": 8190
+        }
+    ],
+    "displacement_channel_installed": true,
+    "file": "/mnt/mpainter-phase1/logs/bake-proof/height8192/height_1001.exr",
+    "float_bits": 32,
+    "full_project_dimensions": true,
+    "installation_available_ram_bytes": 9663676416,
+    "resolution": 8192,
+    "signed_import_midlevel": 0,
+    "signed_import_strength": 1,
+    "simulated_free_vram_bytes": 1,
+    "udim": 1001
+}

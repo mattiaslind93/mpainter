@@ -1,4 +1,4 @@
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #pragma once
 #include "AssetCatalog.hh"
 #include "ImageSequence.hh"
@@ -20,7 +20,7 @@ inline ResourceChanges scan_resources(const std::vector<StudioAsset> &assets,con
    }
    const auto source=read_image_resource(asset.path,is_image_sequence(asset.bytes));
    if(source.bytes==asset.bytes)continue;
-   updated_bytes=resource_sum(updated_bytes,source.bytes.size());require_texture_ram(updated_bytes,"Encoded resource update batch");
+   updated_bytes=resource_sum(updated_bytes,source.bytes.size());
    auto next=asset;next.bytes=source.bytes;next.filename=source.filename;next.alpha.reset();next.smart_mask.reset();
    result.updates.push_back({asset,std::move(next)});
   }catch(const std::exception &e){result.messages.append(asset.name+": "+QString::fromUtf8(e.what())+"; retained imported version.");}

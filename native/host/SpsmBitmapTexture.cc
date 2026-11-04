@@ -47,8 +47,8 @@ std::shared_ptr<const SpsmBitmapTexture> interpret_spsm_bitmap(RawImage raw,cons
  if(h.pitch<row||resource_product(h.pitch,h.height)!=h.raw_bytes||raw.bytes->size()!=h.raw_bytes||count>std::vector<FillTexture::Pixel>{}.max_size())throw Error("Invalid SPSM RGBA16F row span or native pixel storage");
  const auto metadata=resource_product(resource_sum(resource_sum(source.source.native().size(),source.dataset.path.size()),p.input_space.size()),16);
  const auto added=resource_sum(size,resource_sum(metadata,sizeof(Storage)+sizeof(SpsmBitmapTexture)+sizeof(FillTexture)+1024));
- require_texture_ram(added,"SPSM native bitmap conversion");
- if(options.memory_budget_bytes&&resource_sum(retained(raw),added)>options.memory_budget_bytes)throw Error("SPSM native bitmap conversion needs worker RAM "+resource_mebibytes(resource_sum(retained(raw),added))+"; available worker budget "+resource_mebibytes(options.memory_budget_bytes));
+
+
  const auto from=p.raw?std::string{}:canonical(p.input_space),target=p.raw?std::string{}:canonical("ACEScg");
  auto storage=std::make_shared<Storage>();storage->original=raw;storage->pixels.resize(std::size_t(count));
  for(std::uint64_t y=0;y<h.height;++y){const auto sy=p.rows==SpsmRowOrder::FirstRowIsV0?y:h.height-1-y;const auto *line=raw.bytes->data()+std::size_t(sy*h.pitch);
@@ -75,10 +75,10 @@ std::shared_ptr<const SpsmBitmapTexture> interpret_spsm_bitmap(RawImage raw,cons
  return result;
 }
 std::shared_ptr<const SpsmBitmapTexture> SpsmBitmapTextureCache::load(const Descriptor &d,const SpsmBitmapPolicy &p,ReadOptions options){
- policy_valid(p);if(!d.header)throw Error("Missing SPSM bitmap descriptor");require_format(*d.header);require_texture_ram(resource_product(resource_sum(resource_sum(d.resource.source.native().size(),d.resource.dataset.path.size()),p.input_space.size()),16),"SPSM bitmap cache text");const auto key=location(d.resource)+":"+std::to_string(d.resource.stamp.file_bytes)+":"+std::to_string(d.resource.stamp.modified.time_since_epoch().count())+":"+policy_key(p);
+ policy_valid(p);if(!d.header)throw Error("Missing SPSM bitmap descriptor");require_format(*d.header);const auto key=location(d.resource)+":"+std::to_string(d.resource.stamp.file_bytes)+":"+std::to_string(d.resource.stamp.modified.time_since_epoch().count())+":"+policy_key(p);
  std::lock_guard lock(mutex_);std::erase_if(entries_,[](const auto &entry){return entry.second.expired();});
  if(const auto found=entries_.find(key);found!=entries_.end())if(auto shared=found->second.lock())return shared;
- const auto metadata=resource_product(key.size(),4);require_texture_ram(metadata,"SPSM bitmap cache identity");
+ const auto metadata=resource_product(key.size(),4);
  auto result=interpret_spsm_bitmap(decode(load_encoded(d,options),options),d.resource,p,options);entries_[key]=result;return result;
 }
 }

@@ -1,5 +1,5 @@
 #include "SpsmBitmapLowering.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "SpsmBitmapFields.hh"
 #include <set>
 namespace bts {
@@ -18,16 +18,13 @@ struct Lower {
   std::size_t pi;
   const sem::PresetInspection &ir;
   const s::Preset &p;
-  std::uint64_t used = 0, limit;
+  std::uint64_t used = 0;
   std::set<const void *> retained_images, retained_pixels, retained_raw,
       retained_records;
   Lower(const PreparedSpsm &o, const SpsmBitmapLoweringPolicy &v,
         const SpsmBitmapResolver &r, const SpsmBitmapUse &channels)
       : original(o), policy(v), resolve(r), use(channels), pi(primary(o)),
-        ir(o.source->presets.at(pi)), p(o.source->source().presets.at(pi)),
-        limit(v.memory_budget_bytes
-                  ? std::min(v.memory_budget_bytes, ResourceBudget{}.ram())
-                  : ResourceBudget{}.ram()) {
+        ir(o.source->presets.at(pi)), p(o.source->source().presets.at(pi)) {
     // Material pixels/recipes and retained source are shared, not evaluated.
     // This unit accepts only its preparer's untouched Fill/Folder metadata
     // subset.
@@ -59,13 +56,7 @@ struct Lower {
   }
   void add(std::uint64_t bytes) {
     used = resource_sum(used, bytes);
-    if (used > limit)
-      throw s::Error(
-          "SPSM bitmap preparation needs RAM " + resource_mebibytes(used) +
-          " (" + std::to_string(used) + " bytes); available worker budget " +
-          resource_mebibytes(limit) + " (" + std::to_string(limit) +
-          " bytes; minimum of any explicit worker policy and current "
-          "ResourceBudget RAM)");
+
   }
   const s::Node &node(s::NodeId id) const {
     if (id >= p.nodes.size())
@@ -451,7 +442,7 @@ struct Lower {
         *version != std::string_view(ref->resource_dataset).substr(11))
       throw Unsupported{};
     return s::bitmap::describe_image(original.source->source(),
-                                     ref->resource_dataset, {limit - used});
+                                     ref->resource_dataset, {});
   }
   void
   validate_resolved(const s::bitmap::Descriptor &d,
@@ -566,7 +557,7 @@ struct Lower {
       add(sizeof(MaskEffect)*4);
     }
     const auto load=[&](const auto &descriptor){
-      auto image=resolve(descriptor,policy.pixels,{limit-used});validate_resolved(descriptor,image);
+      auto image=resolve(descriptor,policy.pixels,{});validate_resolved(descriptor,image);
       if(retained_pixels.insert(image->texture.pixels.get()).second)
         add(resource_product(image->texture.pixels->size(),sizeof(FillTexture::Pixel)));
       if(retained_raw.insert(image->original.bytes.get()).second)add(image->original.bytes->size());

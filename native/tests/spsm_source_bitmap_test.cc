@@ -110,25 +110,10 @@ void bitmaps(const QString &fixtures) {
                 plain->report.contains("unknown (missing)"),
             "Default bitmap policy hydrated/missing report");
     auto denied_policy = parse_spsm_source_policy(bitmap_tags()).bitmaps;
-    denied_policy.memory_budget_bytes = 16;
-    bool resolved = false;
-    try {
-      enhance_prepared_spsm_bitmaps(
-          plain->prepared, denied_policy,
-          [&](const auto &, const auto &,
-              auto) -> std::shared_ptr<const SpsmBitmapTexture> {
-            resolved = true;
-            return {};
-          });
-      throw std::runtime_error("Low bitmap worker budget accepted");
-    } catch (const spsm::Error &error) {
-      const std::string_view message = error.what();
-      require(message.find("needs RAM") != message.npos &&
-                  message.find("available worker budget") != message.npos &&
-                  message.find("16 bytes") != message.npos && !resolved,
-              "Bitmap RAM failure lacks actual need/available policy bytes or "
-              "hydrated");
-    }
+
+    bool resolved=false;
+    enhance_prepared_spsm_bitmaps(plain->prepared,denied_policy,[&](const auto &,const auto &,auto)->std::shared_ptr<const SpsmBitmapTexture>{resolved=true;return {};});
+    require(resolved,"Former memory policy skipped bitmap resolution");
     auto selected = original;
     selected.search_terms = bitmap_tags();
     require(!hydrate_spsm_asset(selected) && !selected.material_preset,

@@ -10,7 +10,7 @@ namespace {
 void check(const std::atomic_bool &cancel){if(cancel.load())throw std::runtime_error("Native image replacement cancelled");}
 StudioAsset file_source(const QString &path,const std::atomic_bool &cancel){
  const auto source=reference_image_resource(path,false,&cancel);const auto &file=source.files.front();
- require_texture_ram(resource_sum(resource_product(file.size,2),4*1024*1024),"Immutable native replacement source bytes");
+
  StudioAsset asset;asset.name=source.name;asset.filename=source.filename;asset.usages={"texture"};asset.path=source.path;
  QFile input(path);if(!input.open(QIODevice::ReadOnly))throw std::runtime_error(input.errorString().toStdString());
  while(!input.atEnd()){check(cancel);auto bytes=input.read(4*1024*1024);if(bytes.isEmpty()&&input.error()!=QFileDevice::NoError)throw std::runtime_error(input.errorString().toStdString());if(asset.bytes.size()>file.size||bytes.size()>file.size-asset.bytes.size())throw std::runtime_error("Native image source changed during loading");asset.bytes.append(bytes);}
@@ -46,8 +46,8 @@ void NativeMaterialImageJobs::inspect(const StudioAsset &asset,std::function<voi
  const auto key=asset.hash()+":"+QString::fromLatin1(QCryptographicHash::hash(metadata,QCryptographicHash::Sha256).toHex())+":exact-image-edge-v1";
  auto found=inspections_.find(key);if(found!=inspections_.end()){
   if(found->second.result){ready(found->second.result);return;}if(!found->second.error.isEmpty()){failed(found->second.error);return;}
- }else{require_texture_ram(sizeof(Inspection)+resource_product(key.size(),2),"Native image inspection cache metadata");Inspection job;auto cancel=job.cancel;job.worker=submit([asset,cancel]{return std::make_shared<const NativeImageBindingAvailability>(native_material_image_availability(asset,*cancel));});try{found=inspections_.emplace(key,std::move(job)).first;}catch(...){cancel->store(true);throw;}}
- require_texture_ram(resource_product(resource_sum(found->second.callbacks.size(),1),sizeof(decltype(Inspection::callbacks)::value_type)),"Native image inspection callbacks");
+ }else{Inspection job;auto cancel=job.cancel;job.worker=submit([asset,cancel]{return std::make_shared<const NativeImageBindingAvailability>(native_material_image_availability(asset,*cancel));});try{found=inspections_.emplace(key,std::move(job)).first;}catch(...){cancel->store(true);throw;}}
+
  found->second.callbacks.emplace_back(std::move(ready),std::move(failed));timer_.start();
 }
 void NativeMaterialImageJobs::change(NativeImageChangeRequest request,std::function<bool()> current){
@@ -55,7 +55,7 @@ void NativeMaterialImageJobs::change(NativeImageChangeRequest request,std::funct
  // Every active change reserves its retirement slot before worker submission.
  // Cancellation must not allocate while releasing an unpublished GPU alias.
  static_assert(std::is_nothrow_move_constructible_v<Change>);
- if(retired_.size()==retired_.capacity()){const auto count=resource_sum(retired_.size(),1);require_texture_ram(resource_product(count,sizeof(Change)),"Native image cancellation metadata");retired_.reserve(count);}
+ if(retired_.size()==retired_.capacity()){const auto count=resource_sum(retired_.size(),1);retired_.reserve(count);}
  Change next;next.current=std::move(current);auto cancel=next.cancel;
  next.worker=submit([request=std::move(request),cancel]()mutable{return prepare_change(std::move(request),*cancel);});change_.emplace(std::move(next));timer_.start();if(hooks_.progress)hooks_.progress("Preparing native image source…");
 }

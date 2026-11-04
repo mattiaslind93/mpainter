@@ -69,9 +69,6 @@ struct Archive {
   std::uint64_t payload_bytes_read = 0;
 };
 struct ReadOptions {
-  // Zero selects half the available RAM via the shared ResourceBudget. A caller
-  // may supply a smaller worker budget. There is no fixed preset/count cap.
-  std::uint64_t memory_budget_bytes = 0;
 };
 class Error : public std::runtime_error {
  public:

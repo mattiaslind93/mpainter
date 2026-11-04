@@ -1,0 +1,17 @@
+{
+  "Qt6Core": {
+    "reference": "1a3a2d7f241f022366e23928f3340901ffbdb3f32cfd75bb48541a7fae3b8c64",
+    "workspace": "1a3a2d7f241f022366e23928f3340901ffbdb3f32cfd75bb48541a7fae3b8c64",
+    "equal": true
+  },
+  "Qt6Gui": {
+    "reference": "1ea2bfa3b8ff7a479e87bc8913490d7f3c5fb96d8969fe172b8109db59fb4062",
+    "workspace": "1ea2bfa3b8ff7a479e87bc8913490d7f3c5fb96d8969fe172b8109db59fb4062",
+    "equal": true
+  },
+  "Qt6Widgets": {
+    "reference": "9572d10dccc2db31a86d83bb77823fccd8569f0c0a88e7047f262ca5cdb6df70",
+    "workspace": "9572d10dccc2db31a86d83bb77823fccd8569f0c0a88e7047f262ca5cdb6df70",
+    "equal": true
+  }
+}

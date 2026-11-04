@@ -1,4 +1,4 @@
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "PhysicalScale.hh"
 #include "UsdScene.hh"
 #include <QFile>

@@ -27,7 +27,6 @@ struct NativeFragmentGeometryRequest {
  std::vector<int> tiles;
  bool generated_stream=false; // Actual Original coordinates, opt-in only.
  bool allow_original_orco=false; // Stock ensure on a private clone after ordered original-mesh proof.
- std::uint64_t ram_budget_bytes=0; // zero: dynamic safe available-RAM budget.
 };
 enum class NativeFragmentGeneratedProvenance {None,CapturedOrco,StockOriginalOrco};
 struct NativeFragmentGeometryObject {

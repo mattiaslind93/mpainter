@@ -1,4 +1,4 @@
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "UvPreview.hh"
 #include "Performance.hh"
 #include "SceneSnapshot.hh"
@@ -235,7 +235,7 @@ void UvPreview::tag_images_updated() {
 UvPreviewSummary UvPreview::rebuild(Main &main,Scene &scene,Depsgraph &depsgraph,const View3D &source_view,
                                     std::uint32_t uid,bool inspection,const SourceMeshMap *source_meshes) {
   retire();require_gpu_context();
-  const ResourceBudget memory;
+  const ResourceAvailability memory;
   if (DEG_get_bmain(&depsgraph)!=&main || DEG_get_input_scene(&depsgraph)!=&scene || DEG_get_mode(&depsgraph)!=DAG_EVAL_VIEWPORT)
     throw std::invalid_argument("UV preview requires source viewport depsgraph");
   BKE_scene_graph_evaluated_ensure(&depsgraph,&main);
@@ -280,7 +280,7 @@ UvPreviewSummary UvPreview::rebuild(Main &main,Scene &scene,Depsgraph &depsgraph
       const auto a=uv[corners[0]],b=uv[corners[1]],c=uv[corners[2]];
       if (std::abs(double(b.x-a.x)*(c.y-a.y)-double(b.y-a.y)*(c.x-a.x))<1e-15) {++summary.skipped_degenerate_triangles;continue;}
       ++summary.uv_triangles;
-      if((summary.uv_triangles&4095)==0)memory.require(resource_product(summary.uv_triangles,3*(sizeof(std::array<float,4>)*3+sizeof(void*)*4)),0,"UV preview edge buffers");
+
       ++count;
       const float2 lo=math::min(a,math::min(b,c)),hi=math::max(a,math::max(b,c));
       for (int axis=0;axis<2;++axis) {
@@ -290,7 +290,7 @@ UvPreviewSummary UvPreview::rebuild(Main &main,Scene &scene,Depsgraph &depsgraph
       has_bounds=true;
       const int u0=int(std::floor(lo.x)),v0=int(std::floor(lo.y));
       const int u1=std::max(u0,int(std::ceil(hi.x))-1),v1=std::max(v0,int(std::ceil(hi.y))-1);
-      memory.require(resource_product(resource_product(std::uint64_t(std::int64_t(u1)-u0+1),std::uint64_t(std::int64_t(v1)-v0+1)),sizeof(std::pair<int,int>)+4*sizeof(void*)),0,"UV preview tiles");
+
       for (int v=v0;v<=v1;++v) for (int u=u0;u<=u1;++u) tiles.emplace(u,v);
 
       const auto face=faces[triangle_faces[i]];

@@ -51,19 +51,13 @@ inline std::uint64_t texture_available_ram_bytes(){
  return available;
 }
 inline std::string resource_mebibytes(std::uint64_t bytes){return std::to_string(bytes/1048576)+" MiB ("+std::to_string(bytes)+" bytes)";}
-struct ResourceBudget {
+struct ResourceAvailability {
  std::uint64_t available_ram=texture_available_ram_bytes();
  bool vram_known=texture_vram_query_valid.load(std::memory_order_relaxed);
  std::uint64_t available_vram=texture_free_vram.load(std::memory_order_relaxed);
- // Half of currently available memory remains for evaluation, drivers and
- // concurrent applications. This safety margin is proportional, never a cap.
- std::uint64_t ram()const{return available_ram/2;}
- std::uint64_t vram()const{return available_vram/2;}
- void require(std::uint64_t cpu,std::uint64_t gpu,const char *purpose)const{
-  if(cpu>ram()||(gpu&&vram_known&&gpu>vram()))throw std::length_error(std::string(purpose)+" needs RAM "+resource_mebibytes(cpu)+"; available "+resource_mebibytes(available_ram)+" (safe budget "+resource_mebibytes(ram())+"); GPU needs "+resource_mebibytes(gpu)+"; available VRAM "+(vram_known?resource_mebibytes(available_vram)+" (safe budget "+resource_mebibytes(vram())+")":"not reported by driver; device allocation will be checked"));
- }
+ // Availability informs streaming and cache eviction, never admission.
+ std::uint64_t ram()const{return available_ram;}
+ std::uint64_t vram()const{return available_vram;}
+
 };
-inline void require_texture_ram(std::uint64_t bytes,const char *operation){ResourceBudget{}.require(bytes,0,operation);}
-inline std::uint64_t texture_memory_budget_bytes(const char *){const ResourceBudget b;return b.vram_known?std::min(b.ram(),b.vram()):b.ram();}
-inline void require_memory_budget(std::uint64_t bytes,const char *purpose){ResourceBudget{}.require(bytes,bytes,purpose);}
 }

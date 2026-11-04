@@ -1,4 +1,4 @@
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #pragma once
 #include "RibbonSettings.hh"
 #include <QByteArray>
@@ -10,13 +10,13 @@
 #include <map>
 namespace bts {
 namespace ribbon_io {
-inline std::uint64_t image_budget(){return std::min<std::uint64_t>(ResourceBudget{}.ram(),std::numeric_limits<quint32>::max());}
+inline std::uint64_t image_budget(){return std::numeric_limits<quint32>::max();}
 [[noreturn]] inline void fail(){throw std::invalid_argument("Invalid packed ribbon image");}
 inline QByteArray image_bytes(const RibbonImage &image){image.validate();QByteArray bytes;QDataStream s(&bytes,QIODevice::WriteOnly);s.setByteOrder(QDataStream::LittleEndian);s.setFloatingPointPrecision(QDataStream::SinglePrecision);s<<quint32(0x42545231)<<qint32(image.width)<<qint32(image.height)<<QString::fromStdString(image.name);for(const auto &p:image.pixels)for(float v:p)s<<v;if(s.status()!=QDataStream::Ok||bytes.size()>image_budget())fail();return bytes;}
 inline QString hash(const QByteArray &bytes){return QString::fromLatin1(QCryptographicHash::hash(bytes,QCryptographicHash::Sha256).toHex());}
 inline std::shared_ptr<const RibbonImage> read_image(const QString &encoded,const QString &expected){
- const auto base64=encoded.toLatin1();if(base64.isEmpty()||std::uint64_t(base64.size())>ResourceBudget{}.ram())fail();const auto packed=QByteArray::fromBase64(base64);if(packed.toBase64()!=base64||packed.size()<4||qFromBigEndian<quint32>(reinterpret_cast<const uchar *>(packed.constData()))>image_budget())fail();const auto bytes=qUncompress(packed);if(bytes.isEmpty()||bytes.size()>image_budget()||hash(bytes)!=expected)fail();
- QDataStream s(bytes);s.setByteOrder(QDataStream::LittleEndian);s.setFloatingPointPrecision(QDataStream::SinglePrecision);quint32 magic;qint32 width,height;QString name;s>>magic>>width>>height>>name;if(magic!=0x42545231||width<1||height<1||name.isEmpty())fail();const auto needed=resource_product(resource_product(width,height),sizeof(std::array<float,4>));if(needed>std::uint64_t(bytes.size()-s.device()->pos()))fail();require_texture_ram(resource_sum(needed,resource_product(name.size(),16)),"Ribbon decoded image");auto image=std::make_shared<RibbonImage>();image->width=width;image->height=height;image->name=name.toStdString();image->pixels.resize(std::size_t(width)*height);for(auto &p:image->pixels)for(float &v:p)s>>v;if(s.status()!=QDataStream::Ok||!s.atEnd())fail();image->validate();return image;
+ const auto base64=encoded.toLatin1();if(base64.isEmpty())fail();const auto packed=QByteArray::fromBase64(base64);if(packed.toBase64()!=base64||packed.size()<4||qFromBigEndian<quint32>(reinterpret_cast<const uchar *>(packed.constData()))>image_budget())fail();const auto bytes=qUncompress(packed);if(bytes.isEmpty()||bytes.size()>image_budget()||hash(bytes)!=expected)fail();
+ QDataStream s(bytes);s.setByteOrder(QDataStream::LittleEndian);s.setFloatingPointPrecision(QDataStream::SinglePrecision);quint32 magic;qint32 width,height;QString name;s>>magic>>width>>height>>name;if(magic!=0x42545231||width<1||height<1||name.isEmpty())fail();const auto needed=resource_product(resource_product(width,height),sizeof(std::array<float,4>));if(needed>std::uint64_t(bytes.size()-s.device()->pos()))fail();auto image=std::make_shared<RibbonImage>();image->width=width;image->height=height;image->name=name.toStdString();image->pixels.resize(std::size_t(width)*height);for(auto &p:image->pixels)for(float &v:p)s>>v;if(s.status()!=QDataStream::Ok||!s.atEnd())fail();image->validate();return image;
 }
 struct WriteContext{QJsonObject images;std::map<const RibbonImage *,QString> identities;};
 struct ReadContext{std::map<QString,std::shared_ptr<const RibbonImage>> images;};
@@ -30,8 +30,8 @@ class RibbonWriteScope {
 class RibbonReadScope {
  ribbon_io::ReadContext context_;ribbon_io::ReadContext *before_;
  public:explicit RibbonReadScope(const QJsonObject &pool):before_(ribbon_io::reader){
-   require_texture_ram(resource_product(pool.size(),sizeof(std::shared_ptr<const RibbonImage>)),"Ribbon image descriptors");std::uint64_t total=0;
-   for(auto it=pool.begin();it!=pool.end();++it){if(it.key().size()!=64||!it.value().isString())ribbon_io::fail();auto image=ribbon_io::read_image(it.value().toString(),it.key());total+=image->pixels.size()*16;require_texture_ram(total,"Ribbon image pool");context_.images.emplace(it.key(),std::move(image));}ribbon_io::reader=&context_;
+   std::uint64_t total=0;
+   for(auto it=pool.begin();it!=pool.end();++it){if(it.key().size()!=64||!it.value().isString())ribbon_io::fail();auto image=ribbon_io::read_image(it.value().toString(),it.key());total+=image->pixels.size()*16;context_.images.emplace(it.key(),std::move(image));}ribbon_io::reader=&context_;
  }~RibbonReadScope(){ribbon_io::reader=before_;}
 };
 inline QJsonObject ribbon_json(const RibbonSettings &s){

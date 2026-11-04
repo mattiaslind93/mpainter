@@ -1,5 +1,5 @@
 #pragma once
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include <QtCore> // Qt containers must precede Blender's AT debugging macro.
 #include "BKE_idprop.hh"
 #include "DNA_ID.h"
@@ -18,14 +18,14 @@ inline QByteArray native_json_property_bytes(const blender::IDProperty &property
  const auto *data=static_cast<const char *>(property.data.pointer);
  if(MEM_allocN_len(data)<std::size_t(property.totallen))throw std::invalid_argument(std::string(purpose)+": invalid native string span");
  const int size=native_json_string_size(std::uint64_t(property.len-1),purpose);
- require_texture_ram(resource_product(size,3),purpose);
+
  if(data[size]!='\0'||std::memchr(data,'\0',std::size_t(size)))throw std::invalid_argument(std::string(purpose)+": invalid native string terminator");
  return QByteArray(data,size);
 }
 inline blender::IDProperty *new_native_json_property(const QByteArray &bytes,const char *name,const char *purpose){
  const int size=native_json_string_size(std::uint64_t(bytes.size()),purpose);
  if(bytes.contains('\0'))throw std::invalid_argument(std::string(purpose)+": embedded native string terminator");
- require_texture_ram(resource_sum(size,1),purpose);
+
  return blender::IDP_NewString(blender::StringRef(bytes.constData(),size),name);
 }
 }

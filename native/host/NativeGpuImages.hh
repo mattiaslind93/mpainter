@@ -62,7 +62,7 @@ inline void prepare_native_gpu_image(blender::Image *image){
  const bool known=coherent_vram_report(total_kb,free_kb);
  const auto available=known?std::uint64_t(free_kb)*1024:texture_available_ram_bytes();
  const auto required=(std::uint64_t(width)*height*count*(format==gpu::TextureFormat::SFLOAT_32_32_32_32?16:8)*4+2)/3;
- if(required>available/2){texture_memory_refresh_needed=true;throw std::length_error(std::string(image->id.name+2)+": full-resolution GPU target needs "+std::to_string((required+1048575)/1048576)+" MiB; safe available "+(known?"VRAM":"RAM")+" budget is "+std::to_string((available/2+1048575)/1048576)+" MiB. Close other GPU documents/applications or reduce texture-set size.");}
+
  auto *texture=tiled?GPU_texture_create_2d_array(image->id.name+2,width,height,count,9999,format,GPU_TEXTURE_USAGE_GENERAL,nullptr):GPU_texture_create_2d(image->id.name+2,width,height,9999,format,GPU_TEXTURE_USAGE_GENERAL,nullptr);
  if(!texture)throw std::bad_alloc();if(*slot)BKE_image_free_gputextures(image);*slot=texture;const float empty[4]={};GPU_texture_clear(texture,GPU_DATA_FLOAT,empty);GPU_texture_filter_mode(texture,true);GPU_texture_anisotropic_filter(texture,true);GPU_texture_mipmap_range(texture,0,0);
  if(tiled){const int size=last-1000;std::vector<float> mapping(std::size_t(size)*8);for(int i=0;i<size;++i)mapping[i*4]=-1;

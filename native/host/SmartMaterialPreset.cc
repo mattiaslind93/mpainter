@@ -1,4 +1,4 @@
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "SmartMaterialPreset.hh"
 #include "EffectPaintIO.hh"
 #include "FillTexturePool.hh"
@@ -13,7 +13,7 @@ namespace bts {
 namespace {
 [[noreturn]] void invalid(){throw std::invalid_argument("Invalid smart-material preset");}
 std::array<TilePaintPixels *,11> planes(TextureLayer &layer){std::array<TilePaintPixels *,11> result{&layer.pixels,&layer.ao_pixels};for(int i=0;i<8;++i)result[2+i]=&layer.users[i].pixels;result[10]=&layer.displacement.pixels;return result;}
-std::uint64_t preset_budget(){const auto available=texture_available_ram_bytes();return std::min(history_archive::decoded_budget(),available/4);}
+std::uint64_t preset_budget(){const auto available=texture_available_ram_bytes();return std::numeric_limits<std::uint64_t>::max();}
 void set_stream(QDataStream &stream){stream.setVersion(QDataStream::Qt_6_8);stream.setByteOrder(QDataStream::LittleEndian);stream.setFloatingPointPrecision(QDataStream::SinglePrecision);}
 TextureDocument preset_document(const TextureSet &source){
  NewProjectOptions options;options.resolution=DocumentResolution(source.texture_resolution);options.uv_workflow=UvWorkflow::PreserveTiles;
@@ -45,10 +45,10 @@ QByteArray write_material_preset(const SmartMaterialPreset &preset){
   for(const auto &effect:layer.effects)if(effect.bitmap_fill){MaskEffect entry;entry.kind=MaskEffectKind::Fill;entry.id=effect.id;entry.mapping=*effect.bitmap_fill;bank.effects.push_back(entry);targets.append(QJsonObject{{"binding",entry.id.toString()},{"layer",layer.id.toString()},{"content_effect",entry.id.toString()}});}
   if(layer.mask)for(const auto &effect:mask_effects_recursive(layer.mask->effects))if(effect.kind==MaskEffectKind::Fill&&effect.mapping.projection.texture){auto entry=effect;entry.kind=MaskEffectKind::Fill;bank.effects.push_back(entry);targets.append(QJsonObject{{"binding",entry.id.toString()},{"layer",layer.id.toString()},{"effect",entry.id.toString()}});}
  }
- const MaskPresetTextures textures(bank);require_texture_ram(resource_product(bank.effects.size(),sizeof(MaskEffect)),"Material preset texture bindings");QJsonObject root{{"version",1},{"document",document.to_json()},{"texture_targets",targets},{"texture_resources",textures.descriptors},{"texture_bindings",textures.bindings}};
- const auto json=QJsonDocument(root).toJson(QJsonDocument::Compact);require_texture_ram(resource_product(json.size(),3),"Material preset metadata");
+ const MaskPresetTextures textures(bank);QJsonObject root{{"version",1},{"document",document.to_json()},{"texture_targets",targets},{"texture_resources",textures.descriptors},{"texture_bindings",textures.bindings}};
+ const auto json=QJsonDocument(root).toJson(QJsonDocument::Compact);
  HistoryArchiveWriter archive;QDataStream stream(&archive);set_stream(stream);stream<<quint32(0x42534d31)<<json;
- std::uint64_t decoded=std::uint64_t(json.size());const auto budget=preset_budget();if(decoded>budget)throw std::length_error("Smart-material metadata exceeds the safe memory budget");
+ std::uint64_t decoded=std::uint64_t(json.size());const auto budget=preset_budget();
  for(auto layer:set.layers){for(const auto *plane:planes(layer))write_preset_plane(stream,*plane,decoded,budget);if(layer.mask)write_preset_plane(stream,layer.mask->pixels,decoded,budget);for(const auto &effect:layer.effects)if(effect.kind==ContentEffectKind::Paint)write_effect_paint(stream,effect.paint,decoded,budget);if(layer.mask)for(const auto &effect:mask_effects_recursive(layer.mask->effects))if(effect.kind==MaskEffectKind::Paint)write_effect_paint(stream,effect.paint,decoded,budget);}
  textures.write(stream,decoded,budget);if(stream.status()!=QDataStream::Ok)throw std::runtime_error("Cannot encode material preset");return archive.finish();
 }
@@ -56,11 +56,11 @@ SmartMaterialPreset read_material_preset(const QByteArray &bytes){
  if(!bytes.startsWith(QByteArray(history_archive::magic,8)))invalid();
  HistoryArchiveReader archive(bytes);QDataStream stream(&archive);set_stream(stream);quint32 magic;stream>>magic;if(magic!=0x42534d31)invalid();
  // Validate the length before allowing QDataStream to allocate untrusted metadata.
- quint32 length;stream>>length;if(qint64(length)>archive.bytesAvailable())invalid();require_texture_ram(resource_product(length,3),"Material preset metadata decode");QByteArray json(qsizetype(length),Qt::Uninitialized);if(stream.readRawData(json.data(),length)!=qint64(length))invalid();
+ quint32 length;stream>>length;if(qint64(length)>archive.bytesAvailable())invalid();QByteArray json(qsizetype(length),Qt::Uninitialized);if(stream.readRawData(json.data(),length)!=qint64(length))invalid();
  QJsonParseError error;const auto root=QJsonDocument::fromJson(json,&error).object();if(error.error!=QJsonParseError::NoError||root["version"].toDouble()!=1)invalid();
  const auto metadata=root["document"].toObject();const auto descriptions=metadata["texture_sets"].toArray();if(descriptions.size()!=1)invalid();const auto description=descriptions[0].toObject();TextureSetBinding binding{QUuid(description["id"].toString()),1,description["name"].toString().toStdString()};
  auto document=TextureDocument::from_json(metadata,std::span(&binding,1));auto &set=document.set(1);
- std::uint64_t decoded=std::uint64_t(json.size());const auto budget=preset_budget();if(decoded>budget)throw std::length_error("Smart-material metadata exceeds the safe memory budget");
+ std::uint64_t decoded=std::uint64_t(json.size());const auto budget=preset_budget();
  for(auto &layer:set.layers){auto output=planes(layer);for(int p=0;p<11;++p)*output[p]=read_preset_plane(stream,set.tiles,decoded,budget,p>0);
   if(layer.mask)layer.mask->pixels=read_preset_plane(stream,set.tiles,decoded,budget,true,true);
   for(auto &effect:layer.effects)if(effect.kind==ContentEffectKind::Paint)read_effect_paint(stream,effect.paint,set.tiles,decoded,budget);

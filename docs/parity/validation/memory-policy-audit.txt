@@ -1,0 +1,19 @@
+Final focused memory/resolution policy audit
+Production native sources; test/demo/proof files excluded.
+
+Removed admission/settings literals: no matches
+
+
+Automatic downscale/proxy literals: no matches
+
+
+Manual production-path review:
+- ResourceAvailability reads actual free RAM/VRAM, with no 50% fraction or configurable admission cap.
+- CustomChannel::add_displacement_channel has no memory admission; native 8K installation/compositing passed with simulated9GiB RAM and1byte VRAM.
+- MeshBakeDialog/MeshBaker/AutoBakeEngine use requested dimensions, sequential maps/sets/UDIM, GPU batching and CPU fallback.
+- TextureResidencyPolicy returns mip0 for every region; ViewportResidency applies that full-resolution plan.
+- FillTextureIO decodes source dimensions; export uses project dimensions unless the caller explicitly selects a different output size. Supersampling resolves back to the requested bake dimensions.
+- Path/paint/input cache capacity is current available memory plus owned reusable storage. Exhausted eviction attempts actual allocation rather than a preflight refusal.
+- Remaining budget names reviewed: actual availability/eviction, explicit diagnostic injection, per-frame/transfer scheduling, UINT32 archive bounds and one-pixel packet validity. None is a configured production memory policy.
+- GPU device texture/SSBO limits and integer/format validity checks remain structural bounds; GPU bake failure falls back to CPU.
+No further source changes required.

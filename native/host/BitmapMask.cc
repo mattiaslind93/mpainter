@@ -1,4 +1,4 @@
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "TextureExtent.hh"
 #include "BitmapMask.hh"
 #include "ImageSequence.hh"
@@ -25,7 +25,7 @@ std::shared_ptr<const AlphaBitmap> read_bitmap_alpha(const QString &path)
   const QFileInfo file(path);
   if(!file.isAbsolute()||!file.isFile()||file.size()<=0)
     throw std::runtime_error("Choose a readable nonempty image file");
-  require_texture_ram(resource_product(file.size(),2),"Bitmap source read");
+
   QFile source(path);if(!source.open(QIODevice::ReadOnly))throw std::runtime_error("Cannot read alpha source");const auto bytes=source.readAll();if(bytes.size()!=file.size())throw std::runtime_error("Incomplete alpha source read");return read_bitmap_alpha_bytes(bytes,file.completeBaseName());
 }
 std::shared_ptr<const AlphaBitmap> read_bitmap_alpha_bytes(const QByteArray &bytes,const QString &name) {
@@ -36,7 +36,7 @@ std::shared_ptr<const AlphaBitmap> read_bitmap_alpha_bytes(const QByteArray &byt
   const auto description=name.toUtf8();const auto *data=reinterpret_cast<const unsigned char *>(bytes.constData());
   Buffer header(IMB_load_image_from_memory(data,bytes.size(),ImBufFlags::Test|ImBufFlags::AlphaChannelPacked|ImBufFlags::NoColorspaceConvert,description.constData()),IMB_freeImBuf);
   if(!header||header->x<1||header->y<1)throw std::runtime_error("Cannot decode image dimensions");
-  require_texture_ram(resource_product(resource_product(header->x,header->y),sizeof(float)*5),"Bitmap decode and scalar pixels");
+
   Buffer image(IMB_load_image_from_memory(data,bytes.size(),ImBufFlags::AlphaChannelPacked|ImBufFlags::NoColorspaceConvert,description.constData()),IMB_freeImBuf);
   if(!image||image->channels<1||image->channels>4||(!image->float_data()&&!image->byte_data()))throw std::runtime_error("Image has no readable pixel data");
   auto result=std::make_shared<AlphaBitmap>();result->width=image->x;result->height=image->y;result->name=name.toStdString();
@@ -53,7 +53,7 @@ LayerMask load_bitmap_mask(const QString &path,int resolution,int tile,bool bili
   if(!valid_sparse_texture_extent(resolution,128)||tile<1001||tile>2000)throw std::runtime_error("Invalid mask dimensions or UV tile");
   const auto image=read_bitmap_alpha(path);
   const auto texels=texture_texel_count(resolution,resolution);
-  require_texture_ram(resource_sum(resource_product(texels,sizeof(float)*4),resource_product(sparse_texture_page_count(resolution),PaintPixels::page_side*PaintPixels::page_side*sizeof(PaintPixels::Pixel))),"Bitmap mask RGBA scratch and authored pages");
+
   std::vector<float> rgba(std::size_t(resource_product(texels,4)),0);
   for(int y=0;y<resolution;++y)for(int x=0;x<resolution;++x) {
     const auto i=(std::size_t(y)*resolution+x)*4;rgba[i]=image->sample((x+.5)/resolution,(y+.5)/resolution,bilinear);rgba[i+3]=1;

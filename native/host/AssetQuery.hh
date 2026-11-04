@@ -6,7 +6,7 @@ namespace bts {
 class AssetQuery {
  public:
   explicit AssetQuery(const QString &query){
-    require_texture_ram(resource_product(query.size(),sizeof(QChar)+sizeof(Clause)),"Shelf query");QString token;bool quoted=false;
+    QString token;bool quoted=false;
     const auto finish=[&]{if(token.isEmpty())return;Clause clause;const auto colon=token.indexOf(':');if(colon>=0){clause.field=token.left(colon).toLower();token=token.mid(colon+1);if(!QStringList{"n","s","u","p"}.contains(clause.field))valid_=false;}if(token.endsWith('=')){clause.exact=true;token.chop(1);}clause.pattern=token;if(token.isEmpty())valid_=false;clauses_.push_back(clause);token.clear();};
     for(qsizetype i=0;i<query.size();++i){const auto c=query[i];if(c=='\\'&&i+1<query.size()&&(query[i+1]=='"'||query[i+1]=='\\')){token+=query[++i];continue;}if(c=='"'){quoted=!quoted;continue;}if(c.isSpace()&&!quoted)finish();else token+=c;}finish();if(quoted)valid_=false;
   }

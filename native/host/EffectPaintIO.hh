@@ -1,12 +1,12 @@
 #include "TextureExtent.hh"
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #pragma once
 #include "EffectPaint.hh"
 #include <QDataStream>
 namespace bts {
 inline void write_effect_paint(QDataStream &stream,const EffectPaint &paint,std::uint64_t &decoded,std::uint64_t budget){
   if(!paint.loaded)throw std::invalid_argument("Unloaded effect paint");
-  for(int i=0;i<11;++i){stream<<quint32(paint.plane(i).tiles().size());for(const auto &[number,pixels]:paint.plane(i).tiles()){quint32 pages=0;pixels.visit_pages([&](int,std::uint32_t,std::span<const PaintPixels::Pixel>){++pages;});decoded+=std::uint64_t(pages)*64*64*16;if(decoded>budget)throw std::length_error("Effect paint exceeds raster budget");stream<<qint32(number)<<quint32(pages);pixels.visit_pages([&](int channel,std::uint32_t key,std::span<const PaintPixels::Pixel> values){stream<<quint8(channel)<<quint32(key);for(const auto &pixel:values)for(float v:pixel)stream<<v;});}}
+  for(int i=0;i<11;++i){stream<<quint32(paint.plane(i).tiles().size());for(const auto &[number,pixels]:paint.plane(i).tiles()){quint32 pages=0;pixels.visit_pages([&](int,std::uint32_t,std::span<const PaintPixels::Pixel>){++pages;});decoded+=std::uint64_t(pages)*64*64*16;stream<<qint32(number)<<quint32(pages);pixels.visit_pages([&](int channel,std::uint32_t key,std::span<const PaintPixels::Pixel> values){stream<<quint8(channel)<<quint32(key);for(const auto &pixel:values)for(float v:pixel)stream<<v;});}}
 }
 inline void read_effect_paint(QDataStream &stream,EffectPaint &destination,const std::set<int> &allowed,std::uint64_t &decoded,std::uint64_t budget,bool mask=false){
   const auto fail=[](){throw std::invalid_argument("Invalid packed effect paint");};auto expected=effect_paint_json(destination);const int plane_count=expected["planes"].toArray().size();if(plane_count==10){auto planes=expected["planes"].toArray();planes.append(QJsonArray{});expected["planes"]=planes;}if(expected.contains("strokes")&&!expected.contains("displacement_strokes"))expected["displacement_strokes"]=QJsonValue{};EffectPaint result;result.resolution=destination.resolution;result.strokes=destination.strokes;result.user_strokes=destination.user_strokes;result.displacement_strokes=destination.displacement_strokes;

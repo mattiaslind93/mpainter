@@ -1,4 +1,4 @@
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "SceneSnapshot.hh"
 
 #include <algorithm>
@@ -320,7 +320,7 @@ SceneSnapshot read_scene_snapshot(blender::bContext *context,
     if(uv.is_empty()){++result.meshes_without_uvs;if(!include_unmapped)continue;}
     const auto triangles = mesh->corner_tris();
     const auto triangle_faces = mesh->corner_tri_faces();
-    require_texture_ram(resource_product(resource_sum(result.uv_triangles.size(),triangles.size()),sizeof(UvFaceTriangle)),"UV scene snapshot");
+
     result.uv_triangles.reserve(result.uv_triangles.size() + triangles.size());
     const auto corner_normals=mesh->corner_normals();const auto normal_to_world=math::transpose(float3x3(object->world_to_object()));
     for (const int index : triangles.index_range()) {

@@ -26,7 +26,7 @@ BrowserFileType browser_file_type(const QString &path){
   // .ogg is ambiguous upstream (MOV_is_movie_file reads its header). Keep the
   // common audio icon here: file-icon lookup must never probe media on disk.
   add(BrowserFileType::Sound,"wav ogg oga mp3 mp2 ac3 aac flac wma eac3 aif aiff m4a mka opus");
-  add(BrowserFileType::SmartMaterial,"spsm");return values;
+  add(BrowserFileType::SmartMaterial,"spsm");add(BrowserFileType::MaterialArchive,"sbsar");return values;
  }();
  return extensions.value(suffix,BrowserFileType::Blank);
 }

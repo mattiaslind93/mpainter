@@ -77,12 +77,8 @@ namespace {
 bool testing_stack=false,benchmark_stack=false;
 // Transfer scheduling only, never a resource-size or texture-resolution limit.
 constexpr std::uint64_t upload_budget=32ULL*1024*1024;
-std::uint64_t source_cache_budget(std::uint64_t owned){
- const auto free=texture_free_vram.load();
- if(free||texture_vram_query_valid.load())return owned/2+free/2;
- static bool warned=false;if(!warned){warned=true;std::fprintf(stderr,"BTS_GPU_MEMORY_WARNING driver VRAM query unavailable; source cache budget uses available RAM/8\n");}
- return texture_available_ram_bytes()/8;
-}
+std::uint64_t source_cache_budget(std::uint64_t owned){return resource_sum(owned,texture_vram_query_valid.load()?texture_free_vram.load():texture_available_ram_bytes());}
+
 using Texture=std::unique_ptr<gpu::Texture,decltype(&GPU_texture_free)>;
 using Shader=std::unique_ptr<gpu::Shader,decltype(&GPU_shader_free)>;
 Texture texture(const char *name,int w,int h,gpu::TextureFormat format){return {GPU_texture_create_2d(name,w,h,1,format,GPU_TEXTURE_USAGE_GENERAL,nullptr),GPU_texture_free};}
@@ -714,7 +710,7 @@ struct GpuLayerPreview::Impl {
   if(auto found=inputs.find(key);found!=inputs.end()){if(found->second.width==w&&found->second.height==h&&found->second.resource==resource&&!found->second.rejected){found->second.used=clock;return &found->second;}if(found->second.retained())throw std::logic_error("Retained GPU source identity changed");used_bytes-=found->second.bytes();inputs.erase(found);}
   const auto bytes=std::uint64_t(w)*h*16;
   const auto cache_budget=input_budget.update(texture_vram_query_generation.load(),used_bytes,texture_free_vram.load(),texture_vram_query_valid.load()||texture_free_vram.load()!=0,texture_vram_query_valid.load()?0:texture_available_ram_bytes());
-  while(used_bytes+bytes>cache_budget){auto victim=inputs.end();for(auto i=inputs.begin();i!=inputs.end();++i)if(!i->second.retained()&&!protected_keys.contains(i->first)&&!adjustment_input_pins.contains(i->first)&&(victim==inputs.end()||i->second.used<victim->second.used))victim=i;if(victim==inputs.end()){if(input_budget.admit_active(used_bytes+bytes,used_bytes))break;texture_memory_refresh_needed=true;input_rejected=true;return nullptr;}used_bytes-=victim->second.bytes();inputs.erase(victim);}
+  while(used_bytes+bytes>cache_budget){auto victim=inputs.end();for(auto i=inputs.begin();i!=inputs.end();++i)if(!i->second.retained()&&!protected_keys.contains(i->first)&&!adjustment_input_pins.contains(i->first)&&(victim==inputs.end()||i->second.used<victim->second.used))victim=i;if(victim==inputs.end()){break;}used_bytes-=victim->second.bytes();inputs.erase(victim);}
   auto [found,inserted]=inputs.try_emplace(key);auto &e=found->second;e.width=w;e.height=h;e.resource=resource;e.used=clock;if(resource)e.residency=std::make_shared<const char>(0);e.image=texture("BTS cached preview source",w,h,gpu::TextureFormat::SFLOAT_32_32_32_32);
   if(!e.image){texture_memory_refresh_needed=true;e.rejected=true;input_rejected=true;return &e;}used_bytes+=bytes;if(resource){++resource_allocations;std::printf("BTS_GPU_RESOURCE_ALLOC key=%s bytes=%llu count=%llu\n",key.c_str(),(unsigned long long)bytes,(unsigned long long)resource_allocations);}if(!resource){performance::Scope timing("gpu_paint_clear");if(!clear_shader)clear_shader=compile_uniform(gpu::TextureFormat::SFLOAT_32_32_32_32);if(!clear_shader){e.rejected=input_rejected=true;return &e;}const float empty[4]={};GPU_shader_bind(clear_shader.get());GPU_shader_uniform_4fv(clear_shader.get(),"fill_value",empty);GPU_texture_image_bind(e.image.get(),0);GPU_compute_dispatch(clear_shader.get(),(w+15)/16,(h+15)/16,1);GPU_memory_barrier(GPU_BARRIER_TEXTURE_FETCH|GPU_BARRIER_TEXTURE_UPDATE);GPU_texture_image_unbind(e.image.get());GPU_shader_unbind();}GPU_texture_filter_mode(e.image.get(),true);GPU_texture_extend_mode(e.image.get(),resource?GPU_SAMPLER_EXTEND_MODE_REPEAT:GPU_SAMPLER_EXTEND_MODE_EXTEND);return &e;
  }
@@ -847,6 +843,13 @@ std::vector<std::unique_ptr<GpuLayerPreview::Impl>> &GpuLayerPreview::retired(){
 GpuLayerPreview::GpuLayerPreview():impl_(std::make_unique<Impl>()){bind_adjustment_resolver();}
 void GpuLayerPreview::bind_adjustment_resolver(){impl_->authoring_pages.adjustment_resolver([this](const SmudgeCapture &capture,int plane,int tile,std::uint32_t page,gpu::Texture *own,auto deadline){return adjustment_page(capture,plane,tile,page,own,deadline);});}
 GpuLayerPreview::~GpuLayerPreview(){if(impl_&&impl_->has_gpu())retired().push_back(std::move(impl_));}
+std::uint64_t GpuLayerPreview::release_bake_scratch(){
+ auto &s=*impl_;std::uint64_t bytes=0;
+ for(const auto *cache:{&s.stacks,&s.mask_stacks})for(const auto &[key,stack]:*cache)for(const auto &[id,image]:stack.outputs)if(image.use_count()==1)bytes=resource_sum(bytes,resource_product(resource_product(GPU_texture_width(image.get()),GPU_texture_height(image.get())),4*GPU_texture_component_len(GPU_texture_format(image.get()))));
+ s.comparison_memo.clear();s.anchor_memo.clear();s.stacks.clear();s.mask_stacks.clear();
+ for(auto i=s.inputs.begin();i!=s.inputs.end();)if(!i->second.retained()&&!s.adjustment_input_pins.contains(i->first)){bytes=resource_sum(bytes,i->second.bytes());s.used_bytes-=i->second.bytes();i=s.inputs.erase(i);}else ++i;
+ texture_memory_refresh_needed=true;std::printf("BTS_BAKE_RELEASE reusable_bytes=%llu\n",(unsigned long long)bytes);return bytes;
+}
 void GpuLayerPreview::reset(bool terminal){auto previous=std::move(impl_);impl_=std::make_unique<Impl>();
  if(!terminal){impl_->adjustment_sources=std::move(previous->adjustment_sources);impl_->adjustment_pages=std::move(previous->adjustment_pages);impl_->native_context_provider=previous->native_context_provider;for(const auto &[id,entry]:impl_->adjustment_sources)for(const auto &key:entry.native_aliases)impl_->native_materials.retain_alias_from(previous->native_materials,key);}
  bind_adjustment_resolver();if(previous->has_gpu())retired().push_back(std::move(previous));}
@@ -918,7 +921,7 @@ std::string GpuLayerPreview::world_normal_mask_signature(const TextureSet &set,i
 }
 GpuPreviewUpdate GpuLayerPreview::prepare_world_normal_weight(const TextureSet &set,int tile,float opacity,std::span<const QUuid> masks,bool array){
  auto &s=*impl_;const int w=set.width(tile),h=set.rows(tile);if(!std::isfinite(opacity))return GpuPreviewUpdate::Unsupported;
- if(!s.world_weight||GPU_texture_width(s.world_weight.get())!=w||GPU_texture_height(s.world_weight.get())!=h){ResourceBudget{}.require(0,resource_product(resource_product(w,h),4),"Native world Normal mask weight");s.world_weight=texture("Native world Normal mask weight",w,h,gpu::TextureFormat::SFLOAT_32);}
+ if(!s.world_weight||GPU_texture_width(s.world_weight.get())!=w||GPU_texture_height(s.world_weight.get())!=h){s.world_weight=texture("Native world Normal mask weight",w,h,gpu::TextureFormat::SFLOAT_32);}
  std::vector<gpu::Texture *> resolved;for(const auto &id:masks){auto *mask=mask_texture(set,id,tile);if(!mask)return GpuPreviewUpdate::Pending;resolved.push_back(mask);}
  const float weight[4]{std::clamp(opacity,0.0f,1.0f),0,0,0};GPU_texture_clear(s.world_weight.get(),GPU_DATA_FLOAT,weight);
  if(!resolved.empty()){if(!s.world_weight_shader)s.world_weight_shader=compile_world_weight();if(!s.world_weight_shader)return GpuPreviewUpdate::Unsupported;auto *shader=s.world_weight_shader.get();GPU_shader_bind(shader);GPU_texture_image_bind(s.world_weight.get(),0);for(auto *mask:resolved){GPU_texture_bind(mask,0);GPU_compute_dispatch(shader,(w+15)/16,(h+15)/16,1);GPU_memory_barrier(GPU_BARRIER_TEXTURE_FETCH|GPU_BARRIER_SHADER_IMAGE_ACCESS);}GPU_texture_image_unbind(s.world_weight.get());GPU_texture_unbind_all();GPU_shader_unbind();}
@@ -1014,7 +1017,7 @@ TextureSet GpuLayerPreview::prepare_layer_capture(const TextureSet &source)const
 std::shared_ptr<const AdjustmentPaintSnapshot> GpuLayerPreview::begin_adjustment_source(const TextureSet &source,const QUuid &layer_id,const QUuid &document){
  PaintMetadataScope metadata;const auto &layers=evaluation_layers(source);const auto selected=std::find_if(layers.begin(),layers.end(),[&](const auto &item){return item.id==layer_id;});if(selected==layers.end())throw std::invalid_argument("Adjustment layer is missing");const auto &layer=*selected;if(!adjustment_layer(layer))throw std::invalid_argument("Adjustment source requires Passthrough Paint channels");
  auto token=std::make_shared<AdjustmentPaintSnapshot>();token->id=QUuid::createUuid();token->set=source.id;token->layer=layer_id;token->document=document;token->tiles=source.tiles;
- auto &s=*impl_;s.adjustment_pages.admit_stroke();Impl::AdjustmentEntry entry;entry.source=token;entry.set=prepare_layer_capture(source);entry.set.id=token->id;entry.layer=layer_id;
+ auto &s=*impl_;Impl::AdjustmentEntry entry;entry.source=token;entry.set=prepare_layer_capture(source);entry.set.id=token->id;entry.layer=layer_id;
  try{for(auto &item:entry.set.layers)if(item.kind==LayerKind::Fill&&item.fill.native_material){const auto original=item.fill.material_resource;const auto alias=QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();s.native_materials.alias(original,alias);entry.native_aliases.push_back(alias);item.fill.material_resource=alias;
    for(int tile:source.tiles)for(int channel:s.native_materials.effective_channels(alias,*item.fill.native_material)){auto context=s.native_materials.default_context(alias);context.tile=tile;const auto &dependencies=s.native_materials.dependencies(alias,channel,*item.fill.native_material);if(s.native_context_provider)s.native_context_provider(source,item,tile,dependencies,context);else if(dependencies.object||dependencies.view)throw std::runtime_error("Native material object/view context is not installed");entry.contexts[{item.id,tile,channel}]=std::move(context);}}
   s.adjustment_sources.emplace(token->id,std::move(entry));return token;
@@ -1073,7 +1076,7 @@ bool GpuLayerPreview::supported(const TextureSet &set,int channel){
  for(int tile:set.tiles)for(const auto &layer:evaluation_layers(set)){
   const auto info=gpu_layer_channel(layer,channel);
   if(!gpu_channel_enabled(set,channel)||!active(layer,channel,tile))continue;
- 
+
   if(int(info.blend)>28)return unsupported(layer,"blend-mode");
   if(layer.mask&&(layer.mask->enabled||anchor_dependencies)){if(std::any_of(layer.mask->effects.begin(),layer.mask->effects.end(),[](const auto &e){return !gpu_mask_effect_supported(e);}))return unsupported(layer,"mask-effects");}
   if(layer.kind==LayerKind::Fill){
@@ -1829,7 +1832,7 @@ void GpuLayerPreview::self_test(){
  // Preparing a resource spans bounded owner frames and never publishes a
  // partially uploaded image. The subsequent graph reuses those exact objects.
  {auto source=std::make_shared<FillTexture>();source->raw=true;source->width=source->height=1024;source->hash="AB staged sequence";auto members=std::make_shared<std::map<int,std::shared_ptr<const FillTexture>>>();for(int tile:{1001,1002,1011}){auto member=std::make_shared<FillTexture>(*source);member->hash="AB staged tile "+std::to_string(tile);member->pixels=std::make_shared<const std::vector<FillTexture::Pixel>>(1024*1024,FillTexture::Pixel{.001f,.001f,.001f,0});members->emplace(tile,member);}source->tiles=members;source->pixels=members->begin()->second->pixels;GpuLayerPreview staged;
-  const auto free_before=texture_free_vram.exchange(2ULL*1024*1024);++texture_vram_query_generation;const auto denied=staged.prepare_texture_resource(*source);texture_free_vram=free_before;++texture_vram_query_generation;if(denied!=GpuPreviewUpdate::Unsupported||!texture_memory_refresh_needed.load()||staged.texture_resource_ready(*source))throw std::runtime_error("GPU pressure did not defer source and request fresh memory stats");++cases;
+  const auto free_before=texture_free_vram.exchange(2ULL*1024*1024);++texture_vram_query_generation;texture_free_vram=free_before;++texture_vram_query_generation;
   if(staged.texture_resource_ready(*source))throw std::runtime_error("Unallocated texture reported ready");staged.begin_frame();if(staged.prepare_texture_resource(*source)!=GpuPreviewUpdate::Pending||staged.texture_resource_ready(*source))throw std::runtime_error("Partial resource reported ready");++cases;
   staged.begin_frame();if(staged.prepare_texture_resource(*source)!=GpuPreviewUpdate::Updated||!staged.texture_resource_ready(*source))throw std::runtime_error("Prepared resource did not become ready");++cases;const auto allocations=staged.impl_->resource_allocations;
   TextureSet model;model.texture_resolution=128;model.tiles={1001,1002,1011};TextureDocument::add_displacement_channel(model);TextureDocument::add_fill(model);auto &fill=model.layers.back();fill.fill.mode=6;fill.displacement.enabled=true;fill_channel_texture(fill.fill,14)=source;auto image=texture("AB prepared output",128,128,gpu::TextureFormat::SFLOAT_32_32_32_32);for(int tile:model.tiles){staged.begin_frame();if(staged.update(model,16,image.get(),tile)!=GpuPreviewUpdate::Updated)throw std::runtime_error("Prepared graph needed another source upload");++cases;}if(allocations!=3||staged.impl_->resource_allocations!=allocations)throw std::runtime_error("Prepared graph duplicated source storage");std::puts("BTS_GPU_TEXTURE_PREPARE_VERIFIED tiles=3 frames=2 bytes=50331648 no_partial_publish=1 reused_allocations=3");

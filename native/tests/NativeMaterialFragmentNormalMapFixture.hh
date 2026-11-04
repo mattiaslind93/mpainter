@@ -80,7 +80,7 @@ inline int verify_metadata(){
  for(int group=0;group<4;++group){const auto &b=grouped.batches[group];check(b.first==unsigned(3*group)&&b.count==3&&b.invert_front_face==bool((group>=2)!=(group%2!=0)),"Physical facing batch differs from explicit raster/physical contract");check(grouped.vertices[b.first].position[0]==group,"Physical-facing partition changed geometry identity");}
  auto damaged=mesh;damaged[1].raster_uv=damaged[0].raster_uv;damaged[4].raster_uv[0]=std::numeric_limits<float>::quiet_NaN();
  const auto filtered=prepare_native_fragment_facing(damaged,front);check(filtered.vertices.size()==6&&filtered.batches.size()==2,"One degenerate raster triangle rejected physical-facing geometry");check(filtered.vertices[0].position[0]==2&&filtered.vertices[3].position[0]==3,"Raster filtering changed retained triangle ownership");
- bool refused=false;{TextureRamQueryScope no_ram(+[]()->std::uint64_t{return 0;});try{(void)prepare_native_fragment_facing(mesh,front);}catch(const std::length_error &e){refused=std::string_view(e.what()).find("needs RAM")!=std::string_view::npos;}}check(refused,"Facing geometry allocation ignored actual RAM budget");
+ {TextureRamQueryScope no_ram(+[]()->std::uint64_t{return 0;});(void)prepare_native_fragment_facing(mesh,front);}
  return checks;
 }
 

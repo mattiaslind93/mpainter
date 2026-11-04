@@ -45,17 +45,13 @@ std::optional<std::uint64_t> storage_bytes(gpu::Texture *texture){
  const int layers=GPU_texture_is_cube(texture)&&!GPU_texture_is_array(texture)?6:GPU_texture_layer_count(texture);
  return native_texture_storage_bytes(GPU_texture_dimensions(texture),GPU_texture_width(texture),GPU_texture_height(texture),GPU_texture_depth(texture),layers,GPU_texture_mip_count(texture),*bpp);
 }
-std::uint64_t budget_bytes(std::uint64_t automatic,bool known){
- bool ok=false;const auto mb=qEnvironmentVariable("BTS_RESIDENCY_BUDGET_MB").toULongLong(&ok);
- if(ok&&mb)return residency_budget_override(mb,automatic,known);
- const auto settings=viewport_memory_preferences();return settings.automatic?automatic:residency_budget_override(settings.megabytes,automatic,known);
-}
+
 
 
 }
 struct ViewportResidency::Impl {
  struct Entry {Image *image=nullptr;std::uint32_t material=0;ResidencyRegion region;bool bound=true;int current_cap=0,desired_cap=0,largest=1,source_width=1,source_height=1;};
- std::map<unsigned,Entry> entries;std::uint64_t frames=0,changes=0,automatic_budget=0,image_probe_changes=0,image_probe_frame=0;std::chrono::steady_clock::time_point last_budget_query{};QJsonObject state;QJsonArray cached_images;bool images_probed=false,automatic_budget_known=false;
+ std::map<unsigned,Entry> entries;std::uint64_t frames=0,changes=0,available_texture_bytes=0,image_probe_changes=0,image_probe_frame=0;std::chrono::steady_clock::time_point last_memory_query{};QJsonObject state;QJsonArray cached_images;bool images_probed=false,available_texture_bytes_known=false;
 };
 ViewportResidency::ViewportResidency():impl_(std::make_unique<Impl>()){}
 ViewportResidency::~ViewportResidency()=default;
@@ -64,13 +60,13 @@ QJsonObject ViewportResidency::snapshot()const{return impl_->state;}
 void ViewportResidency::update(Main &main,std::span<const ResidencyView> views,std::optional<std::uint32_t> selected,const std::function<SceneSnapshot()> &geometry,bool editing){
  auto &s=*impl_;++s.frames;const auto now=std::chrono::steady_clock::now();
  const bool refresh_memory=texture_memory_refresh_needed.exchange(false);
- if(refresh_memory||s.last_budget_query==std::chrono::steady_clock::time_point{}||now-s.last_budget_query>=std::chrono::seconds(2)){
+ if(refresh_memory||s.last_memory_query==std::chrono::steady_clock::time_point{}||now-s.last_memory_query>=std::chrono::seconds(2)){
   int total_kb=0,free_kb=0;if(!GPU_type_matches(GPU_DEVICE_SOFTWARE,GPU_OS_ANY,GPU_DRIVER_ANY)&&GPU_mem_stats_supported())GPU_mem_stats_get(&total_kb,&free_kb);
-  const auto ram=texture_available_ram_bytes(),resident=std::uint64_t(s.state["resident_texture_storage_bytes"].toDouble());s.automatic_budget=automatic_residency_budget(total_kb,free_kb,ram,resident);const bool driver_valid=coherent_vram_report(total_kb,free_kb);
-  s.automatic_budget_known=driver_valid||ram>0;
-  if(!s.automatic_budget_known){s.state["budget_warning"]="VRAM/RAM queries unavailable; GPU allocation remains authoritative";}else if(!driver_valid)s.state["budget_warning"]="VRAM query unavailable: using 25% of available RAM";else s.state["budget_warning"]="";
-  texture_free_vram=driver_valid?std::uint64_t(free_kb)*1024:0;texture_vram_query_valid=driver_valid;++texture_vram_query_generation;texture_gpu_max_size=GPU_max_texture_size();s.last_budget_query=now;
-  std::printf("BTS_RESIDENCY_VRAM total_kb=%d free_kb=%d available_ram=%llu automatic_budget=%llu\n",total_kb,free_kb,(unsigned long long)ram,(unsigned long long)s.automatic_budget);
+  const auto ram=texture_available_ram_bytes(),resident=std::uint64_t(s.state["resident_texture_storage_bytes"].toDouble());s.available_texture_bytes=available_texture_storage(total_kb,free_kb,ram,resident);const bool driver_valid=coherent_vram_report(total_kb,free_kb);
+  s.available_texture_bytes_known=driver_valid||ram>0;
+  if(!s.available_texture_bytes_known){s.state["memory_warning"]="VRAM/RAM queries unavailable; GPU allocation remains authoritative";}else if(!driver_valid)s.state["memory_warning"]="";else s.state["memory_warning"]="";
+  texture_free_vram=driver_valid?std::uint64_t(free_kb)*1024:0;texture_vram_query_valid=driver_valid;++texture_vram_query_generation;texture_gpu_max_size=GPU_max_texture_size();s.last_memory_query=now;
+  std::printf("BTS_RESIDENCY_VRAM total_kb=%d free_kb=%d available_ram=%llu available_texture_bytes=%llu\n",total_kb,free_kb,(unsigned long long)ram,(unsigned long long)s.available_texture_bytes);
  }
  const auto start=std::chrono::steady_clock::now();std::set<unsigned> live;std::map<unsigned,std::set<unsigned>> owners;
  for(Material &material:main.materials)if(material.nodetree)for(bNode &node:material.nodetree->nodes){if(!STRPREFIX(node.name,"__BTS_")||!node.id||GS(node.id->name)!=ID_IM)continue;auto *image=reinterpret_cast<Image *>(node.id);const auto uid=image->id.session_uid;live.insert(uid);owners[uid].insert(material.id.session_uid);auto &e=s.entries[uid];e.image=image;e.material=material.id.session_uid;}
@@ -90,7 +86,7 @@ void ViewportResidency::update(Main &main,std::span<const ResidencyView> views,s
   const bool inspection=STRPREFIX(e.image->id.name+2,"BTS Authored Normal Inspection")||STRPREFIX(e.image->id.name+2,"BTS Mesh Map Inspection")||STRPREFIX(e.image->id.name+2,"BTS Mask Inspection");
   e.region.priority=(active?4.:1.)*(inspection?.125:1.);e.region.requested_mip=0;regions.push_back(e.region);
  }
- const auto budget=budget_bytes(s.automatic_budget,s.automatic_budget_known);const auto plan=plan_full_resolution(regions);
+ const auto budget=s.available_texture_bytes;const auto plan=plan_full_resolution(regions);
  for(const auto &a:plan){auto &e=s.entries.at(unsigned(a.id));e.desired_cap=std::max(1,e.largest>>a.mip);}
  int evicted=0,promoted=0;
  // Allocation changes only for document/budget/selection changes, never zoom.
@@ -101,9 +97,9 @@ void ViewportResidency::update(Main &main,std::span<const ResidencyView> views,s
 
  std::uint64_t reserved=mapping_bytes,source_bytes=0;bool pending=false;
  for(auto &[uid,e]:s.entries){const int mip=mip_for(e.largest,e.current_cap);reserved=resource_sum(reserved,residency_bytes(e.region,mip));source_bytes=resource_sum(source_bytes,residency_bytes(e.region,0));pending|=e.current_cap!=e.desired_cap;}
- const bool budget_known=s.automatic_budget_known||budget>0;const bool pressure=budget_known&&reserved>budget;const bool pressure_changed=s.state["memory_pressure"].toBool()!=pressure;const auto budget_warning=s.state["budget_warning"];const double elapsed=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-start).count();s.changes+=evicted+promoted;
- s.state={{"mode","fixed full texture-set resolution; GPU stack"},{"memory_pressure",pressure},{"warning",pressure?"Visible textures exceed the configured memory budget; full resolution retained":""},{"budget_warning",budget_warning},{"automatic_budget_bytes",qint64(s.automatic_budget)},{"max_resolution",-1},{"settling",false},{"editing",editing},{"budget_bytes",double(budget)},{"budget_known",budget_known},{"reserved_upperbound_bytes",qint64(reserved)},{"source_upperbound_bytes",qint64(source_bytes)},{"refining",pending},{"frames",qint64(s.frames)},{"changes",qint64(s.changes)}};
- if(evicted||promoted||pressure_changed)std::printf("BTS_RESIDENCY budget=%llu reserved=%llu source=%llu images=%zu evicted=%d refined=%d cpu_ms=%.3f\n",(unsigned long long)budget,(unsigned long long)reserved,(unsigned long long)source_bytes,s.entries.size(),evicted,promoted,elapsed);
+ const bool memory_known=s.available_texture_bytes_known||budget>0;const bool pressure=memory_known&&reserved>budget;const bool pressure_changed=s.state["memory_pressure"].toBool()!=pressure;const auto memory_warning=s.state["memory_warning"];const double elapsed=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-start).count();s.changes+=evicted+promoted;
+ s.state={{"mode","fixed full texture-set resolution; GPU stack"},{"memory_pressure",pressure},{"warning",""},{"memory_warning",memory_warning},{"available_texture_bytes",qint64(s.available_texture_bytes)},{"max_resolution",-1},{"settling",false},{"editing",editing},{"available_bytes",double(budget)},{"memory_known",memory_known},{"reserved_upperbound_bytes",qint64(reserved)},{"source_upperbound_bytes",qint64(source_bytes)},{"refining",pending},{"frames",qint64(s.frames)},{"changes",qint64(s.changes)}};
+ if(evicted||promoted||pressure_changed)std::printf("BTS_RESIDENCY available=%llu reserved=%llu source=%llu images=%zu evicted=%d refined=%d cpu_ms=%.3f\n",(unsigned long long)budget,(unsigned long long)reserved,(unsigned long long)source_bytes,s.entries.size(),evicted,promoted,elapsed);
 }
 void ViewportResidency::finish_frame(){
  auto &s=*impl_;if(s.state.isEmpty())return;
@@ -116,7 +112,7 @@ void ViewportResidency::finish_frame(){
    if(texture&&(GPU_texture_width(texture)>e.current_cap||GPU_texture_height(texture)>e.current_cap||GPU_texture_layer_count(texture)>int(e.region.tiles.size())))throw std::logic_error("Native texture exceeds its residency reservation");
    images.append(QJsonObject{{"image",e.image->id.name+2},{"image_uid",qint64(uid)},{"material_uid",qint64(e.material)},{"shader_bound",e.bound},{"source_width",e.source_width},{"source_height",e.source_height},{"tiles",int(e.region.tiles.size())},{"resolution_reason","texture set resolution"},{"cap",e.current_cap},{"sampling_cap",BKE_image_gpu_sampling_limit(e.image)},{"bytes_per_texel",int(e.region.bytes_per_texel)},{"desired_cap",e.desired_cap},{"width",texture?GPU_texture_width(texture):0},{"height",texture?GPU_texture_height(texture):0},{"layers",texture?GPU_texture_layer_count(texture):0},{"mips",texture?GPU_texture_mip_count(texture):0},{"storage_bytes",bytes?QJsonValue(qint64(*bytes)):QJsonValue()},{"mapping_bytes",map_bytes?QJsonValue(qint64(*map_bytes)):QJsonValue()},{"format",texture?GPU_texture_format_name(GPU_texture_format(texture)):"not allocated"}});
   }
-  if(exact&&resident>std::uint64_t(s.state["reserved_upperbound_bytes"].toDouble())){std::fprintf(stderr,"BTS_RESIDENCY_ACCOUNTING_MISMATCH resident=%llu reserved=%llu images=%s\n",(unsigned long long)resident,(unsigned long long)s.state["reserved_upperbound_bytes"].toDouble(),QJsonDocument(images).toJson(QJsonDocument::Compact).constData());throw std::logic_error("Native texture storage exceeds the budget plan");}s.state["resident_texture_storage_bytes"]=exact?QJsonValue(qint64(resident)):QJsonValue();s.state["storage_formats_measured"]=exact;s.cached_images=images;s.images_probed=true;s.image_probe_changes=s.changes;s.image_probe_frame=s.frames;
+  if(exact&&resident>std::uint64_t(s.state["reserved_upperbound_bytes"].toDouble())){std::fprintf(stderr,"BTS_RESIDENCY_ACCOUNTING_MISMATCH resident=%llu reserved=%llu images=%s\n",(unsigned long long)resident,(unsigned long long)s.state["reserved_upperbound_bytes"].toDouble(),QJsonDocument(images).toJson(QJsonDocument::Compact).constData());throw std::logic_error("Native texture storage exceeds its format accounting");}s.state["resident_texture_storage_bytes"]=exact?QJsonValue(qint64(resident)):QJsonValue();s.state["storage_formats_measured"]=exact;s.cached_images=images;s.images_probed=true;s.image_probe_changes=s.changes;s.image_probe_frame=s.frames;
  }
  // update() replaces the state object every frame. Put the last probe back so the log keeps image caps.
  s.state["images"]=s.cached_images;

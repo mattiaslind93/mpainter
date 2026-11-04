@@ -421,7 +421,8 @@ add_library(bts-export-config STATIC ${BTS_HOST_SOURCE_DIR}/SkewArchive.cc ${BTS
 target_include_directories(bts-export-config PUBLIC ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-export-config PUBLIC cxx_std_20)
 target_link_libraries(bts-export-config PUBLIC Qt6::Core)
-add_library(bts-builtin-smartmasks STATIC ${BTS_HOST_SOURCE_DIR}/BuiltinSmartMasks.cc ${BTS_HOST_SOURCE_DIR}/BuiltinBrushPresets.cc ${BTS_HOST_SOURCE_DIR}/BuiltinProceduralAssets.cc ${BTS_HOST_SOURCE_DIR}/BuiltinStandardMaterials.cc)
+qt6_add_resources(BTS_BUILTIN_BRUSH_RESOURCES ${BTS_HOST_SOURCE_DIR}/../../assets/brush-alphas/builtin-brush-alphas.qrc)
+add_library(bts-builtin-smartmasks STATIC ${BTS_BUILTIN_BRUSH_RESOURCES} ${BTS_HOST_SOURCE_DIR}/BuiltinSmartMasks.cc ${BTS_HOST_SOURCE_DIR}/BuiltinBrushPresets.cc ${BTS_HOST_SOURCE_DIR}/BuiltinProceduralAssets.cc ${BTS_HOST_SOURCE_DIR}/BuiltinStandardMaterials.cc)
 target_include_directories(bts-builtin-smartmasks PUBLIC ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-builtin-smartmasks PUBLIC cxx_std_20)
 target_link_libraries(bts-builtin-smartmasks PUBLIC Qt6::Gui bts-export-config)
@@ -518,6 +519,7 @@ target_compile_features(bts-physical-scale-tests PRIVATE cxx_std_20)
 target_compile_definitions(bts-physical-scale-tests PRIVATE QT_NO_KEYWORDS BTS_PHYSICAL_USD_FIXTURE="${BTS_HOST_SOURCE_DIR}/../tests/fixtures/usd_scene_contract.usda" BTS_PHYSICAL_TEST_ROOT="${CMAKE_BINARY_DIR}")
 target_link_libraries(bts-physical-scale-tests PRIVATE bts-export-config Qt6::Core bf::dependencies::optional::usd bf::dependencies::optional::tbb bf::dependencies::optional::python)
 setup_platform_linker_libs(bts-physical-scale-tests)
+
 
 add_executable(bts-dynamic-resolution-tests ${BTS_HOST_SOURCE_DIR}/../tests/dynamic_resolution_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
 target_include_directories(bts-dynamic-resolution-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
@@ -765,10 +767,16 @@ target_link_libraries(bts-host PRIVATE assimp::assimp bf::dependencies::optional
 
 # Real image encoding joins the CPU assertions; this host path never initializes OpenGL.
 find_program(BTS_CPU_PYTHON_EXECUTABLE NAMES python3 python REQUIRED)
-add_custom_target(bts-cpu-check
+add_custom_target(bts-release-check
   COMMAND ${BTS_CPU_PYTHON_EXECUTABLE} ${BTS_HOST_SOURCE_DIR}/../../scripts/check-release.py
     --build-dir ${CMAKE_BINARY_DIR}
   DEPENDS bts-branding-tests bts-asset-tests USES_TERMINAL)
+
+# Full reference CPU suite remains available independently of the focused release checks.
+add_custom_target(bts-cpu-check
+  COMMAND ${BTS_CPU_PYTHON_EXECUTABLE} ${BTS_HOST_SOURCE_DIR}/../../scripts/host/verify-cpu.py
+    --build-dir ${CMAKE_BINARY_DIR} --output ${CMAKE_BINARY_DIR}/cpu-check
+  DEPENDS bts-cpu-tests bts-host USES_TERMINAL)
 
 add_executable(bts-skew-correction-tests ${BTS_HOST_SOURCE_DIR}/../tests/skew_correction_test.cc)
 target_include_directories(bts-skew-correction-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
@@ -1066,6 +1074,20 @@ if(WITH_MATERIALX)
   set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/TextureExport.cc ${BTS_HOST_SOURCE_DIR}/TextureExportDialog.cc ${BTS_HOST_SOURCE_DIR}/ExportCpuDemo.cc ${BTS_HOST_SOURCE_DIR}/MeshImport.cc ${BTS_HOST_SOURCE_DIR}/main.cc APPEND PROPERTY COMPILE_DEFINITIONS BTS_WITH_MATERIALX)
 endif()
 
+# The Linux prebuilt monolithic USD library requires these shared libraries.
+# Standalone CPU tests do not inherit the host's full dependency closure.
+if(UNIX AND NOT APPLE)
+  foreach(_bts_usd_cpu_target bts-usd-scene-tests bts-physical-scale-tests bts-openpbr-usd-tests bts-openpbr-usd-resource-tests)
+    if(TARGET ${_bts_usd_cpu_target})
+      target_link_libraries(${_bts_usd_cpu_target} PRIVATE
+        bf::dependencies::optional::openvdb
+        bf::dependencies::openimageio
+        bf::dependencies::optional::opensubdiv)
+    endif()
+  endforeach()
+endif()
+
+
 add_executable(bts-blend-selection-tests ${BTS_HOST_SOURCE_DIR}/../tests/blend_selection_test.cc)
 target_include_directories(bts-blend-selection-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-blend-selection-tests PRIVATE cxx_std_20)
@@ -1261,6 +1283,12 @@ target_include_directories(bts-resource-budget-tests PRIVATE ${BTS_HOST_SOURCE_D
 target_compile_features(bts-resource-budget-tests PRIVATE cxx_std_20)
 target_compile_options(bts-resource-budget-tests PRIVATE "$<IF:$<CXX_COMPILER_ID:MSVC>,/UNDEBUG,-UNDEBUG>")
 add_dependencies(bts-cpu-tests bts-resource-budget-tests)
+
+add_executable(bts-disk-scratch-tests ${BTS_HOST_SOURCE_DIR}/../tests/disk_scratch_test.cc)
+target_include_directories(bts-disk-scratch-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
+target_compile_features(bts-disk-scratch-tests PRIVATE cxx_std_20)
+target_link_libraries(bts-disk-scratch-tests PRIVATE Qt6::Core)
+add_test(NAME disk-scratch-full-resolution COMMAND bts-disk-scratch-tests)
 
 add_executable(bts-texture-set-selection-ui-tests ${BTS_HOST_SOURCE_DIR}/../tests/texture_set_selection_ui_test.cc)
 target_include_directories(bts-texture-set-selection-ui-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
@@ -1646,4 +1674,4 @@ target_include_directories(bts-theme-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-theme-tests PRIVATE cxx_std_20)
 target_compile_options(bts-theme-tests PRIVATE "$<IF:$<CXX_COMPILER_ID:MSVC>,/UNDEBUG,-UNDEBUG>")
 target_link_libraries(bts-theme-tests PRIVATE Qt6::Widgets)
-add_dependencies(bts-cpu-check bts-theme-tests)
+add_dependencies(bts-release-check bts-theme-tests)

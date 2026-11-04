@@ -1,4 +1,4 @@
-#include "ResourceBudget.hh"
+#include "ResourceAvailability.hh"
 #include "SafeImagePack.hh"
 #include "SanitizeReadback.hh"
 #include "DisplayPostEffects.hh"
@@ -170,7 +170,7 @@ ProjectFileIdentity write_project(Main &main,Scene &scene,const TextureDocument 
   performance::Scope timing("save_project_encode_write");
   const auto document_json=document.to_json();
   const auto metadata=QJsonDocument(document_json).toJson(QJsonDocument::Compact);
-  require_texture_ram(resource_product(metadata.size(),3),"Project metadata encode");
+
   std::vector<TextureSetBinding> bindings;
   for(const auto &set:document.texture_sets())bindings.push_back({set.id,set.material_session_uid,set.name});
   TextureDocument::from_json(document_json,bindings); // Never write metadata this reader would reject.
@@ -445,7 +445,7 @@ std::unique_ptr<PendingProject> PendingProject::prepare(const std::string &path,
     if(follow->type!=IDP_BOOLEAN)throw std::runtime_error("Invalid project lighting-follow setting");
     for(bScreen &screen:main.screens)for(ScrArea &area:screen.areabase)for(SpaceLink &space:area.spacedata)if(space.spacetype==SPACE_VIEW3D){auto &view=*reinterpret_cast<View3D *>(&space);if(IDP_bool_get(follow))view.shading.flag|=V3D_SHADING_STUDIOLIGHT_VIEW_ROTATION;else view.shading.flag&=~V3D_SHADING_STUDIOLIGHT_VIEW_ROTATION;}
   }
-  if(json->len<1)throw std::runtime_error("Project metadata is empty");require_texture_ram(resource_product(json->len,3),"Project metadata decode");
+  if(json->len<1)throw std::runtime_error("Project metadata is empty");
   display_post_settings(scene);subsurface_preview(scene);
   QJsonParseError error;const auto metadata=QJsonDocument::fromJson(QByteArray(IDP_string_get(json)),&error);
   if(error.error!=QJsonParseError::NoError||!metadata.isObject())throw std::runtime_error("Invalid project JSON");

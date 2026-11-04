@@ -42,6 +42,7 @@ class NativeMaterialGpuLibrary {
  std::vector<int> view_channels(const std::string &,const NativeMaterialDescription &)const;
  std::uint64_t revision(const std::string &)const;
  const NativeMaterialDescription &description(const std::string &)const;
+ const NativeMaterialGraph &source_graph(const std::string &)const;
  std::vector<int> effective_channels(const std::string &,const NativeMaterialDescription &)const;
  NativeMaterialGpuContext default_context(const std::string &)const;
  void validate_instance(const std::string &,const NativeMaterialDescription &)const;

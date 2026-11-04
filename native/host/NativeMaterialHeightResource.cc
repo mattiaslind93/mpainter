@@ -31,16 +31,16 @@ namespace {
 // it never scans unrelated Main materials or changes normal source behavior.
 NativeHeightRequirements original_global_requirements(const blender::bNodeTree &root){
  using blender::ID_Type;
- NativeHeightRequirements result;const ResourceBudget budget;std::set<const blender::bNodeTree *> visited;
+ NativeHeightRequirements result;const ResourceAvailability budget;std::set<const blender::bNodeTree *> visited;
  std::vector<const blender::bNodeTree *> pending{&root};
  while(!pending.empty()){
   const auto *tree=pending.back();pending.pop_back();if(visited.contains(tree))continue;
-  budget.require(resource_product(resource_sum(resource_sum(visited.size(),pending.capacity()),1),sizeof(void *)*8),0,"Original native Height color-context admission");visited.insert(tree);
+  visited.insert(tree);
   for(const auto &node:tree->nodes){
    result.global_blackbody|=STREQ(node.idname,"ShaderNodeBlackbody");
    result.global_wavelength|=STREQ(node.idname,"ShaderNodeWavelength");
    result.global_luminance|=STREQ(node.idname,"ShaderNodeRGBToBW");
-   if(STREQ(node.idname,"ShaderNodeGroup")&&node.id){if(GS(node.id->name)!=blender::ID_NT)throw std::invalid_argument("Raw authored Height source group has an invalid tree ID");budget.require(resource_product(resource_sum(resource_sum(visited.size(),pending.capacity()),resource_sum(pending.size(),1)),sizeof(void *)*8),0,"Original native Height group traversal");pending.push_back(reinterpret_cast<const blender::bNodeTree *>(node.id));}
+   if(STREQ(node.idname,"ShaderNodeGroup")&&node.id){if(GS(node.id->name)!=blender::ID_NT)throw std::invalid_argument("Raw authored Height source group has an invalid tree ID");pending.push_back(reinterpret_cast<const blender::bNodeTree *>(node.id));}
   }
   for(const auto &edge:tree->links)if(edge.fromsock&&edge.tosock&&edge.fromsock->type==blender::SOCK_RGBA&&edge.tosock->type==blender::SOCK_FLOAT)result.global_luminance=true;
  }
