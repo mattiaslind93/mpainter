@@ -11,6 +11,7 @@
 #include "gpu_shader_create_info.hh"
 #include <epoxy/gl.h>
 #include <memory>
+#include <span>
 #include <vector>
 namespace bts {
 struct GpuBakeRayStats {std::uint64_t batches=0,dispatches=0,peak_batch_rays=0;};

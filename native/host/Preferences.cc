@@ -61,15 +61,15 @@ void show_preferences(QWidget *parent,const QString &shelf,bool project_open,Vie
   QObject::connect(library_remove,&QPushButton::clicked,&dialog,[&]{delete libraries->takeItem(libraries->currentRow());});
   auto *viewport_page=new QWidget(tabs);auto *form=new QFormLayout(viewport_page);tabs->addTab(viewport_page,"Viewport");
   const auto number=[&](const char *name,double value){auto *spin=new bts::NumericSpinBox(viewport_page);spin->setObjectName(name);spin->setLocale(QLocale::c());spin->setDecimals(6);spin->setRange(ViewportClipping::minimum_near,ViewportClipping::maximum_plane);spin->setValue(value);spin->setKeyboardTracking(false);return spin;};
-  auto *near=number("viewportClipStart",current.near_plane),*far=number("viewportClipEnd",current.far_plane);near->setSingleStep(.01);far->setSingleStep(100);form->addRow("Clip Start",near);form->addRow("Clip End",far);
+  auto *clip_start=number("viewportClipStart",current.near_plane),*clip_end=number("viewportClipEnd",current.far_plane);clip_start->setSingleStep(.01);clip_end->setSingleStep(100);form->addRow("Clip Start",clip_start);form->addRow("Clip End",clip_end);
   auto *hint=new QLabel("Free orbit view only. Imported cameras retain their own clipping until you navigate.\nOrthographic depth spans ±Clip End around the view.",viewport_page);hint->setWordWrap(true);form->addRow(hint);
   auto *error=new QLabel(viewport_page);error->setObjectName("viewportClipError");error->setStyleSheet(bts::theme::qss("color:@Error@"));error->setWordWrap(true);form->addRow(error);
   auto *restore=new QPushButton("Restore viewport defaults",viewport_page);restore->setObjectName("restoreViewportClipping");form->addRow(restore);
   auto *buttons=new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel,&dialog);layout->addWidget(buttons);
-  const auto update=[&]{ViewportClipping value{near->value(),far->value()};const bool valid=value.valid();buttons->button(QDialogButtonBox::Ok)->setEnabled(valid);error->setText(valid?QString{}:"Clip Start must be positive and smaller than Clip End.");if(valid)preview(value);};
-  QObject::connect(near,&QDoubleSpinBox::valueChanged,&dialog,update);QObject::connect(far,&QDoubleSpinBox::valueChanged,&dialog,update);
-  QObject::connect(restore,&QPushButton::clicked,&dialog,[&]{far->setValue(1000);near->setValue(.01);});
+  const auto update=[&]{ViewportClipping value{clip_start->value(),clip_end->value()};const bool valid=value.valid();buttons->button(QDialogButtonBox::Ok)->setEnabled(valid);error->setText(valid?QString{}:"Clip Start must be positive and smaller than Clip End.");if(valid)preview(value);};
+  QObject::connect(clip_start,&QDoubleSpinBox::valueChanged,&dialog,update);QObject::connect(clip_end,&QDoubleSpinBox::valueChanged,&dialog,update);
+  QObject::connect(restore,&QPushButton::clicked,&dialog,[&]{clip_end->setValue(1000);clip_start->setValue(.01);});
   QObject::connect(buttons,&QDialogButtonBox::accepted,&dialog,&QDialog::accept);QObject::connect(buttons,&QDialogButtonBox::rejected,&dialog,&QDialog::reject);
-  if(dialog.exec()==QDialog::Accepted){QStringList paths;for(int row=0;row<libraries->count();++row)paths.append(libraries->item(row)->text());save_material_library_paths(paths);QSettings settings("mPainter","Preferences");settings.setValue("Viewport/clipStart",near->value());settings.setValue("Viewport/clipEnd",far->value());settings.sync();}else {preview(current);}
+  if(dialog.exec()==QDialog::Accepted){QStringList paths;for(int row=0;row<libraries->count();++row)paths.append(libraries->item(row)->text());save_material_library_paths(paths);QSettings settings("mPainter","Preferences");settings.setValue("Viewport/clipStart",clip_start->value());settings.setValue("Viewport/clipEnd",clip_end->value());settings.sync();}else {preview(current);}
 }
 }

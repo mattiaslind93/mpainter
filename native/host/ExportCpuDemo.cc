@@ -70,7 +70,7 @@ QJsonObject verify_legacy_resource_reuse(){
 // one color map; color+roughness+bump on two UDIM tiles yields exactly those.
 QJsonObject verify_studio_export(const QString &directory){
  const auto require=[](bool value,const std::string &message){if(!value)throw std::runtime_error("Studio export: "+message);};
- const auto document_for=[&](const QString &folder,const std::vector<std::string> &names){SceneSnapshot scene;ImportSummary imported;for(std::size_t i=0;i<names.size();++i){MaterialSummary material;material.session_id=int(i+1);material.name=names[i];material.uniform_editable=true;scene.materials.push_back(material);imported.materials.push_back({int(i+1),names[i]});}
+ const auto document_for=[&](const QString &folder,const std::vector<std::string> &names){SceneSnapshot scene;ImportSummary imported;for(std::size_t i=0;i<names.size();++i){MaterialSummary material;material.session_id=int(i+1);material.name=names[i];material.uniform_editable=true;scene.materials.push_back(material);imported.materials.push_back({std::uint32_t(i+1),names[i]});}
   NewProjectOptions options;options.resolution=DocumentResolution::Pixels128;options.absolute_mesh_path=QDir(folder).absoluteFilePath("gnome.fbx").toStdString();return TextureDocument(options,imported,scene);};
  const auto paint=[](TextureSet &set,std::array<bool,5> channels,const std::set<int> &tiles,std::array<double,2> center={.5,.5}){PaintPixels::Stamp dab{center,{.15,0},{0,.15}};dab.values.base_color={1,0,0,1};dab.values.roughness=.8f;dab.values.bump=.7f;dab.channels=channels;dab.hardness=1;set.layers.front().pixels.stamp(128,dab,tiles);};
  QJsonArray projects;

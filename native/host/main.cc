@@ -3612,7 +3612,7 @@ if(material_importer)material_importer->cancel();
       auto shell = std::make_unique<bts::WorkspaceShell>(viewport, std::move(callbacks));
       workspace = shell.get();workspace->set_trackball(viewport->trackball_enabled());initialize_texture_loader();
       asset_progress=new bts::AssetApplyProgress(workspace);workspace->statusBar()->addPermanentWidget(asset_progress);
-      asset_progress->completed=[&](const QString &error,bool success){asset_drop_mesh.reset();asset_texture_relative={};if(success)workspace->set_status("Material applied");else workspace->set_error_status(error);};
+      asset_progress->completed=[&](const QString &error,bool success){asset_drop_mesh.reset();asset_texture_relative=QUuid();if(success)workspace->set_status("Material applied");else workspace->set_error_status(error);};
       asset_progress->pending=[&]{
         if(!document||opening_project||document->id()!=asset_apply_project){asset_progress->fail("Material loading cancelled: project changed");return true;}
         if(viewport->shader_failed){asset_progress->fail("Shader compilation failed; see the error panel");return true;}

@@ -1081,7 +1081,7 @@ if(WITH_MATERIALX)
   target_link_libraries(bts-openpbr-texture-package PUBLIC bts-export-config bts-openpbr-materialx bts-openpbr-usd Qt6::Core)
   target_link_libraries(bts-host PRIVATE bts-openpbr-texture-package)
   target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/OpenPbrExportCpuTest.cc ${BTS_HOST_SOURCE_DIR}/OpenPbrMaterialImport.cc)
-  set_source_files_properties(${BTS_HOST_SOURCE_DIR}/OpenPbrExportCpuTest.cc PROPERTIES INCLUDE_DIRECTORIES "${MATERIALX_BASE_DIR}/include")
+  set_source_files_properties(${BTS_HOST_SOURCE_DIR}/OpenPbrExportCpuTest.cc PROPERTIES INCLUDE_DIRECTORIES "$<TARGET_PROPERTY:MaterialXCore,INTERFACE_INCLUDE_DIRECTORIES>;$<TARGET_PROPERTY:MaterialXFormat,INTERFACE_INCLUDE_DIRECTORIES>")
   set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/TextureExport.cc ${BTS_HOST_SOURCE_DIR}/TextureExportDialog.cc ${BTS_HOST_SOURCE_DIR}/ExportCpuDemo.cc ${BTS_HOST_SOURCE_DIR}/MeshImport.cc ${BTS_HOST_SOURCE_DIR}/main.cc APPEND PROPERTY COMPILE_DEFINITIONS BTS_WITH_MATERIALX)
 endif()
 

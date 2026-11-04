@@ -51,7 +51,7 @@ class AaPerformanceDemo final:public QObject {
  case 10:if(pending())return;start_slider("roughnessSlider","aa_roughness");stage_=11;return;
  case 11:timed([&]{property_event("roughness");slider_->setValue(200+index_*20);});if(++index_==30){timed([&]{slider_->setSliderDown(false);});stage_=12;boundary("roughness-release");}return;
  case 12:if(pending())return;flow("aa_color");get<QWidget>("materialColorPicker")->findChild<QPushButton *>("colorSwatch")->click();wheel_=get<QDialog>("colorPickerDialog")->findChild<QWidget *>("colorWheel");mouse(QEvent::MouseButtonPress,{65,100},wheel_);stage_=13;return;
- case 13:timed([&]{property_event("color");mouse(QEvent::MouseMove,{65+index_*2.5,100-index_},wheel_);});if(++index_==30){timed([&]{mouse(QEvent::MouseButtonRelease,{140,70},wheel_);get<QDialog>("colorPickerDialog")->hide();});stage_=14;boundary("color-release");}return;
+ case 13:timed([&]{property_event("color");mouse(QEvent::MouseMove,{65+index_*2.5,100.0-index_},wheel_);});if(++index_==30){timed([&]{mouse(QEvent::MouseButtonRelease,{140,70},wheel_);get<QDialog>("colorPickerDialog")->hide();});stage_=14;boundary("color-release");}return;
  case 14:if(pending())return;flow("aa_combobox");timed([&]{get<QComboBox>("fillProjectionMode")->setCurrentIndex(6);});stage_=15;return;
  case 15:if(pending())return;timed([&]{get<QComboBox>("fillProjectionMode")->setCurrentIndex(0);});stage_=16;return;
  case 16:if(pending())return;flow("aa_import");{const auto image=qEnvironmentVariable("BTS_AA_IMAGE");if(image.isEmpty()){stage_=18;return;}select_gui_test_file(w_,"fillTextureFileDialog",image);timed([&]{get<QComboBox>("fillBaseColorResource")->setCurrentIndex(2);});}stage_=17;return;

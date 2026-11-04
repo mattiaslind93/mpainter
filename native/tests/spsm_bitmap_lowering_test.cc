@@ -107,7 +107,7 @@ s::Archive image_file(const std::filesystem::path &path, bool v1 = false, bool s
   w.integer("alphaFormat", 999);
   w.data.insert(w.data.end(), compressed.begin(), compressed.end());
   const auto file =
-      H5Fcreate(path.c_str(), H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
+      H5Fcreate(path.string().c_str(), H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
   require(file >= 0, "HDF fixture create failed");
   const auto group =
       H5Gcreate2(file, "/resources", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);

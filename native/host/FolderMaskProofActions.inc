@@ -7,7 +7,7 @@
         backdrop.name="BK backdrop .8";child.name="BK Multiply child .5";folder.name="BK Folder";
         backdrop.values.base_color={.8,.8,.8,1};backdrop.values.roughness=.8;child.values.base_color={.5,.5,.5,1};child.values.roughness=.5;
         child.blending.fill(bts::LayerBlend::Multiply);folder.blending.fill(bts::LayerBlend::Passthrough);folder.opacity.fill(.6f);child.parent=folder.id;child.depth=1;
-        set.layers={backdrop,child,folder};set.selected_layer=folder.id;set.selected_mask=false;set.selected_geometry=false;set.selected_effect={};set.channels={true,false,true,false,false};set.precision[0]=bts::ChannelPrecision::RGB32F;set.precision[2]=bts::ChannelPrecision::L32F;
+        set.layers={backdrop,child,folder};set.selected_layer=folder.id;set.selected_mask=false;set.selected_geometry=false;set.selected_effect=QUuid();set.channels={true,false,true,false,false};set.precision[0]=bts::ChannelPrecision::RGB32F;set.precision[2]=bts::ChannelPrecision::L32F;
       });viewport->set_layout({bts::ViewLayout::Split,false});viewport->focus_uv({.5,.5},1.2);brush.diameter=25;brush.spacing=5;brush.hardness=1;brush.flow=100;brush.stroke_opacity=100;brush.pressure_size=false;brush.pressure_flow=false;select_material(selected_material);workspace->inspector_splitter()->setSizes({100,430,440,0});});
       add("guiBkSave",[&,directory]{save_document(directory+"/folder-mask.blend");});
       add("guiBkOpen",[&,project_directory]{begin_open_document(project_directory+"/folder-mask.blend");});

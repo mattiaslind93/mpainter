@@ -7,7 +7,7 @@
         const bool folder=workspace->property("spmskTargetFolder").toBool();bts::TextureLayer target;target.kind=folder?bts::LayerKind::Folder:bts::LayerKind::Fill;
         target.name="BN SPMSK "+workspace->property("spmskTargetName").toString().toStdString()+(folder?" Folder":" Fill");target.values.base_color={1,1,1,1};
         if(folder){bts::TextureLayer child;child.kind=bts::LayerKind::Fill;child.name="BN SPMSK child";child.parent=target.id;child.depth=1;child.values.base_color={1,1,1,1};set.layers.push_back(std::move(child));}
-        set.selected_layer=target.id;set.layers.push_back(std::move(target));set.selected_mask=false;set.selected_geometry=false;set.selected_effect={};set.channels={true,false,true,false,false};set.precision[0]=bts::ChannelPrecision::RGB32F;set.precision[2]=bts::ChannelPrecision::L32F;
+        set.selected_layer=target.id;set.layers.push_back(std::move(target));set.selected_mask=false;set.selected_geometry=false;set.selected_effect=QUuid();set.channels={true,false,true,false,false};set.precision[0]=bts::ChannelPrecision::RGB32F;set.precision[2]=bts::ChannelPrecision::L32F;
       });viewport->set_layout({bts::ViewLayout::Split,false});viewport->focus_uv({.5,.5},1.2);select_material(selected_material);workspace->inspector_splitter()->setSizes({100,350,440,0});});
       add("guiSpmskSnapshot",[&]{
         QJsonObject value{{"library",assets.directory()}};QJsonArray entries;

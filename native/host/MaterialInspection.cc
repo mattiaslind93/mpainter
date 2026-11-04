@@ -167,7 +167,7 @@ struct Binding {
   ShaderParameters shader_parameters;
   int scattering_slot=-1;
   DisplacementSettings displacement_settings;std::map<int,std::vector<unsigned char>> displacement_presence;std::size_t displacement_count=0;std::optional<bool> gpu_displacement_presence;std::uint64_t displacement_cpu_epoch=0;float displacement_minimum=0,displacement_maximum=1;
-  Image *mask_image=nullptr; bNode *mask_texture=nullptr;std::optional<TextureSet> mask_snapshot;
+  Image *mask_image=nullptr; bNode *mask_texture=nullptr;std::unique_ptr<TextureSet> mask_snapshot;
   std::uint64_t mask_hash=0; float mask_background=-1; bool mask_cached=false,mask_display_linked=false;QUuid mask_async_layer;
   std::shared_ptr<TexturePadding> padding;
   std::array<double,2> native_per_uv{1,1};
@@ -994,7 +994,7 @@ bool MaterialInspection::update(Main &main,InspectionMode mode,std::span<const I
   }
   bool changed=false;
   for (const auto &source : materials) {
-    auto &binding=impl_->bindings.at(source.material_uid);if(source.mask_set)binding.mask_snapshot=*source.mask_set;
+    auto &binding=impl_->bindings.at(source.material_uid);if(source.mask_set)binding.mask_snapshot=std::make_unique<TextureSet>(*source.mask_set);
     if(!source.mesh_inspection&&!binding.mesh_displayed&&mode==InspectionMode::Mask&&binding.displayed_channel==channel&&binding.mask_display_linked&&source.mask_set&&GpuLayerPreview::supported(*source.mask_set,15)){
       if(binding.mask_async_layer!=source.mask_set->selected_layer){CompositeChannels channels{};channels[15]=true;queue_layer_edit(*source.mask_set,channels,false);changed=true;}continue;
     }
@@ -1151,7 +1151,7 @@ bool MaterialInspection::update_pixels(Main &main,const TextureSet &source,int r
   require_gpu_texture_extent(resolution,height,"Native paint image");
   const auto uid=set.material_session_uid;
   if (!impl_->bindings.contains(uid)) impl_->bindings.emplace(uid,bind(main,uid));
-  auto &binding=impl_->bindings.at(uid);binding.mask_snapshot=set;binding.shader_parameters=set.shader_parameters;restore_preview(main,binding);auto &tree=*binding.material->nodetree;set.native_per_uv=binding.native_per_uv;
+  auto &binding=impl_->bindings.at(uid);binding.mask_snapshot=std::make_unique<TextureSet>(set);binding.shader_parameters=set.shader_parameters;restore_preview(main,binding);auto &tree=*binding.material->nodetree;set.native_per_uv=binding.native_per_uv;
   const bool created=binding.resolution==0;bool shader_changed=created;
   std::map<int,std::pair<int,int>> target_sizes;for(int number:set.tiles)target_sizes[number]={set.width(number),set.rows(number)};
   if(!created&&(binding.resolution!=resolution||binding.height!=height||binding.tile_sizes!=target_sizes)){
@@ -1298,7 +1298,7 @@ bool MaterialInspection::queue_layer_edit(const TextureSet &source,CompositeChan
   const auto invalidation_start=PropertyClock::now();
   auto found=impl_->bindings.find(set.material_session_uid);if(found==impl_->bindings.end())return false;
   if(!found->second.resolution){update_pixels(*found->second.owner_main,set,set.texture_resolution,{},true,true);channels=complete_composite_channels;}
-  auto &binding=found->second;binding.mask_snapshot=set;if(const auto failed=impl_->failed_channels.find(set.material_session_uid);failed!=impl_->failed_channels.end()){for(int c=0;c<17;++c)channels[c]=channels[c]||failed->second[c];}std::map<int,std::pair<int,int>> sizes;for(int tile:set.tiles)sizes[tile]={set.width(tile),set.rows(tile)};if(sizes!=binding.tile_sizes)return false;
+  auto &binding=found->second;binding.mask_snapshot=std::make_unique<TextureSet>(set);if(const auto failed=impl_->failed_channels.find(set.material_session_uid);failed!=impl_->failed_channels.end()){for(int c=0;c<17;++c)channels[c]=channels[c]||failed->second[c];}std::map<int,std::pair<int,int>> sizes;for(int tile:set.tiles)sizes[tile]={set.width(tile),set.rows(tile)};if(sizes!=binding.tile_sizes)return false;
   // Prepare immutable geometry while ordinary layer edits are already settling,
   // so switching to a projection does not introduce a first-use CPU detour.
   if(binding.padding){
@@ -1410,7 +1410,7 @@ NativeSourceEditBatch MaterialInspection::prepare_native_source_edits(std::span<
  for(const auto &edit:edits){if(!edit.before||!edit.after)throw std::invalid_argument("Native source queue snapshot is missing");validate_native_mapping_edit(*edit.before,*edit.after);}
  PaintMetadataScope metadata;
  struct Patch {
-  Binding *binding;std::optional<TextureSet> mask_snapshot;QUuid mask_async_layer;
+  Binding *binding;std::unique_ptr<TextureSet> mask_snapshot;QUuid mask_async_layer;
   CompositeChannels edit_channels,gpu_stack_active,gpu_unbound_waiting;
   std::array<std::optional<std::array<float,4>>,5> gpu_uniform_values{};
  };
@@ -1450,7 +1450,7 @@ NativeSourceEditBatch MaterialInspection::prepare_native_source_edits(std::span<
   TextureSet snapshot=set;snapshot.geometry_ownership=binding.ownership_cache;snapshot.geometry_names=binding.geometry_names;snapshot.projection_tiles=binding.projection_cache;if(!binding.projection_cache.empty())snapshot.projection_geometry=binding.projection_cache.begin()->second;
   auto channels=edit.channels;if(const auto failed=plan->failed_channels.find(uid);failed!=plan->failed_channels.end())for(int c=0;c<17;++c)channels[c]=channels[c]||failed->second[c];
   if(std::any_of(evaluation_layers(snapshot).begin(),evaluation_layers(snapshot).end(),[](const auto &layer){return TextureDocument::anchor_dependent(layer);}))for(int c=0;c<17;++c)channels[c]=channels[c]||complete_composite_channels[c];
-  Patch patch{&binding,snapshot,binding.mask_async_layer,binding.edit_channels,binding.gpu_stack_active,binding.gpu_unbound_waiting};
+  Patch patch{&binding,std::make_unique<TextureSet>(snapshot),binding.mask_async_layer,binding.edit_channels,binding.gpu_stack_active,binding.gpu_unbound_waiting};
   const auto &layers=evaluation_layers(snapshot);const auto selected=std::find_if(layers.begin(),layers.end(),[&](const auto &layer){return layer.id==snapshot.selected_layer;});const bool has_mask=selected!=layers.end()&&bool(selected->mask);
   if(!has_mask){patch.edit_channels[15]=patch.gpu_stack_active[15]=false;patch.mask_async_layer=QUuid();}
   if(!channels[15])for(int c=0;c<17;++c)if(c!=15&&channels[c]){patch.mask_async_layer=QUuid();break;}
@@ -1474,7 +1474,9 @@ NativeSourceEditBatch MaterialInspection::prepare_native_source_edits(std::span<
  }
  static_assert(std::is_nothrow_swappable_v<decltype(Plan::generation)>);
  static_assert(std::is_nothrow_swappable_v<decltype(Plan::gpu_stack_queued)>);
- static_assert(std::is_nothrow_swappable_v<std::optional<TextureSet>>);
+ // MSVC containers can allocate during moves. Allocate snapshots while
+ // preparing the plan so publication still performs only nonthrowing swaps.
+ static_assert(std::is_nothrow_swappable_v<decltype(Patch::mask_snapshot)>);
  return NativeSourceEditBatch([this,plan]()noexcept{
   impl_->generation.swap(plan->generation);impl_->queued.swap(plan->queued);impl_->gpu_queued.swap(plan->gpu_queued);impl_->gpu_stack_queued.swap(plan->gpu_stack_queued);impl_->failures.swap(plan->failures);impl_->failed_channels.swap(plan->failed_channels);
   for(auto &patch:plan->patches){auto &binding=*patch.binding;binding.mask_snapshot.swap(patch.mask_snapshot);std::swap(binding.mask_async_layer,patch.mask_async_layer);binding.edit_channels.swap(patch.edit_channels);binding.gpu_stack_active.swap(patch.gpu_stack_active);binding.gpu_unbound_waiting.swap(patch.gpu_unbound_waiting);binding.gpu_uniform_values.swap(patch.gpu_uniform_values);}

@@ -59,7 +59,7 @@ inline QJsonObject verify_native_world_normal_plan(){
  LevelsEffect effect;effect.channel=4;set.layers.front().effects.push_back(effect);check(set,true);
  const auto rejects=[&](TextureSet invalid,std::vector<QUuid> ids){bool rejected=false;try{native_world_normal_plan(invalid,ids);}catch(const std::invalid_argument &){rejected=true;}++cases;require(rejected,"Malformed world Normal metadata did not throw");};
  set=fixture();const auto id=set.layers[0].id;rejects(set,{QUuid::createUuid()});rejects(set,{id,id});
- auto invalid=set;invalid.layers[0].id={};rejects(invalid,{});
+ auto invalid=set;invalid.layers[0].id=QUuid();rejects(invalid,{});
  invalid=set;invalid.layers.push_back(invalid.layers[0]);rejects(invalid,{id});
  invalid=set;invalid.layers[0].parent=QUuid::createUuid();rejects(invalid,{id});
  invalid=set;invalid.layers[0].opacity[4]=std::numeric_limits<float>::quiet_NaN();rejects(invalid,{id});

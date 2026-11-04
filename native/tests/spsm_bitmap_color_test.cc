@@ -107,7 +107,7 @@ void color_synthetic(){
  // Distinct resource records can fail on the second decode after the first
  // private cache entry exists. Neither selected channel may be published.
  {
-  auto distinct=archive;const auto file=H5Fopen(distinct.source.c_str(),H5F_ACC_RDWR,H5P_DEFAULT);require(file>=0,"Cannot open second-resource fixture");
+  auto distinct=archive;const auto file=H5Fopen(distinct.source.string().c_str(),H5F_ACC_RDWR,H5P_DEFAULT);require(file>=0,"Cannot open second-resource fixture");
   require(H5Ocopy(file,"/resources/test.image",file,"/resources/other.image",H5P_DEFAULT,H5P_DEFAULT)>=0,"Cannot copy second dataset");H5Fclose(file);
   distinct.source_stamp=s::ImageSourceStamp{std::filesystem::file_size(distinct.source),std::filesystem::last_write_time(distinct.source)};distinct.datasets.push_back({"/resources/other.image",archive.datasets[0].size});
   Builder separate;auto built=color_fixture(distinct,separate);auto &p=built.presets[0];
