@@ -1,0 +1,17 @@
+{
+    "native_thumbnails": {
+        "generated_center": [
+            225,
+            45,
+            47
+        ],
+        "legacy_preview_error_resolved": true,
+        "legacy_shelf_generation": true,
+        "native_shelf_exact": true,
+        "no_preview_evaluated_channels": true,
+        "packed_project": "/mnt/mpainter-phase1/build/shaderball-appimage-native/thumbnail-project.blend",
+        "published_asset_reensure_no_gpu_work": true,
+        "saved_preview_exact": true,
+        "uniform_shelf_exact": true
+    }
+}

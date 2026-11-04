@@ -41,15 +41,15 @@ QLabel *section(const QString &text, QWidget *parent)
   return label;
 }
 
-QString default_shaderball_mesh_path()
+QString builtin_mesh_path(const QString &filename)
 {
   const QString app_dir = QCoreApplication::applicationDirPath();
   const QStringList candidates = {
-      QDir(app_dir).filePath("assets/meshes/sphere.obj"),
-      QDir(app_dir).filePath("../share/mpainter/assets/meshes/sphere.obj"),
-      QDir(app_dir).filePath("../../mpainter/assets/meshes/sphere.obj"),
-      QDir(app_dir).filePath("../../../mpainter/assets/meshes/sphere.obj"),
-      QDir::current().filePath("assets/meshes/sphere.obj"),
+      QDir(app_dir).filePath("assets/meshes/" + filename),
+      QDir(app_dir).filePath("../share/mpainter/assets/meshes/" + filename),
+      QDir(app_dir).filePath("../../mpainter/assets/meshes/" + filename),
+      QDir(app_dir).filePath("../../../mpainter/assets/meshes/" + filename),
+      QDir::current().filePath("assets/meshes/" + filename),
   };
   for (const QString &candidate : candidates) {
     const QFileInfo info(candidate);
@@ -92,21 +92,27 @@ NewProjectDialog::NewProjectDialog(QWidget *parent) : QDialog(parent)
   select_mesh_ = new QPushButton(tr("&Select…"), this);
   select_mesh_->setObjectName("selectMesh");
   select_mesh_->setAutoDefault(false);
-  auto *shaderball_btn = new QPushButton(tr("Sphere"), this);
-  shaderball_btn->setObjectName("useShaderballMesh");
-  shaderball_btn->setAutoDefault(false);
-  shaderball_btn->setToolTip(tr("Use the generated UV sphere"));
-  connect(shaderball_btn, &QPushButton::clicked, this, [this] {
-    const QString path = default_shaderball_mesh_path();
-    if (!path.isEmpty()) {
+  file_row->addWidget(file_label);
+  file_row->addWidget(mesh_path_, 1);
+  const auto add_builtin = [&](const QString &label, const char *name,
+                               const QString &filename, const QString &tip) {
+    auto *button = new QPushButton(label, this);
+    button->setObjectName(name);
+    button->setAutoDefault(false);
+    button->setToolTip(tip);
+    const QString path = builtin_mesh_path(filename);
+    button->setEnabled(!path.isEmpty());
+    if (path.isEmpty()) button->setToolTip(tr("Bundled mesh is missing: %1").arg(filename));
+    connect(button, &QPushButton::clicked, this, [this, path] {
       mesh_path_->setText(path);
       mesh_path_->setToolTip(path);
       mesh_path_->setCursorPosition(path.size());
-    }
-  });
-  file_row->addWidget(file_label);
-  file_row->addWidget(mesh_path_, 1);
-  file_row->addWidget(shaderball_btn);
+    });
+    file_row->addWidget(button);
+  };
+  add_builtin(tr("Sphere"), "useSphereMesh", "sphere.obj", tr("Use the generated UV sphere"));
+  add_builtin(tr("Shaderball"), "useShaderballMesh", "Shader_Ball_JL_01.obj",
+              tr("Use Shader_Ball_JL_01 by JLRIN / Craneo (CC BY 4.0)"));
   file_row->addWidget(select_mesh_);
   layout->addLayout(file_row);
   blend_=new BlendLibraryPanel(mesh_path_,{},this);layout->addWidget(blend_);

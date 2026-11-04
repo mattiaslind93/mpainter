@@ -356,10 +356,10 @@ apply_surface_grain_color(const MaterialValues &base,
 
 inline QImage material_sphere_preview(const MaterialValues &base,
                                       const FillProjection *mapping = nullptr,
-                                      int size = 58, bool sphere = true) {
+                                      int size = 58, bool sphere = false) {
   QImage image(size, size, QImage::Format_RGB32);
   image.fill(QColor(bts::theme::Surface));
-  const auto &gbuffer = detail::sphere_preview_gbuffer();
+  const auto &gbuffer = detail::shaderball_jl01_gbuffer();
 
   const auto surface_sample = [&](double u, double v) {
     if (!sphere) return gbuffer.sample(u, v);
@@ -525,7 +525,7 @@ inline QImage smart_material_sphere_preview(const SmartMaterialPreset *preset,
                                             int size = 58) {
   QImage image(size, size, QImage::Format_RGB32);
   image.fill(QColor(bts::theme::Surface));
-  const auto &gbuffer = detail::sphere_preview_gbuffer();
+  const auto &gbuffer = detail::shaderball_jl01_gbuffer();
 
   MaterialValues calib_base;
   calib_base.base_color = {0.22f, 0.23f, 0.25f, 1.0f};
@@ -550,7 +550,7 @@ inline QImage smart_material_sphere_preview(const SmartMaterialPreset *preset,
             continue;
           }
 
-          // Real 3D mesh maps from Mattias's generated sphere
+          // Baked 3D mesh maps from Shader_Ball_JL_01 (see asset attribution).
           const double ao = gb.ao;
           const double curvature = gb.curv;
           const double edge_peak =

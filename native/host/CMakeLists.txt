@@ -1671,7 +1671,12 @@ elseif(WIN32)
   target_sources(bts-host PRIVATE "${BTS_HOST_SOURCE_DIR}/../../packaging/mpainter.rc")
 endif()
 
-install(FILES ${BTS_HOST_SOURCE_DIR}/../../assets/meshes/sphere.obj DESTINATION assets/meshes)
+install(FILES
+  ${BTS_HOST_SOURCE_DIR}/../../assets/meshes/sphere.obj
+  ${BTS_HOST_SOURCE_DIR}/../../assets/meshes/Shader_Ball_JL_01.obj
+  ${BTS_HOST_SOURCE_DIR}/../../assets/meshes/Shader_Ball_JL_01-NOTICE.md
+  ${BTS_HOST_SOURCE_DIR}/../../assets/meshes/CC-BY-4.0.txt
+  DESTINATION assets/meshes)
 
 add_executable(bts-theme-tests ${BTS_HOST_SOURCE_DIR}/../tests/theme_test.cc ${BTS_HOST_SOURCE_DIR}/Theme.cc)
 target_include_directories(bts-theme-tests PRIVATE ${BTS_HOST_SOURCE_DIR})

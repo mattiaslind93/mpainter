@@ -1,0 +1,43 @@
+{
+  "checked": "2026-11-04",
+  "api": "https://api.sketchfab.com/v3/models/9ecc1d8ddb5b4059a80d0bd925e3dd3b",
+  "uid": "9ecc1d8ddb5b4059a80d0bd925e3dd3b",
+  "name": "Shader Ball JL 01",
+  "license": {
+    "uri": "https://api.sketchfab.com/v3/licenses/322a749bcfa841b29dff1e8a1bb74b0b",
+    "label": "CC Attribution",
+    "fullName": "Creative Commons Attribution",
+    "requirements": "Author must be credited. Commercial use is allowed.",
+    "url": "http://creativecommons.org/licenses/by/4.0/",
+    "slug": "by"
+  },
+  "author": {
+    "uid": "6ee48b047be34716b4cf91be55a2fb86",
+    "username": "CRANEO_",
+    "displayName": "Craneo",
+    "profileUrl": "https://sketchfab.com/CRANEO_"
+  },
+  "reference_files": {
+    "assets/shaderball/Shader_Ball_JL_01.obj": "a65d050f4f649be870cc167b01abcf951715a430a476c8f582563ba483bf3772",
+    "assets/shaderball/Shader_Ball_JL_01.usdz": "8c5b9777e3b559d59aebe49a7d9a4514f30835b2b5b7b73cf46aecdcd8b2591a"
+  },
+  "source_usdz_metadata_tokens": [
+    "JLRIN (https://sketchfab.com/JLRIN)",
+    "CC-BY-4.0",
+    "creativecommons.org/licenses/by/4.0/",
+    "Shader Ball JL 01",
+    "9ecc1d8ddb5b4059a80d0bd925e3dd3b"
+  ],
+  "license_text_source": "https://raw.githubusercontent.com/spdx/license-list-data/main/text/CC-BY-4.0.txt",
+  "preview_sha256": {
+    "shaderball-jl01-map-1.png": "5bcc125836a2eb207d38b02727238dec0e352eaf165f1f9b79f20e4f91c6daef",
+    "shaderball-jl01-map-3.png": "dc800a75dce9e5953849c56ee316e072dd34348830b6811954c55bb499baf7b4",
+    "shaderball-jl01-map-4.png": "d9635afafb2dd0b07c003c6c23e4efae5bacb61f6b1c9eda01e6f80350d2295a",
+    "shaderball-jl01-map-5.png": "2c9162a7ac8208ca594a2a753bb6e2e049480398cdb8fa2e15c686ec56eb43c8",
+    "shaderball-jl01-map-6.png": "cd8e40e5fcb8bbd4cb3ae875c0060e30cb401239d56563aa4ad6c1c539689eb3",
+    "shaderball-jl01-norm-ao.png": "3f7b3e5cd6a8469994b2bc1c054d9ad588cec8324eb02a38a18c5ab6b5f2331a",
+    "shaderball-jl01-pos-curv.png": "6b6464328d45fd165074707df861d1d486b665a4b7724848d9bdc3d07469224b",
+    "shaderball-jl01-uv-mask.png": "c04f06d9f1b504543d98d6ab19d7bbffb8938f424795597a9a7e1e67066bae31",
+    "shaderball-jl01-wsn-thick.png": "4253bebc7378575ebae03407b6ffed966f5f7d14001a3d2bccb0161fbdc3510d"
+  }
+}

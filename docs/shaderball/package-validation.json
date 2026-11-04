@@ -1,0 +1,12 @@
+{
+  "appimage_sha256": "a9c97f33058e7fed15cbb8abc3d68882ac811563c331a18c22bfedccf952c129",
+  "size": 438475256,
+  "extracted_files_match_source": {
+    "assets/meshes/sphere.obj": "7c4708c33468e95db6349fdb05a110bb24247ea063b6fac32a992efd7acf03c3",
+    "assets/meshes/Shader_Ball_JL_01.obj": "a65d050f4f649be870cc167b01abcf951715a430a476c8f582563ba483bf3772",
+    "assets/meshes/Shader_Ball_JL_01-NOTICE.md": "479bb878404b09a3778d631061a9e0f948d697180ced765b82e81d43cc095d8c",
+    "assets/meshes/CC-BY-4.0.txt": "d557539df68e771cc1eedcc91d13f70fca930e508d11eedcafa4b15db49e3744",
+    "licenses/shaderball-jl01.md": "479bb878404b09a3778d631061a9e0f948d697180ced765b82e81d43cc095d8c",
+    "licenses/CC-BY-4.0.txt": "d557539df68e771cc1eedcc91d13f70fca930e508d11eedcafa4b15db49e3744"
+  }
+}
