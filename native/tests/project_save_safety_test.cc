@@ -14,7 +14,8 @@ void write(const QString &path,const QByteArray &bytes){QFile file(path);assert(
 QByteArray read(const QString &path){QFile file(path);assert(file.open(QIODevice::ReadOnly));return file.readAll();}
 int main(int argc,char **argv){
   QApplication app(argc,argv);QTemporaryDir dir;assert(dir.isValid());
-  const auto path=dir.filePath("project.blend");
+  const auto path=dir.filePath(QStringLiteral("m\u00e5larprojekt-\u753b\u5e03.blend"));
+  rejects([&]{bts::ProjectFileIdentity::read(dir.path());});
   const auto missing=bts::ProjectFileIdentity::read(path);assert(!missing.exists);
   const auto first=bts::durable_project_write(path,missing,[](const QString &p){write(p,"first");});
   assert(first==bts::ProjectFileIdentity::read(path));
@@ -26,11 +27,16 @@ int main(int argc,char **argv){
   write(path,"external edit");rejects([&]{bts::durable_project_write(path,second,[](const QString &){assert(false);});});
   auto token=bts::ProjectFileIdentity::read(path);
   // Replacement with the same length still conflicts (inode/mtime).
-  write(dir.filePath("replacement"),"external edit");assert(::rename(QFile::encodeName(dir.filePath("replacement")).constData(),QFile::encodeName(path).constData())==0);
+  {QSaveFile replacement(path);assert(replacement.open(QIODevice::WriteOnly));assert(replacement.write("external edit")==13);assert(replacement.commit());}
   rejects([&]{bts::require_project_identity(path,token);});
   token=bts::ProjectFileIdentity::read(path);
   rejects([&]{bts::durable_project_write(path,token,[&](const QString &p){write(p,"new");write(path,"raced");});});
   assert(read(path)=="raced");assert(QFile::remove(path));rejects([&]{bts::require_project_identity(path,token);});
+  // A backup destination failure must not overwrite the existing project.
+  const auto blocked=dir.filePath("blocked.blend");write(blocked,"original");
+  assert(QDir().mkdir(blocked+"1"));
+  rejects([&]{bts::durable_project_write(blocked,bts::ProjectFileIdentity::read(blocked),[](const QString &p){write(p,"new");});});
+  assert(read(blocked)=="original"&&QFileInfo(blocked+"1").isDir());
   const std::uint64_t limit=std::uint64_t(1)<<31;
   bts::require_packed_file_size(limit-1,"test");rejects([&]{bts::require_packed_file_size(limit,"Stroke archive");});rejects([&]{bts::require_packed_file_size(limit+1,"Packed image");});
   std::array<bts::PaintPixels::Pixel,64*64> page{};

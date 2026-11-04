@@ -27,4 +27,19 @@ else:
     run('apply', '--check', str(patch))
     run('apply', str(patch))
     receipt.write_text(fingerprint + '\n')
+# Small follow-up patches have independent receipts so an existing integration
+# can be extended without discarding its build cache.
+for extra in sorted(patch.parent.glob('[0-9]*.patch')):
+    if extra == patch:
+        continue
+    extra_receipt = dest / '.git' / ('mpainter-' + extra.name + '.sha256')
+    extra_fingerprint = hashlib.sha256(extra.read_bytes()).hexdigest()
+    if extra_receipt.exists():
+        if extra_receipt.read_text().strip() != extra_fingerprint:
+            raise SystemExit('Follow-up patch changed; prepare a fresh Blender source directory.')
+        run('apply', '--reverse', '--check', str(extra))
+    else:
+        run('apply', '--check', str(extra))
+        run('apply', str(extra))
+        extra_receipt.write_text(extra_fingerprint + '\n')
 print('Blender v5.2.0 native host integration is ready.')
