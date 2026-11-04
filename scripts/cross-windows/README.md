@@ -3,13 +3,13 @@
 This is a local clang-cl/lld cross-build experiment, not a verified Windows release recipe.
 It targets mPainter 0.9.0-alpha using the Microsoft C++ ABI, the pinned Blender 5.2
 Windows libraries, and Qt 6.8.3 `win64_msvc2022_64`. See `~/mpainter-work/REPORT-win.md`
-for the actual outcome and logs. No script pushes, publishes, or uploads files.
+and `~/mpainter-work/REPORT-win2.md` for the actual outcomes and logs. No script pushes, publishes, or uploads files.
 
-**Result, 4 November 2026:** the complete build stops at Windows-specific `QUuid`
-assignment errors in the unchanged application input
-`9b3975e988e5d31de31ac9c9708efe20be589a12`. No `mPainter.exe`, release ZIP or
-release checksum was produced. Compiler and Qt probes passed under Wine; they
-are diagnostic executables, not the application.
+The first attempt stopped at ambiguous UUID assignments. The follow-up source port
+uses explicit UUID resets, removes obsolete shared-pointer APIs, and addresses
+Windows file replacement, compiler checks and dependency discovery. The follow-up linked and installed the application, passed Wine CPU smoke and
+component checks, and captured its main window under Xvfb/llvmpipe. This still
+does not establish a verified real-Windows release.
 
 MinGW-w64 and llvm-mingw use a different C++ ABI and cannot substitute for the
 MSVC-built Qt, OpenImageIO, USD and other C++ dependencies. Rebuilding that entire
@@ -50,8 +50,9 @@ Run these **sequentially** and do not run another heavy build/test concurrently.
 `build.sh` locks the Windows build directory. Ninja uses at most six jobs; the
 Blender graph restricts heavy compile jobs to three and links to one. lld uses at
 most six threads on fresh configurations. All Windows code runs under private
-Xvfb; no host desktop display is used. Qt smoke tests explicitly select the
-offscreen platform. GPU/OpenGL behavior is not tested by this widget probe.
+Xvfb; no host desktop display is used. CPU smoke tests select the offscreen
+platform. The optional main-window capture uses software OpenGL separately;
+neither test validates physical graphics hardware.
 
 `env.sh` rejects execution outside a container. `MP_WIN_WORK` can select another
 simple absolute mount point. A matching **Linux Qt 6.8.3** installation must exist
@@ -61,9 +62,8 @@ are checked. `msvc-channel.json` selects the original VS package manifest;
 `fetch-manifest.py` verifies its observed SHA-256 (xwin skips that check because
 Microsoft's channel hash differs from the downloaded manifest). The complete
 original manifests remain in `cache/windows/xwin/dl` for acquisition provenance.
-To reproduce this experiment after the scripts commit, set
-`export MP_WIN_SOURCE_REF=9b3975e988e5d31de31ac9c9708efe20be589a12` before
-`prepare-source.sh`. Its default is the current checkout's HEAD.
+`prepare-source.sh` defaults to the current checkout's HEAD. To reproduce the
+original failed attempt, set `MP_WIN_SOURCE_REF` to the revision in `REPORT-win.md`.
 
 ## Source and build adaptations
 
@@ -85,10 +85,13 @@ source/library directories if you need a pristine preparation; do not run the
 upstream updater over a patched checkout. Changing the toolchain may require
 `configure.sh --fresh` before rebuilding.
 
-The project hook also enables Microsoft's `_HAS_DEPRECATED_SHARED_PTR_UNIQUE`
-compatibility switch: the application uses `shared_ptr::unique()`, which the
-Microsoft STL removes in C++20 by default. A future source port should replace
-that obsolete API rather than rely on this switch.
+`snapshot-source.py` refreshes the application snapshot from a committed revision
+without touching unchanged file timestamps. It verifies the old snapshot against
+Git first and refuses source drift or untracked-file collisions. Run it with
+`env.sh` sourced after committing source fixes, then rerun `build.sh`.
+The source uses `use_count() == 1`; no deprecated-STL compatibility switch is needed.
+An additional Blender patch uses explicit ANSI Win32 functions for its `CHAR`
+crash-report buffers, including when Qt enables Unicode for the host target.
 
 The auxiliary target libraries are Assimp 5.4.3, HDF5 1.14.6 and LZ4 1.10.0,
 built sequentially with clang-cl and the dynamic Microsoft CRT. GPU kernel
@@ -96,19 +99,15 @@ compilation is disabled, matching the existing Windows recipe. Packaging must
 retain dependency license texts and runtime resources. `check-pe.py` checks all
 staged PE imports, including recursive files and imported delay-load DLL names
 reported by llvm-readobj. It does not prove dynamic plugin discovery or launch.
+By default every non-OS import must resolve. Packaging/smoke explicitly enable
+`--allow-optional-gpu-drivers`, which reports only the OIDN CUDA/HIP module's
+external `nvcuda.dll`/`amdhip64_7.dll` imports separately. These dependencies are
+not bundled or verified; they are never exempted for the core application.
 VC runtime DLLs are deliberately not classified as OS-supplied dependencies.
 
-## Verified stopping point and follow-up
+## Verification and local packaging
 
-The final host compilation reports 16 ambiguous `QUuid = {}` assignments in
-`SmartMaterialPreset.cc`, `TextureDocument.cc` and `MaterialLayeringStacks.hh`.
-Qt's Windows headers add `operator=(const GUID&)`; an empty initializer can select
-that overload or the UUID copy/move overloads. Explicit `id = QUuid{}` fixes the
-minimal reproducer. This application source change has **not** been applied,
-because the requested build input is the recorded HEAD. Further compile/link
-failures may exist beyond this point.
-
-Useful diagnostics, run sequentially inside the same container:
+Run diagnostics sequentially inside the same container:
 
 ```sh
 source scripts/cross-windows/env.sh
@@ -119,19 +118,33 @@ bash scripts/cross-windows/component-tests.sh
 ```
 
 The UUID diagnostic requires the ambiguous variant to fail compilation and the
-explicit variant to compile and run. Component tests use the original branding
-and theme test targets and the Qt probe's runtime staging directory. These tests
-can run after the full build fails; they do not depend on a linked application.
-`smoke.sh STAGING_DIRECTORY` is reserved for a future completed application and
-checks static imports, `--version` and `--cpu-workspace-shutdown-test`; there is no
-application `--self-test` option. It has not been run against mPainter.
+`QUuid()` variant to compile and run. Component tests run branding, theme,
+Unicode project save/backup/conflict handling, and signed warp-tangent dragging
+under Wine. They use the Qt probe's runtime staging directory and do not depend
+on a linked application. Failed checks stop the script.
 
-The existing `scripts/package-windows.ps1` remains the Windows packaging recipe;
-this experiment has not reached installation, Qt deployment or packaging. Before
-any future ZIP, resolve the source blockers, finish linking/installing, include
-the runtime dependencies/resources/licenses, run closure and smoke checks, and
-compute SHA-256 for the actual archive. Real Windows, GPU/OpenGL and tablet
-validation remain outstanding.
+After a completed build and install:
+
+```sh
+python3 scripts/cross-windows/package.py
+bash scripts/cross-windows/smoke.sh "$MP_WIN_WORK/dist/mPainter-0.9.0-alpha-windows-x64"
+bash scripts/cross-windows/capture.sh "$MP_WIN_WORK/dist/mPainter-0.9.0-alpha-windows-x64"
+```
+
+`package.py` stages runtime resources, Qt plugins, release CRT and dependency
+licenses, checks required static DLL closure (with explicit optional GPU imports), and writes the ZIP plus its
+`.zip.sha256` file locally. It refuses to overwrite existing outputs. `smoke.sh`
+checks static imports, `--version` and `--cpu-workspace-shutdown-test`; there is
+no application `--self-test` option. `capture.sh` attempts the main window using
+Wine's Windows Qt plugin inside private Xvfb and software OpenGL, saving
+`$MP_WIN_WORK/win.png`. It selects GLX for mPainter in the isolated Wine prefix
+because Wine's EGL device selection conflicts with forced software rendering.
+Capture can fail even when CPU smoke tests pass.
+
+The existing `scripts/package-windows.ps1` remains the native Windows packaging
+recipe. Real Windows/NTFS durability, GPU drivers, tablet input and interactive
+painting must be validated separately. Wine checks cover only the paths actually
+exercised; see the dated local report for evidence and remaining blockers.
 
 ## Microsoft SDK and runtime terms
 

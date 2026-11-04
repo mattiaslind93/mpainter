@@ -14,4 +14,4 @@ cmake --build "$build" --parallel 6 --target uuid-explicit
 cp "$MP_WIN_QT/bin/Qt6Core.dll" "$build/"
 cp "$MP_WIN_WORK/toolchains/windows/redist/"*.dll "$build/"
 "$MP_WIN_SCRIPTS/wine-headless.sh" "$build/uuid-explicit.exe"
-echo 'Confirmed: id = {} fails to compile; id = QUuid{} compiles and runs.'
+echo 'Confirmed: id = {} fails to compile; id = QUuid() compiles and runs.'

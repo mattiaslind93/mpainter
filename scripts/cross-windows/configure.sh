@@ -6,6 +6,8 @@ cmake -S "$MP_WIN_WORK/build/windows/blender" -B "$MP_WIN_WORK/build/windows/nat
   -DCMAKE_PROJECT_INCLUDE="$MP_WIN_SCRIPTS/project-hooks.cmake" \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_PREFIX_PATH="$MP_WIN_QT;$MP_WIN_WORK/toolchains/windows/deps" \
+  -DHDF5_DIR="$MP_WIN_WORK/toolchains/windows/deps/cmake" \
+  -DHDF5_USE_STATIC_LIBRARIES=OFF \
   -DQT_HOST_PATH="$MP_WIN_WORK/toolchains/qt" \
   -DLIBDIR="$MP_WIN_WORK/build/windows/lib-windows_x64" \
   -DZLIB_LIBRARY_RELEASE="$MP_WIN_WORK/build/windows/lib-windows_x64/zlib/lib/libz_st.lib" \

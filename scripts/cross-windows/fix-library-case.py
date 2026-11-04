@@ -38,18 +38,27 @@ for path in root.rglob('*.cmake'):
 # Upstream's installed OIIO config embeds Windows absolute paths. CMake running
 # on Linux cannot pass these to file(RELATIVE_PATH); both paths share a prefix.
 oiio = root / 'OpenImageIO/lib/cmake/OpenImageIO/OpenImageIOConfig.cmake'
-content = oiio.read_text()
-content = content.replace('C:/db/build/S/VS1564R/Release/openimageio/', str(root / 'OpenImageIO') + '/')
-oiio.write_text(content)
+original = oiio.read_text()
+content = original.replace('C:/db/build/S/VS1564R/Release/openimageio/', str(root / 'OpenImageIO') + '/')
+if content != original:
+    oiio.write_text(content)
 
 # Blender also uses mixed case in hardcoded LIBDIR paths. Resolve the actual
 # generated Ninja paths against the checkout, without rewriting the build file.
 ninja = root.parent / 'native/build.ninja'
 if ninja.exists():
     build_text = ninja.read_text()
-    for suffix in set(re.findall(r'/lib-windows_x64/([^\s";<>$)]+)', build_text)):
+    # Runtime DLL spellings also occur only in generated install scripts.
+    library_paths = build_text + '\n' + '\n'.join(
+        path.read_text() for path in ninja.parent.rglob('cmake_install.cmake'))
+    for suffix in set(re.findall(r'/lib-windows_x64/([^\s";<>$)]+)', library_paths)):
         alias_path(root, suffix)
     sdk = Path(os.environ['MP_WIN_SDK'])
     for name in set(re.findall(r'(?<![\w/])([A-Za-z0-9_]+\.lib)\b', build_text)):
         for libdir in (sdk / 'crt/lib/x86_64', sdk / 'sdk/lib/ucrt/x86_64', sdk / 'sdk/lib/um/x86_64'):
             alias_path(libdir, name)
+
+# Blender's Win32 GHOST code spells these SDK headers with mixed case.
+sdk = Path(os.environ['MP_WIN_SDK'])
+for name in ('D3D11.h', 'Dwmapi.h'):
+    alias_path(sdk / 'sdk/include/um', name)

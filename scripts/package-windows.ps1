@@ -12,6 +12,11 @@ Copy-Item "$Runtime/*.dll" $Stage -ErrorAction SilentlyContinue
 if (Test-Path "$Runtime/lib") { Copy-Item "$Runtime/lib" $Stage -Recurse }
 python "$Root/scripts/sanitize-runtime.py" "$Stage/5.2"
 if ($LASTEXITCODE -ne 0) { throw "Runtime normalization failed" }
+$World = "$Stage/5.2/datafiles/studiolights/world"
+New-Item -ItemType Directory -Force $World | Out-Null
+Copy-Item "$Root/assets/environments/default-studio.hdr", "$Root/assets/environments/default-studio.txt" $World
+python "$Root/scripts/check-environment.py" $Stage
+if ($LASTEXITCODE -ne 0) { throw "Studio environment validation failed" }
 Copy-Item "$Root/assets/branding" $Stage -Recurse
 New-Item -ItemType Directory -Force "$Stage/assets" | Out-Null
 Copy-Item "$Root/assets/meshes" "$Stage/assets" -Recurse

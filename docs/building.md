@@ -55,21 +55,22 @@ Copy-Item "$env:VCPKG_INSTALLATION_ROOT/installed/x64-windows/bin/*.dll" ../buil
 ./scripts/package-windows.ps1 -Runtime ../build/native/bin -Qt $env:QT_ROOT_DIR -Output ../dist
 ```
 
-The package includes the branded Windows executable/icon, Qt deployment and runtime DLLs. Windows compilation, DLL closure, graphics, tablet support and launch remain unverified locally. CI is a build recipe, not evidence of a successful Windows release.
+The package includes the branded Windows executable/icon, Qt deployment and runtime DLLs. The local clang-cl cross-build has linked and installed successfully, passed Wine CPU startup/workspace checks, and captured the main window with llvmpipe in Xvfb. Required DLL imports resolve; optional OIDN CUDA/HIP modules still require external driver/runtime DLLs. Native Windows/MSVC, hardware graphics and tablet behavior remain unverified. CI is a build recipe, not independent evidence of a successful Windows release.
 
 An experimental Linux-hosted Windows build is documented in
 [`scripts/cross-windows/README.md`](../scripts/cross-windows/README.md). It uses
 clang-cl/lld, an xwin-acquired Microsoft SDK/CRT, the exact Blender Windows library
 revision, Qt's MSVC package with matching Linux host tools, and separately built
-Assimp/HDF5/LZ4. Compiler and Qt widget probes have run headlessly under Wine/Xvfb;
-these probes do not establish a working mPainter Windows release. The scripts
+Assimp/HDF5/LZ4. Compiler/component probes and the completed application have run
+headlessly under Wine/Xvfb; these checks do not establish a real-Windows release. The scripts
 record the required case-sensitive filesystem and generator adaptations, resource
 limits, static DLL checks, and Microsoft redistribution terms. Keep all builds and
 tests sequential and inside a capped container; do not publish this experiment.
-The 4 November 2026 attempt stopped at ambiguous `QUuid = {}` assignments in
-Windows Qt headers; no application executable or Windows release archive was
-produced. The cross-build README records a minimal reproducer and the source
-changes needed before another complete build can succeed.
+The initial 4 November 2026 attempt stopped at ambiguous UUID assignments. The
+follow-up port replaces those assignments and deprecated shared-pointer APIs,
+adds Windows project-save handling, and extends the sequential Wine checks.
+`~/mpainter-work/REPORT-win2.md` records the follow-up's actual build, artifact
+and verification outcome; the scripts alone are not release evidence.
 
 ## macOS arm64: viewport port required
 

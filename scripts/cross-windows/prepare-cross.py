@@ -38,7 +38,10 @@ text = macros.read_text()
 for target in ('datatoc', 'shader_tool'):
     text = text.replace(f'COMMAND "$<TARGET_FILE:{target}>"',
                         f'COMMAND {runner} "$<TARGET_FILE:{target}>"')
-macros.write_text(text)
+if text != macros.read_text():
+    macros.write_text(text)
+replace(macros, 'env ${PLATFORM_ENV_BUILD} "$<TARGET_FILE:msgfmt>"',
+        f'env ${{PLATFORM_ENV_BUILD}} {runner} "$<TARGET_FILE:msgfmt>"')
 replace(root / 'intern/cycles/kernel/osl/shaders/CMakeLists.txt',
         '${OSL_COMPILER} -q -O2', f'{runner} ${{OSL_COMPILER}} -q -O2')
 replace(platform, 'set(PLATFORM_ENV_BUILD "PATH=${PLATFORM_ENV_BUILD_DIRS}")',

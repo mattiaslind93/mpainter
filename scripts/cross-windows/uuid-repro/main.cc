@@ -2,7 +2,7 @@
 int main() {
   QUuid id = QUuid::createUuid();
 #ifdef EXPLICIT_UUID_RESET
-  id = QUuid{};
+  id = QUuid();
 #else
   id = {};
 #endif

@@ -24,6 +24,8 @@ export RAYON_NUM_THREADS=6
 export OMP_NUM_THREADS=6
 export WINEPREFIX="$MP_WIN_WORK/build/windows/wine-prefix"
 export WINEARCH=win64
+# Blender searches executable suffixes through the Windows environment contract.
+export PATHEXT="${PATHEXT:-.COM;.EXE;.BAT;.CMD}"
 export WINEDEBUG=-all WINEDLLOVERRIDES='mscoree,mshtml=;winemenubuilder.exe=d'
 export QT_QPA_PLATFORM=offscreen LIBGL_ALWAYS_SOFTWARE=1
 unset DISPLAY WAYLAND_DISPLAY
