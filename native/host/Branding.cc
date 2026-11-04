@@ -19,6 +19,7 @@
 #include <QScreen>
 #include <QSettings>
 #include <QTimer>
+#include <QToolButton>
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -32,17 +33,24 @@ QString splash_featured_path(){
 }
 QPointF splash_focus(const QString &featured){
  auto sidecar=featured;const int dot=sidecar.lastIndexOf('.');if(dot>sidecar.lastIndexOf('/'))sidecar.truncate(dot);sidecar+=".focus";
- QFile file(sidecar);if(!file.open(QIODevice::ReadOnly))return {.5,.5};
- const auto values=QString::fromUtf8(file.read(256)).simplified().split(' ');if(values.size()!=2)return {.5,.5};bool x_ok=false,y_ok=false;const double x=values[0].toDouble(&x_ok),y=values[1].toDouble(&y_ok);
- return x_ok&&y_ok&&std::isfinite(x)&&std::isfinite(y)?QPointF(std::clamp(x,0.,1.),std::clamp(y,0.,1.)):QPointF(.5,.5);
+ QFile file(sidecar);if(!file.open(QIODevice::ReadOnly))return {.52,.23};
+ const auto values=QString::fromUtf8(file.read(256)).simplified().split(' ');if(values.size()!=2)return {.52,.23};bool x_ok=false,y_ok=false;const double x=values[0].toDouble(&x_ok),y=values[1].toDouble(&y_ok);
+ return x_ok&&y_ok&&std::isfinite(x)&&std::isfinite(y)?QPointF(std::clamp(x,0.,1.),std::clamp(y,0.,1.)):QPointF(.52,.23);
 }
-QImage compose_splash(const QString &featured,QPointF,int scale){
+QImage compose_splash(const QString &featured,QPointF focus,int scale){
  scale=scale>=2?2:1;
  QImage canvas(940*scale,529*scale,QImage::Format_RGB32);canvas.fill(QColor("#111315"));
  QPainter painter(&canvas);painter.setRenderHint(QPainter::SmoothPixmapTransform);
  QImage artwork(featured);if(artwork.isNull())artwork.load(":/branding/splash-featured.png");
- painter.drawImage(canvas.rect(),artwork);painter.scale(scale,scale);
- painter.fillRect(QRect(0,0,230,529),QColor("#111315"));
+ // The portrait ends above the footer; never paint status text over the artwork.
+ // Use the full-resolution source and crop at the waist without stretching it.
+ const QRectF image_area(230,0,710,443);
+ const double height=std::min(artwork.height()*.46,artwork.width()*image_area.height()/image_area.width());
+ const double width=height*image_area.width()/image_area.height();
+ const QRectF source(std::clamp(focus.x()*artwork.width()-width/2,0.,artwork.width()-width),
+                     std::clamp(focus.y()*artwork.height()-height/2,0.,artwork.height()-height),width,height);
+ painter.scale(scale,scale);
+ painter.drawImage(image_area,artwork,source);
  painter.setPen(QColor("#F2F4F5"));QFont title=QApplication::font();title.setPixelSize(34);title.setWeight(QFont::DemiBold);painter.setFont(title);painter.drawText(28,76,"mPainter");
  QFont detail=QApplication::font();detail.setPixelSize(14);painter.setFont(detail);painter.setPen(QColor("#B4BAC1"));painter.drawText(28,108,"3D texture painting");
  painter.setPen(QPen(QColor("#C8D2DC"),1));painter.drawLine(28,130,202,130);
@@ -54,8 +62,8 @@ StartupSplash::StartupSplash(const QString &featured,int scale):QSplashScreen(){
  QFont font=QApplication::font();font.setPixelSize(12);setFont(font);
 }
 void StartupSplash::drawContents(QPainter *painter){
- painter->setFont(font());painter->setPen(QColor("#B4BAC1"));painter->drawText(QRect(28,443,180,18),Qt::AlignLeft|Qt::AlignTop,"Version "+product_version());
- painter->drawText(QRect(28,470,180,42),Qt::AlignLeft|Qt::AlignTop|Qt::TextWordWrap,status_);
+ painter->setFont(font());painter->setPen(QColor("#B4BAC1"));painter->drawText(QRect(28,470,210,22),Qt::AlignLeft|Qt::AlignTop,"Version "+product_version());
+ painter->drawText(QRect(258,470,654,42),Qt::AlignLeft|Qt::AlignTop|Qt::TextWordWrap,status_);
 }
 // Qt 6.8 QSplashScreen::event(Show) waits up to one second for mapping.
 // The application owns startup pacing; never wait or run nested events here.
@@ -80,8 +88,11 @@ void BrandingStartup::ready(QMainWindow *window){
    if(qEnvironmentVariableIsSet("MPAINTER_RELEASE_CHECK")){
     if(auto *categories=window->findChild<QListWidget *>("shelfCategories"))for(int i=0;i<categories->count();++i)if(categories->item(i)->text()=="Materials"){categories->setCurrentRow(i);break;}
     auto *assets=window->findChild<QListWidget *>("shelfAssets");auto *empty=window->findChild<QWidget *>("emptyMaterials");
-    const bool valid=assets&&assets->count()==0&&empty&&empty->isVisible()&&window->findChild<QPushButton *>("downloadFreeMaterialsShelf")&&window->findChild<QPushButton *>("downloadFreeMaterialsEmpty")&&window->findChild<QAction *>("downloadFreeMaterialsHelp");
-    QFile result(path+"/empty-materials.json");if(result.open(QIODevice::WriteOnly))result.write(QJsonDocument(QJsonObject{{"passed",valid},{"material_count",assets?assets->count():-1},{"empty_state_visible",empty&&empty->isVisible()},{"download_controls",valid?3:0}}).toJson());
+    auto *material_count=window->findChild<QLabel *>("layerMaterialLibraryCount");
+    auto *blend_materials=window->findChild<QToolButton *>("editUniformMaterialLayering");
+    const bool layers_valid=material_count&&material_count->isHidden()&&blend_materials&&blend_materials->text()=="Blend materials…";
+    const bool valid=layers_valid&&assets&&assets->count()==0&&empty&&empty->isVisible()&&window->findChild<QPushButton *>("downloadFreeMaterialsShelf")&&window->findChild<QPushButton *>("downloadFreeMaterialsEmpty")&&window->findChild<QAction *>("downloadFreeMaterialsHelp");
+    QFile result(path+"/empty-materials.json");if(result.open(QIODevice::WriteOnly))result.write(QJsonDocument(QJsonObject{{"passed",valid},{"material_count",assets?assets->count():-1},{"empty_state_visible",empty&&empty->isVisible()},{"layer_material_count_hidden",material_count&&material_count->isHidden()},{"layer_controls_valid",layers_valid},{"download_controls",valid?3:0}}).toJson());
     if(!valid){std::fprintf(stderr,"MPAINTER_RELEASE_CHECK failed\n");QCoreApplication::exit(3);return;}
    }
    if(!capture.isNull())capture.save(path+"/splash.png");window->grab().save(path+"/workspace.png");window->windowIcon().pixmap(128,128).save(path+"/window-icon.png");

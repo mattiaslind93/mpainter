@@ -1056,6 +1056,10 @@ WorkspaceShell::WorkspaceShell(QWidget *viewport, Callbacks callbacks, QWidget *
   layer_actions_layout->addWidget(smart_material_button_);
   auto *image_layer=new QToolButton(layer_actions);image_layer->setText("▧");image_layer->setObjectName("importImageAsFillLayer");image_layer->setToolTip("Load image as a new fill layer…");layer_actions_layout->addWidget(image_layer);connect(image_layer,&QToolButton::clicked,this,[this]{if(callbacks_.layer_texture_file_requested)callbacks_.layer_texture_file_requested();});
   layers_layout->addWidget(layer_actions);
+  auto *material_count=new QLabel(layers);
+  material_count->setObjectName("layerMaterialLibraryCount");
+  material_count->hide();
+  layers_layout->addWidget(material_count);
   auto *empty=new QFrame(layers);empty->setObjectName("emptyLayersView");auto *empty_layout=new QVBoxLayout(empty);auto *empty_label=new QLabel("Inget projekt - File → New (Ctrl+N) / File → Open",empty);empty_label->setObjectName("emptyLayersMessage");empty_label->setWordWrap(true);empty_layout->addWidget(empty_label);
   for(const auto &[text,name]:{std::pair{"New project…","newProject"},std::pair{"Open project…","openProject"}}){auto *button=new QPushButton(text,empty);empty_layout->addWidget(button);connect(button,&QPushButton::clicked,this,[this,name]{if(auto *action=findChild<QAction *>(name))action->trigger();});}layers_layout->addWidget(empty);
   auto *layer_list = new LayerStackList(layers);
@@ -1763,6 +1767,12 @@ void WorkspaceShell::add_alpha_resource(const BrushAlpha &alpha)
 bool WorkspaceShell::layer_thumbnails_pending() const{return thumbnails_&&thumbnails_->pending();}
 void WorkspaceShell::refresh_alpha_shelf()
 {
+  if(auto *label=findChild<QLabel *>("layerMaterialLibraryCount")){
+    int count=0;
+    if(asset_catalog_)for(const auto &asset:asset_catalog_->assets())if(asset_in_category(asset,"Materials"))++count;
+    label->setText(count==1?QStringLiteral("1 library material"):QString("%1 library materials").arg(count));
+    label->setVisible(count>0);
+  }
   if(asset_catalog_&&smart_material_button_){
     auto *menu=smart_material_button_->menu();std::vector<const StudioAsset *> presets;QByteArray signature;
     for(const auto &asset:asset_catalog_->assets())if(asset.smart_material&&asset_in_category(asset,"Material presets")){presets.push_back(&asset);signature+=asset.id.toRfc4122();signature+=QByteArray::number(qulonglong(asset.revision));signature+=';';}

@@ -11,4 +11,4 @@ mkdir -p "$output"
 cp -R "$runtime/mPainter.app" "$output/mPainter.app"
 macdeployqt "$output/mPainter.app" -always-overwrite
 codesign --force --deep --sign - "$output/mPainter.app"
-hdiutil create -volname mPainter -srcfolder "$output/mPainter.app" -ov -format UDZO "$output/mPainter-1.0.0-macos-arm64.dmg"
+hdiutil create -volname mPainter -srcfolder "$output/mPainter.app" -ov -format UDZO "$output/mPainter-0.9.0-alpha-macos-arm64.dmg"

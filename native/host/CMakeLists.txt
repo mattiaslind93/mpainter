@@ -6,7 +6,7 @@ set(BTS_FILE_BROWSER_WIDGET_SOURCES ${BTS_HOST_SOURCE_DIR}/FileDialogs.cc ${BTS_
 qt6_add_resources(BTS_BRANDING_RESOURCES ${BTS_HOST_SOURCE_DIR}/../../assets/branding/branding.qrc)
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${BTS_HOST_SOURCE_DIR}/../../pyproject.toml)
 file(STRINGS ${BTS_HOST_SOURCE_DIR}/../../pyproject.toml BTS_PRODUCT_VERSION_LINE REGEX "^version = ")
-string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+" BTS_PRODUCT_VERSION "${BTS_PRODUCT_VERSION_LINE}")
+string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+(-[A-Za-z0-9.-]+)?" BTS_PRODUCT_VERSION "${BTS_PRODUCT_VERSION_LINE}")
 add_executable(bts-host ${SRC}
   ${BTS_BRANDING_RESOURCES}
   ${BTS_HOST_SOURCE_DIR}/Branding.cc

@@ -31,6 +31,12 @@ int bts::run_asset_workspace_drop_test(const QString &directory){
  callbacks.asset_selected=[&](const StudioAsset &asset){assert(asset.id==material.id);++double_clicks;};
  auto *placeholder=new QLabel("CPU regression fixture\n3D rendering is not initialized");placeholder->setAlignment(Qt::AlignCenter);
  WorkspaceShell shell(placeholder,std::move(callbacks));window=&shell;shell.set_asset_catalog(&catalog);shell.resize(1440,1000);shell.show();shell.reset_reference_layout();shell.show_texture_set(&set,&options,&brush);QApplication::processEvents();
+ // Count library materials, not the fixed capacity of the blending editor.
+ auto *count=shell.findChild<QLabel *>("layerMaterialLibraryCount");assert(count&&!count->isHidden()&&count->text()=="1 library material");
+ AssetCatalog empty_catalog(library.filePath("empty"));shell.set_asset_catalog(&empty_catalog);assert(count->isHidden());
+ empty_catalog.add(material);shell.refresh_alpha_shelf();assert(!count->isHidden()&&count->text()=="1 library material");
+ StudioAsset second=material;second.id=QUuid::createUuid();empty_catalog.add(second);shell.refresh_alpha_shelf();assert(count->text()=="2 library materials");
+ shell.set_asset_catalog(nullptr);assert(count->isHidden());shell.set_asset_catalog(&catalog);
  auto *shelf=shell.findChild<QListWidget *>("shelfAssets");auto *layers=dynamic_cast<LayerStackList *>(shell.findChild<QListWidget *>("layerStack"));assert(shelf&&layers);QListWidgetItem *material_item=nullptr;for(int i=0;i<shelf->count();++i)if(QUuid(shelf->item(i)->data(Qt::UserRole).toString())==material.id)material_item=shelf->item(i);assert(material_item&&(material_item->flags()&Qt::ItemIsDragEnabled));
  std::unique_ptr<QMimeData> mime(shelf->model()->mimeData({shelf->indexFromItem(material_item)}));assert(mime->data("application/x-bts-asset")==material.id.toString().toUtf8());
  QDir().mkpath(directory);

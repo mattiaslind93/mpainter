@@ -7,7 +7,7 @@ root=pathlib.Path(__file__).absolute().parents[1];out=a.output.resolve();out.mkd
 def is_elf(path):
     if not path.is_file():return False
     with path.open('rb') as stream:return stream.read(4)==b'\x7fELF'
-stage=out/'mPainter-1.0.0-linux-x86_64'
+stage=out/'mPainter-0.9.0-alpha-linux-x86_64'
 if stage.exists():raise SystemExit('Output staging directory exists; choose a new output directory.')
 stage.mkdir();(stage/'lib').mkdir()
 shutil.copy2(a.runtime/'mpainter',stage/'mpainter')
@@ -120,7 +120,7 @@ if shutil.which('rpm'):
         for source in result.stdout.splitlines():
             if source.startswith('/usr/share/licenses/') and pathlib.Path(source).is_file():
                 dest=licenses/'system'/pathlib.Path(source).relative_to('/usr/share/licenses');dest.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(source,dest)
-(stage/'BUILD-INFO.txt').write_text('mPainter 1.0.0\nBlender 5.2.0\nQt 6.8.3\nRequires a compatible Linux glibc and OpenGL 4.3 graphics driver.\nCycles GPU kernels and Intel/AMD GPU denoising backends are not bundled.\nCUDA denoising requires the system NVIDIA driver; CPU denoising is included.\nSource preparation and package commands: docs/building.md in the matching source tree.\n')
+(stage/'BUILD-INFO.txt').write_text('mPainter 0.9.0-alpha\nBlender 5.2.0\nQt 6.8.3\nRequires a compatible Linux glibc and OpenGL 4.3 graphics driver.\nCycles GPU kernels and Intel/AMD GPU denoising backends are not bundled.\nCUDA denoising requires the system NVIDIA driver; CPU denoising is included.\nSource preparation and package commands: docs/building.md in the matching source tree.\n')
 dependency_manifest=json.dumps({'libraries':sorted(origins),'external_libraries':sorted(external_libraries),'system_packages':sorted(packages)},indent=2)+'\n'
 (out/'linux-dependencies.json').write_text(dependency_manifest)
 (stage/'DEPENDENCIES.json').write_text(dependency_manifest)

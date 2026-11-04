@@ -92,7 +92,7 @@ jobs:
         run: python scripts/package-linux.py --runtime build/native/bin --qt "$QT_ROOT_DIR" --output dist
       - name: Package AppImage
         if: runner.os == 'Linux'
-        run: python scripts/package-appimage.py --appdir dist/mPainter-1.0.0-linux-x86_64 --output dist/mPainter-1.0.0-linux-x86_64.AppImage --cache .cache/appimage
+        run: python scripts/package-appimage.py --appdir dist/mPainter-0.9.0-alpha-linux-x86_64 --output dist/mPainter-0.9.0-alpha-linux-x86_64.AppImage --cache .cache/appimage
       - name: Package Windows
         if: runner.os == 'Windows'
         shell: pwsh

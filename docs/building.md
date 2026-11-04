@@ -1,10 +1,10 @@
-# Building mPainter 1.0.0
+# Building mPainter 0.9.0-alpha
 
 The native host is compiled inside Blender's CMake graph. The stable internal target is `bts-host`; its installed executable is `mpainter` on Linux and `mPainter.exe` on Windows. Blender's standalone executable is built only to complete its runtime resource installation and is excluded from the mPainter package.
 
 ## Sources and prerequisites
 
-Use Git with Git LFS, Python 3.11+, CMake 3.31+, Ninja, `patchelf` for Linux packaging, a C++20 compiler, Qt **6.8.3** (including private GUI headers), Assimp and HDF5 development packages. Use a large local build volume; allow at least 20 GB for source, libraries, build and packaging. The public repository contains the application and an integration patch, not the full Blender source or a material library.
+Use Git with Git LFS, Python 3.11+, CMake 3.31+, Ninja, `file` and `patchelf` for Linux packaging, a C++20 compiler, Qt **6.8.3** (including private GUI headers), Assimp and HDF5 development packages. Use a large local build volume; allow at least 20 GB for source, libraries, build and packaging. The public repository contains the application and an integration patch, not the full Blender source or a material library.
 
 ```sh
 python3 scripts/prepare-blender.py ../build/blender
@@ -25,8 +25,8 @@ From this repository, with `QT_ROOT_DIR` pointing to the installed Qt SDK:
 ```sh
 python3 scripts/build.py --blender ../build/blender --build ../build/native --qt "$QT_ROOT_DIR" --jobs 4
 python3 scripts/package-linux.py --runtime ../build/native/bin --qt "$QT_ROOT_DIR" --output ../dist
-python3 scripts/package-appimage.py --appdir ../dist/mPainter-1.0.0-linux-x86_64 --output ../dist/mPainter-1.0.0-linux-x86_64.AppImage --cache ../cache/appimage
-../dist/mPainter-1.0.0-linux-x86_64.AppImage
+python3 scripts/package-appimage.py --appdir ../dist/mPainter-0.9.0-alpha-linux-x86_64 --output ../dist/mPainter-0.9.0-alpha-linux-x86_64.AppImage --cache ../cache/appimage
+../dist/mPainter-0.9.0-alpha-linux-x86_64.AppImage
 ```
 
 The AppImage wrapper uses checksum-pinned appimagetool 1.9.1 and type2 runtime 20251108. It can extract and run when FUSE is unavailable (`--appimage-extract-and-run`); extraction must have writable temporary storage. It does not lower the required glibc version.
@@ -71,7 +71,7 @@ For a future unsigned reviewed build, Gatekeeper may require Finder > right-clic
 
 Each successful build uploads its platform archive. A tagged run creates a draft release via `softprops/action-gh-release` only if the full matrix passes. The known Mac blocker currently prevents that release step. Manual dispatch builds artifacts without publishing. No workflows were run remotely during phase one, and no repository, remote, tag or release was created.
 
-Before publishing, run the workflow, resolve platform failures, test the actual downloaded artifacts, retain dependency license texts and provide corresponding source. Version 1.0.0 is fixed in the package filenames and metadata; update all version metadata together for a later release.
+Before publishing, run the workflow, resolve platform failures, test the actual downloaded artifacts, retain dependency license texts and provide corresponding source. Version 0.9.0-alpha is fixed in the package filenames and metadata; update all version metadata together for a later release.
 
 Runtime packaging normalizes compiled OSL source-path metadata and gives legacy wide-gamut color spaces neutral display names. Standard interoperability aliases remain intact so embedded image metadata keeps its color meaning. These aliases and third-party codec/license references are included in the audit, rather than silently altering dependency APIs.
 
