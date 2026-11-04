@@ -7,12 +7,13 @@
 #include <QTemporaryDir>
 #include <QTimer>
 #include <cassert>
+#include <cstdio>
 #include <limits>
 
 template<class F> void rejects(F f){bool rejected=false;try{f();}catch(const std::exception &){rejected=true;}assert(rejected);}
 void write(const QString &path,const QByteArray &bytes){QFile file(path);assert(file.open(QIODevice::WriteOnly));assert(file.write(bytes)==bytes.size());}
 QByteArray read(const QString &path){QFile file(path);assert(file.open(QIODevice::ReadOnly));return file.readAll();}
-int main(int argc,char **argv){
+int main(int argc,char **argv) try {
   QApplication app(argc,argv);QTemporaryDir dir;assert(dir.isValid());
   const auto path=dir.filePath(QStringLiteral("m\u00e5larprojekt-\u753b\u5e03.blend"));
   rejects([&]{bts::ProjectFileIdentity::read(dir.path());});
@@ -49,4 +50,7 @@ int main(int argc,char **argv){
     QTimer::singleShot(0,[&]{auto *box=qobject_cast<QMessageBox *>(QApplication::activeModalWidget());assert(box);assert(box->defaultButton()->text().contains("Cancel"));for(auto *button:box->buttons())if(button->text().contains(text)){button->click();return;}assert(false);});
     assert(bts::ask_project_save_conflict(nullptr,path)==choice);
   }
+} catch(const std::exception &error) {
+  std::fprintf(stderr,"Project save safety test failed: %s\n",error.what());
+  return 1;
 }
