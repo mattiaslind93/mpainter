@@ -1,3 +1,4 @@
+#include "Theme.hh"
 #pragma once
 #include "FillProjection.hh"
 #include <QJsonArray>
@@ -53,8 +54,8 @@ inline const FillGizmoHandle *fill_gizmo_hit(const FillGizmoGeometry &g,QPointF 
  for(const auto &h:g.handles){if(QLineF(h.start,h.end).length()<8&&g.tool!=1)continue;for(int i=1;i<h.path.size();++i){const auto a=h.path[i-1],b=h.path[i];const double d=fill_gizmo_segment_distance(p,a,b);if(d<distance&&(g.tool==1||QLineF(p,h.start).length()>10)){distance=d;best=&h;}}}return best;
 }
 inline void paint_fill_gizmo(QPainter &painter,const FillGizmoGeometry &g){
- if(!g.uv_frame.isEmpty()){painter.setPen(QPen(QColor(200,200,200,200),1,Qt::DotLine));painter.setBrush(Qt::NoBrush);painter.drawPolygon(g.uv_frame);}
- const QColor colors[3]={QColor("#dc6060"),QColor("#70cc80"),QColor("#649ce4")};painter.setBrush(Qt::NoBrush);
+ if(!g.uv_frame.isEmpty()){painter.setPen(QPen(bts::theme::alpha(bts::theme::Text, 200),1,Qt::DotLine));painter.setBrush(Qt::NoBrush);painter.drawPolygon(g.uv_frame);}
+ const QColor colors[3]={QColor(bts::theme::AxisX),QColor(bts::theme::AxisY),QColor(bts::theme::AxisZ)};painter.setBrush(Qt::NoBrush);
  for(const auto &h:g.handles){painter.setPen(QPen(colors[h.axis],2));painter.drawPolyline(h.path);if(g.tool==2)painter.drawRect(QRectF(h.end-QPointF(3,3),QSizeF(6,6)));else if(g.tool==0){const auto delta=h.end-h.start;const double length=QLineF(h.start,h.end).length();if(length>1){const auto d=delta/length;const QPointF side(-d.y(),d.x());painter.drawLine(h.end,h.end-d*8+side*4);painter.drawLine(h.end,h.end-d*8-side*4);}}}
 }
 class FillGizmo {

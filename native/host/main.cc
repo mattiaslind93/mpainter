@@ -1,3 +1,4 @@
+#include "Theme.hh"
 #include "RenderStatusTest.hh"
 #include "AssetApplicationTarget.hh"
 #include "AssetApplyProgress.hh"
@@ -269,7 +270,7 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
     setAttribute(Qt::WA_TabletTracking,true);
     QObject::connect(this,&QOpenGLWidget::frameSwapped,this,[]{bts::property_frame_done();});
     setMinimumSize(400, 300);
-    camera_selector_=new QComboBox(this);camera_selector_->setObjectName("sceneCameraSelector");camera_selector_->addItem("Default camera",0u);camera_selector_->hide();camera_selector_->setStyleSheet("QComboBox{background:#292929;color:#bbb;border:1px solid #494949;padding:2px;}");connect(camera_selector_,&QComboBox::currentIndexChanged,this,[this](int index){choose_scene_camera(index);});camera_back_=new QPushButton(this);camera_back_->setObjectName("restoreSceneCamera");camera_back_->hide();camera_notice_=new QLabel("Scene cameras cannot be moved.",this);camera_notice_->setObjectName("sceneCameraNavigationNotice");camera_notice_->setStyleSheet("background:#292929;color:#ccc;padding:2px");camera_notice_->hide();connect(camera_back_,&QPushButton::clicked,this,[this]{if(last_imported_camera_){const int index=camera_selector_->findData(*last_imported_camera_);if(index>0)camera_selector_->setCurrentIndex(index);}});
+    camera_selector_=new QComboBox(this);camera_selector_->setObjectName("sceneCameraSelector");camera_selector_->addItem("Default camera",0u);camera_selector_->hide();camera_selector_->setStyleSheet(bts::theme::qss("QComboBox{background:@Surface@;color:@Text@;border:1px solid @Border@;padding:2px;}"));connect(camera_selector_,&QComboBox::currentIndexChanged,this,[this](int index){choose_scene_camera(index);});camera_back_=new QPushButton(this);camera_back_->setObjectName("restoreSceneCamera");camera_back_->hide();camera_notice_=new QLabel("Scene cameras cannot be moved.",this);camera_notice_->setObjectName("sceneCameraNavigationNotice");camera_notice_->setStyleSheet(bts::theme::qss("background:@Surface@;color:@Text@;padding:2px"));camera_notice_->hide();connect(camera_back_,&QPushButton::clicked,this,[this]{if(last_imported_camera_){const int index=camera_selector_->findData(*last_imported_camera_);if(index>0)camera_selector_->setCurrentIndex(index);}});
 
     timer_.setInterval(16);timer_.setSingleShot(true);timer_.setTimerType(Qt::PreciseTimer);
     connect(&timer_, &QTimer::timeout, this, [this] { update(); });
@@ -985,7 +986,7 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
     draw_guard.run([&]{paint_frame();},[&](const QString &message){
       timer_.stop();input_timer_.stop();paint_enabled=false;
       qWarning("BTS_DRAW_FAILED: %s",qPrintable(message));
-      if(!draw_error_label){draw_error_label=new QLabel(this);draw_error_label->setObjectName("viewportDrawError");draw_error_label->setWordWrap(true);draw_error_label->setStyleSheet("background:#392626;color:#fff;padding:16px;");}
+      if(!draw_error_label){draw_error_label=new QLabel(this);draw_error_label->setObjectName("viewportDrawError");draw_error_label->setWordWrap(true);draw_error_label->setStyleSheet(bts::theme::qss("background:@ErrorSurface@;color:@Heading@;padding:16px;"));}
       draw_error_label->setText(message+"\nFile New/Open can resume rendering. Recovery checkpoint requested.");
       draw_error_label->setGeometry(16,16,std::max(200,width()-32),160);draw_error_label->show();draw_error_label->raise();
       // Recovery must start after Blender/Qt have left the failed draw stack.
@@ -997,7 +998,7 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
     bts::performance::Scope full_frame_timing("viewport_full_frame");
     bts::property_paint_begin();
     if(headless_surface_&&!headless_gpu_ready_)return;
-    if(empty_project){if(host_.texture_updates_pending())timer_.start(16);else timer_.stop();if(empty_project_view){const int panel_width=std::min(460,width()-24);empty_project_view->setGeometry((width()-panel_width)/2,(height()-110)/2,panel_width,110);empty_project_view->raise();}auto *functions=context()->functions();functions->glClearColor(.15f,.15f,.15f,1);functions->glClear(GL_COLOR_BUFFER_BIT);++frame_count;if(frame_done)frame_done(0);return;}
+    if(empty_project){if(host_.texture_updates_pending())timer_.start(16);else timer_.stop();if(empty_project_view){const int panel_width=std::min(460,width()-24);empty_project_view->setGeometry((width()-panel_width)/2,(height()-110)/2,panel_width,110);empty_project_view->raise();}auto *functions=context()->functions();const QColor backdrop(bts::theme::Canvas);functions->glClearColor(backdrop.redF(),backdrop.greenF(),backdrop.blueF(),1);functions->glClear(GL_COLOR_BUFFER_BIT);++frame_count;if(frame_done)frame_done(0);return;}
     if(shader_failed)return;
     if(prepare_frame)prepare_frame();
     position_camera_controls();position_paths_panel();
@@ -1045,7 +1046,7 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
       if(!failures.empty()){shader_failed=true;timer_.stop();end_paint(true);paint_enabled=false;const QString message="Shader compile failed: "+QString::fromStdString(failures)+". Compiler diagnostics are written to stderr. Use File New/Open to resume rendering.";qWarning("%s",qPrintable(message));if(shader_error)shader_error(message);return;}
       if (layouts_enabled_) {
         draw_view_chrome(*overlay);
-        if(material_pending){overlay->setPen(QColor(220,220,220));overlay->drawText(rect(),Qt::AlignCenter,"Loading material textures…");}
+        if(material_pending){overlay->setPen(QColor(bts::theme::Text));overlay->drawText(rect(),Qt::AlignCenter,"Loading material textures…");}
       }
       overlay.reset();overlay_gpu_.end();
       ++frame_count;
@@ -1577,13 +1578,13 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
       const auto kind=source.surface?bts::ViewKind::Scene:bts::ViewKind::Uv;const auto rect=pane_rect(kind);
       if(!rect.isEmpty()){const auto center=source.surface?scene_point({float(source.surface->center[0]),float(source.surface->center[1]),float(source.surface->center[2])}):uv_point({source.center[0],source.center[1]});
         const double radius=std::max(5.,double(brush->diameter)/200*rect.height()/(source.surface?1:uv_vertical_extent_));
-        painter.save();painter.setClipRect(rect);painter.setPen(QPen(QColor(245,245,245),1,Qt::DotLine));for(double x:{-1.,1.})for(double y:{-1.,1.}){const auto corner=center+QPointF(x*radius,y*radius);painter.drawLine(corner,corner-QPointF(x*radius*.35,0));painter.drawLine(corner,corner-QPointF(0,y*radius*.35));}painter.restore();}
+        painter.save();painter.setClipRect(rect);painter.setPen(QPen(QColor(bts::theme::Heading),1,Qt::DotLine));for(double x:{-1.,1.})for(double y:{-1.,1.}){const auto corner=center+QPointF(x*radius,y*radius);painter.drawLine(corner,corner-QPointF(x*radius*.35,0));painter.drawLine(corner,corner-QPointF(0,y*radius*.35));}painter.restore();}
     }
 
     if(path_active&&paint_enabled){painter.save();const auto pane=pane_rect(bts::ViewKind::Scene);painter.setClipRect(pane);const auto project=[&](const auto &world){return scene_point({float(world[0]),float(world[1]),float(world[2])});};for(const auto &path:paths){const bool selected=path->id==selected_path;const auto color=selected?path_display.selected:path_display.other;painter.setPen(QPen(color,path_display.width+(selected?.5:0),path->visible?Qt::SolidLine:Qt::DashLine));QPolygonF polygon;const auto found=path_draw.find(path->id);if(found!=path_draw.end())for(const auto &sample:found->second.samples){const auto screen=project(sample.point.position);if(std::isfinite(screen.x())&&std::isfinite(screen.y()))polygon<<screen;}else for(const auto &point:path->points)polygon<<project(point.position);painter.drawPolyline(polygon);
       if(path_display.direction&&polygon.size()>1){const auto delta=polygon.back()-polygon[polygon.size()-2];const double length=std::hypot(delta.x(),delta.y());if(length>1e-8){const auto axis=delta/length,side=QPointF(-axis.y(),axis.x());painter.drawLine(polygon.back(),polygon.back()-axis*9+side*4);painter.drawLine(polygon.back(),polygon.back()-axis*9-side*4);}}
-      for(int i=0;i<int(path->points.size());++i){const auto &point=path->points[i];const auto screen=project(point.position);painter.setBrush(selected&&i==selected_vertex?QColor("#eeeeee"):color);painter.drawEllipse(screen,path_display.handle*.5,path_display.handle*.5);if(path_display.normals){auto end=point.position;const double span=symmetry_scene?std::max({double(symmetry_scene->maximum[0]-symmetry_scene->minimum[0]),double(symmetry_scene->maximum[1]-symmetry_scene->minimum[1]),double(symmetry_scene->maximum[2]-symmetry_scene->minimum[2])})*.08:.1;for(int c=0;c<3;++c)end[c]+=point.normal[c]*span;painter.drawLine(screen,project(end));}}
-      if(selected&&selected_vertex>=0&&selected_vertex<int(path->points.size())&&path_display.tangents){const auto &point=path->points[selected_vertex];const auto handles=bts::surface_path_handles(*path,selected_vertex);painter.setPen(QPen(point.custom?color:QColor("#777777"),1,Qt::DashLine));for(const auto &handle:handles){auto position=point.position;for(int c=0;c<3;++c)position[c]+=handle[c];const auto screen=project(position);painter.drawLine(project(point.position),screen);if(point.custom){painter.setBrush(color);painter.drawRect(QRectF(screen-QPointF(3,3),QSizeF(6,6)));}}}
+      for(int i=0;i<int(path->points.size());++i){const auto &point=path->points[i];const auto screen=project(point.position);painter.setBrush(selected&&i==selected_vertex?QColor(bts::theme::Heading):color);painter.drawEllipse(screen,path_display.handle*.5,path_display.handle*.5);if(path_display.normals){auto end=point.position;const double span=symmetry_scene?std::max({double(symmetry_scene->maximum[0]-symmetry_scene->minimum[0]),double(symmetry_scene->maximum[1]-symmetry_scene->minimum[1]),double(symmetry_scene->maximum[2]-symmetry_scene->minimum[2])})*.08:.1;for(int c=0;c<3;++c)end[c]+=point.normal[c]*span;painter.drawLine(screen,project(end));}}
+      if(selected&&selected_vertex>=0&&selected_vertex<int(path->points.size())&&path_display.tangents){const auto &point=path->points[selected_vertex];const auto handles=bts::surface_path_handles(*path,selected_vertex);painter.setPen(QPen(point.custom?color:QColor(bts::theme::Muted),1,Qt::DashLine));for(const auto &handle:handles){auto position=point.position;for(int c=0;c<3;++c)position[c]+=handle[c];const auto screen=project(position);painter.drawLine(project(point.position),screen);if(point.custom){painter.setBrush(color);painter.drawRect(QRectF(screen-QPointF(3,3),QSizeF(6,6)));}}}
     }if(pending_path_point){painter.setPen(QPen(path_display.selected,2));painter.setBrush(Qt::NoBrush);painter.drawEllipse(project(pending_path_point->position),4,4);}painter.restore();}
     painter.setRenderHint(QPainter::Antialiasing);
     QFont font = painter.font();
@@ -1595,28 +1596,28 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
       painter.save();
       painter.setClipRect(rect);
       if (pane.kind == bts::ViewKind::Uv && reference_image_enabled) {
-        painter.fillRect(rect, QColor(30, 30, 30));
+        painter.fillRect(rect, QColor(bts::theme::Surface));
         if (reference_image.valid()) {
           const QRectF target = bts::reference_image_screen_rect(
               rect, reference_image.width, reference_image.height, ref_center_, ref_vertical_extent_);
           painter.setRenderHint(QPainter::SmoothPixmapTransform, ref_vertical_extent_ > 0.25f);
           painter.drawImage(target, reference_image.display_image);
-          painter.setPen(QPen(QColor(90, 90, 90, 200), 1.0));
+          painter.setPen(QPen(bts::theme::alpha(bts::theme::Border, 200), 1.0));
           painter.setBrush(Qt::NoBrush);
           painter.drawRect(target);
         } else {
-          painter.setPen(QColor("#bcbcbc"));
+          painter.setPen(QColor(bts::theme::Text));
           painter.drawText(rect.adjusted(20, 40, -20, -40),
                            Qt::AlignCenter | Qt::TextWordWrap,
                            "No reference image loaded — click Open Image...");
         }
-        painter.setPen(QColor("#bcbcbc"));
+        painter.setPen(QColor(bts::theme::Text));
         const QString badge = reference_image.valid()
             ? QStringLiteral("2D REF — %1").arg(QFileInfo(reference_image.path).fileName())
             : QStringLiteral("2D REF");
         const int badge_w = std::clamp(painter.fontMetrics().horizontalAdvance(badge) + 16, 54, std::max(54, int(rect.width()) - 16));
         const QRectF badge_rect(rect.left() + 8, rect.top() + 8, badge_w, 20);
-        painter.fillRect(badge_rect, QColor(35, 35, 35, 210));
+        painter.fillRect(badge_rect, bts::theme::alpha(bts::theme::Surface, 210));
         painter.drawText(badge_rect.adjusted(6, 0, -6, 0), Qt::AlignVCenter | Qt::AlignLeft,
                          painter.fontMetrics().elidedText(badge, Qt::ElideRight, badge_w - 12));
         if (cursor_visible_ && rect.contains(cursor_) && reference_image.valid()) {
@@ -1624,15 +1625,15 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
               rect, reference_image.width, reference_image.height, ref_center_, ref_vertical_extent_, cursor_);
           if (uv) {
             if (const auto sample = bts::sample_reference_image_uv_rgba(reference_image, uv->x(), uv->y())) {
-              painter.setPen(QPen(QColor(15, 15, 15, 220), 2.5));
+              painter.setPen(QPen(bts::theme::alpha(bts::theme::Canvas, 220), 2.5));
               painter.setBrush(Qt::NoBrush);
               painter.drawEllipse(cursor_, 7, 7);
-              painter.setPen(QPen(QColor(245, 245, 245, 235), 1.2));
+              painter.setPen(QPen(bts::theme::alpha(bts::theme::Heading, 235), 1.2));
               painter.drawEllipse(cursor_, 7, 7);
               const QColor chip = bts::picker_to_srgb(*sample);
               const QRectF swatch(cursor_.x() + 12, cursor_.y() - 22, 18, 18);
               painter.fillRect(swatch, chip);
-              painter.setPen(QPen(QColor(235, 235, 235, 220), 1.0));
+              painter.setPen(QPen(bts::theme::alpha(bts::theme::Heading, 220), 1.0));
               painter.drawRect(swatch);
             }
           }
@@ -1656,7 +1657,7 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
           if(projected){host_.display_rgba(colors);for(int y=0;y<size.height();++y)for(int x=0;x<size.width();++x){const auto index=(std::size_t(y)*size.width()+x)*4;int rgb[3];for(int c=0;c<3;++c)rgb[c]=qRound(255*std::clamp(colors[index+c],0.f,1.f));image.setPixel(x,y,qPremultiply(qRgba(rgb[0],rgb[1],rgb[2],colors[index+3]>0?75:0)));}}
         }
         painter.drawImage(rect,image);
-        if(stencil_key){const QRectF reset(rect.right()-96,rect.top()+36,88,20);painter.fillRect(reset,QColor("#444444"));painter.setPen(QColor("#eeeeee"));painter.drawText(reset,Qt::AlignCenter,"Reset");}
+        if(stencil_key){const QRectF reset(rect.right()-96,rect.top()+36,88,20);painter.fillRect(reset,QColor(bts::theme::Hover));painter.setPen(QColor(bts::theme::Heading));painter.drawText(reset,Qt::AlignCenter,"Reset");}
       }
       if (pane.kind == bts::ViewKind::Uv) {
         draw_uv_tiles(painter, rect);
@@ -1666,32 +1667,32 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
         painter.save();QPainterPath excluded;excluded.setFillRule(Qt::WindingFill);
         if(pane.kind==bts::ViewKind::Uv){for(int tile:geometry_excluded_tiles){const int number=tile-1001;const auto a=uv_point({double(number%10),double(number/10)}),b=uv_point({double(number%10+1),double(number/10+1)});excluded.addRect(QRectF(a,b).normalized());}}
         else for(const auto &shape:geometry_hatch_shapes){QPolygonF polygon;for(const auto &vertex:shape)polygon<<scene_point({float(vertex.position[0]),float(vertex.position[1]),float(vertex.position[2])});excluded.addPolygon(polygon);excluded.closeSubpath();}
-        painter.setClipPath(excluded,Qt::IntersectClip);painter.fillRect(rect,QColor(0,0,0,30));painter.setPen(QPen(QColor(12,12,12,190),2));for(double x=rect.left()-rect.height();x<rect.right();x+=9)painter.drawLine(QPointF(x,rect.bottom()),QPointF(x+rect.height(),rect.top()));
-        painter.restore();painter.fillRect(QRectF(rect.left()+8,rect.bottom()-28,110,20),QColor(35,35,35,210));painter.setPen(QColor("#bcbcbc"));painter.drawText(QRectF(rect.left()+12,rect.bottom()-28,104,20),Qt::AlignVCenter,"UV TILE MASK");
+        painter.setClipPath(excluded,Qt::IntersectClip);painter.fillRect(rect,bts::theme::alpha(bts::theme::Black, 30));painter.setPen(QPen(bts::theme::alpha(bts::theme::Canvas, 190),2));for(double x=rect.left()-rect.height();x<rect.right();x+=9)painter.drawLine(QPointF(x,rect.bottom()),QPointF(x+rect.height(),rect.top()));
+        painter.restore();painter.fillRect(QRectF(rect.left()+8,rect.bottom()-28,110,20),bts::theme::alpha(bts::theme::Surface, 210));painter.setPen(QColor(bts::theme::Text));painter.drawText(QRectF(rect.left()+12,rect.bottom()-28,104,20),Qt::AlignVCenter,"UV TILE MASK");
       }
-      painter.setPen(QColor("#bcbcbc"));
-      painter.fillRect(QRectF(rect.left() + 8, rect.top() + 8, 28, 20), QColor(35, 35, 35, 210));
+      painter.setPen(QColor(bts::theme::Text));
+      painter.fillRect(QRectF(rect.left() + 8, rect.top() + 8, 28, 20), bts::theme::alpha(bts::theme::Surface, 210));
       painter.drawText(QRectF(rect.left() + 8, rect.top() + 8, 28, 20), Qt::AlignCenter,
                        pane.kind == bts::ViewKind::Scene ? "3D" : "2D");
       const QRectF material_label(rect.right() - 96, rect.top() + 8, 88, 20);
-      painter.fillRect(material_label, QColor(35, 35, 35, 210));
+      painter.fillRect(material_label, bts::theme::alpha(bts::theme::Surface, 210));
       painter.drawText(material_label, Qt::AlignCenter, painter.fontMetrics().elidedText(current_inspection_label(),Qt::ElideRight,80));
       if(pane.kind==bts::ViewKind::Uv&&fill_projection&&fill_projection->mode==0)bts::paint_fill_gizmo(painter,fill_gizmo_geometry());
       if(pane.kind==bts::ViewKind::Scene&&fill_projection&&fill_projection->mode==5)warp_editor.paint(painter,*fill_projection,warp_view_context());
       if(pane.kind==bts::ViewKind::Scene&&fill_projection&&bts::fill_surface_projection(*fill_projection)&&fill_projection->mode!=5&&fill_projection->manipulator&&symmetry_scene){
         const auto &p=*fill_projection;const auto geometry=fill_gizmo_geometry();const double extent=geometry.extent;const auto &matrix=geometry.matrix;
         const auto point=[&](QVector3D local){return scene_point((matrix*QVector4D(local,1)).toVector3DAffine());};
-        painter.setPen(QPen(QColor(210,210,210,160),1,Qt::DashLine));if(p.mode==3){for(int axis=0;axis<3;++axis){QPolygonF circle;for(int step=0;step<=96;++step){const double angle=step*2*std::numbers::pi/96;QVector3D local;local[(axis+1)%3]=std::cos(angle)*extent*.5;local[(axis+2)%3]=std::sin(angle)*extent*.5;circle<<point(local);}painter.drawPolyline(circle);}}else if(p.mode==4){const double span=p.cylinder_angle*std::numbers::pi/180;for(double z:{-.5,.5}){QPolygonF arc;for(int step=0;step<=96;++step){const double a=(double(step)/96-.5)*span;arc<<point({float(std::sin(a)*extent*.5),float(-std::cos(a)*extent*.5),float(z*extent)});}painter.drawPolyline(arc);if(p.cylinder_angle<360)painter.drawLine(arc.first(),arc.last());}for(int step=0;step<=8;++step){const double a=(double(step)/8-.5)*span;const float x=std::sin(a)*extent*.5,y=-std::cos(a)*extent*.5;painter.drawLine(point({x,y,float(-.5*extent)}),point({x,y,float(.5*extent)}));}}else for(int corner=0;corner<8;++corner)for(int axis=0;axis<3;++axis)if(!(corner&(1<<axis))){QVector3D a,b;for(int i=0;i<3;++i){a[i]=((corner&(1<<i))?.5:-.5)*extent*(p.mode==2&&i==1?2:1);b[i]=a[i];}b[axis]*=-1;painter.drawLine(point(a),point(b));}
+        painter.setPen(QPen(bts::theme::alpha(bts::theme::Text, 160),1,Qt::DashLine));if(p.mode==3){for(int axis=0;axis<3;++axis){QPolygonF circle;for(int step=0;step<=96;++step){const double angle=step*2*std::numbers::pi/96;QVector3D local;local[(axis+1)%3]=std::cos(angle)*extent*.5;local[(axis+2)%3]=std::sin(angle)*extent*.5;circle<<point(local);}painter.drawPolyline(circle);}}else if(p.mode==4){const double span=p.cylinder_angle*std::numbers::pi/180;for(double z:{-.5,.5}){QPolygonF arc;for(int step=0;step<=96;++step){const double a=(double(step)/96-.5)*span;arc<<point({float(std::sin(a)*extent*.5),float(-std::cos(a)*extent*.5),float(z*extent)});}painter.drawPolyline(arc);if(p.cylinder_angle<360)painter.drawLine(arc.first(),arc.last());}for(int step=0;step<=8;++step){const double a=(double(step)/8-.5)*span;const float x=std::sin(a)*extent*.5,y=-std::cos(a)*extent*.5;painter.drawLine(point({x,y,float(-.5*extent)}),point({x,y,float(.5*extent)}));}}else for(int corner=0;corner<8;++corner)for(int axis=0;axis<3;++axis)if(!(corner&(1<<axis))){QVector3D a,b;for(int i=0;i<3;++i){a[i]=((corner&(1<<i))?.5:-.5)*extent*(p.mode==2&&i==1?2:1);b[i]=a[i];}b[axis]*=-1;painter.drawLine(point(a),point(b));}
         bts::paint_fill_gizmo(painter,geometry);
       }
 
-      if(polygon_drag){painter.setPen(QPen(QColor(245,180,110),1,Qt::DashLine));painter.fillRect(QRectF(polygon_start,polygon_end).normalized(),QColor(225,150,75,30));painter.drawRect(QRectF(polygon_start,polygon_end).normalized());}
+      if(polygon_drag){painter.setPen(QPen(QColor(bts::theme::Warning),1,Qt::DashLine));painter.fillRect(QRectF(polygon_start,polygon_end).normalized(),bts::theme::alpha(bts::theme::Warning, 30));painter.drawRect(QRectF(polygon_start,polygon_end).normalized());}
       if(pane.kind==bts::ViewKind::Scene)draw_symmetry(painter);
       draw_axes(painter, rect, pane.kind);
-      if(quick_mask_edit){painter.setPen(QColor("#dddddd"));const QRectF label(rect.left()+8,rect.bottom()-28,118,20);painter.fillRect(label,QColor(35,35,35,220));painter.drawText(label,Qt::AlignCenter,"▦ QUICK MASK");}
-      else if(paint_mask){painter.setPen(QColor("#bcbcbc"));const QRectF label(rect.left()+8,rect.bottom()-28,48,20);painter.fillRect(label,QColor(35,35,35,210));painter.drawText(label,Qt::AlignCenter,skew_field?"SKEW":"MASK");}
+      if(quick_mask_edit){painter.setPen(QColor(bts::theme::Heading));const QRectF label(rect.left()+8,rect.bottom()-28,118,20);painter.fillRect(label,bts::theme::alpha(bts::theme::Surface, 220));painter.drawText(label,Qt::AlignCenter,"▦ QUICK MASK");}
+      else if(paint_mask){painter.setPen(QColor(bts::theme::Text));const QRectF label(rect.left()+8,rect.bottom()-28,48,20);painter.fillRect(label,bts::theme::alpha(bts::theme::Surface, 210));painter.drawText(label,Qt::AlignCenter,skew_field?"SKEW":"MASK");}
       if (pane.kind == bts::ViewKind::Uv && !host_.uv_preview_summary()) {
-        painter.setPen(QColor("#bcbcbc"));
+        painter.setPen(QColor(bts::theme::Text));
         const QString hint = selected_material_ ? "No UV faces for this texture set" :
                                                   "Select a texture set to view its UVs";
         painter.drawText(rect.adjusted(20, 40, -20, -40),
@@ -1699,7 +1700,7 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
       }
       if(!polygon_active&&paint_enabled && brush && cursor_visible_ && rect.contains(cursor_)) {
         const double radius=pane.kind==bts::ViewKind::Uv ? brush->diameter_at(input_pressure_)/200*rect.height()/uv_vertical_extent_ : cursor_radius_*brush->diameter_at(input_pressure_)/cursor_diameter_;
-        painter.setPen(QPen(QColor(240,240,240,220),1));painter.setBrush(Qt::NoBrush);painter.drawEllipse(cursor_,radius,radius);
+        painter.setPen(QPen(bts::theme::alpha(bts::theme::Heading, 220),1));painter.setBrush(Qt::NoBrush);painter.drawEllipse(cursor_,radius,radius);
         if(brush->alpha.kind!=bts::AlphaKind::Shape) {
           constexpr int grid=32;const auto inside=[&](int x,int y){return x>=0&&x<grid&&y>=0&&y<grid&&brush->alpha.sample((x+.5)*2/grid-1,1-(y+.5)*2/grid,brush->hardness)>.5;};
           const auto point=[&](int x,int y){return cursor_+QPointF((double(x)*2/grid-1)*radius,(double(y)*2/grid-1)*radius);};
@@ -1713,18 +1714,18 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
     }
     if(!polygon_active&&paint_enabled&&brush&&brush->lazy_mouse&&cursor_visible_)if(const auto pane=pane_at(cursor_)) {
       const double radius=brush->lazy_distance/100*(pane->height/devicePixelRatioF());
-      painter.setBrush(QColor(12,12,12,65));painter.setPen(QPen(QColor(210,210,210,140),1));painter.drawEllipse(cursor_,radius,radius);
+      painter.setBrush(bts::theme::alpha(bts::theme::Canvas, 65));painter.setPen(QPen(bts::theme::alpha(bts::theme::Text, 140),1));painter.drawEllipse(cursor_,radius,radius);
       if(painting_){painter.setBrush(Qt::NoBrush);painter.drawLine(cursor_,paint_last_);painter.drawEllipse(paint_last_,3,3);}
     }
-    if(secondary_active_&&paint_enabled&&cursor_visible_){painter.save();painter.setPen(QColor("#f0b96e"));painter.drawText(cursor_+QPointF(16,-16),paint_mask?"Ctrl: inverted mask":"Ctrl: secondary color");painter.restore();}
-    if(pressure_overlay_){painter.save();const QRectF box(12,12,std::min(540,width()-24),48);painter.fillRect(box,QColor(20,20,20,220));painter.setPen(QColor("#eeeeee"));painter.drawText(box.adjusted(8,0,-8,-16),Qt::AlignVCenter,pointer_name_+"  Pressure "+QString::number(input_pressure_,'f',2));painter.fillRect(QRectF(box.left()+8,box.bottom()-10,(box.width()-16)*std::clamp(input_pressure_,0.f,1.f),4),QColor("#8dc3e8"));painter.restore();}
+    if(secondary_active_&&paint_enabled&&cursor_visible_){painter.save();painter.setPen(QColor(bts::theme::Warning));painter.drawText(cursor_+QPointF(16,-16),paint_mask?"Ctrl: inverted mask":"Ctrl: secondary color");painter.restore();}
+    if(pressure_overlay_){painter.save();const QRectF box(12,12,std::min(540,width()-24),48);painter.fillRect(box,bts::theme::alpha(bts::theme::Canvas, 220));painter.setPen(QColor(bts::theme::Heading));painter.drawText(box.adjusted(8,0,-8,-16),Qt::AlignVCenter,pointer_name_+"  Pressure "+QString::number(input_pressure_,'f',2));painter.fillRect(QRectF(box.left()+8,box.bottom()-10,(box.width()-16)*std::clamp(input_pressure_,0.f,1.f),4),QColor(bts::theme::Accent));painter.restore();}
   }
 
   mutable bts::SymmetryIntersectionCache symmetry_lines_;
   void draw_symmetry(QPainter &painter) const {
     bts::performance::Scope symmetry_timing("draw_symmetry");
     if(!symmetry||!symmetry->enabled||!symmetry_scene)return;
-    painter.save();painter.setPen(QPen(QColor(224,70,70,220),1.2));
+    painter.save();painter.setPen(QPen(bts::theme::alpha(bts::theme::Error, 220),1.2));
     if(symmetry->intersection) {
       if(symmetry->mode==bts::SymmetryMode::Mirror){
         const auto visible=panes();const auto scene=std::find_if(visible.begin(),visible.end(),[](const auto &pane){return pane.kind==bts::ViewKind::Scene;});
@@ -1740,7 +1741,7 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
       else {QVector3D axis;axis[symmetry->axis]=1;double extent=1;for(int i=0;i<3;++i)extent=std::max(extent,double(symmetry_scene->maximum[i]-symmetry_scene->minimum[i]));painter.drawLine(scene_point(symmetry_origin()-axis*extent),scene_point(symmetry_origin()+axis*extent));}
     }
     if(const auto handle=symmetry_handle()) {
-      painter.setPen(QPen(symmetry_drag?QColor("#f4d65e"):QColor("#df6969"),2));painter.drawLine(*handle);const auto direction=(handle->p2()-handle->p1())/handle->length();const QPointF perpendicular(-direction.y(),direction.x());
+      painter.setPen(QPen(symmetry_drag?QColor(bts::theme::Warning):QColor(bts::theme::AxisX),2));painter.drawLine(*handle);const auto direction=(handle->p2()-handle->p1())/handle->length();const QPointF perpendicular(-direction.y(),direction.x());
       for(int i=0;i<2;++i){const auto tip=i?handle->p2():handle->p1();const auto inward=direction*(i?-8:8);painter.drawLine(tip,tip+inward+perpendicular*5);painter.drawLine(tip,tip+inward-perpendicular*5);}
     }
     painter.restore();
@@ -1761,7 +1762,7 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
     const double step = std::pow(10.0, std::ceil(std::log10(std::max(1.0, span / line_limit))));
     const auto x = [&](double u) { return rect.left() + (u - u0) / units_per_pixel; };
     const auto y = [&](double v) { return rect.bottom() - (v - v0) / units_per_pixel; };
-    painter.setPen(QPen(QColor(160, 160, 160, 90), 1));
+    painter.setPen(QPen(bts::theme::alpha(bts::theme::Muted, 90), 1));
     const double first_u = std::ceil(u0 / step) * step;
     const double first_v = std::ceil(v0 / step) * step;
     for (int index = 0; index <= line_limit; ++index) {
@@ -1781,7 +1782,7 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
     if (step != 1.0 || 1.0 / units_per_pixel < 48) {
       return;
     }
-    painter.setPen(QColor("#a7a7a7"));
+    painter.setPen(QColor(bts::theme::Muted));
     const double first_column = std::floor(u0);
     const double first_row = std::floor(v0);
     int labels = 0;
@@ -1800,7 +1801,7 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
                                   QString("(%1, %2)").arg(u, 0, 'f', 0).arg(v, 0, 'f', 0);
         const QRectF label_rect(x(u) + 5, y(v) - 21, 94, 17);
         if (rect.intersects(label_rect)) {
-          painter.fillRect(label_rect, QColor(35, 35, 35, 180));
+          painter.fillRect(label_rect, bts::theme::alpha(bts::theme::Surface, 180));
           painter.drawText(label_rect, Qt::AlignLeft | Qt::AlignVCenter, label);
         }
         ++labels;
@@ -1820,20 +1821,20 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
                         Qt::AlignCenter, label);
     };
     if (kind == bts::ViewKind::Uv) {
-      axis({1, 0}, QColor("#d97777"), "U");
-      axis({0, -1}, QColor("#83bc71"), "V");
+      axis({1, 0}, QColor(bts::theme::AxisX), "U");
+      axis({0, -1}, QColor(bts::theme::AxisY), "V");
     }
     else {
       const QMatrix4x4 rotation = camera_.view_matrix();
       const QVector3D x_axis = rotation.mapVector({1, 0, 0});
       const QVector3D y_axis = rotation.mapVector({0, 1, 0});
       const QVector3D z_axis = rotation.mapVector({0, 0, 1});
-      axis({x_axis.x(), -x_axis.y()}, QColor("#d97777"), "X");
-      axis({y_axis.x(), -y_axis.y()}, QColor("#83bc71"), "Y");
-      axis({z_axis.x(), -z_axis.y()}, QColor("#7c9fdd"), "Z");
+      axis({x_axis.x(), -x_axis.y()}, QColor(bts::theme::AxisX), "X");
+      axis({y_axis.x(), -y_axis.y()}, QColor(bts::theme::AxisY), "Y");
+      axis({z_axis.x(), -z_axis.y()}, QColor(bts::theme::AxisZ), "Z");
     }
     painter.setPen(Qt::NoPen);
-    painter.setBrush(QColor("#c7c7c7"));
+    painter.setBrush(QColor(bts::theme::Text));
     painter.drawEllipse(origin, 2, 2);
     painter.setBrush(Qt::NoBrush);
   }
@@ -1944,16 +1945,7 @@ QJsonObject native_document_state(bts::BlenderHost &host)
 
 void configure_theme(QApplication &app)
 {
-  app.setStyle("Fusion");
-  QPalette palette;
-  palette.setColor(QPalette::Window, QColor("#333333"));
-  palette.setColor(QPalette::WindowText, QColor("#bcbcbc"));
-  palette.setColor(QPalette::Base, QColor("#262626"));
-  palette.setColor(QPalette::Text, QColor("#bcbcbc"));
-  palette.setColor(QPalette::Button, QColor("#333333"));
-  palette.setColor(QPalette::ButtonText, QColor("#cccccc"));
-  palette.setColor(QPalette::Highlight, QColor("#5580ab"));
-  app.setPalette(palette);
+  bts::theme::apply(app);
 }
 
 QJsonObject workspace_state(const bts::WorkspaceShell &workspace)
@@ -2278,7 +2270,7 @@ int main(int argc, char **argv)
     bts::InspectionMode id_picker_previous_mode=bts::InspectionMode::Material;std::function<void(bool)> change_id_picker;
     bts::SymmetrySettings symmetry,fill_display_symmetry;
     bts::AssetCatalog assets(parser.isSet("library-dir")?QFileInfo(parser.value("library-dir")).absoluteFilePath():QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).filePath("shelf"));
-    if(!parser.value("environment").isEmpty()){const auto source=bts::read_image_resource(QFileInfo(parser.value("environment")).absoluteFilePath(),false);bts::StudioAsset environment;environment.name="Studio environment";environment.filename=source.filename;environment.path=source.path;environment.scope=bts::AssetScope::Builtin;environment.usages={"environment"};environment.bytes=source.bytes;assets.add(std::move(environment));}
+    if(!parser.value("environment").isEmpty()){const auto source=bts::read_image_resource(QFileInfo(parser.value("environment")).absoluteFilePath(),false);bts::StudioAsset environment;environment.name="Studio Environment";environment.filename=source.filename;environment.path=source.path;environment.scope=bts::AssetScope::Builtin;environment.usages={"environment"};environment.bytes=source.bytes;assets.add(std::move(environment));}
     QString library_error;try{assets.load_user_library();}catch(const std::exception &error){library_error=QString::fromUtf8(error.what());}
     bool quick_enabled=false,quick_editing=false;
     std::map<std::uint32_t,bts::QuickMaskField> quick_masks;
@@ -2413,7 +2405,7 @@ int main(int argc, char **argv)
       catch (const std::exception &error) { if (workspace) workspace->append_console(QString::fromUtf8(error.what())); }
     };
     viewport->mesh_map_requested=[&](int role){if(!document||role<0||role>=7)return;inspected_map=role;viewport->mesh_map_active=viewport->last_mesh_map=role;update_inspection(bts::InspectionMode::Roughness);};
-    const auto refresh_texture_set_list=[&]{if(!workspace||!document)return;const QSignalBlocker block(workspace->texture_sets());QStringList names;for(const auto &material:snapshot.materials)names.append(QString::fromStdString(document->set(material.session_id).name));workspace->set_texture_sets(names,names.isEmpty()?-1:std::clamp(selected_material,0,int(names.size())-1));for(int row=0;row<int(snapshot.materials.size());++row)workspace->texture_sets()->item(row)->setData(Qt::UserRole,snapshot.materials[row].session_id);for(const auto &set:document->texture_sets())if(set.disabled){auto *item=new QListWidgetItem(QString::fromStdString(set.name),workspace->texture_sets());item->setFlags(Qt::NoItemFlags);item->setForeground(QColor(120,120,120));item->setToolTip("Unused Texture Set: use Settings → Reassign Texture Sets");}};
+    const auto refresh_texture_set_list=[&]{if(!workspace||!document)return;const QSignalBlocker block(workspace->texture_sets());QStringList names;for(const auto &material:snapshot.materials)names.append(QString::fromStdString(document->set(material.session_id).name));workspace->set_texture_sets(names,names.isEmpty()?-1:std::clamp(selected_material,0,int(names.size())-1));for(int row=0;row<int(snapshot.materials.size());++row)workspace->texture_sets()->item(row)->setData(Qt::UserRole,snapshot.materials[row].session_id);for(const auto &set:document->texture_sets())if(set.disabled){auto *item=new QListWidgetItem(QString::fromStdString(set.name),workspace->texture_sets());item->setFlags(Qt::NoItemFlags);item->setForeground(QColor(bts::theme::Muted));item->setToolTip("Unused Texture Set: use Settings → Reassign Texture Sets");}};
     const auto mark_document_commit = [&]()noexcept {
       dirty=true;++document_revision;last_document_edit=bts::performance::Clock::now();
     };

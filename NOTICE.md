@@ -16,3 +16,14 @@ Copyright Mattias Lind. Original mPainter code and artwork are distributed under
 Poly Haven is an external source of CC0 materials: https://polyhaven.com/license . No materials from that service are bundled. Imported user content remains subject to the user's own rights and licenses.
 
 When redistributing a binary, provide the matching mPainter source, Blender source and patch, build scripts, and corresponding dependency source/license information as required by their licenses. The local phase-one package is for review; do not interpret this notice as evidence that an unpublished source URL exists.
+
+## Default Studio HDRI
+
+New projects use Blender's bundled `5.2/datafiles/studiolights/world/studio.exr`
+with the environment visible. Its adjacent `license.txt` explicitly licenses all
+world HDRIs as **CC0**, credited to Greg Zaal / Poly Haven. Upstream identifies the
+original Studio asset as *probably* `studio_small_01`; that uncertainty concerns
+the original asset name, not the explicit CC0 grant for the bundled file.
+Poly Haven permits commercial redistribution: https://polyhaven.com/license.
+The file and notice are required by both Linux packaging steps; SHA-256:
+`c36c7fd390b2cdf8693360cf3662cb1d710c95fa799d9f822f42997167839b56`.

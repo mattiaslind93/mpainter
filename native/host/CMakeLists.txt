@@ -10,6 +10,7 @@ string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+(-[A-Za-z0-9.-]+)?" BTS_PRODUCT_VERS
 add_executable(bts-host ${SRC}
   ${BTS_BRANDING_RESOURCES}
   ${BTS_HOST_SOURCE_DIR}/Branding.cc
+  ${BTS_HOST_SOURCE_DIR}/Theme.cc
   ${BTS_HOST_SOURCE_DIR}/BakeSourceCpuDemo.cc
   ${BTS_HOST_SOURCE_DIR}/ViewportHeadlessDemo.cc
   ${BTS_HOST_SOURCE_DIR}/TextureImportCpuDemo.cc
@@ -1639,3 +1640,10 @@ elseif(WIN32)
 endif()
 
 install(FILES ${BTS_HOST_SOURCE_DIR}/../../assets/meshes/sphere.obj DESTINATION assets/meshes)
+
+add_executable(bts-theme-tests ${BTS_HOST_SOURCE_DIR}/../tests/theme_test.cc ${BTS_HOST_SOURCE_DIR}/Theme.cc)
+target_include_directories(bts-theme-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
+target_compile_features(bts-theme-tests PRIVATE cxx_std_20)
+target_compile_options(bts-theme-tests PRIVATE "$<IF:$<CXX_COMPILER_ID:MSVC>,/UNDEBUG,-UNDEBUG>")
+target_link_libraries(bts-theme-tests PRIVATE Qt6::Widgets)
+add_dependencies(bts-cpu-check bts-theme-tests)

@@ -1,3 +1,4 @@
+#include "Theme.hh"
 #include <epoxy/gl.h>
 #include "SmartMaskThumbnailJobs.hh"
 #include "SmartMaskThumbnailPacket.hh"
@@ -34,7 +35,7 @@ QImage display_packet(const ThumbnailMetadata &packet){
  constexpr int out_side=84;
  constexpr int pkt_side=ThumbnailMetadata::side;
  QImage image(out_side,out_side,QImage::Format_RGB32);
- image.fill(QColor("#292929"));
+ image.fill(QColor(bts::theme::Surface));
  if(!packet.valid||packet.pixels.size()<std::size_t(pkt_side*pkt_side))return image;
  const auto &gb=detail::sphere_preview_gbuffer();
  const auto encode=[](double v){return v<=.0031308?12.92*v:1.055*std::pow(v,1.0/2.4)-.055;};

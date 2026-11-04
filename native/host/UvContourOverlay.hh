@@ -1,3 +1,4 @@
+#include "Theme.hh"
 #pragma once
 #include <QImage>
 #include <QPainter>
@@ -24,7 +25,7 @@ class UvContourOverlay {
   for(const auto &e:edges)lines.append(QLineF(point(e[0],e[1]),point(e[2],e[3])));
   painter.save();painter.setClipRect(rect,Qt::IntersectClip);
   if(!hidden.empty()){QPainterPath clip;clip.addRect(rect);for(int tile:hidden){const int number=tile-1001;QPainterPath hole;hole.addRect(QRectF(point(number%10,number/10),point(number%10+1,number/10+1)).normalized());clip=clip.subtracted(hole);}painter.setClipPath(clip,Qt::IntersectClip);}
-  painter.setPen(QPen(QColor(35,35,35,200),1));painter.drawLines(lines);painter.restore();
+  painter.setPen(QPen(bts::theme::alpha(bts::theme::Surface, 200),1));painter.drawLines(lines);painter.restore();
  }
  const QImage &image(const Source &source,QSizeF size,double dpr,QPointF center,double extent,const std::set<int> &hidden){
   if(source_==source&&size_==size&&dpr_==dpr&&center_==center&&extent_==extent&&hidden_==hidden&&!image_.isNull())return image_;

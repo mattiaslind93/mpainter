@@ -1,3 +1,4 @@
+#include "Theme.hh"
 #pragma once
 #include "LayerRowLayout.hh"
 #include <QDrag>
@@ -107,11 +108,11 @@ class LayerStackList final : public QListWidget {
   }
   void paintEvent(QPaintEvent *event) override {
     QListWidget::paintEvent(event);QPainter painter(viewport());
-    if(count()==0){painter.setPen(QColor("#858585"));painter.drawText(viewport()->rect(),Qt::AlignCenter,"No layers");}
-    if(into_folder_){for(int row=0;row<count();++row)if(QUuid(item(row)->data(Qt::UserRole).toString())==drop_target_&&item(row)->data(Qt::UserRole+10).toString().isEmpty()){const auto rect=visualItemRect(item(row)).adjusted(1,1,-2,-2);painter.fillRect(rect,QColor(82,134,180,75));painter.setPen(QPen(QColor("#82b6eb"),2));painter.drawRect(rect);return;}}
+    if(count()==0){painter.setPen(QColor(bts::theme::Muted));painter.drawText(viewport()->rect(),Qt::AlignCenter,"No layers");}
+    if(into_folder_){for(int row=0;row<count();++row)if(QUuid(item(row)->data(Qt::UserRole).toString())==drop_target_&&item(row)->data(Qt::UserRole+10).toString().isEmpty()){const auto rect=visualItemRect(item(row)).adjusted(1,1,-2,-2);painter.fillRect(rect,bts::theme::alpha(bts::theme::Accent, 75));painter.setPen(QPen(QColor(bts::theme::Accent),2));painter.drawRect(rect);return;}}
     if(gap_<0)return;
     int y=gap_<count()?visualItemRect(item(gap_)).top():count()?visualItemRect(item(count()-1)).bottom()+1:0;
-    y=std::clamp(y,1,std::max(1,viewport()->height()-2));painter.setPen(QPen(QColor("#82b6eb"),2));
+    y=std::clamp(y,1,std::max(1,viewport()->height()-2));painter.setPen(QPen(QColor(bts::theme::Accent),2));
     painter.drawLine(4,y,viewport()->width()-5,y);
   }
  private:

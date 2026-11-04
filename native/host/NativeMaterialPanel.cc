@@ -1,3 +1,4 @@
+#include "Theme.hh"
 #include "NativeMaterialPanel.hh"
 #include "ColorPicker.hh"
 #include "NativeMaterialColor.hh"
@@ -34,8 +35,8 @@ class NativeRamp final:public QWidget {
   // source space, then apply the existing canonical/display color hooks.
   // Converting stops first would change HSV/HSL and nonlinear display blends.
   for(int x=0;x<samples;++x){PickerColor rgba;blender::BKE_colorband_evaluate(&band,float(x+.5f)/samples,rgba.data());strip.setPixelColor(x,0,picker_to_srgb(to_canonical?to_canonical(rgba):rgba));}
-  p.drawImage(rectangle,strip);p.setPen(QColor("#777"));p.drawRect(rectangle);const auto stops=value["stops"].toArray();
-  for(int i=0;i<stops.size();++i){const double x=8+stops[i].toObject()["position"].toDouble()*(width()-16);p.setPen(QColor("#222"));p.setBrush(i==selected?QColor("#72b3db"):QColor("#ddd"));p.drawPolygon(QPolygonF{QPointF(x,32),QPointF(x-6,45),QPointF(x+6,45)});}
+  p.drawImage(rectangle,strip);p.setPen(QColor(bts::theme::Muted));p.drawRect(rectangle);const auto stops=value["stops"].toArray();
+  for(int i=0;i<stops.size();++i){const double x=8+stops[i].toObject()["position"].toDouble()*(width()-16);p.setPen(QColor(bts::theme::Canvas));p.setBrush(i==selected?QColor(bts::theme::Accent):QColor(bts::theme::Heading));p.drawPolygon(QPolygonF{QPointF(x,32),QPointF(x-6,45),QPointF(x+6,45)});}
  }
  void place(qreal x){auto stops=value["stops"].toArray();if(selected<0||selected>=stops.size())return;auto stop=stops[selected].toObject();const double minimum=selected?stops[selected-1].toObject()["position"].toDouble():0,maximum=selected+1<stops.size()?stops[selected+1].toObject()["position"].toDouble():1;stop["position"]=std::clamp((x-8)/std::max(1,width()-16),minimum,maximum);stops[selected]=stop;value["stops"]=stops;update();if(changed)changed(value);}
  void mousePressEvent(QMouseEvent *e)override{if(e->button()!=Qt::LeftButton)return;const auto stops=value["stops"].toArray();if(stops.isEmpty())return;selected=std::clamp(selected,0,int(stops.size())-1);double nearest=std::abs(e->position().x()-8-stops[selected].toObject()["position"].toDouble()*(width()-16));for(int i=0;i<stops.size();++i){const double distance=std::abs(e->position().x()-8-stops[i].toObject()["position"].toDouble()*(width()-16));if(distance<nearest){nearest=distance;selected=i;}}if(selected_changed)selected_changed(selected);dragging=true;if(started)started();place(e->position().x());e->accept();}
@@ -106,7 +107,7 @@ void NativeMaterialPanel::rebuild(){
   }
   layout_->addWidget(row);
  }
- for(const auto &warning:state_.warnings){if(warning.startsWith("Bump unavailable: Native bump/normal extraction unavailable:"))continue;auto *text=new QLabel(warning,this);text->setWordWrap(true);text->setStyleSheet("color:#e3b36c");layout_->addWidget(text);}
+ for(const auto &warning:state_.warnings){if(warning.startsWith("Bump unavailable: Native bump/normal extraction unavailable:"))continue;auto *text=new QLabel(warning,this);text->setWordWrap(true);text->setStyleSheet(bts::theme::qss("color:@Warning@"));layout_->addWidget(text);}
  layout_->addStretch();
 }
 }

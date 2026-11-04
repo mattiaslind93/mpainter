@@ -1,3 +1,4 @@
+#include "Theme.hh"
 #include "NumericLocale.hh"
 #pragma once
 #include "TextureDocument.hh"
@@ -20,10 +21,10 @@ class CompareMaskHistogram final : public QWidget {
   std::array<std::array<int,64>,2> bins{};
  protected:
   void paintEvent(QPaintEvent *) override {
-    QPainter p(this);p.fillRect(rect(),QColor("#252525"));const int bottom=height()-18;int maximum=1;for(const auto &series:bins)for(int value:series)maximum=std::max(maximum,value);
-    const std::array<QColor,2> colors{QColor(100,205,130,180),QColor(195,120,215,180)};
+    QPainter p(this);p.fillRect(rect(),QColor(bts::theme::Canvas));const int bottom=height()-18;int maximum=1;for(const auto &series:bins)for(int value:series)maximum=std::max(maximum,value);
+    const std::array<QColor,2> colors{bts::theme::alpha(bts::theme::Success, 180),bts::theme::alpha(bts::theme::PlotPurple, 180)};
     for(int source=0;source<2;++source){p.setPen(Qt::NoPen);p.setBrush(colors[source]);for(int i=0;i<64;++i)p.drawRect(QRectF(double(i)*width()/64,bottom-double(bins[source][i])*(bottom-5)/maximum,std::max(1.,double(width())/64),double(bins[source][i])*(bottom-5)/maximum));}
-    p.setPen(QColor("#bcbcbc"));for(int i=0;i<4;++i)p.drawText(QRect(i*width()/4,bottom,width()/4,18),Qt::AlignLeft|Qt::AlignVCenter,QString::number(i*.25));
+    p.setPen(QColor(bts::theme::Text));for(int i=0;i<4;++i)p.drawText(QRect(i*width()/4,bottom,width()/4,18),Qt::AlignLeft|Qt::AlignVCenter,QString::number(i*.25));
   }
 };
 class CompareMaskPanel final : public QWidget {
@@ -44,7 +45,7 @@ class CompareMaskPanel final : public QWidget {
     connect(width_,&QDoubleSpinBox::valueChanged,this,[this](double v){auto e=effect_;e.compare_width=v;publish(e);});
     connect(invert_,&QCheckBox::toggled,this,[this](bool v){auto e=effect_;e.compare_invert=v;activate_ramp(e);publish(e);});
     ramp_->changed=[this](const auto &points){auto e=effect_;e.compare_ramp=points;activate_ramp(e);publish(e);};
-    warning_=new QLabel("Identical operands produce a white or black mask.",this);warning_->setObjectName("compareIdenticalWarning");warning_->setWordWrap(true);warning_->setStyleSheet("color:#e8ad64;");layout->addWidget(warning_);layout->addWidget(new QLabel("Source Channels Histogram",this));histogram_=new CompareMaskHistogram(this);histogram_->setObjectName("compareHistogram");layout->addWidget(histogram_);
+    warning_=new QLabel("Identical operands produce a white or black mask.",this);warning_->setObjectName("compareIdenticalWarning");warning_->setWordWrap(true);warning_->setStyleSheet(bts::theme::qss("color:@Warning@;"));layout->addWidget(warning_);layout->addWidget(new QLabel("Source Channels Histogram",this));histogram_=new CompareMaskHistogram(this);histogram_->setObjectName("compareHistogram");layout->addWidget(histogram_);
     connect(channel_,&QComboBox::currentIndexChanged,this,[this](int i){if(i>=0){auto e=effect_;e.compare_channel=channel_->itemData(i).toInt();publish(e);}});
     connect(left_,&QComboBox::currentIndexChanged,this,[this](int i){if(i>=0){auto e=effect_;e.left=i;publish(e);}});connect(right_,&QComboBox::currentIndexChanged,this,[this](int i){if(i>=0){auto e=effect_;e.right=i;publish(e);}});connect(operation_,&QComboBox::currentIndexChanged,this,[this](int i){if(i>=0){auto e=effect_;e.operation=i;publish(e);}});
     connect(constant_,&QDoubleSpinBox::valueChanged,this,[this](double value){auto e=effect_;e.constant=value;publish(e);});connect(tolerance_,&QDoubleSpinBox::valueChanged,this,[this](double value){auto e=effect_;e.tolerance=value;publish(e);});connect(hardness_,&QDoubleSpinBox::valueChanged,this,[this](double value){auto e=effect_;e.hardness=value;if(e.compare_width>=0)e.compare_width=1-value;publish(e);});

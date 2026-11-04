@@ -1,10 +1,10 @@
 // Named settings validated on the pinned native RNA; see docs/user-startup-environment.md.
 R"profile({
   "shading": {
-    "studiolight_background_alpha": 0.0,
-    "studiolight_background_blur": 0.5,
+    "studiolight_background_alpha": 1.0,
+    "studiolight_background_blur": 0.0,
     "studiolight_intensity": 1.0,
-    "studiolight_rotate_z": 1.5707963705062866,
+    "studiolight_rotate_z": 0.0,
     "type": "MATERIAL",
     "use_scene_lights": false,
     "use_scene_world": false,

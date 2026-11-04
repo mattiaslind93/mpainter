@@ -1,3 +1,4 @@
+#include "Theme.hh"
 #include "UvView.hh"
 
 #include <algorithm>
@@ -200,7 +201,7 @@ void UvView::paint_into(QPainter &painter, const QRectF &target, bool keep_under
     return QPointF(center_.x() + (point.x() - pane_w * 0.5) / pixels_per_uv_,
                    center_.y() - (point.y() - pane_h * 0.5) / pixels_per_uv_);
   };
-  if (!keep_underlay) painter.fillRect(QRectF(0, 0, pane_w, pane_h), QColor("#242426"));
+  if (!keep_underlay) painter.fillRect(QRectF(0, 0, pane_w, pane_h), QColor(bts::theme::Surface));
   const QRectF visible_uv = QRectF(to_uv({-2, -2}), to_uv({pane_w + 2.0, pane_h + 2.0})).normalized();
 
   const auto draw_grid = [&](double step, const QColor &color) {
@@ -219,8 +220,8 @@ void UvView::paint_into(QPainter &painter, const QRectF &target, bool keep_under
   };
   const double minor_step = std::pow(10.0, std::floor(std::log10(80.0 / pixels_per_uv_)));
   if (!keep_underlay) {
-    draw_grid(minor_step, QColor("#2e2e31"));
-    draw_grid(std::max(1.0, minor_step * 10.0), QColor("#424246"));
+    draw_grid(minor_step, QColor(bts::theme::Surface));
+    draw_grid(std::max(1.0, minor_step * 10.0), QColor(bts::theme::Hover));
   }
 
   painter.setPen(Qt::NoPen);
@@ -247,7 +248,7 @@ void UvView::paint_into(QPainter &painter, const QRectF &target, bool keep_under
 
   painter.setRenderHint(QPainter::Antialiasing);
   painter.setBrush(Qt::NoBrush);
-  painter.setPen(QPen(QColor("#77777d"), 1));
+  painter.setPen(QPen(QColor(bts::theme::Muted), 1));
   for (const UvTriangle &triangle : triangles_) {
     for (int edge = 0; edge < 3; ++edge) {
       if (triangle.visible_edges[edge]) {
@@ -262,18 +263,18 @@ void UvView::paint_into(QPainter &painter, const QRectF &target, bool keep_under
 
   const QPointF origin = to_px({0, 0});
   if (origin.x() >= 0 && origin.x() <= pane_w) {
-    painter.setPen(QPen(QColor("#557f50"), 1));
+    painter.setPen(QPen(QColor(bts::theme::AxisY), 1));
     painter.drawLine(QPointF(origin.x(), 0), QPointF(origin.x(), pane_h));
   }
   if (origin.y() >= 0 && origin.y() <= pane_h) {
-    painter.setPen(QPen(QColor("#965151"), 1));
+    painter.setPen(QPen(QColor(bts::theme::AxisX), 1));
     painter.drawLine(QPointF(0, origin.y()), QPointF(pane_w, origin.y()));
   }
 
   QFont caption_font = font();
   caption_font.setPixelSize(10);
   painter.setFont(caption_font);
-  painter.setPen(QColor("#bcbcbc"));
+  painter.setPen(QColor(bts::theme::Text));
   // Blender's supported UDIM range is 1001..2000, with ten columns. Labels describe coordinates,
   // not the existence of an image tile, and never wrap negative coordinates or U >= 10.
   if (pixels_per_uv_ >= 72 && visible_uv.right() >= 0 && visible_uv.left() < 10 &&
@@ -286,25 +287,25 @@ void UvView::paint_into(QPainter &painter, const QRectF &target, bool keep_under
       for (int u = first_u; u <= last_u; ++u) {
         const QPointF corner = to_px({double(u), double(v)});
         const QRectF label(corner.x() + 4, corner.y() - 17, 40, 14);
-        painter.fillRect(label, QColor(36, 36, 38, 210));
+        painter.fillRect(label, bts::theme::alpha(bts::theme::Selection, 210));
         painter.drawText(label, Qt::AlignVCenter, QString::number(1001 + 10 * v + u));
       }
     }
   }
 
   const QPointF axis_origin(pane_w - 38.0, pane_h - 28.0);
-  painter.setPen(QPen(QColor("#b56464"), 1.5));
+  painter.setPen(QPen(QColor(bts::theme::AxisX), 1.5));
   painter.drawLine(axis_origin, axis_origin + QPointF(20, 0));
   painter.drawText(axis_origin + QPointF(23, 4), "U");
-  painter.setPen(QPen(QColor("#78a772"), 1.5));
+  painter.setPen(QPen(QColor(bts::theme::AxisY), 1.5));
   painter.drawLine(axis_origin, axis_origin + QPointF(0, -20));
   painter.drawText(axis_origin + QPointF(-3, -24), "V");
 
   const QRect label_rect(int(pane_w) - 126, 8, 118, 22);
-  painter.fillRect(label_rect, QColor("#2b2b2b"));
-  painter.setPen(QColor("#bcbcbc"));
+  painter.fillRect(label_rect, QColor(bts::theme::Surface));
+  painter.setPen(QColor(bts::theme::Text));
   painter.drawText(label_rect, Qt::AlignCenter, "UV / Base Color");
-  if (!triangles_.empty()) painter.fillRect(QRect(8, 36, 8, 8), QColor(226, 59, 122));
+  if (!triangles_.empty()) painter.fillRect(QRect(8, 36, 8, 8), QColor(bts::theme::Error));
   if (triangles_.empty()) {
     painter.drawText(QRectF(0, 0, pane_w, pane_h), Qt::AlignCenter, "No UV data");
   }

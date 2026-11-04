@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Wrap the staged Linux package with pinned, checksum-verified AppImage tools."""
 import argparse,hashlib,os,pathlib,subprocess,urllib.request
-import shutil
+import shutil, sys, tempfile
 p=argparse.ArgumentParser();p.add_argument('--appdir',required=True,type=pathlib.Path);p.add_argument('--output',required=True,type=pathlib.Path);p.add_argument('--cache',required=True,type=pathlib.Path);a=p.parse_args()
+subprocess.run([sys.executable,str(pathlib.Path(__file__).absolute().with_name("check-environment.py")),str(a.appdir)],check=True)
 a.cache.mkdir(parents=True,exist_ok=True);a.output.parent.mkdir(parents=True,exist_ok=True)
 # Embedded Python may ignore PYTHONDONTWRITEBYTECODE during a staging launch test.
 # Bytecode caches can contain absolute build paths and are never release inputs.
@@ -38,5 +39,11 @@ copy_icon(a.appdir/'branding/mpainter.svg',icons/'se.mattiaslind.mpainter.svg')
 binary=a.appdir/'usr/bin/mpainter';binary.parent.mkdir(parents=True,exist_ok=True)
 if not binary.exists():binary.symlink_to('../../mpainter')
 env=dict(os.environ,ARCH='x86_64',TMPDIR=str(a.cache.absolute()),XDG_CACHE_HOME=str(a.cache.absolute()))
-subprocess.run([str((a.cache/assets[0][0]).absolute()),'--appimage-extract-and-run','--runtime-file',str((a.cache/assets[1][0]).absolute()),'--comp','zstd','--mksquashfs-opt','-Xcompression-level','--mksquashfs-opt','5','--mksquashfs-opt','-processors','--mksquashfs-opt','2',str(a.appdir.absolute()),str(a.output.absolute())],env=env,check=True)
-a.output.chmod(0o755)
+# Build beside the destination, then replace it atomically. A FUSE runtime can
+# still hold the previous AppImage open after its application window closes.
+# Failed builds must leave the last usable artifact intact.
+with tempfile.TemporaryDirectory(prefix='.mpainter-appimage-',dir=a.output.parent) as temp:
+    candidate=pathlib.Path(temp)/a.output.name
+    subprocess.run([str((a.cache/assets[0][0]).absolute()),'--appimage-extract-and-run','--runtime-file',str((a.cache/assets[1][0]).absolute()),'--comp','zstd','--mksquashfs-opt','-Xcompression-level','--mksquashfs-opt','5','--mksquashfs-opt','-processors','--mksquashfs-opt','2',str(a.appdir.absolute()),str(candidate.absolute())],env=env,check=True)
+    candidate.chmod(0o755)
+    candidate.replace(a.output)

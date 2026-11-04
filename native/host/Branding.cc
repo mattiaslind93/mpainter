@@ -1,3 +1,4 @@
+#include "Theme.hh"
 #include "Branding.hh"
 #include <QApplication>
 #include <QDesktopServices>
@@ -39,7 +40,7 @@ QPointF splash_focus(const QString &featured){
 }
 QImage compose_splash(const QString &featured,QPointF /*focus*/,int scale){
  scale=scale>=2?2:1;
- QImage canvas(940*scale,529*scale,QImage::Format_RGB32);canvas.fill(QColor("#111315"));
+ QImage canvas(940*scale,529*scale,QImage::Format_RGB32);canvas.fill(QColor(bts::theme::Canvas));
  QPainter painter(&canvas);painter.setRenderHint(QPainter::SmoothPixmapTransform);
  QImage artwork(featured);if(artwork.isNull())artwork.load(":/branding/splash-featured.png");
  // The supplied artwork is already cropped. Fit the entire image above the
@@ -49,9 +50,9 @@ QImage compose_splash(const QString &featured,QPointF /*focus*/,int scale){
  const QRectF target(image_area.center()-QPointF(fitted.width()/2,fitted.height()/2),fitted);
  painter.scale(scale,scale);
  painter.drawImage(target,artwork);
- painter.setPen(QColor("#F2F4F5"));QFont title=QApplication::font();title.setPixelSize(34);title.setWeight(QFont::DemiBold);painter.setFont(title);painter.drawText(28,76,"mPainter");
- QFont detail=QApplication::font();detail.setPixelSize(14);painter.setFont(detail);painter.setPen(QColor("#B4BAC1"));painter.drawText(28,108,"3D texture painting");
- painter.setPen(QPen(QColor("#C8D2DC"),1));painter.drawLine(28,130,202,130);
+ painter.setPen(QColor(bts::theme::Heading));QFont title=QApplication::font();title.setPixelSize(34);title.setWeight(QFont::DemiBold);painter.setFont(title);painter.drawText(28,76,"mPainter");
+ QFont detail=QApplication::font();detail.setPixelSize(14);painter.setFont(detail);painter.setPen(QColor(bts::theme::Text));painter.drawText(28,108,"3D texture painting");
+ painter.setPen(QPen(QColor(bts::theme::Text),1));painter.drawLine(28,130,202,130);
  return canvas;
 }
 StartupSplash::StartupSplash(const QString &featured,int scale):QSplashScreen(){
@@ -60,7 +61,7 @@ StartupSplash::StartupSplash(const QString &featured,int scale):QSplashScreen(){
  QFont font=QApplication::font();font.setPixelSize(12);setFont(font);
 }
 void StartupSplash::drawContents(QPainter *painter){
- painter->setFont(font());painter->setPen(QColor("#B4BAC1"));painter->drawText(QRect(28,470,210,22),Qt::AlignLeft|Qt::AlignTop,"Version "+product_version());
+ painter->setFont(font());painter->setPen(QColor(bts::theme::Text));painter->drawText(QRect(28,470,210,22),Qt::AlignLeft|Qt::AlignTop,"Version "+product_version());
  painter->drawText(QRect(258,470,654,42),Qt::AlignLeft|Qt::AlignTop|Qt::TextWordWrap,status_);
 }
 // Qt 6.8 QSplashScreen::event(Show) waits up to one second for mapping.

@@ -34,34 +34,6 @@ namespace {
 
 constexpr std::array normal_formats = {NormalMapFormat::OpenGL, NormalMapFormat::DirectX};
 
-const char *stylesheet = R"(
-  QDialog#newProjectDialog { background: #333333; color: #bcbcbc; }
-  QLabel { color: #bcbcbc; background: transparent; }
-  QLabel#projectSection { color: #cccccc; font-weight: 600; }
-  QLabel#projectValidationError { color: #f09b91; }
-  QLabel#uvWorkflowDescription { color: #999999; }
-  QLineEdit, QComboBox {
-    background: #262626; color: #bcbcbc; border: 1px solid #494949;
-    border-radius: 1px; min-height: 24px; padding: 0 6px;
-  }
-  QLineEdit:focus, QComboBox:focus { border-color: #5580ab; }
-  QComboBox QAbstractItemView {
-    background: #262626; color: #bcbcbc; selection-background-color: #5580ab;
-    selection-color: white; border: 1px solid #494949;
-  }
-  QCheckBox { color: #bcbcbc; spacing: 7px; }
-  QPushButton {
-    color: #cccccc; background: #494949; border: 1px solid #494949;
-    border-radius: 1px; min-height: 24px; min-width: 76px; padding: 0 10px;
-  }
-  QPushButton:hover { background: #555555; }
-  QPushButton:pressed { background: #262626; }
-  QPushButton:focus { border-color: #5580ab; }
-  QPushButton:default { border-color: #bcbcbc; }
-  QPushButton:disabled { color: #656565; background: #3b3b3b; border-color: #494949; }
-  QToolTip { background: #262626; color: #cccccc; border: 1px solid #494949; }
-)";
-
 QLabel *section(const QString &text, QWidget *parent)
 {
   auto *label = new QLabel(text, parent);
@@ -101,18 +73,6 @@ NewProjectDialog::NewProjectDialog(QWidget *parent) : QDialog(parent)
   QFont body_font = font();
   body_font.setPixelSize(11);
   setFont(body_font);
-  QPalette colors = palette();
-  colors.setColor(QPalette::Window, QColor("#333333"));
-  colors.setColor(QPalette::WindowText, QColor("#bcbcbc"));
-  colors.setColor(QPalette::Base, QColor("#262626"));
-  colors.setColor(QPalette::Text, QColor("#bcbcbc"));
-  colors.setColor(QPalette::Button, QColor("#494949"));
-  colors.setColor(QPalette::ButtonText, QColor("#cccccc"));
-  colors.setColor(QPalette::Highlight, QColor("#5580ab"));
-  colors.setColor(QPalette::HighlightedText, Qt::white);
-  colors.setColor(QPalette::Disabled, QPalette::ButtonText, QColor("#656565"));
-  setPalette(colors);
-  setStyleSheet(QString::fromLatin1(stylesheet));
 
   auto *outer = new QVBoxLayout(this);auto *scroll=new QScrollArea(this);scroll->setObjectName("newProjectScroll");scroll->setWidgetResizable(true);scroll->setFrameShape(QFrame::NoFrame);auto *body=new QWidget(scroll);body->setObjectName("newProjectBody");scroll->setWidget(body);outer->addWidget(scroll,1);
   auto *layout = new QVBoxLayout(body);

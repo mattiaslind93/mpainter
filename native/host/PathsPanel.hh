@@ -1,3 +1,4 @@
+#include "Theme.hh"
 #pragma once
 #include "SurfacePath.hh"
 #include <QFrame>
@@ -26,7 +27,7 @@ class PathsPanel final:public QFrame {
   std::function<void(const std::string &,bool)> visibility;
   std::function<void()> finished;
   explicit PathsPanel(QWidget *parent):QFrame(parent){
-    setObjectName("pathsPanel");setStyleSheet("#pathsPanel{background:#292929;border:1px solid #505050;} QListWidget{background:#303030;color:#ccc;border:0;}");auto *layout=new QVBoxLayout(this);layout->setContentsMargins(6,5,6,5);layout->setSpacing(4);layout->addWidget(new QLabel("PATHS",this));
+    setObjectName("pathsPanel");setStyleSheet(bts::theme::qss("#pathsPanel{background:@Surface@;border:1px solid @Border@;} QListWidget{background:@Surface@;color:@Text@;border:0;}"));auto *layout=new QVBoxLayout(this);layout->setContentsMargins(6,5,6,5);layout->setSpacing(4);layout->addWidget(new QLabel("PATHS",this));
     list_=new PathList(this);list_->setObjectName("pathsList");list_->setEditTriggers(QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed);layout->addWidget(list_,1);
     auto *buttons=new QHBoxLayout;auto *duplicate=new QPushButton("Duplicate",this);duplicate->setObjectName("duplicateSurfacePath");buttons->addWidget(duplicate);auto *remove=new QPushButton("Delete",this);remove->setObjectName("deleteSurfacePath");buttons->addWidget(remove);auto *finish=new QPushButton("Finish",this);finish->setObjectName("finishSurfacePath");buttons->addWidget(finish);layout->addLayout(buttons);
     connect(list_,&QListWidget::currentItemChanged,this,[this](QListWidgetItem *item){if(item&&selected)selected(item->data(Qt::UserRole).toString().toStdString());});

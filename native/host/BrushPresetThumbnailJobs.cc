@@ -1,4 +1,5 @@
 #include <epoxy/gl.h>
+#include "Theme.hh"
 #include "BrushPresetThumbnailJobs.hh"
 #include "BrushPresetThumbnailStroke.hh"
 #include "BlenderHost.hh"
@@ -31,7 +32,11 @@ struct BrushPresetThumbnailJobs::Impl:std::enable_shared_from_this<Impl> {
    for(auto *image:{&ink,&background,&display})image->reset(GPU_texture_create_2d("Own brush stroke preview",side,side,1,gpu::TextureFormat::SFLOAT_32_32_32_32,GPU_TEXTURE_USAGE_GENERAL,nullptr));
    if(!ink||!background||!display)throw std::bad_alloc();
    if(!raster.prepare())throw std::runtime_error("Brush thumbnail GPU raster preparation failed");
-   const float clear[4]={},gray[4]={.025f,.025f,.025f,1};GPU_texture_clear(ink.get(),GPU_DATA_FLOAT,clear);GPU_texture_clear(background.get(),GPU_DATA_FLOAT,gray);GPU_texture_clear(display.get(),GPU_DATA_FLOAT,gray);
+   // The download packet encodes with gamma 2.2. Decode the UI token with
+   // the inverse so the preview canvas matches the surrounding panel exactly.
+   const QColor canvas(theme::Surface);
+   const float clear[4]={},surface[4]={std::pow(float(canvas.redF()),2.2f),std::pow(float(canvas.greenF()),2.2f),std::pow(float(canvas.blueF()),2.2f),1};
+   GPU_texture_clear(ink.get(),GPU_DATA_FLOAT,clear);GPU_texture_clear(background.get(),GPU_DATA_FLOAT,surface);GPU_texture_clear(display.get(),GPU_DATA_FLOAT,surface);
    // Compile/allocate the small packet path during real host startup too.
    download.update({},{{display.get(),side,side}},0);prepared=true;
   }

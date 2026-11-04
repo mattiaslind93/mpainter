@@ -1,3 +1,4 @@
+#include "Theme.hh"
 #include "BlendLibraryPreferences.hh"
 #include <QInputDialog>
 #include <QMessageBox>
@@ -35,7 +36,7 @@ class Browser final:public QObject {
  int selected()const{const auto *item=items_->currentItem();return item?item->data(Qt::UserRole).toInt():-1;}
  void cancel_preview(){if(native_preview_cancel_)native_preview_cancel_->store(true);native_preview_={};native_preview_cancel_.reset();dialog_->setProperty("previewPending",false);}
  void cancel(){cancel_preview();scan_cancel_->request_stop();if(job_cancel_)job_cancel_->store(true);poll_.stop();populate_.stop();}
- QImage thumbnail(int row)const{if(auto i=previews_.find(row);i!=previews_.end())return i->second;QImage placeholder(64,64,QImage::Format_RGB32);placeholder.fill(errors_.contains(row)?QColor("#633b3b"):QColor("#343941"));return placeholder;}
+ QImage thumbnail(int row)const{if(auto i=previews_.find(row);i!=previews_.end())return i->second;QImage placeholder(64,64,QImage::Format_RGB32);placeholder.fill(errors_.contains(row)?QColor(bts::theme::ErrorSurface):QColor(bts::theme::Raised));return placeholder;}
  QString description(int row)const{const auto &entry=library_.materials[row];return entry.material.name+"\n"+(entry.material.marked_asset?"Marked asset":"Material datablock")+" — "+(entry.catalog_path.isEmpty()?"Unassigned":entry.catalog_path)+"\n"+entry.file+"\n"+entry.material.description+"\nTags: "+entry.material.tags.join(", ")+(errors_.contains(row)?"\n"+errors_.at(row):QString{})+(native_previews_.contains(row)?"\nGenerated native Base Color preview — UV tile1001; not a shaded material render":entry.material.preview.isNull()?(hooks_.native_shader?(previews_.contains(row)?"\nGenerated native Base Color preview — UV tile1001; not a shaded material render":"\nNo saved preview — request a native Base Color preview or Import"):"\nGenerated first-tile channel-preset preview"):"\nSaved Blender PreviewImage");}
  void update_row(int row){for(int i=0;i<items_->count();++i){auto *item=items_->item(i);if(item->data(Qt::UserRole).toInt()!=row)continue;item->setIcon(QPixmap::fromImage(thumbnail(row)));item->setToolTip(description(row));item->setData(Qt::UserRole+5,previews_.contains(row)&&library_.materials[row].material.preview.isNull());item->setData(Qt::UserRole+6,errors_.contains(row)?errors_.at(row):QString{});}}
  void selection(){const int row=selected();if(native_preview_.valid()&&row!=native_preview_row_){cancel_preview();progress_->hide();}if(preview_)preview_->setEnabled(row>=0&&!native_preview_.valid());import_->setEnabled(row>=0&&!wanted_import_);if(row>=0&&errors_.contains(row))status_->setText(errors_.at(row));if(job_.valid()&&job_preview_&&row!=job_row_)job_cancel_->store(true);poll_.start();}
@@ -54,12 +55,12 @@ class Browser final:public QObject {
     for(const auto &path:library_.catalogs.values()){QString prefix;QTreeWidgetItem *parent=nullptr;for(const auto &part:path.split('/',Qt::SkipEmptyParts)){prefix+=prefix.isEmpty()?part:"/"+part;auto *item=paths.value(prefix);if(!item){item=parent?new QTreeWidgetItem(parent,QStringList{part}):new QTreeWidgetItem(catalogs_,QStringList{part});item->setData(0,Qt::UserRole,prefix);paths.insert(prefix,item);}parent=item;}}
     for(int row=0;row<int(library_.materials.size());++row)if(!library_.materials[row].material.preview.isNull())previews_[row]=library_.materials[row].material.preview;
     catalogs_->expandAll();catalogs_->setCurrentItem(all);dialog_->setProperty("libraryLoaded",true);dialog_->setProperty("sourceFiles",library_.files);dialog_->setProperty("allMaterials",int(library_.materials.size()));progress_->hide();filter();
-   }catch(const std::exception &error){scan_={};status_->setText(QString::fromUtf8(error.what()));status_->setStyleSheet("color:#ee8888");progress_->hide();poll_.stop();}return;
+   }catch(const std::exception &error){scan_={};status_->setText(QString::fromUtf8(error.what()));status_->setStyleSheet(bts::theme::qss("color:@Error@"));progress_->hide();poll_.stop();}return;
   }
   if(job_.valid()){
    if(job_.wait_for(std::chrono::seconds(0))!=std::future_status::ready)return;
    const int row=job_row_;try{if(!job_cancel_->load()){const auto result=job_.get();auto image=blend_material_preview(result.material);if(!image.isNull())previews_[row]=std::move(image);if(!job_preview_){if(result.preview_only)throw std::logic_error("Preview cannot be installed");hooks_.install(result);wanted_import_.reset();const char *counter=hooks_.native_shader?"nativeQueuedCount":"importedCount";dialog_->setProperty(counter,dialog_->property(counter).toInt()+1);status_->setText((hooks_.native_shader?"Native shader queued — appears in Shelf when preparation finishes: ":"Imported to Shelf — ")+library_.materials[row].material.name);}}}
-   catch(const std::exception &error){errors_[row]=QString::fromUtf8(error.what());status_->setText(errors_.at(row));status_->setStyleSheet("color:#ee8888");wanted_import_.reset();}
+   catch(const std::exception &error){errors_[row]=QString::fromUtf8(error.what());status_->setText(errors_.at(row));status_->setStyleSheet(bts::theme::qss("color:@Error@"));wanted_import_.reset();}
    if(!job_cancel_->load()){attempted_.insert(row);if(job_preview_&&!errors_.contains(row))status_->setText(QString("%1 matching materials · %2 source files").arg(matching_.size()).arg(library_.files));}job_={};job_cancel_.reset();dialog_->setProperty("previewPending",false);progress_->hide();update_row(row);import_->setEnabled(selected()>=0&&!wanted_import_);int generated=0;for(const auto &[index,image]:previews_)generated+=library_.materials[index].material.preview.isNull();dialog_->setProperty("generatedPreviews",generated);
   }
   if(wanted_import_){start(*wanted_import_,false);return;}

@@ -1,3 +1,4 @@
+#include "Theme.hh"
 #pragma once
 #include <QWidget>
 #include <QPainter>
@@ -15,11 +16,11 @@ class CompareRampEditor final : public QWidget {
   std::function<void(const std::array<float,5> &)> changed;
  protected:
   void paintEvent(QPaintEvent *)override{
-    QPainter p(this);p.fillRect(rect(),QColor("#252525"));p.setRenderHint(QPainter::Antialiasing);
+    QPainter p(this);p.fillRect(rect(),QColor(bts::theme::Canvas));p.setRenderHint(QPainter::Antialiasing);
     QLinearGradient gradient(8,0,width()-8,0);for(int i=0;i<5;++i)gradient.setColorAt(i/4.,QColor::fromRgbF(points[i],points[i],points[i]));
     p.fillRect(QRectF(8,height()-17,width()-16,10),gradient);
-    p.setPen(QPen(QColor("#82bde6"),2));for(int i=1;i<5;++i)p.drawLine(point(i-1),point(i));
-    p.setBrush(QColor("#eeeeee"));for(int i=0;i<5;++i)p.drawEllipse(point(i),4,4);
+    p.setPen(QPen(QColor(bts::theme::Accent),2));for(int i=1;i<5;++i)p.drawLine(point(i-1),point(i));
+    p.setBrush(QColor(bts::theme::Heading));for(int i=0;i<5;++i)p.drawEllipse(point(i),4,4);
   }
   void mousePressEvent(QMouseEvent *e)override{if(e->button()!=Qt::LeftButton)return;active_=std::clamp(int(std::lround((e->position().x()-8)*4/std::max(1,width()-16))),0,4);move(e);}
   void mouseMoveEvent(QMouseEvent *e)override{if(active_>=0&&(e->buttons()&Qt::LeftButton))move(e);}

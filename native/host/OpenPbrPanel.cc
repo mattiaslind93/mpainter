@@ -1,3 +1,4 @@
+#include "Theme.hh"
 #include "NumericLocale.hh"
 #include "OpenPbrPanel.hh"
 #include "OpenPbrCompatibility.hh"
@@ -10,7 +11,7 @@
 #include <QVBoxLayout>
 #include <QLocale>
 namespace bts {
-OpenPbrPanel::OpenPbrPanel(QWidget *parent):QWidget(parent){setObjectName("openpbrParameters");auto *layout=new QVBoxLayout(this);layout->setContentsMargins(0,4,0,0);auto *notice=new QLabel("OpenPBR 1.1 parameters — portable Principled approximation. This is not a conformant OpenPBR BSDF. Base Color, Metalness and Roughness come from the GPU layer stack. Grey fields are unavailable in this backend; their non-default values are rejected.",this);notice->setWordWrap(true);notice->setObjectName("openpbrBackendNotice");layout->addWidget(notice);error_=new QLabel(this);error_->setObjectName("openpbrParameterError");error_->setWordWrap(true);error_->setStyleSheet("color:#e99578");error_->hide();layout->addWidget(error_);QString group;QFormLayout *form=nullptr;
+OpenPbrPanel::OpenPbrPanel(QWidget *parent):QWidget(parent){setObjectName("openpbrParameters");auto *layout=new QVBoxLayout(this);layout->setContentsMargins(0,4,0,0);auto *notice=new QLabel("OpenPBR 1.1 parameters — portable Principled approximation. This is not a conformant OpenPBR BSDF. Base Color, Metalness and Roughness come from the GPU layer stack. Grey fields are unavailable in this backend; their non-default values are rejected.",this);notice->setWordWrap(true);notice->setObjectName("openpbrBackendNotice");layout->addWidget(notice);error_=new QLabel(this);error_->setObjectName("openpbrParameterError");error_->setWordWrap(true);error_->setStyleSheet(bts::theme::qss("color:@Error@"));error_->hide();layout->addWidget(error_);QString group;QFormLayout *form=nullptr;
  for(const auto &p:openpbr_parameters){if(group!=p.group){group=p.group;auto *title=new QLabel(group,this);layout->addWidget(title);form=new QFormLayout;layout->addLayout(form);}QWidget *control=nullptr;
   if(openpbr_layer_parameter(p.id)){auto *label=new QLabel("GPU layer stack",this);label->setToolTip("Edit this channel in the selected paint/fill layer.");control=label;}
   else if(!openpbr_compatibility_parameter(p.id)){auto *label=new QLabel("Unavailable in Principled preview",this);label->setWordWrap(true);label->setEnabled(false);label->setToolTip("Requires an OpenPBR BSDF backend; this renderer will not silently ignore an authored value.");control=label;}

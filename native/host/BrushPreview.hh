@@ -1,3 +1,4 @@
+#include "Theme.hh"
 #pragma once
 #include "BrushSettings.hh"
 #include <QImage>
@@ -19,7 +20,7 @@ class BrushPreview final:public QWidget {
   const QImage &image()const{return image_;}
   int generations()const{return generations_;}
  protected:
-  void paintEvent(QPaintEvent *)override {QPainter painter(this);painter.fillRect(rect(),QColor(43,43,43));if(!image_.isNull())painter.drawImage(rect(),image_);}
+  void paintEvent(QPaintEvent *)override {QPainter painter(this);painter.fillRect(rect(),QColor(bts::theme::Surface));if(!image_.isNull())painter.drawImage(rect(),image_);}
  private:
   using Key=std::pair<std::vector<double>,std::array<std::shared_ptr<const AlphaBitmap>,3>>;
   static Key signature(const BrushSettings &b){Key key;auto &v=key.first;const auto value=[&](auto n){v.push_back(double(n));};const auto values=[&](const MaterialValues &m){for(auto n:m.base_color)value(n);value(m.metallic);value(m.roughness);for(auto n:m.normal)value(n);value(m.bump);value(m.ambient_occlusion);};

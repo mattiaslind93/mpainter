@@ -1,3 +1,4 @@
+#include "Theme.hh"
 #include "FileDialogs.hh"
 #include "FileBrowser.hh"
 #include "Performance.hh"
@@ -101,7 +102,7 @@ class FolderList:public QListWidget {
  void dragMoveEvent(QDragMoveEvent *event) override{if(event->mimeData()->hasUrls())event->acceptProposedAction();else QListWidget::dragMoveEvent(event);}
  void dropEvent(QDropEvent *event) override{if(event->mimeData()->hasUrls()){for(const auto &url:event->mimeData()->urls())if(url.isLocalFile()&&QFileInfo(url.toLocalFile()).isDir())pin(url.toLocalFile());event->acceptProposedAction();}else{QListWidget::dropEvent(event);if(reordered)reordered();}}
 };
-void populate(QListWidget *list,const QStringList &paths,bool keep_missing){list->clear();for(const auto &path:paths){const bool exists=QFileInfo(path).isDir();if(!exists&&!keep_missing)continue;auto *item=new QListWidgetItem(QFileInfo(path).fileName().isEmpty()?path:QFileInfo(path).fileName(),list);item->setData(Qt::UserRole,path);item->setToolTip(path+(exists?QString():"\nFolder unavailable; pin retained"));if(!exists){item->setForeground(Qt::gray);item->setData(Qt::UserRole+1,false);}else item->setData(Qt::UserRole+1,true);}}
+void populate(QListWidget *list,const QStringList &paths,bool keep_missing){list->clear();for(const auto &path:paths){const bool exists=QFileInfo(path).isDir();if(!exists&&!keep_missing)continue;auto *item=new QListWidgetItem(QFileInfo(path).fileName().isEmpty()?path:QFileInfo(path).fileName(),list);item->setData(Qt::UserRole,path);item->setToolTip(path+(exists?QString():"\nFolder unavailable; pin retained"));if(!exists){item->setForeground(QColor(bts::theme::Disabled));item->setData(Qt::UserRole+1,false);}else item->setData(Qt::UserRole+1,true);}}
 }
 QStringList FileDialog::recent_folders(){QStringList result;for(const auto &path:stored(recent_key))if(QFileInfo(path).isDir()&&!result.contains(normalized(path))){result<<normalized(path);if(result.size()==10)break;}return result;}
 QStringList FileDialog::pinned_folders(){return stored(pinned_key);}

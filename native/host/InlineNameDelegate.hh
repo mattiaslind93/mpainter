@@ -1,3 +1,4 @@
+#include "Theme.hh"
 #pragma once
 #include <limits>
 #include <QStyledItemDelegate>
@@ -29,7 +30,7 @@ class InlineNameField final:public QLineEdit {
  std::function<void(const QString &)> renamed;
  explicit InlineNameField(QWidget *parent=nullptr):QLineEdit(parent){
    setReadOnly(true);setFrame(false);setMaxLength(std::numeric_limits<int>::max());
-   setStyleSheet("QLineEdit{background:transparent;border:0;} QLineEdit:focus{border:1px solid #82b6eb;}");
+   setStyleSheet(bts::theme::qss("QLineEdit{background:transparent;border:0;} QLineEdit:focus{border:1px solid @Accent@;}"));
    // Item widgets are persistent editors to Qt; the list cannot open its
    // normal delegate on F2. Route that key to the current row's name instead.
    for(auto *ancestor=parent;ancestor;ancestor=ancestor->parentWidget())

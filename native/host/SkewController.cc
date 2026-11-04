@@ -1,3 +1,4 @@
+#include "Theme.hh"
 #include "ResourceBudget.hh"
 #include "SkewController.hh"
 #include "TextureMemory.hh"
@@ -38,7 +39,7 @@ SkewBakeOptions skew_options(const QJsonObject &r){
 }
 }
 SkewController::SkewController(QMainWindow *owner,SkewHooks hooks):QObject(owner),hooks_(std::move(hooks)){
- dock_=new QDialog(owner);dock_->setObjectName("bakingDock");dock_->setWindowTitle("Baking");dock_->setModal(false);for(const auto *name:{"undoDocument","redoDocument"})if(auto *action=owner->findChild<QAction *>(name))dock_->addAction(action);dock_->setMinimumSize(820,520);dock_->setStyleSheet(owner->styleSheet()+"\nQDialog{background:#2e2e2e;color:#d0d0d0;}");auto *layout=new QVBoxLayout(dock_);layout->setContentsMargins(0,0,0,0);panel_=new SkewPanel(dock_);layout->addWidget(panel_);connect(dock_,&QDialog::rejected,this,[this]{if(mode()>0)mode(0);});dock_->hide();
+ dock_=new QDialog(owner);dock_->setObjectName("bakingDock");dock_->setWindowTitle("Baking");dock_->setModal(false);for(const auto *name:{"undoDocument","redoDocument"})if(auto *action=owner->findChild<QAction *>(name))dock_->addAction(action);dock_->setMinimumSize(820,520);dock_->setStyleSheet(bts::theme::qss(owner->styleSheet()+"\nQDialog{background:@Surface@;color:@Text@;}"));auto *layout=new QVBoxLayout(dock_);layout->setContentsMargins(0,0,0,0);panel_=new SkewPanel(dock_);layout->addWidget(panel_);connect(dock_,&QDialog::rejected,this,[this]{if(mode()>0)mode(0);});dock_->hide();
  if(auto *old=owner->findChild<QAction *>("bakeMeshMapsAction"))old->setShortcut({});
  auto *action=new QAction("Baking mode",owner);action->setObjectName("enterBakingMode");action->setShortcut(QKeySequence(Qt::CTRL|Qt::SHIFT|Qt::Key_B));owner->addAction(action);dock_->addAction(action);connect(action,&QAction::triggered,this,[this]{mode(1);});if(auto *menu=owner->findChild<QMenu *>("viewportMenu"))menu->addAction(action);else owner->menuBar()->addAction(action);
  panel_->paint_mode=[this]{mode(0);};panel_->paint_skew=[this]{if(eligible())mode(mode()==2?1:2);};panel_->configure=[this]{finish_edit();if(hooks_.configure)hooks_.configure();sync();};

@@ -1,3 +1,4 @@
+#include "Theme.hh"
 #include "NumericLocale.hh"
 #pragma once
 #include "SurfacePath.hh"
@@ -17,14 +18,14 @@
 #include <functional>
 namespace bts {
 enum class PathCurveAction {Pressure,Smooth,Custom,Reverse,Closed,DeleteVertex};
-struct PathDisplayOptions {double handle=6,width=1;QColor selected{"#edb763"},other{"#8195a5"};bool normals=false,tangents=true,direction=true;};
+struct PathDisplayOptions {double handle=6,width=1;QColor selected{bts::theme::Warning},other{bts::theme::Muted};bool normals=false,tangents=true,direction=true;};
 class PathCurvePanel final:public QFrame {
  public:
   std::function<void(PathCurveAction,double)> changed;
   std::function<void()> ribbon_requested;
   std::function<void(int)> mode_changed;
   std::function<void(const PathDisplayOptions &)> display_changed;
-  explicit PathCurvePanel(QWidget *parent):QFrame(parent){setObjectName("pathCurvePanel");setStyleSheet("#pathCurvePanel{background:#292929;border:1px solid #505050;}");auto *layout=new QGridLayout(this);layout->setContentsMargins(5,4,5,4);layout->setSpacing(3);
+  explicit PathCurvePanel(QWidget *parent):QFrame(parent){setObjectName("pathCurvePanel");setStyleSheet(bts::theme::qss("#pathCurvePanel{background:@Surface@;border:1px solid @Border@;}"));auto *layout=new QGridLayout(this);layout->setContentsMargins(5,4,5,4);layout->setSpacing(3);
     vertex_=new QLabel("No vertex selected",this);vertex_->setObjectName("surfaceVertexLabel");layout->addWidget(vertex_,0,0);auto *line=new QWidget(this);auto *pressure_layout=new QHBoxLayout(line);pressure_layout->setContentsMargins(0,0,0,0);pressure_layout->addWidget(new QLabel("Pressure",line));pressure_=new bts::NumericSpinBox(line);pressure_->setObjectName("surfaceVertexPressure");pressure_->setRange(0,100);pressure_->setDecimals(1);pressure_->setKeyboardTracking(false);pressure_layout->addWidget(pressure_);layout->addWidget(line,0,1,1,2);
     const auto button=[&](const char *text,const char *name,int row,int column,bool check,PathCurveAction action){auto *control=new QToolButton(this);control->setText(text);control->setObjectName(name);control->setCheckable(check);control->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);layout->addWidget(control,row,column);connect(control,&QToolButton::clicked,this,[this,control,action](bool checked){if(changed)changed(action,control->isCheckable()?double(checked):0);});return control;};
     smooth_=button("Smooth","surfaceVertexSmooth",1,0,true,PathCurveAction::Smooth);custom_=button("Custom tangents","surfaceCustomTangents",1,1,true,PathCurveAction::Custom);closed_=button("Close path","closeSurfacePath",1,2,true,PathCurveAction::Closed);reverse_=button("Reverse","reverseSurfacePath",2,0,false,PathCurveAction::Reverse);remove_=button("Delete vertex","deleteSurfaceVertex",2,1,false,PathCurveAction::DeleteVertex);

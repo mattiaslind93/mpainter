@@ -1,3 +1,4 @@
+#include "Theme.hh"
 #pragma once
 #include "SceneSnapshot.hh"
 #include <QDragEnterEvent>
@@ -43,7 +44,7 @@ class AssetDropHighlight final : public QWidget {
   explicit AssetDropHighlight(QWidget *parent):QWidget(parent){setObjectName("assetDropHighlight");setAttribute(Qt::WA_TransparentForMouseEvents);setAttribute(Qt::WA_NoSystemBackground);setStyleSheet("background:transparent;");hide();}
   QPainterPath silhouette;QString label;QRectF clip;
  protected:
-  void paintEvent(QPaintEvent *)override {QPainter painter(this);painter.setRenderHint(QPainter::Antialiasing);painter.save();if(!clip.isEmpty())painter.setClipRect(clip);painter.setPen(QPen(QColor("#82b6eb"),2));painter.setBrush(QColor(82,160,235,65));painter.drawPath(silhouette);painter.restore();painter.setPen(Qt::white);painter.fillRect(QRect(12,12,std::min(width()-24,500),30),QColor(30,40,50,230));painter.drawText(QRect(20,12,width()-40,30),Qt::AlignVCenter,"Apply to "+label);}
+  void paintEvent(QPaintEvent *)override {QPainter painter(this);painter.setRenderHint(QPainter::Antialiasing);painter.save();if(!clip.isEmpty())painter.setClipRect(clip);painter.setPen(QPen(QColor(bts::theme::Accent),2));painter.setBrush(bts::theme::alpha(bts::theme::Accent, 65));painter.drawPath(silhouette);painter.restore();painter.setPen(QColor(bts::theme::Heading));painter.fillRect(QRect(12,12,std::min(width()-24,500),30),bts::theme::alpha(bts::theme::Accent, 230));painter.drawText(QRect(20,12,width()-40,30),Qt::AlignVCenter,"Apply to "+label);}
 };
 class AssetViewportDrop final : public QObject {
  public:

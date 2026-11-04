@@ -7,6 +7,7 @@ root=pathlib.Path(__file__).absolute().parents[1];out=a.output.resolve();out.mkd
 def is_elf(path):
     if not path.is_file():return False
     with path.open('rb') as stream:return stream.read(4)==b'\x7fELF'
+subprocess.run([sys.executable,str(root/'scripts/check-environment.py'),str(a.runtime)],check=True)
 stage=out/'mPainter-0.9.0-alpha-linux-x86_64'
 if stage.exists():raise SystemExit('Output staging directory exists; choose a new output directory.')
 stage.mkdir();(stage/'lib').mkdir()

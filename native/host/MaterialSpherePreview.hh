@@ -1,3 +1,4 @@
+#include "Theme.hh"
 #pragma once
 #include "FillProjection.hh"
 #include "SmartMaterialPreset.hh"
@@ -433,7 +434,7 @@ inline QImage material_sphere_preview(const MaterialValues &base,
                                       const FillProjection *mapping = nullptr,
                                       int size = 58, bool sphere = true) {
   QImage image(size, size, QImage::Format_RGB32);
-  image.fill(QColor("#292929"));
+  image.fill(QColor(bts::theme::Surface));
   const auto &gbuffer = detail::sphere_preview_gbuffer();
 
   const auto surface_sample = [&](double u, double v) {
@@ -599,7 +600,7 @@ inline QImage material_sphere_preview(const MaterialValues &base,
 inline QImage smart_material_sphere_preview(const SmartMaterialPreset *preset,
                                             int size = 58) {
   QImage image(size, size, QImage::Format_RGB32);
-  image.fill(QColor("#292929"));
+  image.fill(QColor(bts::theme::Surface));
   const auto &gbuffer = detail::sphere_preview_gbuffer();
 
   MaterialValues calib_base;
@@ -899,7 +900,7 @@ inline QImage smart_mask_sphere_preview(const LayerMask &mask, int size = 58, bo
   thread_local int cached_size=0;thread_local detail::ShaderBallUvSurface surface;
   int canvas=32;while(canvas<size)canvas*=2;
   if(cached_size!=canvas){surface=detail::shaderball_uv_surface(canvas);cached_size=canvas;}
-  QImage image(size,size,QImage::Format_RGB32);image.fill(QColor("#1e1e1e"));MaskCompareInputs context;context.projection=&surface.atlas;
+  QImage image(size,size,QImage::Format_RGB32);image.fill(QColor(bts::theme::Canvas));MaskCompareInputs context;context.projection=&surface.atlas;
   const auto encode=[](double v){return v<=.0031308?12.92*v:1.055*std::pow(v,1/2.4)-.055;};
   for(int y=0;y<size;++y)for(int x=0;x<size;++x){const auto gb=detail::sphere_preview_gbuffer().sample((x+.5)/size,(y+.5)/size);if(gb.cov<=.005)continue;
     const float value=mask.enabled?mask.value(std::clamp(int(gb.u*canvas),0,canvas-1),std::clamp(int(gb.v*canvas),0,canvas-1),1001,canvas,canvas,nullptr,&surface.maps,&context):1.f;

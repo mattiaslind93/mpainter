@@ -1,3 +1,4 @@
+#include "Theme.hh"
 #include <QDateTime>
 #include "PainterLayerDelegate.hh"
 #include "NameListShortcuts.hh"
@@ -135,7 +136,7 @@ QIcon icon(Glyph glyph)
     pixmap.fill(Qt::transparent);
     QPainter p(&pixmap);
     p.setRenderHint(QPainter::Antialiasing);
-    p.setPen(QPen(QColor(mode == QIcon::Disabled ? "#8B949E" : "#B4BAC1"), 1.2,
+    p.setPen(QPen(QColor(mode == QIcon::Disabled ? bts::theme::Muted : bts::theme::Text), 1.2,
                  Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
     p.setBrush(Qt::NoBrush);
     switch (glyph) {
@@ -267,7 +268,7 @@ class TangentBumpBar final : public QWidget {
     QPainter painter(this);
     const auto channel = [](float value) { return std::clamp(int(std::lround((value * .5f + .5f) * 255.f)), 0, 255); };
     painter.fillRect(rect(), QColor(channel(normal_[0]), channel(normal_[1]), channel(normal_[2])));
-    painter.setPen(QColor("#2A2F34"));
+    painter.setPen(QColor(bts::theme::Hover));
     painter.drawRect(rect().adjusted(0, 0, -1, -1));
   }
   void mouseReleaseEvent(QMouseEvent *event) override {
@@ -383,15 +384,15 @@ class ShelfCategoryDelegate final : public QStyledItemDelegate {
     const bool selected = option.state & QStyle::State_Selected;
     const bool hovered = option.state & QStyle::State_MouseOver;
     const QRectF cell = QRectF(option.rect).adjusted(1.5, 1.5, -1.5, -1.5);
-    const QColor bg = selected ? QColor("#717B86") : (hovered ? QColor("#3a3a3a") : QColor("#2e2e2e"));
-    const QColor border = selected ? QColor("#C8D2DC") : (hovered ? QColor("#4c4c4c") : QColor("#090A0B"));
+    const QColor bg = selected ? QColor(bts::theme::Selection) : (hovered ? QColor(bts::theme::Raised) : QColor(bts::theme::Surface));
+    const QColor border = selected ? QColor(bts::theme::Accent) : (hovered ? QColor(bts::theme::Border) : QColor(bts::theme::Separator));
     painter->setPen(QPen(border, 1.0));
     painter->setBrush(bg);
     painter->drawRoundedRect(cell, 3.0, 3.0);
 
     const QString text = index.data(Qt::DisplayRole).toString();
-    const QColor fg = selected ? QColor("#ffffff") : (hovered ? QColor("#e6e6e6") : QColor("#c6c6c6"));
-    const QColor ic = selected ? QColor("#ffffff") : (hovered ? QColor("#d8d8d8") : QColor("#969696"));
+    const QColor fg = selected ? QColor(bts::theme::Heading) : (hovered ? QColor(bts::theme::Heading) : QColor(bts::theme::Text));
+    const QColor ic = selected ? QColor(bts::theme::Heading) : (hovered ? QColor(bts::theme::Heading) : QColor(bts::theme::Muted));
 
     const qreal ix = cell.left() + 6.0;
     const qreal iy = cell.center().y() - 5.0;
@@ -486,7 +487,7 @@ class EmptyList final : public QListWidget {
     QListWidget::paintEvent(event);
     if (count() == 0) {
       QPainter painter(viewport());
-      painter.setPen(QColor("#858585"));
+      painter.setPen(QColor(bts::theme::Muted));
       painter.drawText(viewport()->rect().adjusted(8, 8, -8, -8), Qt::AlignCenter, empty_text_);
     }
   }
@@ -494,93 +495,6 @@ class EmptyList final : public QListWidget {
  private:
   QString empty_text_;
 };
-
-const char *stylesheet = R"(
-  QMainWindow, QWidget#workspaceRoot, QWidget#toolRail, QWidget#utilityRail,
-  QWidget#materialProperties, QScrollArea#propertiesScroll {
-    background: #111315; color: #F2F4F5;
-  }
-  QWidget#contextToolbar, QWidget#shelfFilter { background: #1B1E21; }
-  QWidget#dockHeader { background: #1B1E21; border-bottom: 1px solid #090A0B; }
-  QLabel#dockTitle { color: #F2F4F5; font-size: 11px; font-weight: 600; }
-  QLabel#sectionTitle { color: #F2F4F5; font-weight: 600; }
-  QLabel { color: #B4BAC1; background: transparent; }
-  QLabel:disabled { color: #8B949E; }
-  QSplitter::handle { background: #090A0B; }
-  QSplitter::handle:hover { background: #717B86; }
-  QToolButton { border: 1px solid transparent; border-radius: 0; color: #B4BAC1; }
-  QToolButton:hover { background: #2A2F34; border-color: #2A2F34; }
-  QToolButton:checked { background: #717B86; color: white; border-color: #717B86; }
-  QWidget#assetShelf, QWidget#textureSetPanel { background: #111315; }
-  QListWidget#shelfCategories { background: #111315; border-bottom: 1px solid #090A0B; padding: 2px; }
-  QListWidget#shelfCategories::item { background: transparent; border: none; padding: 0; }
-  QListWidget#shelfAssets { background: #111315; padding: 1px; }
-  QListWidget#shelfAssets::item { padding: 0; border: 0; }
-  QToolButton:disabled { color: #8B949E; background: transparent; border-color: transparent; }
-  QToolButton::menu-indicator { image: none; }
-  QToolButton#shelfCategoryChip { background: #111315; border: 1px solid #2A2F34; padding: 2px 4px; }
-  QLineEdit, QComboBox, QDoubleSpinBox {
-    background: #111315; color: #B4BAC1; border: 1px solid #2A2F34;
-    border-radius: 1px; min-height: 20px; padding: 0 4px;
-  }
-  QLineEdit:focus, QDoubleSpinBox:focus, QComboBox:focus { border-color: #717B86; }
-  QLineEdit:disabled, QDoubleSpinBox:disabled, QComboBox:disabled { color: #8B949E; }
-  QComboBox::drop-down { width: 14px; border: none; }
-  QDoubleSpinBox::up-button, QDoubleSpinBox::down-button { width: 12px; border: none; }
-  QTabWidget::pane { background: #1B1E21; border: none; border-top: 1px solid #090A0B; }
-  QTabBar::tab {
-    color: #B4BAC1; background: #1B1E21; border: 1px solid transparent;
-    padding: 0 7px; height: 32px; font-size: 10px; font-weight: 600;
-  }
-  QTabBar::tab:selected { background: #1B1E21; border-top-color: #717B86; color: #F2F4F5; }
-  QTabBar::tab:hover { background: #2A2F34; }
-  QListWidget { background: #111315; color: #F2F4F5; border: none; outline: none; }
-  QListWidget::item { min-height: 22px; border: 1px solid transparent; padding: 0 5px; }
-  QListWidget::item:selected { background: #1B1E21; border-color: #717B86; color: #F2F4F5; }
-  QListWidget::item:hover { background: #2A2F34; }
-  QListWidget#layerStack::item { padding: 0; }
-  QListWidget#shelfCategories { border-right: 1px solid #090A0B; font-size: 10px; }
-  QListWidget#shelfCategories::item { min-height: 18px; }
-  QPlainTextEdit { background: #111315; color: #B4BAC1; border: 1px solid #2A2F34; }
-  QSlider::groove:horizontal { height: 2px; background: #8B949E; }
-  QSlider::handle:horizontal {
-    width: 7px; height: 7px; margin: -3px 0; border-radius: 4px; background: #B4BAC1;
-  }
-  QSlider::handle:horizontal:disabled { background: #8B949E; }
-  QSlider::sub-page:horizontal { background: #B4BAC1; }
-  QSlider::sub-page:horizontal:disabled { background: #2A2F34; }
-  QScrollBar:vertical { background: #1B1E21; width: 8px; margin: 0; }
-  QScrollBar:horizontal { background: #1B1E21; height: 8px; margin: 0; }
-  QScrollBar::handle { background: #2A2F34; min-height: 20px; min-width: 20px; }
-  QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }
-  QScrollBar::add-page, QScrollBar::sub-page { background: transparent; }
-  QStatusBar { background: #1B1E21; color: #B4BAC1; border-top: 1px solid #090A0B; }
-  QStatusBar::item { border: none; }
-  QMenu { background: #111315; color: #F2F4F5; border: 1px solid #2A2F34; }
-  QMenu::item { padding: 6px 24px; }
-  QMenu::item:selected { background: #111315; }
-  QMenu::separator { height: 1px; background: #2A2F34; margin: 4px; }
-  QMenuBar { background: #111315; color: #F2F4F5; border-bottom: 1px solid #090A0B; }
-  QMenuBar::item { padding: 4px 8px; background: transparent; }
-  QMenuBar::item:selected { background: #111315; }
-  QToolTip { background: #111315; color: #F2F4F5; border: 1px solid #2A2F34; }
-  QCheckBox[fillChannelToggle="true"] {
-    spacing: 0; padding: 3px 6px; color: #B4BAC1; background: #2A2F34; border: 1px solid #2A2F34;
-  }
-  QCheckBox[fillChannelToggle="true"]::indicator { width: 0; height: 0; }
-  QCheckBox[fillChannelToggle="true"]:checked { background: #276395; border-color: #68a6dc; color: #ffffff; }
-  QToolButton[artistChannelToggle="true"] { background: #2A2F34; border: 1px solid #2A2F34; color: #B4BAC1; }
-  QToolButton[artistChannelToggle="true"]:checked { background: #276395; border-color: #68a6dc; color: #ffffff; }
-  QToolButton#fillMaterialMode, QToolButton[fillChannelHeader="true"] {
-    background: #2A2F34; border: 1px solid #2A2F34; padding: 4px 8px; text-align: left;
-  }
-  QPushButton#colorSwatch { min-height: 28px; border: 1px solid #2A2F34; }
-  QToolButton#fillSettingsTab, QToolButton#fillMaterialTab { min-width: 28px; min-height: 24px; }
-  QDoubleSpinBox#metallicControl, QDoubleSpinBox#roughnessControl, QDoubleSpinBox#materialBump,
-  QDoubleSpinBox#materialDisplacement, QDoubleSpinBox#materialAmbientOcclusion, QDoubleSpinBox[userChannelValue="true"] {
-    background: transparent; border: none; padding: 0; min-height: 14px;
-  }
-)";
 
 }  // namespace
 
@@ -598,20 +512,6 @@ WorkspaceShell::WorkspaceShell(QWidget *viewport, Callbacks callbacks, QWidget *
   QFont body_font = font();
   body_font.setPixelSize(11);
   setFont(body_font);
-  QPalette colors = palette();
-  colors.setColor(QPalette::Window, QColor("#1B1E21"));
-  colors.setColor(QPalette::WindowText, QColor("#B4BAC1"));
-  colors.setColor(QPalette::Base, QColor("#111315"));
-  colors.setColor(QPalette::AlternateBase, QColor("#1B1E21"));
-  colors.setColor(QPalette::Text, QColor("#B4BAC1"));
-  colors.setColor(QPalette::Button, QColor("#1B1E21"));
-  colors.setColor(QPalette::ButtonText, QColor("#B4BAC1"));
-  colors.setColor(QPalette::Highlight, QColor("#717B86"));
-  colors.setColor(QPalette::HighlightedText, QColor("#ffffff"));
-  colors.setColor(QPalette::Disabled, QPalette::Text, QColor("#8B949E"));
-  colors.setColor(QPalette::Disabled, QPalette::ButtonText, QColor("#8B949E"));
-  setPalette(colors);
-  setStyleSheet(QString::fromLatin1(stylesheet));
 
   auto *root = new QWidget(this);
   root->setObjectName("workspaceRoot");
@@ -883,7 +783,7 @@ WorkspaceShell::WorkspaceShell(QWidget *viewport, Callbacks callbacks, QWidget *
   auto *shelf_layout = column(shelf_);
   QToolButton *close_shelf;
   shelf_layout->addWidget(header(shelf_, "ASSETS", &close_shelf));
-  auto *library_header=new QLabel("All libraries  /  Your assets",shelf_);library_header->setObjectName("assetLibraryHeader");library_header->setContentsMargins(8,4,8,4);library_header->setStyleSheet("color: #9e9e9e; font-size: 10px; font-weight: 600; background: #111315; border-bottom: 1px solid #1a1a1a;");shelf_layout->addWidget(library_header);
+  auto *library_header=new QLabel("All libraries  /  Your assets",shelf_);library_header->setObjectName("assetLibraryHeader");library_header->setContentsMargins(8,4,8,4);library_header->setStyleSheet(bts::theme::qss("color: @Muted@; font-size: 10px; font-weight: 600; background: @Canvas@; border-bottom: 1px solid @Canvas@;"));shelf_layout->addWidget(library_header);
   auto *filter = new QWidget(shelf_);
   filter->setObjectName("shelfFilter");
   filter->setFixedHeight(30);
@@ -902,7 +802,7 @@ WorkspaceShell::WorkspaceShell(QWidget *viewport, Callbacks callbacks, QWidget *
   search->setObjectName("shelfSearch");
   search->setPlaceholderText("Search assets…");
   search->setToolTip("Combine n:name s:library u:usage p:path; append = for exact matches");
-  search->setStyleSheet("QLineEdit#shelfSearch { margin: 4px 6px 2px 6px; padding: 2px 6px; min-height: 22px; background: #090A0B; border: 1px solid #2A2F34; border-radius: 3px; } QLineEdit#shelfSearch:focus { border-color: #717B86; }");
+  search->setStyleSheet(bts::theme::qss("QLineEdit#shelfSearch { margin: 4px 6px 2px 6px; padding: 2px 6px; min-height: 22px; background: @Separator@; border: 1px solid @Hover@; border-radius: 3px; } QLineEdit#shelfSearch:focus { border-color: @Accent@; }"));
   connect(search,&QLineEdit::textChanged,this,[this](const QString &text){alpha_search_=text;refresh_alpha_shelf();});
   shelf_layout->addWidget(search);
   shelf_layout->addWidget(filter);
@@ -1841,7 +1741,7 @@ void WorkspaceShell::show_texture_set(const TextureSet *set, const NewProjectOpt
       auto *item=rebuild ? new QListWidgetItem(layers_) : layers_->item(row);
       item->setData(adjustment_editable_role,set->uniform_editable&&!set->disabled&&!opacity_stack&&it->kind==LayerKind::Paint&&!it->instance);
       item->setData(adjustment_checked_role,adjustment_layer(*it));
-      const bool cached=layer_is_cached(*set,it->id);item->setData(Qt::UserRole+27,cached);item->setData(Qt::UserRole+28,it->precompose_below);item->setForeground(cached?QBrush(QColor("#777777")):QBrush(QColor("#F2F4F5")));
+      const bool cached=layer_is_cached(*set,it->id);item->setData(Qt::UserRole+27,cached);item->setData(Qt::UserRole+28,it->precompose_below);item->setForeground(cached?QBrush(QColor(bts::theme::Muted)):QBrush(QColor(bts::theme::Heading)));
       item->setText(QString::fromStdString(it->name)+(cached?" [Cached]":""));item->setData(Qt::UserRole+19,it->instance.has_value());item->setData(Qt::UserRole+20,set->instance_hierarchies.contains(it->id));item->setData(Qt::UserRole+21,set->instance_problems.contains(it->id)?set->instance_problems.at(it->id):QString{});
       {std::set<std::string> names;for(const auto &[uid,name]:set->geometry_names)names.insert(name);int included=0;if(it->geometry.type==1){for(int tile:set->tiles)included+=it->geometry.includes_tile(tile);}else for(const auto &name:names)included+=it->geometry.includes(name);item->setData(Qt::UserRole+15,included);item->setData(Qt::UserRole+16,it->geometry.type==1?int(set->tiles.size()):int(names.size()));item->setData(Qt::UserRole+17,it->id==set->selected_layer&&geometry_target);item->setData(Qt::UserRole+18,it->geometry.active());}
       item->setData(Qt::UserRole+1,(layer_channel_==14?it->displacement.opacity:layer_channel_>=6?it->users[layer_channel_-6].opacity:layer_channel_==5?it->ao_opacity:it->opacity[layer_channel_])*100);
@@ -1910,7 +1810,7 @@ void WorkspaceShell::show_texture_set(const TextureSet *set, const NewProjectOpt
   if(set&&!property("layerSelectionOnly").toBool())thumbnails_->request(*set,layer_channel_);
   findChild<QAction *>("configureChannels")->setEnabled(set&&set->uniform_editable&&!set->disabled&&!opacity_stack);
   mesh_maps_panel_->synchronize(set);
-  for(int r=0;set&&r<layers_->count();++r){auto *item=layers_->item(r);const bool cached=layer_is_cached(*set,QUuid(item->data(Qt::UserRole).toString()));item->setData(Qt::UserRole+27,cached);if(cached){item->setForeground(QColor("#777777"));item->setFlags(Qt::ItemIsEnabled|Qt::ItemIsSelectable);}}
+  for(int r=0;set&&r<layers_->count();++r){auto *item=layers_->item(r);const bool cached=layer_is_cached(*set,QUuid(item->data(Qt::UserRole).toString()));item->setData(Qt::UserRole+27,cached);if(cached){item->setForeground(QColor(bts::theme::Muted));item->setFlags(Qt::ItemIsEnabled|Qt::ItemIsSelectable);}}
   findChild<QWidget *>("materialProperties")->setEnabled(!set||!layer_is_cached(*set,set->selected_layer));
   findChild<QToolButton *>("toolbarBakeMeshMaps")->setEnabled(set&&!set->disabled&&bool(callbacks_.bake_mesh_maps));
   findChild<QWidget *>("emptyLayersView")->setVisible(!set);layers_->setVisible(set);
@@ -1999,7 +1899,7 @@ void WorkspaceShell::show_texture_set(const TextureSet *set, const NewProjectOpt
     const bool culling=brush->projection.alignment!=BrushAlignment::UV;brush_cull_->setEnabled(culling);brush_cull_angle_->setEnabled(culling&&brush->projection.cull);brush_cull_slider_->setEnabled(culling&&brush->projection.cull);
   }
   const auto fill=set?std::find_if(set->layers.begin(),set->layers.end(),[&](const auto &layer){return layer.id==set->selected_layer;}):std::vector<TextureLayer>::const_iterator{};
-  const bool filling=set&&!geometry_target&&!instance_target&&!hierarchy_target&&!effect_target&&!multiple&&!mask_target&&fill!=set->layers.end()&&fill->kind==LayerKind::Fill;fill_panel_->setVisible(filling);fill_toolbar_->setVisible((filling&&fill->fill.mode!=6)||(mask_filling&&selected_mask_effect->anchor_source.isNull()));for(auto *action:fill_gizmo_actions_)action->setEnabled((filling&&fill->fill.mode!=6)||(mask_filling&&selected_mask_effect->anchor_source.isNull()&&selected_mask_effect->mapping.projection.mode!=6));if(filling){displayed_fill_=fill->fill;std::array<bool,15> active{};QStringList names{"Base Color","Metallic","Roughness","Normal","Bump","Ambient occlusion"};for(int c=0;c<5;++c)active[c]=set->channels[c];active[5]=set->ao_channel;for(int slot=0;slot<8;++slot){active[slot+6]=set->users[slot].present;names.append(QString::fromStdString(set->users[slot].name));}active[14]=set->displacement.channel;names.append("Displacement");fill_panel_->set_displacement_midlevel(set->displacement.midlevel);fill_panel_->set_channels(active,names);fill_panel_->set_anchor_context(set,set->selected_layer);fill_panel_->synchronize(fill->fill);auto *resolution_warning=fill_panel_->findChild<QLabel *>("fillResolutionWarning");if(!resolution_warning){resolution_warning=new QLabel(fill_panel_);resolution_warning->setObjectName("fillResolutionWarning");resolution_warning->setWordWrap(true);resolution_warning->setStyleSheet("color:#dfb26f");fill_panel_->layout()->addWidget(resolution_warning);}QStringList source_warnings;for(int c=0;c<15;++c)if(active[c])if(const auto &source=fill_channel_texture(fill->fill,c)){const auto check=[&](int tile,const auto &image){if(image.width>set->width(tile)||image.height>set->rows(tile))source_warnings.append(names.value(c)+QString(": source %1×%2 > Texture Set %3×%4 (tile %5)").arg(image.width).arg(image.height).arg(set->width(tile)).arg(set->rows(tile)).arg(tile));};if(source->tiles){for(const auto &[tile,image]:*source->tiles)if(set->tiles.contains(tile))check(tile,*image);}else check(1001,*source);}resolution_warning->setText(source_warnings.join('\n'));resolution_warning->setVisible(!source_warnings.empty());const QSignalBlocker a(fill_manipulator_),b(fill_gizmo_size_);fill_manipulator_->setChecked(fill->fill.manipulator);fill_manipulator_->setText(fill->fill.mode==0?"UV frame":"Projection frame");fill_spatial_toolbar_->setVisible(fill->fill.mode!=6);fill_gizmo_size_->setValue(fill->fill.gizmo_size);for(int i=0;i<3;++i){const QSignalBlocker blocker(fill_gizmos_[i]);fill_gizmos_[i]->setChecked(i==fill->fill.gizmo);}}
+  const bool filling=set&&!geometry_target&&!instance_target&&!hierarchy_target&&!effect_target&&!multiple&&!mask_target&&fill!=set->layers.end()&&fill->kind==LayerKind::Fill;fill_panel_->setVisible(filling);fill_toolbar_->setVisible((filling&&fill->fill.mode!=6)||(mask_filling&&selected_mask_effect->anchor_source.isNull()));for(auto *action:fill_gizmo_actions_)action->setEnabled((filling&&fill->fill.mode!=6)||(mask_filling&&selected_mask_effect->anchor_source.isNull()&&selected_mask_effect->mapping.projection.mode!=6));if(filling){displayed_fill_=fill->fill;std::array<bool,15> active{};QStringList names{"Base Color","Metallic","Roughness","Normal","Bump","Ambient occlusion"};for(int c=0;c<5;++c)active[c]=set->channels[c];active[5]=set->ao_channel;for(int slot=0;slot<8;++slot){active[slot+6]=set->users[slot].present;names.append(QString::fromStdString(set->users[slot].name));}active[14]=set->displacement.channel;names.append("Displacement");fill_panel_->set_displacement_midlevel(set->displacement.midlevel);fill_panel_->set_channels(active,names);fill_panel_->set_anchor_context(set,set->selected_layer);fill_panel_->synchronize(fill->fill);auto *resolution_warning=fill_panel_->findChild<QLabel *>("fillResolutionWarning");if(!resolution_warning){resolution_warning=new QLabel(fill_panel_);resolution_warning->setObjectName("fillResolutionWarning");resolution_warning->setWordWrap(true);resolution_warning->setStyleSheet(bts::theme::qss("color:@Warning@"));fill_panel_->layout()->addWidget(resolution_warning);}QStringList source_warnings;for(int c=0;c<15;++c)if(active[c])if(const auto &source=fill_channel_texture(fill->fill,c)){const auto check=[&](int tile,const auto &image){if(image.width>set->width(tile)||image.height>set->rows(tile))source_warnings.append(names.value(c)+QString(": source %1×%2 > Texture Set %3×%4 (tile %5)").arg(image.width).arg(image.height).arg(set->width(tile)).arg(set->rows(tile)).arg(tile));};if(source->tiles){for(const auto &[tile,image]:*source->tiles)if(set->tiles.contains(tile))check(tile,*image);}else check(1001,*source);}resolution_warning->setText(source_warnings.join('\n'));resolution_warning->setVisible(!source_warnings.empty());const QSignalBlocker a(fill_manipulator_),b(fill_gizmo_size_);fill_manipulator_->setChecked(fill->fill.manipulator);fill_manipulator_->setText(fill->fill.mode==0?"UV frame":"Projection frame");fill_spatial_toolbar_->setVisible(fill->fill.mode!=6);fill_gizmo_size_->setValue(fill->fill.gizmo_size);for(int i=0;i<3;++i){const QSignalBlocker blocker(fill_gizmos_[i]);fill_gizmos_[i]->setChecked(i==fill->fill.gizmo);}}
   if(filling){QString material_name;if(!fill->fill.material_resource.empty()&&asset_catalog_){const QUuid id(QString::fromStdString(fill->fill.material_resource));for(const auto &asset:asset_catalog_->assets())if(asset.id==id){material_name=asset.name;break;}}fill_panel_->set_material_mode_text(material_name);}
   if(mask_filling){displayed_fill_=selected_mask_effect->mapping.projection;const QSignalBlocker block(fill_manipulator_);fill_manipulator_->setChecked(displayed_fill_.manipulator);fill_manipulator_->setText(fill_surface_projection(displayed_fill_)?"Manipulator":"UV frame");fill_spatial_toolbar_->setVisible(displayed_fill_.mode!=6);}
   findChild<QWidget *>("propertiesProjectionModes")->setVisible((filling||mask_filling)&&displayed_fill_.mode!=6);for(int mode:{0,1}){auto *button=findChild<QToolButton *>(mode==0?"propertiesUVProjection":"propertiesTriplanarProjection");const QSignalBlocker block(button);button->setChecked(displayed_fill_.mode==mode);}
@@ -2178,7 +2078,7 @@ void WorkspaceShell::set_status(const QString &message)
 void WorkspaceShell::set_error_status(const QString &message)
 {
   auto *area=statusBar()->findChild<QWidget *>("workspaceError");
-  if(!area){area=new QWidget(statusBar());area->setObjectName("workspaceError");auto *layout=new QHBoxLayout(area);layout->setContentsMargins(6,0,0,0);auto *label=new QLabel(area);label->setObjectName("workspaceErrorText");label->setStyleSheet("color:#ffb0a0");label->setMaximumWidth(850);layout->addWidget(label);auto *dismiss=new QToolButton(area);dismiss->setObjectName("dismissWorkspaceError");dismiss->setText("×");dismiss->setToolTip("Dismiss error");connect(dismiss,&QToolButton::clicked,area,&QWidget::hide);layout->addWidget(dismiss);statusBar()->addPermanentWidget(area);}
+  if(!area){area=new QWidget(statusBar());area->setObjectName("workspaceError");auto *layout=new QHBoxLayout(area);layout->setContentsMargins(6,0,0,0);auto *label=new QLabel(area);label->setObjectName("workspaceErrorText");label->setStyleSheet(bts::theme::qss("color:@Error@"));label->setMaximumWidth(850);layout->addWidget(label);auto *dismiss=new QToolButton(area);dismiss->setObjectName("dismissWorkspaceError");dismiss->setText("×");dismiss->setToolTip("Dismiss error");connect(dismiss,&QToolButton::clicked,area,&QWidget::hide);layout->addWidget(dismiss);statusBar()->addPermanentWidget(area);}
   auto *label=area->findChild<QLabel *>("workspaceErrorText");label->setText(message);label->setToolTip(message);area->show();
   const int generation=area->property("errorGeneration").toInt()+1;area->setProperty("errorGeneration",generation);
   QTimer::singleShot(15000,area,[area,generation]{if(area->property("errorGeneration").toInt()==generation)area->hide();});
@@ -2369,7 +2269,7 @@ void WorkspaceShell::set_baking_tools(bool baking,bool editing,const BrushSettin
 
 void bts::WorkspaceShell::set_fill_color_spaces(const QStringList &spaces){fill_panel_->set_color_spaces(spaces);mask_fill_panel_->set_color_spaces(spaces);}
 
-void bts::WorkspaceShell::set_texture_load_status(QUuid set,QUuid layer,int channel,const QString &text,int completed,int total,bool loading,bool error){const auto key=set.toString()+layer.toString()+QString::number(channel);texture_load_states_[key]={text,completed,total,loading,error};if(texture_load_states_.size()>4096)texture_load_states_.erase(texture_load_states_.begin());if(set==shown_texture_set_&&layer==shown_texture_layer_){fill_panel_->set_load_status(channel,text,completed,total,loading,error);mask_fill_panel_->set_load_status(channel,text,completed,total,loading,error);}texture_loading_bar_->setVisible(loading||error);texture_loading_notice_->setText(text);texture_loading_notice_->setStyleSheet(error?"color:#ee8980":"");texture_loading_progress_->setUpdatesEnabled(false);texture_loading_progress_->setVisible(loading);texture_loading_progress_->setRange(0,total);texture_loading_progress_->setValue(completed);texture_loading_progress_->setUpdatesEnabled(true);texture_loading_cancel_->setVisible(loading);setProperty("textureLoadPending",loading);setProperty("textureLoadError",error?text:QString{});}
+void bts::WorkspaceShell::set_texture_load_status(QUuid set,QUuid layer,int channel,const QString &text,int completed,int total,bool loading,bool error){const auto key=set.toString()+layer.toString()+QString::number(channel);texture_load_states_[key]={text,completed,total,loading,error};if(texture_load_states_.size()>4096)texture_load_states_.erase(texture_load_states_.begin());if(set==shown_texture_set_&&layer==shown_texture_layer_){fill_panel_->set_load_status(channel,text,completed,total,loading,error);mask_fill_panel_->set_load_status(channel,text,completed,total,loading,error);}texture_loading_bar_->setVisible(loading||error);texture_loading_notice_->setText(text);texture_loading_notice_->setStyleSheet(bts::theme::qss(error?"color:@Error@":""));texture_loading_progress_->setUpdatesEnabled(false);texture_loading_progress_->setVisible(loading);texture_loading_progress_->setRange(0,total);texture_loading_progress_->setValue(completed);texture_loading_progress_->setUpdatesEnabled(true);texture_loading_cancel_->setVisible(loading);setProperty("textureLoadPending",loading);setProperty("textureLoadError",error?text:QString{});}
 
 namespace bts {
 namespace {
@@ -2379,7 +2279,7 @@ QImage render_panel(QWidget *widget,int width){
   const QSize previous=widget->size();
   widget->resize(width,height);
   QImage image(width,height,QImage::Format_RGB32);
-  image.fill(QColor("#1B1E21"));
+  image.fill(QColor(bts::theme::Surface));
   QPainter painter(&image);
   widget->render(&painter);
   widget->resize(previous);
@@ -2394,7 +2294,7 @@ void save_properties(WorkspaceShell &shell,const QString &path){
   body->setMinimumWidth(width);body->setMaximumWidth(width);body->adjustSize();
   const auto content=render_panel(body,width);
   QImage image(width,head.height()+content.height(),QImage::Format_RGB32);
-  image.fill(QColor("#1B1E21"));
+  image.fill(QColor(bts::theme::Surface));
   QPainter painter(&image);
   painter.drawImage(0,0,head);
   painter.drawImage(0,head.height(),content);
@@ -2433,7 +2333,7 @@ void require_fill_chrome(WorkspaceShell &shell){
   if(!bar||bar->isVisible()||!xyz||xyz->isVisible())fail("normal swatch visible");
   if(!shell.findChild<QSlider *>("metallicSlider")->isHidden()||!shell.findChild<QSlider *>("roughnessSlider")->isHidden()||!shell.findChild<QSlider *>("bumpSlider")->isHidden()||!shell.findChild<QSlider *>("displacementSlider")->isHidden())fail("scalar sliders still visible");
   if(!shell.findChild<QDoubleSpinBox *>("metallicControl")->isHidden()||!shell.findChild<QDoubleSpinBox *>("materialBump")->isHidden()||!shell.findChild<QDoubleSpinBox *>("materialDisplacement")->isHidden())fail("scalar values still visible");
-  const auto gradient_ok=[&](const char *name,const char *text){auto *widget=shell.findChild<QWidget *>(name);if(!widget||widget->isHidden())fail(name);QImage image(std::max(widget->width(),8),std::max(widget->height(),8),QImage::Format_RGB32);image.fill(QColor("#1B1E21"));widget->render(&image);if(widget->accessibleName()!=text)fail(name);const int y=std::clamp(image.height()*3/4,0,image.height()-1);const auto left=image.pixelColor(std::clamp(image.width()/8,1,image.width()-1),y);const auto right=image.pixelColor(std::clamp(image.width()*5/8,1,image.width()-1),y);if(right.red()+right.green()+right.blue()-left.red()-left.green()-left.blue()<80)fail(name);};
+  const auto gradient_ok=[&](const char *name,const char *text){auto *widget=shell.findChild<QWidget *>(name);if(!widget||widget->isHidden())fail(name);QImage image(std::max(widget->width(),8),std::max(widget->height(),8),QImage::Format_RGB32);image.fill(QColor(bts::theme::Surface));widget->render(&image);if(widget->accessibleName()!=text)fail(name);const int y=std::clamp(image.height()*3/4,0,image.height()-1);const auto left=image.pixelColor(std::clamp(image.width()/8,1,image.width()-1),y);const auto right=image.pixelColor(std::clamp(image.width()*5/8,1,image.width()-1),y);if(right.red()+right.green()+right.blue()-left.red()-left.green()-left.blue()<80)fail(name);};
   gradient_ok("fillGradientMetallic","0.000");
   gradient_ok("fillGradientRoughness","0.800");
   gradient_ok("fillGradientBump","0.500");

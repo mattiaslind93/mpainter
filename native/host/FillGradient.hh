@@ -1,3 +1,4 @@
+#include "Theme.hh"
 #pragma once
 #include <QWidget>
 #include <QSlider>
@@ -57,13 +58,13 @@ class FillGradient final : public QWidget {
     const double span = std::max(1, slider_->maximum() - slider_->minimum());
     const double t = std::clamp((slider_->value() - slider_->minimum()) / span, 0.0, 1.0);
     const QPointF center(radius + t * std::max(1, width() - 2 * radius), bar.center().y());
-    painter.setPen(QColor("#d7d7d7"));
+    painter.setPen(QColor(bts::theme::Heading));
     const int text_w = metrics.horizontalAdvance(printed);
     painter.drawText(QPointF(std::clamp(center.x() - text_w / 2.0, 0.0, double(std::max(0, width() - text_w))), metrics.ascent()), printed);
-    painter.setPen(QPen(QColor("#2a2a2a"), 1.5));
-    painter.setBrush(QColor("#e4e4e4"));
+    painter.setPen(QPen(QColor(bts::theme::Surface), 1.5));
+    painter.setBrush(QColor(bts::theme::Heading));
     painter.drawEllipse(center, radius, radius);
-    painter.setBrush(QColor("#4a4a4a"));
+    painter.setBrush(QColor(bts::theme::Border));
     painter.setPen(Qt::NoPen);
     painter.drawEllipse(center, 3, 3);
   }

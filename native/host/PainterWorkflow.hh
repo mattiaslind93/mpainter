@@ -1,3 +1,4 @@
+#include "Theme.hh"
 #pragma once
 #include "LayerBlend.hh"
 #include <QColor>
@@ -17,7 +18,7 @@ inline QString compact_layer_blend(int value){
 }
 inline QString compact_layer_opacity(double percent){return QString::number(std::clamp(qRound(percent),0,100));}
 enum class PainterGlyph {Eye,Hidden,Generator,Filter,Fill,Levels,Paint,Mask,Folder,Wand,Delete,Group,Anchor,Geometry,Count};
-inline void paint_workflow_glyph(QPainter &painter,const QRectF &rect,PainterGlyph glyph,const QColor &color=QColor("#d5d5d5")){
+inline void paint_workflow_glyph(QPainter &painter,const QRectF &rect,PainterGlyph glyph,const QColor &color=QColor(bts::theme::Heading)){
  painter.save();painter.setRenderHint(QPainter::Antialiasing);painter.translate(rect.topLeft());painter.scale(rect.width()/16.,rect.height()/16.);painter.setPen(QPen(color,1.25,Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin));painter.setBrush(Qt::NoBrush);
  switch(glyph){
   case PainterGlyph::Eye:case PainterGlyph::Hidden:{QPainterPath eye;eye.moveTo(1,8);eye.cubicTo(4,2,12,2,15,8);eye.cubicTo(12,14,4,14,1,8);painter.drawPath(eye);painter.drawEllipse(QPointF(8,8),2,2);if(glyph==PainterGlyph::Hidden)painter.drawLine(QPointF(2,14),QPointF(14,2));break;}
