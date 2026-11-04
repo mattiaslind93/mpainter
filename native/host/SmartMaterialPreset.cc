@@ -35,7 +35,7 @@ SmartMaterialPreset capture_material_folder(const TextureSet &source,const QUuid
  PaintMetadataScope metadata;const auto end=std::find_if(source.layers.begin(),source.layers.end(),[&](const auto &layer){return layer.id==folder;});
  if(end==source.layers.end()||end->kind!=LayerKind::Folder)throw std::invalid_argument("Select a folder to create a material preset");
  auto begin=end;while(begin!=source.layers.begin()&&(begin-1)->depth>end->depth)--begin;
- SmartMaterialPreset result{source};auto &set=result.set;set.layers.assign(begin,end+1);set.layers.back().parent={};set.selected_layer=folder;set.selected_mask=false;set.selected_geometry=false;set.selected_effect={};clear_runtime(set);TextureDocument::validate_hierarchy(set);local_references(set);return result;
+ SmartMaterialPreset result{source};auto &set=result.set;set.layers.assign(begin,end+1);set.layers.back().parent=QUuid();set.selected_layer=folder;set.selected_mask=false;set.selected_geometry=false;set.selected_effect=QUuid();clear_runtime(set);TextureDocument::validate_hierarchy(set);local_references(set);return result;
 }
 QByteArray write_material_preset(const SmartMaterialPreset &preset){
  GpuPersistenceScope no_cpu_recipes;local_references(preset.set);auto document=preset_document(preset.set);const auto &set=document.set(1);
@@ -93,6 +93,6 @@ QUuid apply_material_preset(TextureSet &destination,const SmartMaterialPreset &p
  }
  for(int i=0;i<8;++i)if(preset.set.users[i].present){if(candidate.users[i].present&&(candidate.users[i].name!=preset.set.users[i].name||candidate.users[i].scattering!=preset.set.users[i].scattering))throw std::invalid_argument("Smart-material custom channel conflicts with this Texture Set");if(!candidate.users[i].present)candidate.users[i]=preset.set.users[i];}
  if(preset.set.displacement.channel&&!candidate.displacement.channel)candidate.displacement=preset.set.displacement;
- candidate.ao_channel|=preset.set.ao_channel;candidate.selected_layer=block.back().id;candidate.selected_mask=false;candidate.selected_effect={};candidate.selected_geometry=false;candidate.layers.insert(candidate.layers.begin()+insertion,block.begin(),block.end());TextureDocument::validate_hierarchy(candidate);const auto root=candidate.selected_layer;destination=std::move(candidate);return root;
+ candidate.ao_channel|=preset.set.ao_channel;candidate.selected_layer=block.back().id;candidate.selected_mask=false;candidate.selected_effect=QUuid();candidate.selected_geometry=false;candidate.layers.insert(candidate.layers.begin()+insertion,block.begin(),block.end());TextureDocument::validate_hierarchy(candidate);const auto root=candidate.selected_layer;destination=std::move(candidate);return root;
 }
 }

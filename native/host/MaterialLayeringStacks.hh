@@ -12,8 +12,8 @@ inline void select_material_substack(TextureSet &set,int which){
  auto &model=set.material_layering;if(which< -1||which>2||(which>=0&&!model.enabled))throw std::invalid_argument("Material opacity substack is unavailable");const auto groups=material_stack_membership(set);
  if(const auto old=groups.find(set.selected_layer);old!=groups.end()){if(old->second<0)model.main_selection=set.selected_layer;else if(set.selected_layer!=model.mask_roots[old->second])model.mask_selections[old->second]=set.selected_layer;}
  model.active_mask=which;QUuid selected=which<0?model.main_selection:model.mask_selections[which];
- if(!groups.contains(selected)||groups.at(selected)!=which){selected={};for(auto it=set.layers.rbegin();it!=set.layers.rend();++it)if(groups.at(it->id)==which&&(which<0||it->id!=model.mask_roots[which])){selected=it->id;break;}if(selected.isNull())selected=model.mask_roots[std::max(0,which)];}
- set.selected_layer=selected;set.selected_mask=false;set.selected_effect={};set.selected_geometry=false;
+ if(!groups.contains(selected)||groups.at(selected)!=which){selected=QUuid();for(auto it=set.layers.rbegin();it!=set.layers.rend();++it)if(groups.at(it->id)==which&&(which<0||it->id!=model.mask_roots[which])){selected=it->id;break;}if(selected.isNull())selected=model.mask_roots[std::max(0,which)];}
+ set.selected_layer=selected;set.selected_mask=false;set.selected_effect=QUuid();set.selected_geometry=false;
 }
 inline void prepare_material_layer_insert(const TextureSet &set,TextureLayer &layer){
  if(!set.material_layering.allocated())return;const int which=set.material_layering.active_mask;
@@ -41,7 +41,7 @@ inline void validate_material_substacks(const TextureSet &set){
 }
 inline TextureSet material_layering_display(const TextureSet &set){
  auto result=set;const auto &model=set.material_layering;if(!model.allocated())return result;const auto groups=material_stack_membership(set);const int which=model.active_mask;std::erase_if(result.layers,[&](const auto &layer){return groups.at(layer.id)!=which||(which>=0&&layer.id==model.mask_roots[which]);});
- if(which>=0){for(auto &layer:result.layers){--layer.depth;if(layer.parent==model.mask_roots[which])layer.parent={};}result.channels.fill(false);result.ao_channel=false;result.displacement.channel=false;for(int slot=0;slot<custom_channel_count;++slot){result.users[slot].present=slot==model.mask_slots[which];if(result.users[slot].present)result.users[slot].name="Opacity";}}
+ if(which>=0){for(auto &layer:result.layers){--layer.depth;if(layer.parent==model.mask_roots[which])layer.parent=QUuid();}result.channels.fill(false);result.ao_channel=false;result.displacement.channel=false;for(int slot=0;slot<custom_channel_count;++slot){result.users[slot].present=slot==model.mask_slots[which];if(result.users[slot].present)result.users[slot].name="Opacity";}}
  else for(int slot:model.mask_slots)result.users[slot].present=false;
  result.material_layering={};result.instance_layers.reset();return result;
 }

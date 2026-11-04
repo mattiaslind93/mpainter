@@ -150,7 +150,7 @@ void TextureDocument::add_fill(TextureSet &set)
   for(auto &user:fill.users)user.enabled=false;fill.kind = LayerKind::Fill;fill.parent=selected->parent;fill.depth=selected->depth;
   fill.name = "Fill layer " + std::to_string(next_layer_number(set.next_fill_number));
   prepare_material_layer_insert(set,fill);
-  set.selected_layer = fill.id;set.selected_geometry=false;set.selected_mask=false;set.selected_effect={};
+  set.selected_layer = fill.id;set.selected_geometry=false;set.selected_mask=false;set.selected_effect=QUuid();
   set.layers.insert(fill.parent==selected->id?selected:selected+1, std::move(fill));
 }
 namespace {
@@ -210,7 +210,7 @@ void TextureDocument::add_folder(TextureSet &set)
   const int selected=layer_index(set,set.selected_layer);TextureLayer folder;folder.material_id=next_material_id(set.layers);folder.displacement.enabled=set.displacement.channel;folder.displacement.blending=LayerBlend::Passthrough;folder.kind=LayerKind::Folder;
   folder.name="Folder "+std::to_string(next_layer_number(set.next_folder_number));folder.parent=set.layers[selected].parent;folder.depth=set.layers[selected].depth;
   prepare_material_layer_insert(set,folder);
-  set.selected_layer=folder.id;set.selected_geometry=false;set.selected_mask=false;set.selected_effect={};set.layers.insert(set.layers.begin()+selected+(folder.parent==set.layers[selected].id?0:1),std::move(folder));
+  set.selected_layer=folder.id;set.selected_geometry=false;set.selected_mask=false;set.selected_effect=QUuid();set.layers.insert(set.layers.begin()+selected+(folder.parent==set.layers[selected].id?0:1),std::move(folder));
 }
 void TextureDocument::group_layers(TextureSet &set,const std::vector<QUuid> &ids)
 {
@@ -236,7 +236,7 @@ void TextureDocument::group_layers(TextureSet &set,const std::vector<QUuid> &ids
   validate_hierarchy(candidate);validate_material_substacks(candidate);set=std::move(candidate);
 }
 void TextureDocument::remove_masks(TextureSet &set,const std::vector<QUuid> &ids){
-  for(const auto &id:ids){auto &target=layer(set,id);if(target.instance)throw std::invalid_argument("Edit instance masks at their source");target.mask.reset();if(set.selected_layer==id){set.selected_mask=false;set.selected_effect={};}}
+  for(const auto &id:ids){auto &target=layer(set,id);if(target.instance)throw std::invalid_argument("Edit instance masks at their source");target.mask.reset();if(set.selected_layer==id){set.selected_mask=false;set.selected_effect=QUuid();}}
 }
 void TextureDocument::remove_effects(TextureSet &set,const std::vector<std::pair<QUuid,QUuid>> &effects){
   for(const auto &[parent,id]:effects){
@@ -244,10 +244,10 @@ void TextureDocument::remove_effects(TextureSet &set,const std::vector<std::pair
     std::erase_if(target.effects,[&](const auto &effect){return effect.id==id;});
     if(target.mask)if(const auto path=find_mask_effect_path(std::as_const(target.mask->effects),id)){
       const auto &removed=*find_mask_effect(std::as_const(target.mask->effects),id);
-      if(removed.kind==MaskEffectKind::Group&&removed.group_effects&&find_mask_effect(*removed.group_effects,set.selected_effect))set.selected_effect={};
+      if(removed.kind==MaskEffectKind::Group&&removed.group_effects&&find_mask_effect(*removed.group_effects,set.selected_effect))set.selected_effect=QUuid();
       auto *siblings=edit_mask_effect_siblings(target.mask->effects,*path);siblings->erase(siblings->begin()+path->back());
     }
-    if(set.selected_effect==id)set.selected_effect={};
+    if(set.selected_effect==id)set.selected_effect=QUuid();
   }
 }
 void TextureDocument::delete_layers(TextureSet &set,const std::vector<QUuid> &ids){
@@ -257,14 +257,14 @@ void TextureDocument::delete_layers(TextureSet &set,const std::vector<QUuid> &id
   if(selected.empty())return;std::vector<char> doomed(candidate.layers.size());for(int index:selected){const int start=subtree_start(candidate,index);for(int i=start;i<=index;++i)doomed[i]=1;}
   if(std::all_of(doomed.begin(),doomed.end(),[](char value){return value;}))throw std::invalid_argument("A Texture Set keeps at least one layer");
   std::sort(selected.begin(),selected.end());for(auto it=selected.rbegin();it!=selected.rend();++it){const int start=subtree_start(candidate,*it);candidate.layers.erase(candidate.layers.begin()+start,candidate.layers.begin()+*it+1);}
-  bool alive=false;for(const auto &entry:candidate.layers)alive|=entry.id==candidate.selected_layer;if(!alive){candidate.selected_layer=candidate.layers.back().id;candidate.selected_mask=false;candidate.selected_effect={};candidate.selected_geometry=false;}
+  bool alive=false;for(const auto &entry:candidate.layers)alive|=entry.id==candidate.selected_layer;if(!alive){candidate.selected_layer=candidate.layers.back().id;candidate.selected_mask=false;candidate.selected_effect=QUuid();candidate.selected_geometry=false;}
   validate_hierarchy(candidate);validate_material_substacks(candidate);set=std::move(candidate);
 }
 void TextureDocument::add_paint(TextureSet &set)
 {
   const auto selected=std::find_if(set.layers.begin(),set.layers.end(),[&](const auto &layer){return layer.id==set.selected_layer;});
   if (selected==set.layers.end()) throw std::runtime_error("Selected layer is missing");
-  TextureLayer paint;paint.material_id=next_material_id(set.layers);paint.values.bump=set.bump_origin;paint.displacement.enabled=false;paint.displacement.value=set.displacement.midlevel;paint.parent=selected->parent;paint.depth=selected->depth;paint.name="Layer "+std::to_string(next_layer_number(set.next_paint_number));prepare_material_layer_insert(set,paint);set.selected_layer=paint.id;set.selected_geometry=false;set.selected_mask=false;set.selected_effect={};
+  TextureLayer paint;paint.material_id=next_material_id(set.layers);paint.values.bump=set.bump_origin;paint.displacement.enabled=false;paint.displacement.value=set.displacement.midlevel;paint.parent=selected->parent;paint.depth=selected->depth;paint.name="Layer "+std::to_string(next_layer_number(set.next_paint_number));prepare_material_layer_insert(set,paint);set.selected_layer=paint.id;set.selected_geometry=false;set.selected_mask=false;set.selected_effect=QUuid();
   set.layers.insert(paint.parent==selected->id?selected:selected+1,std::move(paint));
 }
 void TextureDocument::add_mask(TextureSet &set,float background)
@@ -272,7 +272,7 @@ void TextureDocument::add_mask(TextureSet &set,float background)
   if(!std::isfinite(background)||background<0||background>1)throw std::invalid_argument("Mask background outside 0..1");
   auto &selected=layer(set,set.selected_layer);
   if(selected.instance)throw std::invalid_argument("Edit instance masks at their source");
-  selected.mask=LayerMask{};selected.mask->background=background;set.selected_geometry=false;set.selected_mask=true;set.selected_effect={};
+  selected.mask=LayerMask{};selected.mask->background=background;set.selected_geometry=false;set.selected_mask=true;set.selected_effect=QUuid();
 }
 LayerMask TextureDocument::copy_mask(const TextureSet &set,const QUuid &id){for(const auto &layer:set.layers)if(layer.id==id&&layer.mask)return *layer.mask;throw std::invalid_argument("Select a source mask");}
 void TextureDocument::paste_mask(TextureSet &set,const QUuid &id,const LayerMask &source){
@@ -280,7 +280,7 @@ void TextureDocument::paste_mask(TextureSet &set,const QUuid &id,const LayerMask
   for(const auto &[number,pixels]:source.pixels.tiles())if(!set.tiles.contains(number))throw std::invalid_argument("Destination Texture Set does not contain a copied UV tile");
   for(const auto &entry:mask_effect_entries(source.effects))if(entry.effect->kind==MaskEffectKind::Paint)for(const auto &[number,pixels]:entry.effect->paint.pixels.tiles())if(!set.tiles.contains(number))throw std::invalid_argument("Destination does not contain a painted effect UV tile");
   auto replacement=source;replacement.enabled=target.mask->enabled;renew_mask_effect_ids(replacement.effects);
-  target.mask=std::move(replacement);set.selected_layer=id;set.selected_geometry=false;set.selected_mask=true;set.selected_effect={};
+  target.mask=std::move(replacement);set.selected_layer=id;set.selected_geometry=false;set.selected_mask=true;set.selected_effect=QUuid();
 }
 void TextureDocument::move_effect(TextureSet &set,int offset){
   if(offset!=1&&offset!=-1)throw std::invalid_argument("Invalid effect move");auto &selected=layer(set,set.selected_layer);
@@ -313,7 +313,7 @@ void TextureDocument::apply_mask_preset(TextureSet &set,const QUuid &id,const La
     if(has_ink){MaskEffect ink;ink.kind=MaskEffectKind::Paint;ink.paint.pixels=preset.pixels;ink.paint.resolution=preset.author_resolution?preset.author_resolution:preset.pixels.resolution();result.effects.push_back(std::move(ink));}
     auto effects=preset.effects;renew_mask_effect_ids(effects);result.effects.insert(result.effects.end(),effects.begin(),effects.end());
   }
-  target.mask=std::move(result);set.selected_layer=id;set.selected_geometry=false;set.selected_mask=true;set.selected_effect={};
+  target.mask=std::move(result);set.selected_layer=id;set.selected_geometry=false;set.selected_mask=true;set.selected_effect=QUuid();
 }
 static std::array<float,4> fill_sample_unadapted(const TextureSet &set,const TextureLayer &layer,int channel,int x,int y,int tile){
  if(layer.kind!=LayerKind::Fill||x<0||y<0)return {1,1,1,1};if(const auto &ref=layer.fill.anchors.at(channel);!ref.source.isNull())return anchor_components(TextureDocument::anchor_sample({&set,layer.id,x,y,tile,&TextureDocument::anchor_sample,set.projection_tiles.contains(tile)?set.projection_tiles.at(tile).get():set.projection_geometry.get()},ref),ref);auto mapping=layer.fill;mapping.texture=fill_channel_texture(layer.fill,channel);mapping.sample_alpha=layer.fill.alpha_mask.at(channel);mapping.channel_textures={};mapping.atom=channel==0&&layer.fill.atom;mapping.native_per_uv=set.native_per_uv;mapping.cm_per_native=set.cm_per_native;
