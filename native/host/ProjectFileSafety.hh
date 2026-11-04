@@ -3,6 +3,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QSaveFile>
+#include <QScopeGuard>
 #include <QTemporaryFile>
 #include <QString>
 #include <cerrno>
@@ -116,9 +117,14 @@ ProjectFileIdentity durable_project_write(const QString &path,
     std::optional<ProjectFileIdentity> expected,Writer &&writer) {
   const auto original=expected.value_or(ProjectFileIdentity::read(path));
   require_project_identity(path,original);
-  QTemporaryFile staged(path+".saving-XXXXXX");
-  if(!staged.open())throw std::runtime_error("Cannot create temporary project beside target");
-  const auto temporary=staged.fileName();staged.close();
+  const auto temporary=[&]{
+    QTemporaryFile staged(path+".saving-XXXXXX");
+    if(!staged.open())throw std::runtime_error("Cannot create temporary project beside target");
+    const auto name=staged.fileName();
+    staged.setAutoRemove(false);
+    return name;
+  }(); // Destroy the object: QTemporaryFile::close() retains its native handle.
+  const auto cleanup=qScopeGuard([&]{QFile::remove(temporary);});
   writer(temporary);
   QFile complete(temporary);
 #ifdef Q_OS_WIN

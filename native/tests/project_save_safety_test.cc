@@ -38,6 +38,7 @@ int main(int argc,char **argv) try {
   assert(QDir().mkdir(blocked+"1"));
   rejects([&]{bts::durable_project_write(blocked,bts::ProjectFileIdentity::read(blocked),[](const QString &p){write(p,"new");});});
   assert(read(blocked)=="original"&&QFileInfo(blocked+"1").isDir());
+  assert(QDir(dir.path()).entryList({"*.saving-*"},QDir::Files).isEmpty());
   const std::uint64_t limit=std::uint64_t(1)<<31;
   bts::require_packed_file_size(limit-1,"test");rejects([&]{bts::require_packed_file_size(limit,"Stroke archive");});rejects([&]{bts::require_packed_file_size(limit+1,"Packed image");});
   std::array<bts::PaintPixels::Pixel,64*64> page{};
