@@ -5,10 +5,13 @@
 #include "CompareRampEditor.hh"
 #include <QApplication>
 #include <QCheckBox>
+#include <QComboBox>
+#include <QAbstractItemView>
 #include <QDialog>
 #include <QGroupBox>
 #include <QLabel>
 #include <QListWidget>
+#include <QListView>
 #include <QMenu>
 #include <QPushButton>
 #include <QScrollArea>
@@ -22,6 +25,41 @@
 #include <QPainter>
 #include <QStyleOptionMenuItem>
 #include <cassert>
+static void dropdown_pixels(QApplication &app)
+{
+  for (int delegate = 0; delegate < 3; ++delegate) for (bool rtl : {false, true}) {
+    QDialog dialog;
+    dialog.setLayoutDirection(rtl ? Qt::RightToLeft : Qt::LeftToRight);
+    QGridLayout layout(&dialog);
+    QComboBox combo;
+    if (delegate == 1) combo.setEditable(true);
+    if (delegate == 2) combo.setView(new QListView);
+    combo.addItems({"128", "256", "512", "1024", "2048", "4096", "8192"});
+    layout.addWidget(&combo);
+    dialog.resize(320, 100);
+    dialog.show();
+    app.processEvents();
+    combo.showPopup();
+    app.processEvents();
+    const auto image = combo.view()->viewport()->grab().toImage();
+    const auto screenshot = qEnvironmentVariable("BTS_DROPDOWN_SCREENSHOT");
+    if (!screenshot.isEmpty() && delegate == 0 && !rtl) assert(combo.view()->window()->grab().save(screenshot));
+    for (int row = 0; row < combo.count(); ++row) {
+      const auto rect = combo.view()->visualRect(combo.model()->index(row, 0)).intersected(image.rect());
+      int text = 0, inner = 0;
+      for (int y = rect.top(); y <= rect.bottom(); ++y)
+        for (int x = rect.left(); x <= rect.right(); ++x) {
+          const auto color = image.pixelColor(x, y);
+          text += color.red() > 140 && color.green() > 140 && color.blue() > 140;
+          inner += color == QColor(bts::theme::OptionInner);
+        }
+      qInfo("Dropdown delegate=%d rtl=%d row=%d: text=%d indicatorFill=%d", delegate, rtl, row, text, inner);
+      assert(text > 10);
+      assert(inner < 20);
+    }
+    combo.hidePopup();
+  }
+}
 static void indicator_pixels(QApplication &app)
 {
  for(auto primitive:{QStyle::PE_IndicatorCheckBox,QStyle::PE_IndicatorItemViewItemCheck,QStyle::PE_IndicatorRadioButton})
@@ -109,6 +147,7 @@ int main(int argc, char **argv)
 {
   QApplication app(argc, argv);
   bts::theme::apply(app);
+  dropdown_pixels(app);
   indicator_pixels(app);
   indicator_gallery(app);
   assert(!app.styleSheet().contains('@'));

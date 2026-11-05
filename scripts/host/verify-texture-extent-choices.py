@@ -71,8 +71,10 @@ with (output / 'run.log').open('w') as log:
     'actual_production_widgets': ['NewProjectDialog', 'WorkspaceShell',
                                   'MeshBakeDialog', 'SkewPanel'],
     'desktop_windows': 0, 'gpu_contexts': 0,
-    'gpu_max_sizes': [16384, 32768, 0], 'unknown_gpu_choice_maximum': 4194304,
-    'retained_dimensions': [65536, 32768], 'new_project_accepts_larger_sizes': True,
+    'gpu_max_sizes': [16384, 32768, 0], 'unknown_gpu_choice_maximum': 8192,
+    'oversized_dimensions_clamped_from': [65536, 32768],
+    'clamped_dimension': 8192, 'new_project_maximum': 8192,
+    'new_project_accepts_larger_sizes': False,
     'linked_dimensions_use_values': True, 'live_popup_refresh': True,
     'paint_allocations': 0, 'menu_ram_queries': 0,
     'unchanged_sync_model_mutations': 0, 'host_files_modified': False

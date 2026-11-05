@@ -16,6 +16,7 @@
 namespace bts {
 struct SmartMaterialPreset;
 enum class AssetScope {Builtin,Session,Project,User};
+enum class MaterialShelf {None,Materials,Presets};
 struct StudioAsset {
   QUuid id=QUuid::createUuid();
   QString name,filename,path;
@@ -40,6 +41,11 @@ struct StudioAsset {
   // never reused after byte mutation, even when QByteArray had one owner.
   friend void hydrate_asset_presets(StudioAsset &);
   friend void bind_verified_spsm_source(StudioAsset &,const QByteArray &,const QString &);
+  friend MaterialShelf material_shelf(const StudioAsset &);
+  friend void cache_material_shelf(StudioAsset &,MaterialShelf);
+  QByteArray classified_bytes_;
+  QStringList classified_policies_;
+  MaterialShelf classified_shelf_=MaterialShelf::None;
   QString hydrated_hash_;
   const void *hydrated_mask_=nullptr,*hydrated_material_=nullptr;
   mutable QByteArray hashed_bytes_;
@@ -56,6 +62,8 @@ class PreparedUserAsset {
 
 };
 void hydrate_asset_presets(StudioAsset &);
+MaterialShelf material_shelf(const StudioAsset &);
+void cache_material_shelf(StudioAsset &,MaterialShelf);
 FillProjection asset_fill_projection(const StudioAsset &,bool automatic_physical);
 QString asset_scope_name(AssetScope);
 QJsonObject asset_metadata(const StudioAsset &);

@@ -61,6 +61,7 @@ MeshMaps AutoBakeEngine::bake(std::uint32_t material,const std::string &name,con
   if(cancel.load())return {};
   if(tiles.size()>1){MeshMaps result;for(int tile:tiles){auto part=bake(material,name,base,{tile},field,options,cancel);if(cancel.load())return {};for(int role=0;role<7;++role)if(part[role]){if(!result[role])result[role]=MeshMap{};result[role]->name=part[role]->name;result[role]->tiles.merge(part[role]->tiles);}}return result;}
   auto &s=*impl_;auto settings=options.maps;
+  require_texture_resolution(settings.resolution,"Bake width",32,true);require_texture_resolution(settings.rows(),"Bake height",32,true);
   if(!valid_sparse_texture_extent(settings.resolution,32,true)||!valid_sparse_texture_extent(settings.rows(),32,true)||
      (settings.resolution&(settings.resolution-1))||(settings.rows()&(settings.rows()-1))||
      (settings.sampling!=1&&settings.sampling!=2&&settings.sampling!=4&&settings.sampling!=8)||

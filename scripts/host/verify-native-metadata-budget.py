@@ -79,7 +79,7 @@ with (output / 'run.log').open('w') as log:
     'recovery_manifest_over_32768_bytes': True, 'full_source_characters': 65558,
     'corrupt_manifest_scan_survives': True, 'project_and_snapshot_identity': True,
     'snapshot_and_manifest_symlinks_rejected': True,
-    'derived_output_descriptors': 40, 'planned_output_resolution': 16384,
+    'derived_output_descriptors': 40, 'planned_output_resolution': 8192,
     'export_planning_low_ram_refusal': True,
     'desktop_windows': 0, 'gpu_contexts': 0, 'host_files_modified': False
 }, indent=2) + '\n')

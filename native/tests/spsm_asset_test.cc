@@ -1,4 +1,5 @@
 #include "ResourceImportUsage.hh"
+#include "AssetCategories.hh"
 #include "SpsmAssetDispatch.hh"
 #include "MaskResourceBank.hh"
 #include "SmartMaterialPreset.hh"
@@ -33,6 +34,14 @@ int main()
   constexpr char opaque[]="opaque original source bytes\0unknown fields";
   source.bytes.append(opaque,sizeof(opaque)-1);
   assert(is_spsm_asset(source));
+  {
+   auto classified=source;cache_material_shelf(classified,MaterialShelf::Presets);
+   assert(asset_in_category(classified,"Material presets")&&!asset_in_category(classified,"Materials"));
+   classified.search_terms.append("artist-discovery-tag");assert(material_shelf(classified)==MaterialShelf::Presets);
+   auto changed=classified;changed.bytes[0]=char(changed.bytes[0]^1);assert(material_shelf(changed)==MaterialShelf::None);
+   changed=classified;changed.search_terms.append("spsm:policy:uniform-input=ACEScg");assert(material_shelf(changed)==MaterialShelf::None);
+   assert(material_shelf(classified)==MaterialShelf::Presets);
+  }
   {auto cold=source;cold.smart_material=true;
    assert(smart_material_target_ready(cold,true,false));assert(!smart_material_target_ready(cold,false,true));
    cold.filename="worn-metal.builtin";assert(!smart_material_target_ready(cold,true,false));

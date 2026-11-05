@@ -15,7 +15,7 @@ inline SkewField read_skew_field_json(const QJsonValue &value,const std::set<int
  if(!value.isObject())fail();const auto o=value.toObject();SkewField field;auto &s=field.settings;
  const auto number=[&](const char *key){if(!o[key].isDouble()||!std::isfinite(o[key].toDouble()))fail();return o[key].toDouble();};
  const auto boolean=[&](const char *key){if(!o[key].isBool())fail();return o[key].toBool();};
- const double resolution=number("resolution");if(resolution<128||resolution>sparse_texture_max_side||resolution!=int(resolution)||(int(resolution)&(int(resolution)-1)))fail();field.resolution=int(resolution);
+ const double resolution=number("resolution");require_texture_resolution_limit(resolution,"Skew map");if(resolution<128||resolution>max_texture_resolution||resolution!=int(resolution)||(int(resolution)&(int(resolution)-1)))fail();field.resolution=int(resolution);
  s.enabled=boolean("enabled");s.edge_protection=boolean("edge_protection");s.vectors=boolean("vectors");s.edge_distance=number("edge_distance");s.edge_contrast=number("edge_contrast");s.vector_length=number("vector_length");s.vector_opacity=number("vector_opacity");const double density=number("vector_density");if(density<1||density>128||density!=int(density))fail();s.vector_density=int(density);s.validate();
  if(!o["tiles"].isArray()||o["tiles"].toArray().size()>int(allowed.size()))fail();
  for(const auto &entry:o["tiles"].toArray()){

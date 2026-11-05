@@ -26,6 +26,35 @@ int main(){
  LevelsEffect content;content.kind=ContentEffectKind::Paint;content.channel=2;content.paint.resolution=128;stamp.values.roughness=.4;content.paint.pixels.stamp(128,stamp,set.tiles);fill.effects.push_back(content);
  const auto fill_id=fill.id;TextureDocument::group_layers(set,{paint_id,fill_id});const auto folder=set.selected_layer;TextureDocument::layer(set,folder).name="Own material";
  auto preset=capture_material_folder(set,folder);assert(preset.set.layers.size()==3&&preset.set.layers.back().depth==0&&preset.set.layers.back().parent.isNull());for(const auto &map:preset.set.mesh_maps)assert(!map);
+ {
+  assert(!material_preset_has_generators(preset));
+  auto nested=preset;MaskEffect generator;generator.kind=MaskEffectKind::Generator;generator.generator=8;generator.enabled=false;
+  MaskEffect mask_group;mask_group.kind=MaskEffectKind::Group;mask_group.group_effects=std::make_shared<const std::vector<MaskEffect>>(std::vector{generator});
+  nested.set.layers.front().visible=false;nested.set.layers.front().mask->effects.push_back(mask_group);
+  TextureDocument::group_layers(nested.set,{nested.set.layers.back().id});nested=capture_material_folder(nested.set,nested.set.selected_layer);
+  assert(nested.set.layers.front().depth==2);
+  assert(material_preset_has_generators(nested));
+  auto channel=preset;LevelsEffect content_generator;content_generator.kind=ContentEffectKind::Generator;content_generator.generator=5;channel.set.layers.front().effects.push_back(content_generator);
+  assert(material_preset_has_generators(channel));
+  QTemporaryDir migration;assert(migration.isValid());AssetCatalog old_library(migration.path());
+  std::vector<StudioAsset> saved;
+  for(const auto *recipe:{&preset,&nested,&channel}){
+   StudioAsset asset;asset.name=QString("Saved folder %1").arg(saved.size());asset.filename=asset.id.toString()+".btsmaterial";
+   asset.usages={"smartmaterial"};asset.scope=AssetScope::User;asset.bytes=write_material_preset(*recipe);
+   old_library.add_prepared(AssetCatalog::prepare_user(asset,migration.path()));saved.push_back(asset);
+  }
+  AssetCatalog migrated(migration.path());migrated.load_user_library();
+  for(std::size_t i=0;i<saved.size();++i){
+   const auto found=std::find_if(migrated.assets().begin(),migrated.assets().end(),[&](const auto &asset){return asset.id==saved[i].id;});
+   assert(found!=migrated.assets().end()&&found->bytes==saved[i].bytes&&found->hash()==saved[i].hash());
+   assert(asset_in_category(*found,"Materials")==bool(i==0));
+   assert(asset_in_category(*found,"Material presets")==bool(i!=0));
+   assert(found->material_preset&&found->smart_material);
+  }
+  auto retained=saved;for(auto &asset:retained){asset.scope=AssetScope::Project;asset.id=QUuid::createUuid();}
+  migrated.replace_project(std::move(retained));
+  for(const auto &asset:migrated.project_assets())assert(asset_in_category(asset,"Materials")!=asset_in_category(asset,"Material presets"));
+ }
  // Add a generator so an old format-1 body exercises optional-field migration.
  MaskEffect generated;generated.kind=MaskEffectKind::Generator;generated.generator=0;preset.set.layers[0].mask->effects.push_back(generated);
  const auto bytes=write_material_preset(preset);const auto restored=read_material_preset(bytes);assert(restored.set.layers[0].pixels.hash(0)==preset.set.layers[0].pixels.hash(0));assert(restored.set.layers[0].users[0].pixels.hash(2)==preset.set.layers[0].users[0].pixels.hash(2));assert(restored.set.layers[0].displacement.pixels.hash(2)==preset.set.layers[0].displacement.pixels.hash(2));assert(restored.set.layers[0].users[0].pixels.resolution()==256);

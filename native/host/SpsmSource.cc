@@ -173,7 +173,18 @@ Source prepare(const StudioAsset &asset,const QString &sha,const QStringList &ta
 bool hydrate(StudioAsset &asset){
  if(!is_spsm_archive_asset(asset))throw spsm::Error("Not an original SPSM material or SPMSK mask");const auto tags=spsm_policy_tags(asset);const auto policy=policies_key(tags);
  if(auto ready=lookup(asset,policy)){bind_source(asset,ready);return true;}
- if(gui_thread())return false;
+ if(gui_thread()){
+  asset.material_preset.reset();
+  if(is_spsm_asset(asset)&&material_shelf(asset)==MaterialShelf::None){
+   // The structural reader loads preset metadata only, never image/package
+   // payloads. Full source hydration remains deferred to the worker.
+   const auto path=materialize_source(asset.hash(),asset.bytes);
+   SpsmImportOptions options;options.native_actions=true;
+   const auto metadata=prepare_spsm_material(std::filesystem::path(path.toStdString()),std::move(options));
+   cache_material_shelf(asset,material_preset_has_generators(metadata.material)?MaterialShelf::Presets:MaterialShelf::Materials);
+  }
+  return false;
+ }
  if(asset.bytes.isEmpty())throw spsm::Error("SPSM original source bytes are empty");
 
  const auto sha=digest(asset.bytes),key=sha+":"+policy;auto &s=state();std::shared_future<Source> waiting;std::shared_ptr<std::promise<Source>> owner;

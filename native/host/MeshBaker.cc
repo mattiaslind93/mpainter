@@ -102,6 +102,7 @@ SceneSnapshot prepare_bake_surface(const SceneSnapshot &source,const MeshBakeSet
 MeshBakeJob::MeshBakeJob(SceneSnapshot snapshot,std::vector<MeshBakeInput> inputs,MeshBakeSettings settings)
  :MeshBakeJob(std::make_shared<const SceneSnapshot>(std::move(snapshot)),std::move(inputs),std::move(settings)){}
 MeshBakeJob::MeshBakeJob(std::shared_ptr<const SceneSnapshot> source,std::vector<MeshBakeInput> inputs,MeshBakeSettings settings){
+  require_texture_resolution(settings.resolution,"Bake width",32,true);require_texture_resolution(settings.rows(),"Bake height",32,true);
   if(!source)throw std::invalid_argument("Missing bake source");const auto &snapshot=*source;
   if(!settings.use_project_mesh&&!settings.external_source)throw std::invalid_argument("Enable the project mesh as bake source");if(!valid_sparse_texture_extent(settings.resolution,32,true)||!valid_sparse_texture_extent(settings.rows(),32,true)||(settings.sampling!=1&&settings.sampling!=2&&settings.sampling!=4&&settings.sampling!=8)||settings.rays<1||settings.rays>512||settings.dilation<0||settings.dilation>64||inputs.empty()||snapshot.uv_triangles.empty())throw std::invalid_argument("Invalid mesh bake settings");
   for(float value:{settings.curvature_radius,settings.curvature_scale,settings.ao_distance,settings.thickness_distance,settings.ray_offset,settings.normal_detail})if(!std::isfinite(value)||value<0)throw std::invalid_argument("Invalid world-space bake parameter");

@@ -26,7 +26,7 @@ inline bool smart_material_target_ready(const StudioAsset &asset,bool project,bo
          (asset.material_preset || is_spsm_asset(asset) || mesh_maps_ready);
 }
 // Host-only reader/color management stays outside the pure document library.
-// A GUI cache miss may defer hydration; workers must validate or throw. A true
+// A GUI cache miss classifies metadata and defers hydration; workers validate or throw. A true
 // result must provide an immutable native preset retaining the source report.
 // Internal host boundary: canonical bytes and digest must already have been
 // verified on a worker. Atomically rebind the COW bytes and cached digest so a

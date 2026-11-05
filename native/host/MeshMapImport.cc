@@ -15,7 +15,7 @@ MeshMapPlane load_plane(const std::string &path){
     Buffer header(blender::IMB_load_image_from_filepath(encoded_path.constData(),flags|blender::ImBufFlags::Test),blender::IMB_freeImBuf);
     if(!header)throw std::invalid_argument("Cannot decode utility-map image header: "+path);
     const int width=header->x,height=header->y;
-    if(!valid_sparse_texture_extent(width,32,true)||!valid_sparse_texture_extent(height,32,true))throw std::invalid_argument("Utility-map dimensions exceed the sparse representation or are not powers of two: "+path);
+    require_texture_resolution(width,"Utility-map width",32,true);require_texture_resolution(height,"Utility-map height",32,true);
     // Completed maps can live in evictable disk snapshots. Admit only the new
     // native decode and RGBA staging buffers against currently available RAM;
     // an in-RAM cache fallback is already reflected in that fresh query.

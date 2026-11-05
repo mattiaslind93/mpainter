@@ -1,6 +1,7 @@
 #include "Theme.hh"
 #include "SliderHitArea.hh"
 #include <QApplication>
+#include <QComboBox>
 #include <QMouseEvent>
 #include <QTabletEvent>
 #include <QPointer>
@@ -19,7 +20,7 @@ class OptionStyle final : public QProxyStyle {
   void drawControl(ControlElement element, const QStyleOption *option,
                    QPainter *painter, const QWidget *widget = nullptr) const override {
     const auto *menu = qstyleoption_cast<const QStyleOptionMenuItem *>(option);
-    if (element != CE_MenuItem || !menu || menu->checkType == QStyleOptionMenuItem::NotCheckable) {
+    if (element != CE_MenuItem || !menu || qobject_cast<const QComboBox *>(widget) || menu->checkType == QStyleOptionMenuItem::NotCheckable) {
       QProxyStyle::drawControl(element, option, painter, widget); return;
     }
     auto text = *menu;

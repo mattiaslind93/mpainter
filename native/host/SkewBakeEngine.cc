@@ -24,6 +24,7 @@ SkewBakeEngine::~SkewBakeEngine()=default;
 std::shared_ptr<const SkewGeometry> SkewBakeEngine::geometry()const{return impl_->edges;}
 MeshMap SkewBakeEngine::bake(std::uint32_t material,const SkewField &field,const std::set<int> &tiles,const SkewBakeOptions &options,const std::map<int,PaintPixels::Bounds> &regions,const std::atomic<bool> &cancel){
  if(cancel.load())return {};
+ require_texture_resolution(options.resolution,"Skew bake width",32,true);require_texture_resolution(options.height,"Skew bake height",32,true);
  if(!valid_sparse_texture_extent(options.resolution,32,true)||!valid_sparse_texture_extent(options.height,32,true)||options.sampling<1||options.sampling>8||(options.sampling&(options.sampling-1))||options.dilation<0||options.dilation>64||options.ray.use_cage||!options.ray.average_normals)throw std::invalid_argument("Invalid automatic skew bake options");
  auto &s=*impl_;auto &cache=s.sets[material];s.prepare(cache,material,options);const int width=options.resolution*options.sampling,height=options.height*options.sampling;const auto texels=std::uint64_t(width)*height;
  if(cache.width!=width||cache.height!=height){cache.raw.clear();cache.filtered.clear();cache.width=width;cache.height=height;}

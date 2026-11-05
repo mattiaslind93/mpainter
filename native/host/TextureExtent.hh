@@ -2,8 +2,12 @@
 #include "ResourceAvailability.hh"
 
 namespace bts {
-// Sparse page keys contain two 16-bit page coordinates, each covering 64 texels.
-// This is an authoring representation limit, independent of a GPU allocation.
+inline constexpr int max_texture_resolution=8192;
+inline void require_texture_resolution_limit(double value,const char *purpose){
+ if(value>max_texture_resolution)throw std::invalid_argument(std::string(purpose)+": maximum resolution is 8192 (8K)");
+}
+// Imported images and bake supersampling can exceed the user resolution cap.
+// Sparse page keys contain two 16-bit coordinates, each covering 64 texels.
 inline constexpr int sparse_texture_page_side=64;
 inline constexpr int sparse_texture_max_side=sparse_texture_page_side*(1<<16);
 inline bool valid_sparse_texture_extent(int value,int minimum=1,bool power_of_two=false){
@@ -11,6 +15,10 @@ inline bool valid_sparse_texture_extent(int value,int minimum=1,bool power_of_tw
 }
 inline void require_sparse_texture_extent(int value,const char *purpose,int minimum=1,bool power_of_two=false){
  if(!valid_sparse_texture_extent(value,minimum,power_of_two))throw std::invalid_argument(std::string(purpose)+": extent is outside the sparse page-key representation");
+}
+inline void require_texture_resolution(int value,const char *purpose,int minimum=1,bool power_of_two=false){
+ require_texture_resolution_limit(value,purpose);
+ require_sparse_texture_extent(value,purpose,minimum,power_of_two);
 }
 inline std::uint64_t texture_texel_count(int width,int height){
  require_sparse_texture_extent(width,"Texture width");require_sparse_texture_extent(height,"Texture height");return resource_product(width,height);

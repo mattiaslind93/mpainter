@@ -17,7 +17,7 @@ bool boolean(const QJsonValue &value){if(!value.isBool())fail();return value.toB
 QUuid uuid(const QJsonValue &value){const auto result=QUuid(text(value,38));if(result.isNull())fail();return result;}
 QJsonValue format_json(std::optional<ExportFormat> value){return value?QJsonValue(int(*value)):QJsonValue(QJsonValue::Null);}
 std::optional<ExportFormat> read_format(const QJsonValue &value){if(value.isNull())return {};return ExportFormat(integer(value,0,4));}
-int size(const QJsonValue &value,bool inherited){const int result=integer(value,inherited?0:128,sparse_texture_max_side);if(result&&((result&(result-1))||result<128))fail();return result;}
+int size(const QJsonValue &value,bool inherited){require_texture_resolution_limit(value.toDouble(),"Export");const int result=integer(value,inherited?0:128,max_texture_resolution);if(result&&((result&(result-1))||result<128))fail();return result;}
 }
 ExportOutputPreset material_id_preset(){ExportOutputPreset p;p.id=QUuid("6e15bcb2-191a-4e19-b6d1-5db2bea50005");p.name="Material ID";p.standard_outputs=false;p.outputs={{"$mesh_$textureSet_material_id",ExportMapSource::MaterialId,false,ExportFormat::Png8}};return p;}
 void set_default_export_formats(ExportOutputPreset &p){p.formats[0]=ExportFormat::Png8;p.formats[4]=ExportFormat::Png16;p.formats[8]=ExportFormat::Exr32;}

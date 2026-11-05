@@ -257,8 +257,8 @@ std::optional<NewProjectOptions> NewProjectDialog::validate_options()
   }
   const int resolution_value = resolution_->currentData().toInt();
   const int normal_index = normal_format_->currentIndex();
-  if (error.isEmpty() && !valid_sparse_texture_extent(resolution_value,128,true)) {
-    error = tr("Select a supported document resolution.");
+  if (error.isEmpty() && (resolution_value>max_texture_resolution||!valid_sparse_texture_extent(resolution_value,128,true))) {
+    error = tr("Select a power-of-two document resolution from 128 to 8192 (8K).");
   }
   if (error.isEmpty() && (normal_index < 0 || normal_index >= int(normal_formats.size()))) {
     error = tr("Select a normal map format.");

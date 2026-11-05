@@ -13,9 +13,31 @@ int main(){using namespace bts;PaintPixels pixels;PaintPixels::Stamp stamp{{.5,.
   const auto rectangle=loaded.to_json();auto rectangle_loaded=TextureDocument::from_json(rectangle,bindings);auto &rectangle_layer=rectangle_loaded.set(1).layers.front();rectangle_layer.pixels=restored.pixels;rectangle_layer.mask->pixels=restored.mask->pixels;read_stroke_archive(rectangle_loaded,write_stroke_archive(loaded));assert(rectangle_loaded.to_json()==rectangle&&rectangle_loaded.set(1).rows()==512&&!rectangle_loaded.set(1).size_linked);
   TextureDocument::set_dimensions(loaded.set(1),2048,512,true);assert(loaded.set(1).rows()==2048&&loaded.set(1).size_linked&&restored.pixels.hash(0)==hash);
   // Logical authoring metadata is independent of present RAM/VRAM residency.
-  // A 16K image could not fit this injected budget, but no image is allocated.
-  {TextureRamQueryScope memory(+[]()->std::uint64_t{return 64ULL*1024*1024;});const int old_max=texture_gpu_max_size.exchange(256);const bool old_valid=texture_vram_query_valid.exchange(true);const auto old_free=texture_free_vram.exchange(0);NewProjectOptions large_options;large_options.resolution=DocumentResolution(16384);large_options.uv_workflow=UvWorkflow::PreserveTiles;TextureDocument large(large_options,imported,scene);large.set(2).tiles={1001};for(int tile=1001;tile<=1017;++tile)large.set(1).tiles.insert(tile);large.set(1).tiles.insert(2000);const auto wide=large.to_json();std::vector<TextureSetBinding> wide_bindings;for(const auto &entry:large.texture_sets())wide_bindings.push_back({entry.id,entry.material_session_uid,entry.name});auto wide_copy=TextureDocument::from_json(wide,wide_bindings);assert(wide_copy.to_json()==wide&&wide_copy.set(1).width()==16384&&wide_copy.set(1).tiles.size()==18&&wide_copy.set(1).tiles.contains(2000));
-    auto large_pages=wide;auto large_sets=large_pages["texture_sets"].toArray();auto first_set=large_sets[0].toObject();auto layers=first_set["layers"].toArray();auto first_layer=layers[0].toObject();first_layer["author_resolution"]=sparse_texture_max_side;first_layer["paint_tiles"]=QJsonArray{QJsonObject{{"number",1001},{"pages",QJsonArray{qint64(1ULL<<32),0,0,0,0}}}};layers[0]=first_layer;first_set["layers"]=layers;large_sets[0]=first_set;large_pages["texture_sets"]=large_sets;TextureDocument::from_json(large_pages,wide_bindings);
+  // An 8K image could not fit this injected budget, but no image is allocated.
+  {TextureRamQueryScope memory(+[]()->std::uint64_t{return 64ULL*1024*1024;});const int old_max=texture_gpu_max_size.exchange(256);const bool old_valid=texture_vram_query_valid.exchange(true);const auto old_free=texture_free_vram.exchange(0);NewProjectOptions large_options;large_options.resolution=DocumentResolution(8192);large_options.uv_workflow=UvWorkflow::PreserveTiles;TextureDocument large(large_options,imported,scene);large.set(2).tiles={1001};for(int tile=1001;tile<=1017;++tile)large.set(1).tiles.insert(tile);large.set(1).tiles.insert(2000);const auto wide=large.to_json();std::vector<TextureSetBinding> wide_bindings;for(const auto &entry:large.texture_sets())wide_bindings.push_back({entry.id,entry.material_session_uid,entry.name});auto wide_copy=TextureDocument::from_json(wide,wide_bindings);assert(wide_copy.to_json()==wide&&wide_copy.set(1).width()==8192&&wide_copy.set(1).tiles.size()==18&&wide_copy.set(1).tiles.contains(2000));
+    auto large_pages=wide;auto large_sets=large_pages["texture_sets"].toArray();auto first_set=large_sets[0].toObject();auto layers=first_set["layers"].toArray();auto first_layer=layers[0].toObject();first_layer["author_resolution"]=max_texture_resolution;first_layer["paint_tiles"]=QJsonArray{QJsonObject{{"number",1001},{"pages",QJsonArray{qint64(sparse_texture_page_count(max_texture_resolution)),0,0,0,0}}}};layers[0]=first_layer;first_set["layers"]=layers;large_sets[0]=first_set;large_pages["texture_sets"]=large_sets;TextureDocument::from_json(large_pages,wide_bindings);
     auto long_labels=wide;long_labels["source_mesh"]=QString(20000,'p');auto named_sets=long_labels["texture_sets"].toArray();auto named_set=named_sets[0].toObject();auto named_layers=named_set["layers"].toArray();auto named_layer=named_layers[0].toObject();named_layer["name"]=QString(70000,'l');named_layers[0]=named_layer;named_set["layers"]=named_layers;named_set["next_fill_number"]=1000001;named_sets[0]=named_set;long_labels["texture_sets"]=named_sets;auto labels_copy=TextureDocument::from_json(long_labels,wide_bindings);assert(labels_copy.to_json()==long_labels);TextureDocument::add_fill(labels_copy.set(1));assert(labels_copy.set(1).next_fill_number==1000002);
     texture_gpu_max_size=old_max;texture_vram_query_valid=old_valid;texture_free_vram=old_free;}
+
+  const auto rejects_limit=[](auto &&action){bool rejected=false;try{action();}catch(const std::invalid_argument &error){rejected=std::string(error.what()).find("8192 (8K)")!=std::string::npos;}assert(rejected);};
+  for(int oversized:{8193,16384,2147483647}){
+    rejects_limit([&]{NewProjectOptions options;options.resolution=DocumentResolution(oversized);TextureDocument invalid(options,imported,scene);});
+    const auto unchanged=loaded.to_json();
+    rejects_limit([&]{TextureDocument::set_dimensions(loaded.set(1),oversized,128,false);});
+    rejects_limit([&]{TextureDocument::set_dimensions(loaded.set(1),128,oversized,false);});
+    rejects_limit([&]{TextureDocument::set_tile_resolution(loaded.set(1),1001,oversized);});
+    rejects_limit([&]{loaded.set_bake_configuration({{"resolution",oversized}});});
+    rejects_limit([&]{loaded.set_bake_configuration({{"height",oversized}});});
+    assert(loaded.to_json()==unchanged);
+    for(const char *key:{"resolution","height","author_resolution","tile_resolutions","mesh_maps","skew_correction"}){
+      auto bad=unchanged;auto sets=bad["texture_sets"].toArray();auto set=sets[0].toObject();
+      if(std::string(key)=="author_resolution"){auto layers=set["layers"].toArray();auto layer=layers[0].toObject();layer[key]=oversized;layers[0]=layer;set["layers"]=layers;}
+      else if(std::string(key)=="tile_resolutions")set[key]=QJsonObject{{"1001",oversized}};
+      else if(std::string(key)=="mesh_maps"){auto maps=set[key].toArray();maps[0]=QJsonObject{{"name","Oversized"},{"tiles",QJsonArray{QJsonObject{{"number",1001},{"resolution",oversized},{"height",128},{"hash","0000000000000000"}}}}};set[key]=maps;}
+      else if(std::string(key)=="skew_correction"){auto skew=set[key].toObject();skew["resolution"]=oversized;set[key]=skew;}
+      else set[key]=oversized;
+      sets[0]=set;bad["texture_sets"]=sets;rejects_limit([&]{TextureDocument::from_json(bad,bindings);});
+    }
+    auto bad=unchanged;bad["resolution"]=oversized;rejects_limit([&]{TextureDocument::from_json(bad,bindings);});
+  }
   std::cout<<"Retained 1024 authoring data, 128 area reduction, 2048 smooth evaluation, mass/color and tile boundaries passed\n";}

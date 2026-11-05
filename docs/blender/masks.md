@@ -21,10 +21,36 @@ Blender asset; the scripts also reproduce it from the current built-in recipes.
 | Material capture/apply | Capture includes all folder descendants, validates internal anchors, strips runtime mesh maps/projection/skew/native layering state. Apply renews layer/effect/anchor IDs, remaps internal references, validates map/tile/channel dependencies, and installs atomically. Destination mesh maps drive the same preset on another object. External anchors must be resolved before capture. |
 | Library | `AssetCatalog.cc`, `main.cc`: built-ins are compiled Qt resources and in-memory assets; user shelf is `QStandardPaths::AppDataLocation/shelf` (or `--library-dir`), with `library.json` metadata and content-addressed `blobs/<hash>`. Project-retained assets have separate identities. Import/export in the shelf already supports `.btsmask` / `.btsmaterial`. |
 
-A **Material Preset** is a native layer-folder recipe, not an arbitrary Blender
-shader tree. Existing `.blend` material import (`BlendMaterial`,
-`NativeMaterialGraph`, `NativeMaterialArchive`) is a separate native-material
-workflow. This bridge creates the shelf's actual preset archives.
+## Materials vs Material Presets
+
+**Materials** contains plain materials without dynamic mask generators. This
+includes Poly Haven, procedural built-ins, CraftyPack, imported Blender materials,
+and saved layer folders that contain only paint, bitmap masks, or ordinary effects.
+
+**Material Presets** contains materials with dynamic smart masks that use the same
+generators as **Mask generators**. A generator anywhere in a saved folder qualifies,
+including generators inside nested mask groups or material channel effects.
+Disabled generators and hidden layers still count because they remain editable
+parts of the saved material. The two shelves never show the same resource.
+
+Classification comes from decoded content, not filenames, display names, origin,
+or user tags. Saving a plain folder places it in **Materials**. Saving a folder
+with generators places it in **Material Presets** and preserves its dynamic masks.
+Existing user libraries and project resources receive the same classification
+when loaded. Original archive bytes, resource IDs, and hashes stay unchanged.
+
+Both kinds of editable layer-folder recipes use `.btsmaterial` archives. The
+legacy `smartmaterial` usage identifies this archive and its application path;
+it no longer determines shelf membership. Original `.spsm` archives use a
+metadata-only reader to classify their native generator content before full
+worker decoding. Classification does not decode image or compiled package
+payloads. The cached result is bound to the source bytes and interpretation
+policy and is invalidated when either changes.
+
+Imported Blender shader trees use the separate native-material workflow
+(`BlendMaterial`, `NativeMaterialGraph`, and `NativeMaterialArchive`). Their
+procedural shader nodes do not themselves count as smart masks. This bridge
+creates native layer-folder archives.
 
 ## Mesh maps and coordinate conventions
 

@@ -26,7 +26,7 @@ int main(){
   const std::array<TextureSetBinding,1> bindings{{{doc.set(1).id,1,"History"}}};auto restored=TextureDocument::from_json(doc.to_json(),bindings);assert(restored.set(1).texture_resolution==8192&&restored.set(1).rows()==8192);
   // Logical resizing allocates no dense channel images. Native GPU targets
   // and spatial atlases admit their actual buffers when the owner creates them.
-  {TextureRamQueryScope metadata_only(+[]()->std::uint64_t{return 1024*1024;});TextureDocument::set_dimensions(doc.set(1),16384,16384,true);assert(doc.set(1).texture_resolution==16384&&doc.set(1).rows()==16384);auto large=TextureDocument::from_json(doc.to_json(),bindings);assert(large.set(1).texture_resolution==16384);}
+  {TextureRamQueryScope metadata_only(+[]()->std::uint64_t{return 1024*1024;});TextureDocument::set_dimensions(doc.set(1),8192,8192,true);assert(doc.set(1).texture_resolution==8192&&doc.set(1).rows()==8192);auto large=TextureDocument::from_json(doc.to_json(),bindings);assert(large.set(1).texture_resolution==8192);}
 
  }
  // Crossing the old operation cap must not silently rebase away old marks.

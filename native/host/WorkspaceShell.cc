@@ -848,7 +848,7 @@ WorkspaceShell::WorkspaceShell(QWidget *viewport, Callbacks callbacks, QWidget *
   shelf_body_layout->addWidget(assets, 1);
   {auto *empty_materials=new QWidget(shelf_body);empty_materials->setObjectName("emptyMaterials");
   auto *empty_layout=column(empty_materials);
-  auto *empty_note=new QLabel("Your material library is empty. Poly Haven materials are CC0. Import or drop downloaded textures here.",empty_materials);empty_note->setWordWrap(true);empty_layout->addWidget(empty_note);
+  auto *empty_note=new QLabel("Your material library is empty. Poly Haven materials are CC0. Import or drop downloaded textures here.",empty_materials);empty_note->setObjectName("emptyMaterialsNote");empty_note->setWordWrap(true);empty_layout->addWidget(empty_note);
   auto *empty_download=new QPushButton("Download free materials",empty_materials);empty_download->setObjectName("downloadFreeMaterialsEmpty");
   connect(empty_download,&QPushButton::clicked,this,[]{QDesktopServices::openUrl(QUrl("https://polyhaven.com/textures"));});empty_layout->addWidget(empty_download);
   empty_materials->hide();shelf_body_layout->addWidget(empty_materials); }
@@ -1721,6 +1721,9 @@ void WorkspaceShell::refresh_alpha_shelf()
   asset_reset_->setEnabled(!alpha_search_.isEmpty()||asset_scope_!=(category_name=="Project"?int(AssetScope::Project):-1));
   if(auto *empty=findChild<QWidget *>("emptyMaterials")){
     const bool material_category=category_name=="Materials"||category_name=="Material presets";
+    const bool presets=category_name=="Material presets";
+    if(auto *note=empty->findChild<QLabel *>("emptyMaterialsNote"))note->setText(presets?"No dynamic material presets yet. Add a Mask Generator to a layer folder, then save the folder to your library.":"Your material library is empty. Poly Haven materials are CC0. Import or drop downloaded textures here.");
+    if(auto *download=empty->findChild<QPushButton *>("downloadFreeMaterialsEmpty"))download->setVisible(!presets);
     bool has_material=false;if(asset_catalog_)for(const auto &asset:asset_catalog_->assets())if(asset_in_category(asset,category_name)){has_material=true;break;}
     empty->setVisible(material_category&&!has_material);
     alpha_assets_->setVisible(!(material_category&&!has_material));

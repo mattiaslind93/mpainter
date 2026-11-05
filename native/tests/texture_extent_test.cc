@@ -20,7 +20,8 @@ void stream_format(QDataStream &stream){stream.setVersion(QDataStream::Qt_6_8);s
 }
 int main(int argc,char **argv){
  QCoreApplication app(argc,argv);assert(argc==2);qputenv("BTS_RECOVERY_DIR",QByteArray(argv[1]));QDir().mkpath(QString::fromLocal8Bit(argv[1]));
- static_assert(sparse_texture_max_side==4194304);
+ static_assert(sparse_texture_max_side==4194304);static_assert(max_texture_resolution==8192);
+ require_texture_resolution(8192,"Fixture",128,true);assert(rejects([]{require_texture_resolution(8193,"Fixture");}));assert(rejects([]{require_texture_resolution(16384,"Fixture",128,true);}));
  assert(valid_sparse_texture_extent(16384,128,true)&&valid_sparse_texture_extent(sparse_texture_max_side,128,true));
  assert(!valid_sparse_texture_extent(sparse_texture_max_side+1)&&!valid_sparse_texture_extent(129,128,true));
  assert(sparse_texture_page_count(65)==4&&sparse_texture_page_count(65,1)==2);
@@ -45,8 +46,9 @@ int main(int argc,char **argv){
   PaintPixels admitted;admitted.assign_page(16384,0,0,page);assert(admitted.resolution()==16384&&admitted.page_count(0)==1&&admitted.sample(0,63,63)==page.back());
   PaintPixels::PageVersions versions;versions[0][UINT32_MAX]=1;auto source=std::make_shared<DeferredSource>();auto retained=PaintPixels::from_source(sparse_texture_max_side,source,versions);PaintMetadataScope metadata;assert(retained.page_count(0)==1&&source->evaluations==0);
   QJsonArray planes;for(int i=0;i<11;++i)planes.append(QJsonArray{});
-  QJsonArray counts{double(1ULL<<32),0,0,0,0},hashes{"0","0","0","0","0"};planes[0]=QJsonArray{QJsonObject{{"number",1001},{"pages",counts},{"hashes",hashes}}};
-  QJsonObject description{{"resolution",sparse_texture_max_side},{"planes",planes}};assert(read_effect_paint(description).resolution==sparse_texture_max_side);
+  QJsonArray counts{double(sparse_texture_page_count(max_texture_resolution)),0,0,0,0},hashes{"0","0","0","0","0"};planes[0]=QJsonArray{QJsonObject{{"number",1001},{"pages",counts},{"hashes",hashes}}};
+  QJsonObject description{{"resolution",max_texture_resolution},{"planes",planes}};assert(read_effect_paint(description).resolution==max_texture_resolution);
+  description["resolution"]=16384;assert(rejects([&]{read_effect_paint(description);}));description["resolution"]=max_texture_resolution;
   counts[0]=double((1ULL<<32)+1);planes[0]=QJsonArray{QJsonObject{{"number",1001},{"pages",counts},{"hashes",hashes}}};description["planes"]=planes;assert(rejects([&]{read_effect_paint(description);}));
  }
  // Width is large while the actual immutable result is only 8 MiB, not 4 GiB.

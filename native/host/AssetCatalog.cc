@@ -26,6 +26,16 @@
 namespace bts {
 namespace {std::atomic_uint64_t asset_revision{1};}
 
+MaterialShelf material_shelf(const StudioAsset &asset){
+ if(asset.material_preset)return material_preset_has_generators(*asset.material_preset)?MaterialShelf::Presets:MaterialShelf::Materials;
+ if(asset.usages.contains("material"))return MaterialShelf::Materials;
+ if(is_spsm_asset(asset)&&asset.classified_bytes_.constData()==asset.bytes.constData()&&asset.classified_bytes_.size()==asset.bytes.size()&&asset.classified_policies_==spsm_policy_tags(asset))return asset.classified_shelf_;
+ return MaterialShelf::None;
+}
+void cache_material_shelf(StudioAsset &asset,MaterialShelf shelf){
+ asset.classified_bytes_=asset.bytes;asset.classified_policies_=spsm_policy_tags(asset);asset.classified_shelf_=shelf;
+}
+
 FillProjection asset_fill_projection(const StudioAsset &asset,bool automatic){auto p=asset.fill_preset.value_or(FillProjection{});if(asset.physical_size_cm){p.asset_size_cm=*asset.physical_size_cm;p.custom_size=false;p.physical=automatic;}validate_fill_projection(p);return p;}
 QString StudioAsset::hash() const{
  if(!texture_files.empty())return texture_sources_hash(texture_files);
@@ -46,8 +56,7 @@ void hydrate_asset_presets(StudioAsset &asset){
  const bool brush=asset.usages.contains("brush");
  if(brush){if(asset.scope==AssetScope::Builtin&&asset.bytes.isEmpty())return;const auto hash=asset.hash();if(asset.brush_preset&&asset.hydrated_hash_==hash)return;auto preset=read_brush_preset(asset.bytes);asset.brush_preset=std::move(preset.brush);asset.hydrated_hash_=hash;return;}
  const bool mask=asset.usages.contains("smartmask"),material=asset.usages.contains("smartmaterial");if(!mask&&!material)return;
- // A cold SPSM can be hundreds of MiB. The host dispatcher performs a cheap
- // GUI identity lookup and defers IO/digests/preparation to its worker cache.
+ // Cold SPSM sources classify from metadata; image hydration stays on workers.
  if(is_spsm_archive_asset(asset)){
   asset.smart_material=is_spsm_asset(asset);
   if(!hydrate_spsm_asset(asset)){asset.material_preset.reset();asset.smart_mask.reset();}

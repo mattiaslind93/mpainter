@@ -42,3 +42,16 @@ and handles clipped out by a scroll area are excluded. Mouse and pen input use
 the same routing. `bts-theme-tests` exercises the actual event path and snapshots
 handle appearance, including both orientations, RTL, inverted ranges, endpoints,
 custom gradients, Levels and curve handles.
+
+## Dropdown rendering
+
+Qt's default `QComboBox` popup delegate draws rows through `CE_MenuItem` and
+marks choices as checkable without reserving a checkbox column. `OptionStyle`
+leaves those rows to Qt. Its custom menu indicator applies to actual menus, so
+Turquoise Dark checkboxes remain visible in Texture Sets, trees, lists, and
+checkable menu actions. Drawing an extra indicator over combo rows hides their
+leading text.
+
+`bts-theme-tests` opens default, editable, and custom-list combo popups in both
+layout directions. It checks their rendered pixels for readable text and the
+absence of checkbox fill, alongside the existing checkbox and menu gallery.

@@ -10,6 +10,13 @@
 #include <algorithm>
 #include <map>
 namespace bts {
+bool material_preset_has_generators(const SmartMaterialPreset &preset){
+ for(const auto &layer:preset.set.layers){
+  for(const auto &effect:layer.effects)if(effect.kind==ContentEffectKind::Generator)return true;
+  if(layer.mask)for(const auto &effect:mask_effects_recursive(layer.mask->effects))if(effect.kind==MaskEffectKind::Generator)return true;
+ }
+ return false;
+}
 namespace {
 [[noreturn]] void invalid(){throw std::invalid_argument("Invalid smart-material preset");}
 std::array<TilePaintPixels *,11> planes(TextureLayer &layer){std::array<TilePaintPixels *,11> result{&layer.pixels,&layer.ao_pixels};for(int i=0;i<8;++i)result[2+i]=&layer.users[i].pixels;result[10]=&layer.displacement.pixels;return result;}
