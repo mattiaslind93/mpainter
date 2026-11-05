@@ -1351,11 +1351,15 @@ set_source_files_properties(${BTS_HOST_SOURCE_DIR}/../tests/ordinary_color_sourc
   PROPERTIES COMPILE_DEFINITIONS BTS_EMBED_SOURCE_REGRESSIONS=1)
 
 # Synthetic ordered RGB lowering is fixture-free and runs once in native CPU mode.
+# Source-level include properties bypass CMake's usual filtering of compiler
+# implicit paths. Re-adding /usr/include as -isystem breaks GCC include_next.
+get_target_property(BTS_HDF5_FIXTURE_INCLUDES bts-hdf5 INTERFACE_INCLUDE_DIRECTORIES)
+list(REMOVE_ITEM BTS_HDF5_FIXTURE_INCLUDES ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES})
 target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/../tests/spsm_bitmap_color_test.cc)
 set_source_files_properties(${BTS_HOST_SOURCE_DIR}/../tests/spsm_bitmap_color_test.cc
   PROPERTIES
     COMPILE_DEFINITIONS "BTS_EMBED_SOURCE_REGRESSIONS=1;$<TARGET_PROPERTY:bts-hdf5,INTERFACE_COMPILE_DEFINITIONS>"
-    INCLUDE_DIRECTORIES "$<TARGET_PROPERTY:bts-hdf5,INTERFACE_INCLUDE_DIRECTORIES>")
+    INCLUDE_DIRECTORIES "${BTS_HDF5_FIXTURE_INCLUDES}")
 
 # Instance interpretation is explicit, strict and separate from source metadata.
 target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/NativeMaterialHeightResource.cc)
