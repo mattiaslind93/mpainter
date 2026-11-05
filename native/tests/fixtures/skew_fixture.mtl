@@ -1,0 +1,9 @@
+newmtl SkewSurface
+Kd 1 1 1
+Pr 0.5
+Pm 0
+
+newmtl SkewSecondary
+Kd 1 1 1
+Pr 0.5
+Pm 0

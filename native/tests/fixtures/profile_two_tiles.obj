@@ -1,0 +1,25 @@
+mtllib profile_two_tiles.mtl
+o ProfileTile1001
+usemtl ProfileSurface
+v -2 -1 0
+v 0 -1 0
+v 0 1 0
+v -2 1 0
+v 0 -1 0
+v 2 -1 0
+v 2 1 0
+v 0 1 0
+vt 0 0
+vt 1 0
+vt 1 1
+vt 0 1
+vt 1 0
+vt 2 0
+vt 2 1
+vt 1 1
+s 1
+f 1/1 2/2 3/3
+f 1/1 3/3 4/4
+o ProfileTile1002
+f 5/5 6/6 7/7
+f 5/5 7/7 8/8

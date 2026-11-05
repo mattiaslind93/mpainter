@@ -1,0 +1,47 @@
+{
+  "source_commit": "5b1e4d00c62f46ca7206d6fb84f0015bf9c16ce5",
+  "source_directory": "fixtures",
+  "purpose": "Retained synthetic GUI regression meshes and schema-45 painted-project fixture from the local predecessor repository.",
+  "files": [
+    {
+      "path": "profile_two_tiles.obj",
+      "bytes": 273,
+      "sha256": "ee984bab40b0593fab4e498d14e061c9dd0861413a548e1f0015d3ac20a2ca29"
+    },
+    {
+      "path": "profile_two_tiles.mtl",
+      "bytes": 43,
+      "sha256": "f97482c5e0cc0b684ade3cce94d53dea9ddf21cd7f89548b810dcab04b9cff78"
+    },
+    {
+      "path": "skew_fixture.mtl",
+      "bytes": 83,
+      "sha256": "590fb87da13da30a49077475d783e802db2cdb9888107faea1684fd53c2abeb8"
+    },
+    {
+      "path": "skew_high.obj",
+      "bytes": 5943,
+      "sha256": "821a2d27285a42a2792c25e67309047d500ab37bcc2ccf1c60ddd93f677302d7"
+    },
+    {
+      "path": "skew_low.obj",
+      "bytes": 237,
+      "sha256": "9f0529b1384f6f13f9d9574d65c3c886fa6b721f45f38e6dd18cc04f881d4b7e"
+    },
+    {
+      "path": "skew_sets_high.obj",
+      "bytes": 12249,
+      "sha256": "a4efd6e87a597efb72d621bf5138bb9f396abcfe5d3f2d00022fb41784aab4c2"
+    },
+    {
+      "path": "skew_sets_low.obj",
+      "bytes": 485,
+      "sha256": "dfaad44e7a8cc7552528b94b6781958ccf9f5c352431ce2fb244f7cc6feff7ac"
+    },
+    {
+      "path": "legacy/schema45-painted.blend",
+      "bytes": 5778282,
+      "sha256": "ab9d50715c0ad3bd14b1371cf392a1b5d645927f46acacbfb01ae6ee047c73aa"
+    }
+  ]
+}
