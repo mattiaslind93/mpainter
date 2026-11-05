@@ -32,6 +32,22 @@ if any(path.exists() for path in (stage, archive, checksum)):
 stage.mkdir(parents=True)
 
 
+def case_alias(path):
+    if not path.is_symlink():
+        return False
+    target = path.parent / os.readlink(path)
+    return (target.exists() and target.name != path.name
+            and target.name.casefold() == path.name.casefold()
+            and target.parent.resolve() == path.parent.resolve())
+
+
+def ignore_build_files(directory, names):
+    # The Linux cross-build needs case aliases; a Windows archive must contain
+    # only the canonical sibling. Do not traverse aliases of whole directories.
+    return [name for name in names if name.lower().endswith('.pdb')
+            or name == '__pycache__' or case_alias(Path(directory) / name)]
+
+
 def copy_file(source, target):
     source = Path(source)
     # CMake installs case aliases as relative symlinks even when their real
@@ -50,7 +66,7 @@ def copy_file(source, target):
 def copy(source, target):
     if source.is_dir():
         shutil.copytree(source, target, dirs_exist_ok=True, copy_function=copy_file,
-                        ignore=shutil.ignore_patterns('*.pdb', '__pycache__'))
+                        ignore=ignore_build_files)
     else:
         target.parent.mkdir(parents=True, exist_ok=True)
         copy_file(source, target)
@@ -61,7 +77,8 @@ for folder in ('5.2', 'blender.shared', 'lib'):
     if (runtime / folder).is_dir():
         copy(runtime / folder, stage / folder)
 for path in runtime.glob('*.dll'):
-    copy(path, stage / path.name)
+    if not case_alias(path):
+        copy(path, stage / path.name)
 for relative in ('5.2/datafiles/assets', '5.2/scripts/addons_core/cycles/lib',
                  '5.2/scripts/startup/bl_app_templates_system'):
     if (stage / relative).is_dir():
@@ -114,7 +131,8 @@ for folder in ('license', 'licenses'):
     if (runtime / folder).is_dir():
         copy(runtime / folder, licenses / 'Blender')
 for path in runtime.iterdir():
-    if path.is_file() and any(word in path.name.lower() for word in ('license', 'copyright', 'dependencies')):
+    if (path.is_file() and not case_alias(path)
+            and any(word in path.name.lower() for word in ('license', 'copyright', 'dependencies'))):
         copy(path, licenses / path.name)
 for folder in ('licenses', 'sbom'):
     if (qt / folder).is_dir():
@@ -157,6 +175,16 @@ while True:
         copy(candidates[0], destination)
         added.append({'dll': name, 'source': str(candidates[0])})
 (logs / 'package-added-dlls.json').write_text(json.dumps(added, indent=2) + '\n')
+
+windows_paths = {}
+for path in stage.rglob('*'):
+    relative = path.relative_to(stage).as_posix()
+    key = relative.casefold()
+    if key in windows_paths:
+        raise SystemExit(f'Windows case collision: {windows_paths[key]} / {relative}')
+    if path.is_symlink():
+        raise SystemExit(f'Unexpected packaged symlink: {relative}')
+    windows_paths[key] = relative
 
 with zipfile.ZipFile(archive, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=6) as output:
     for path in sorted(stage.rglob('*')):
