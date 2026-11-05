@@ -18,15 +18,15 @@ common=(-G Ninja "-DCMAKE_TOOLCHAIN_FILE=$MP_WIN_SCRIPTS/toolchain.cmake"
 cmake -S "$src/assimp-5.4.3" -B "$MP_WIN_WORK/build/windows/assimp" "${common[@]}" \
   -DASSIMP_BUILD_TESTS=OFF -DASSIMP_BUILD_ASSIMP_TOOLS=OFF -DASSIMP_BUILD_ZLIB=ON \
   -DASSIMP_WARNINGS_AS_ERRORS=OFF -DASSIMP_INSTALL_PDB=OFF
-cmake --build "$MP_WIN_WORK/build/windows/assimp" --parallel 6
+cmake --build "$MP_WIN_WORK/build/windows/assimp" --parallel "$MP_WIN_JOBS"
 cmake --install "$MP_WIN_WORK/build/windows/assimp" --config Release
 cmake -S "$src/hdf5-hdf5_1.14.6" -B "$MP_WIN_WORK/build/windows/hdf5" "${common[@]}" \
   -DHDF5_BUILD_TOOLS=OFF -DHDF5_BUILD_EXAMPLES=OFF -DHDF5_BUILD_CPP_LIB=OFF \
   -DHDF5_BUILD_FORTRAN=OFF -DHDF5_BUILD_HL_LIB=OFF -DHDF5_ENABLE_Z_LIB_SUPPORT=OFF \
   -DHDF5_ENABLE_SZIP_SUPPORT=OFF -DHDF5_NO_PACKAGES=ON -DBUILD_STATIC_LIBS=OFF
-cmake --build "$MP_WIN_WORK/build/windows/hdf5" --parallel 6
+cmake --build "$MP_WIN_WORK/build/windows/hdf5" --parallel "$MP_WIN_JOBS"
 cmake --install "$MP_WIN_WORK/build/windows/hdf5" --config Release
 cmake -S "$src/lz4-1.10.0/build/cmake" -B "$MP_WIN_WORK/build/windows/lz4" "${common[@]}" \
   -DLZ4_BUILD_CLI=OFF -DLZ4_BUILD_LEGACY_LZ4C=OFF
-cmake --build "$MP_WIN_WORK/build/windows/lz4" --parallel 6
+cmake --build "$MP_WIN_WORK/build/windows/lz4" --parallel "$MP_WIN_JOBS"
 cmake --install "$MP_WIN_WORK/build/windows/lz4" --config Release

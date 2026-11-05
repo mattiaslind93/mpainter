@@ -7,7 +7,7 @@ stage="$MP_WIN_WORK/build/windows/qt-smoke"
 cmake -S "$MP_WIN_SCRIPTS/qt-probe" -B "$build" -G Ninja \
   -DCMAKE_TOOLCHAIN_FILE="$MP_WIN_SCRIPTS/toolchain.cmake" -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_PREFIX_PATH="$MP_WIN_QT" -DQT_HOST_PATH="$MP_WIN_WORK/toolchains/qt"
-cmake --build "$build" --parallel 6
+cmake --build "$build" --parallel "$MP_WIN_JOBS"
 mkdir -p "$stage/platforms"
 cp "$build/qt-probe.exe" "$stage/"
 for dll in Qt6Core Qt6Gui Qt6Widgets; do cp "$MP_WIN_QT/bin/$dll.dll" "$stage/"; done

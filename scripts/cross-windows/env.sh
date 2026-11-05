@@ -19,9 +19,12 @@ export XDG_CONFIG_HOME="$MP_WIN_WORK/build/windows/xdg/config"
 export XDG_DATA_HOME="$MP_WIN_WORK/build/windows/xdg/data"
 export XDG_STATE_HOME="$MP_WIN_WORK/build/windows/xdg/state"
 export PIP_CACHE_DIR="$XDG_CACHE_HOME/pip"
-export CMAKE_BUILD_PARALLEL_LEVEL=6
+: "${MP_WIN_JOBS:=6}"
+[[ "$MP_WIN_JOBS" =~ ^[1-6]$ ]] || { echo 'MP_WIN_JOBS must be 1..6.' >&2; exit 1; }
+export MP_WIN_JOBS
+export CMAKE_BUILD_PARALLEL_LEVEL="$MP_WIN_JOBS"
 export RAYON_NUM_THREADS=6
-export OMP_NUM_THREADS=6
+export OMP_NUM_THREADS="$MP_WIN_JOBS"
 export WINEPREFIX="$MP_WIN_WORK/build/windows/wine-prefix"
 export WINEARCH=win64
 # Blender searches executable suffixes through the Windows environment contract.

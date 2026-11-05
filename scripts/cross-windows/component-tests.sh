@@ -7,7 +7,7 @@ stage="$MP_WIN_WORK/build/windows/qt-smoke"
 [[ -f "$stage/platforms/qoffscreen.dll" ]] || { echo 'Run qt-probe.sh first.' >&2; exit 1; }
 targets=(bts-branding-tests bts-theme-tests bts-project-save-safety-tests bts-warp-editor-tests)
 xvfb-run -a env MP_WIN_BUILD_HEADLESS=1 cmake --build "$MP_WIN_WORK/build/windows/native" \
-  --parallel 6 --target "${targets[@]}"
+  --parallel "$MP_WIN_JOBS" --target "${targets[@]}"
 for target in "${targets[@]}"; do
   cp "$MP_WIN_WORK/build/windows/native/bin/$target.exe" "$stage/"
 done

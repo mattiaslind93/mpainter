@@ -47,7 +47,8 @@ bash scripts/cross-windows/build.sh
 ```
 
 Run these **sequentially** and do not run another heavy build/test concurrently.
-`build.sh` locks the Windows build directory. Ninja uses at most six jobs; the
+`build.sh` locks the Windows build directory. Set `MP_WIN_JOBS=2` for a lower-memory rebuild (accepted range: 1–6, default: 6).
+Ninja uses at most six jobs; the
 Blender graph restricts heavy compile jobs to three and links to one. lld uses at
 most six threads on fresh configurations. All Windows code runs under private
 Xvfb; no host desktop display is used. CPU smoke tests select the offscreen
