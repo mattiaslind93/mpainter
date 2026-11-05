@@ -13,7 +13,7 @@ if a.full_resolution:env.update(BTS_FLATTEN_LARGE='1',BTS_FLATTEN_UDIM='1')
 if a.legacy_normal:env['BTS_FLATTEN_LEGACY_NORMAL']='1'
 if not a.check_only:
  with (a.output/'run.log').open('w')as log:
-  proc=subprocess.Popen(['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(root/('fixtures/two_tile_udim.obj' if a.full_resolution else 'fixtures/single_tile.obj')),'--gui-fix-resolution',str(resolution),'--library-dir',str(a.output/'shelf'),'--recovery-dir',str(a.output/'recovery')],env=env,stdout=log,stderr=subprocess.STDOUT)
+  proc=subprocess.Popen(['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(root/('native/tests/fixtures/two_tile_udim.obj' if a.full_resolution else 'native/tests/fixtures/single_tile.obj')),'--gui-fix-resolution',str(resolution),'--library-dir',str(a.output/'shelf'),'--recovery-dir',str(a.output/'recovery')],env=env,stdout=log,stderr=subprocess.STDOUT)
   try:code=proc.wait(timeout=1200 if a.full_resolution else 400)
   except subprocess.TimeoutExpired:proc.terminate();proc.wait(timeout=20);raise
  assert code==0,(code,(a.output/'run.log').read_text()[-3500:])
