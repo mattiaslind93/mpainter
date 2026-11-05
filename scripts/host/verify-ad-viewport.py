@@ -63,7 +63,7 @@ def main():
                             ("BTS_SESSION_LOG_DIR", "logs")]:
             (run / folder).mkdir(parents=True, exist_ok=True)
             env[key] = str(run / folder)
-        command = ["distrobox", "enter", "bts-build", "--", "env", *[f"{k}={v}" for k, v in env.items()],
+        command = (["env"] if Path("/run/.containerenv").exists() else ["distrobox", "enter", "bts-build", "--", "env"]) + [*[f"{k}={v}" for k, v in env.items()],
                    "nice", "-n", "19", "bash", str(root / "scripts/host/run-host.sh"),
                    "--workspace", "--gui-fix-demo", str(run / "workspace"), "--gui-fix-mesh", str(mesh),
                    "--gui-fix-resolution", str(resolution), "--autosave-seconds", "3600"]

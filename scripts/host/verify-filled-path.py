@@ -14,7 +14,7 @@ assert code==0,code
 proof=json.loads((a.output/'filled-path.json').read_text());assert proof['pid']==process.pid
 c={v['stage']:v for v in proof['captures']}
 for name,v in c.items():
- assert len(v['paths'])==1 and v['paths'][0]['version']==5 and v['document']['schema']==58
+ assert len(v['paths'])==1 and v['paths'][0]['version']==5 and v['document']['schema']==79
  assert v['decimal']=='.' and not v['shader_failures']
  assert v['paths'][0]['filled']==(name!='brush-mode')
 assert not c['two-points']['paths'][0]['closed'] and c['filled']['paths'][0]['closed']

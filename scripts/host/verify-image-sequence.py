@@ -26,7 +26,7 @@ proof=json.loads((a.output/'image-sequence.json').read_text());assert pid is Non
 def projection(stage):return c[stage]['document']['texture_sets'][0]['layers'][-1]['fill_projection']
 def tiles(stage):return {v['tile']:v for v in c[stage]['sequence_tiles']}
 def hashes(stage):return [v['hash'] for v in c[stage]['sequence_tiles']]
-for v in c.values():assert v['decimal']=='.' and not v['shader_failures'] and v['document']['schema']==60 and not v['property_pending']
+for v in c.values():assert v['decimal']=='.' and not v['shader_failures'] and v['document']['schema']==79 and not v['property_pending']
 assert c['created']['document']==c['imported-only']['document']
 assert c['imported-only']['sequence_shelf']==[dict(name='PD103-color',count=2)]
 assert projection('match-uniform')['mode']==6

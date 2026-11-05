@@ -13,7 +13,7 @@ if a.large:env['BTS_TEXTURE_IMPORT_LARGE']='1'
 if a.extra_channels:env['BTS_TEXTURE_IMPORT_EXTRA_CHANNELS']='1'
 runner=root/'scripts/host/run-host.sh'
 def run(label,args,extra=None):
- command=['distrobox','enter','bts-build','--','env']+[key+'='+value for key,value in (env|dict(extra or {})).items()]+['nice','-n','19','bash',str(runner)]+args
+ command=(['env'] if Path('/run/.containerenv').exists() else ['distrobox', 'enter', 'bts-build', '--', 'env'])+[key+'='+value for key,value in (env|dict(extra or {})).items()]+['nice','-n','19','bash',str(runner)]+args
  with (a.output/(label+'.log')).open('w')as log:
   result=subprocess.run(command,stdout=log,stderr=subprocess.STDOUT,timeout=240)
  assert result.returncode==0,(label,result.returncode,(a.output/(label+'.log')).read_text()[-5000:])

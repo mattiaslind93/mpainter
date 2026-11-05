@@ -35,7 +35,7 @@ if a.source_copy:
 
 
 def run(label, args, extra=None):
-    command = ["distrobox", "enter", "bts-build", "--", "env"]
+    command = (['env'] if Path('/run/.containerenv').exists() else ['distrobox', 'enter', 'bts-build', '--', 'env'])
     command += [f"{k}={v}" for k, v in (env | (extra or {})).items()]
     command += ["nice", "-n", "19", "bash", str(root / "scripts/host/run-host.sh")] + args
     with (out / f"{label}.log").open("w") as log:

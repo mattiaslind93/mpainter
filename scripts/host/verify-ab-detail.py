@@ -8,7 +8,7 @@ env={'BTS_ROOT':str(root.parent),'QT_QPA_PLATFORM':'offscreen','BTS_HEADLESS_WOR
 for key,folder in [('XDG_CONFIG_HOME','config'),('XDG_DATA_HOME','data'),('XDG_CACHE_HOME','cache'),('BTS_RECOVERY_DIR','recovery'),('BTS_RESOURCE_CACHE','resources'),('TMPDIR','tmp'),('BTS_SESSION_LOG_DIR','logs')]:
  (out/folder).mkdir(exist_ok=True);env[key]=str(out/folder)
 def run(label,args,extra):
- cmd=['distrobox','enter','bts-build','--','env']+[k+'='+v for k,v in (env|extra).items()]+['nice','-n','19','bash',str(root/'scripts/host/run-host.sh')]+args
+ cmd=(['env'] if Path('/run/.containerenv').exists() else ['distrobox', 'enter', 'bts-build', '--', 'env'])+[k+'='+v for k,v in (env|extra).items()]+['nice','-n','19','bash',str(root/'scripts/host/run-host.sh')]+args
  with (out/(label+'.log')).open('w')as log:r=subprocess.run(cmd,stdout=log,stderr=subprocess.STDOUT,timeout=300)
  assert r.returncode==0,(label,r.returncode,(out/(label+'.log')).read_text()[-4000:])
 run('fixtures',['--cpu-texture-import-test',str(out/'fixtures')],{'BTS_AB_DETAIL_FIXTURES':'1'})

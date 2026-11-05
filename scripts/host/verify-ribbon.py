@@ -16,7 +16,7 @@ c={v['stage']:v for v in proof['captures']}
 for v in c.values():
  assert len(v['paths'])==1 and v['paths'][0]['ribbon']['enabled']
  assert v['paths'][0]['version']==5 and len(v['paths'][0]['points'])==3
- assert v['document']['schema']==58 and len(v['document']['ribbon_images'])==1
+ assert v['document']['schema']==79 and len(v['document']['ribbon_images'])==1
  assert v['decimal']=='.' and not v['shader_failures']
  assert len(v['paths'][0]['ribbon']['image']['packed'])>100
 assert c['stretched']['hash']!=c['repeated']['hash']

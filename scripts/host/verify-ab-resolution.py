@@ -127,7 +127,7 @@ def main():
     args = ["--workspace", "--open-document", str(project), "--gui-fix-demo", str(out / "workspace"),
             "--gui-fix-mesh", str(root / "native/tests/fixtures/two_tile_udim.obj"),
             "--gui-fix-resolution", "2048", "--autosave-seconds", "3600"]
-    command = ["distrobox", "enter", "bts-build", "--", "env"]
+    command = (['env'] if Path('/run/.containerenv').exists() else ['distrobox', 'enter', 'bts-build', '--', 'env'])
     command += [f"{k}={v}" for k, v in env.items()]
     command += ["nice", "-n", "19", "bash", str(root / "scripts/host/run-host.sh")] + args
     cancel_pressure = multiprocessing.Event()

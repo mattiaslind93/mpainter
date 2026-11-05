@@ -32,7 +32,7 @@ proof=json.loads((a.output/'planar.json').read_text());assert proof['pid']==proc
 c={v['stage']:v for v in proof['captures']}
 def projection(v):return v['document']['texture_sets'][0]['layers'][-1]['fill_projection']
 for v in c.values():
- assert v['decimal']=='.' and not v['shader_failures'] and v['document']['schema']==58
+ assert v['decimal']=='.' and not v['shader_failures'] and v['document']['schema']==79
  assert len(v['other_sets'])==1
  for current,original in zip(v['other_sets'],c['planar']['other_sets']):
   assert current['name']==original['name']

@@ -2,8 +2,8 @@
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess
 from pathlib import Path
-p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);a=p.parse_args();a.output.mkdir(parents=True,exist_ok=True);root=Path(__file__).resolve().parents[2]
-legacy=root.parent/'build/mattias-K-gui/fill-texture.blend';assert legacy.is_file()
+p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);p.add_argument('--legacy-project',type=Path);a=p.parse_args();a.output.mkdir(parents=True,exist_ok=True);root=Path(__file__).resolve().parents[2]
+legacy=a.legacy_project or root.parent/'build/mattias-K-gui/fill-texture.blend';assert legacy.is_file()
 env=dict(os.environ,LANG='sv_SE.UTF-8',LC_ALL='sv_SE.UTF-8',DISPLAY=private_display(),XDG_RUNTIME_DIR='/run/user/1000',BTS_FILL_TEXTURE_DEMO='1',BTS_FILL_CHANNELS_DEMO='1',BTS_FILL_CHANNELS_LEGACY=str(legacy))
 command=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(root/'native/tests/fixtures/single_tile.obj'),'--gui-fix-resolution','512','--recovery-dir',str(a.output/'recovery')]
 with (a.output/'run.log').open('w') as log:
@@ -13,7 +13,7 @@ with (a.output/'run.log').open('w') as log:
 assert code==0,code
 proof=json.loads((a.output/'fill-channels.json').read_text());assert proof['pid']==process.pid;c={v['stage']:v for v in proof['captures']}
 for value in c.values():
- assert value['decimal']=='.' and not value['shader_failures'] and value['document']['schema']==58
+ assert value['decimal']=='.' and not value['shader_failures'] and value['document']['schema']==79
  assert not value['property_pending'] and not value['composite_pending'],value['stage']
 for channel in range(15):
  value=c[f'channel-{channel}'];data=value['fill_channels'][channel];assert data['resolved'] and data['raw']==(channel!=0),(channel,data)

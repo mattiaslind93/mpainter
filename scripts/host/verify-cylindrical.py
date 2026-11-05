@@ -32,7 +32,7 @@ proof=json.loads((a.output/'spatial.json').read_text());assert proof['pid']==pro
 c={v['stage']:v for v in proof['captures']}
 def projection(v):return v['document']['texture_sets'][0]['layers'][-1]['fill_projection']
 for v in c.values():
- assert v['decimal']=='.' and not v['shader_failures'] and v['document']['schema']==58
+ assert v['decimal']=='.' and not v['shader_failures'] and v['document']['schema']==79
  assert len(v['other_sets'])==1 and v['uv_texels']==c['spatial']['uv_texels']
  for current,original in zip(v['other_sets'],c['spatial']['other_sets']):
   assert current['name']==original['name'] and max(abs(x-y) for x,y in zip(current['native_values'],original['native_values']))<1e-6

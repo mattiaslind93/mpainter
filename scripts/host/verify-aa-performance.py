@@ -14,7 +14,7 @@ if a.image:
 if a.binary:env['BTS_HOST_EXECUTABLE']=str(a.binary.resolve())
 if a.gpu_brush:env['BTS_GPU_BRUSH_AUTHORING']='1'
 if a.fixed_resolution:env['BTS_RESOLUTION_LOG']='1'
-cmd=['distrobox','enter','bts-build','--','env']+[k+'='+v for k,v in env.items()]+['nice','-n','19','bash',str(root/'scripts/host/run-host.sh')]+args
+cmd=(['env'] if Path('/run/.containerenv').exists() else ['distrobox', 'enter', 'bts-build', '--', 'env'])+[k+'='+v for k,v in env.items()]+['nice','-n','19','bash',str(root/'scripts/host/run-host.sh')]+args
 if not a.existing:
  with (out/'run.log').open('w')as log:run=subprocess.run(cmd,stdout=log,stderr=subprocess.STDOUT,timeout=720)
  assert run.returncode==0,(run.returncode,(out/'run.log').read_text()[-5000:])
