@@ -1,3 +1,4 @@
+#include "LongOperationCancel.hh"
 #include "TextureExtentChoices.hh"
 #include "GPU_capabilities.hh"
 #include "GPU_state.hh"
@@ -133,7 +134,42 @@ std::optional<std::vector<MeshBakeResult>> choose_mesh_bake(QWidget *parent,cons
     else {TexturePadding geometry(snapshot,set.material_session_uid);atlas=options.external_source?geometry.project_source(snapshot,secondary,cage?&*cage:nullptr,ray,width,height,selected.at(set.id),false):geometry.projection_geometry(width,selected.at(set.id),false,height);}
     inputs.push_back({set.material_session_uid,set.name,set.base_values,std::move(atlas)});
 
-  MeshBakeJob job(secondary,std::move(inputs),options);QDialog progress(parent);progress.setObjectName("meshBakeProgress");progress.setWindowTitle("Baking mesh maps");progress.resize(400,300);auto *progress_layout=new QVBoxLayout(&progress);auto *tasks=new QListWidget(&progress);tasks->setObjectName("bakeProgressTasks");for(const auto &name:job.tasks)tasks->addItem(QString::fromStdString(name));progress_layout->addWidget(tasks);auto *bar=new QProgressBar(&progress);bar->setObjectName("bakeProgressBar");bar->setRange(0,int(job.tasks.size()));progress_layout->addWidget(bar);auto *status=new QLabel(&progress);status->setObjectName("meshBakeProgressStatus");status->setWordWrap(true);progress_layout->addWidget(status);auto *finish=new QPushButton("Cancel",&progress);finish->setObjectName("finishMeshBake");progress_layout->addWidget(finish);QObject::connect(finish,&QPushButton::clicked,&progress,[&]{if(job.finished.load(std::memory_order_acquire)){if(job.error.empty())progress.accept();else progress.reject();}else{job.cancel();finish->setEnabled(false);finish->setText("Stopping…");}});QTimer timer;QObject::connect(&timer,&QTimer::timeout,&progress,[&]{job.process_gpu();const int complete=job.completed;bar->setValue(complete);for(int i=0;i<tasks->count();++i)tasks->item(i)->setText((i<complete?"✓ ":i==job.current?"… ":"  ")+QString::fromStdString(job.tasks[i]));if(job.finished.load(std::memory_order_acquire)){if(job.error.empty()&&remaining_sets>0){progress.accept();return;}finish->setEnabled(true);finish->setText(job.error.empty()?"OK":"Close");status->setText(job.error.empty()?QString("%1/%1 maps complete").arg(job.tasks.size()):QString::fromStdString(job.error));}else status->setText((job.cpu_fallback.load()?QString("GPU unavailable; continuing on CPU. "):QString{})+QString("%1 / %2").arg(complete).arg(job.tasks.size()));});timer.start(50);const int completed_dialog=progress.exec();if(completed_dialog!=QDialog::Accepted){job.cancel();return {};}if(!job.error.empty())throw std::runtime_error(job.error);for(auto &result:job.result)results.push_back(std::move(result));
+  MeshBakeJob job(secondary,std::move(inputs),options);
+  CancellableOperationDialog progress(parent);
+  progress.setObjectName("meshBakeProgress");progress.setWindowTitle("Baking mesh maps");progress.resize(400,300);
+  auto *progress_layout=new QVBoxLayout(&progress);
+  auto *tasks=new QListWidget(&progress);tasks->setObjectName("bakeProgressTasks");
+  for(const auto &name:job.tasks)tasks->addItem(QString::fromStdString(name));
+  progress_layout->addWidget(tasks);
+  auto *bar=new QProgressBar(&progress);bar->setObjectName("bakeProgressBar");
+  bar->setRange(0,int(job.tasks.size()));progress_layout->addWidget(bar);
+  auto *status=new QLabel(&progress);status->setObjectName("meshBakeProgressStatus");
+  status->setWordWrap(true);progress_layout->addWidget(status);
+  auto *finish=new QPushButton("Cancel",&progress);finish->setObjectName("finishMeshBake");progress_layout->addWidget(finish);
+  progress.pending=[&]{return !job.finished.load(std::memory_order_acquire);};
+  progress.cancel=[&]{job.cancel();finish->setEnabled(false);finish->setText("Stopping…");status->setText("Stopping bake…");};
+  LongOperationCancel escape(progress.pending,[&]{progress.reject();});
+  QObject::connect(finish,&QPushButton::clicked,&progress,[&]{
+    if(job.finished.load(std::memory_order_acquire)&&!job.cancelled.load()&&job.error.empty())progress.accept();
+    else progress.reject();
+  });
+  QTimer timer;
+  QObject::connect(&timer,&QTimer::timeout,&progress,[&]{
+    job.process_gpu();const int complete=job.completed;bar->setValue(complete);
+    for(int i=0;i<tasks->count();++i)tasks->item(i)->setText((i<complete?"✓ ":i==job.current?"… ":"  ")+QString::fromStdString(job.tasks[i]));
+    if(job.finished.load(std::memory_order_acquire)){
+      if(job.cancelled.load()){progress.reject();return;}
+      if(job.error.empty()&&remaining_sets>0){progress.accept();return;}
+      finish->setEnabled(true);finish->setText(job.error.empty()?"OK":"Close");
+      status->setText(job.error.empty()?QString("%1/%1 maps complete").arg(job.tasks.size()):QString::fromStdString(job.error));
+    }else if(!job.cancelled.load()){
+      status->setText((job.cpu_fallback.load()?QString("GPU unavailable; continuing on CPU. "):QString{})+QString("%1 / %2").arg(complete).arg(job.tasks.size()));
+    }
+  });
+  timer.start(50);
+  if(progress.exec()!=QDialog::Accepted){job.cancel();return {};}
+  if(!job.error.empty())throw std::runtime_error(job.error);
+  for(auto &result:job.result)results.push_back(std::move(result));
   }
   remember();return results;
 }

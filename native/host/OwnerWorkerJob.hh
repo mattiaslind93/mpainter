@@ -37,9 +37,9 @@ template<class Result> class OwnerWorkerJob : public QObject {
   void poll(){
     if(!pending())return;
     QString text;{std::lock_guard lock(state_->mutex);text=state_->text;}
-    if(progress_&&!text.isEmpty())progress_(text);
+    if(!state_->cancel->load()&&progress_&&!text.isEmpty())progress_(text);
     if(worker_.wait_for(std::chrono::seconds(0))!=std::future_status::ready)return;
-    if(deliver_when_&&!deliver_when_()&&(!valid_||valid_()))return;
+    if(!state_->cancel->load()&&deliver_when_&&!deliver_when_()&&(!valid_||valid_()))return;
     timer_.stop();deliver_when_={};auto state=std::move(state_);auto valid=std::move(valid_);
     auto ready=std::move(ready_);auto error=std::move(error_);progress_={};
     struct Finish{std::function<void()> callback;~Finish(){if(callback)callback();}} finish{std::move(finished_)};

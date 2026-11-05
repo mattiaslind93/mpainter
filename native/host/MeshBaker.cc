@@ -114,17 +114,22 @@ MeshBakeJob::MeshBakeJob(std::shared_ptr<const SceneSnapshot> source,std::vector
   const auto working_bytes=std::max(resource_sum(sampled_bytes,output_bytes),resource_product(output_bytes,4));
 
   worker_=std::jthread([this,source=std::move(source),inputs=std::move(inputs),settings,working_bytes]()mutable{
-    try{auto snapshot=prepare_bake_surface(*source,settings);
+    try{const auto check_cancel=[this]{if(cancelled.load())throw std::runtime_error("Bake cancelled");};
+      check_cancel();auto snapshot=prepare_bake_surface(*source,settings);check_cancel();
       // Raster positions and ray triangles must be the same displaced surface.
       if(settings.use_project_mesh&&(displaced(settings)||settings.enabled[3]||settings.enabled[4]||settings.enabled[6]))for(auto &input:inputs){
+        check_cancel();
         std::set<int> tiles;for(const auto &[tile,points]:input.atlas->tiles)tiles.insert(tile);
         TexturePadding geometry(snapshot,input.material_uid);
         input.atlas=geometry.projection_geometry(settings.resolution*settings.sampling,tiles,false,settings.rows()*settings.sampling);
       }
+      check_cancel();
       SurfaceCurvature curvature_field(snapshot,false);
+      check_cancel();
 
       std::optional<RayScene> scene;scene.emplace(snapshot,settings);double extent=0,radius_squared=0;std::array<double,3> center;for(int i=0;i<3;++i){const double size=snapshot.maximum[i]-snapshot.minimum[i];extent=std::max(extent,size);radius_squared+=size*size*.25;center[i]=(snapshot.maximum[i]+snapshot.minimum[i])*.5;}extent=std::max(extent,1e-5);const double diameter=std::max(2*std::sqrt(radius_squared),1e-5);
       if(settings.enabled[int(MeshMapRole::Curvature)])curvature_field.calculate_pointiness(settings.curvature_radius);
+      check_cancel();
       const float offset=settings.ray_offset>0?settings.ray_offset:float(extent*1e-6);
       int task=0;
       for(const auto &input:inputs){MeshBakeResult output;output.material_uid=input.material_uid;

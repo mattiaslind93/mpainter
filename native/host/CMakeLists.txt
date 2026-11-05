@@ -616,7 +616,7 @@ target_link_libraries(bts-paint-effect-tests PRIVATE bts-export-config)
 add_executable(bts-filter-effect-tests ${BTS_HOST_SOURCE_DIR}/../tests/filter_effect_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
 target_include_directories(bts-filter-effect-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-filter-effect-tests PRIVATE cxx_std_20)
-target_link_libraries(bts-filter-effect-tests PRIVATE bts-export-config)
+target_link_libraries(bts-filter-effect-tests PRIVATE bts-export-config Qt6::Widgets)
 
 add_executable(bts-fill-effect-tests ${BTS_HOST_SOURCE_DIR}/../tests/fill_effect_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
 target_include_directories(bts-fill-effect-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
@@ -1340,7 +1340,7 @@ add_executable(bts-owner-worker-job-tests ${BTS_HOST_SOURCE_DIR}/../tests/owner_
 target_include_directories(bts-owner-worker-job-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-owner-worker-job-tests PRIVATE cxx_std_20)
 target_compile_options(bts-owner-worker-job-tests PRIVATE "$<IF:$<CXX_COMPILER_ID:MSVC>,/UNDEBUG,-UNDEBUG>")
-target_link_libraries(bts-owner-worker-job-tests PRIVATE Qt6::Core)
+target_link_libraries(bts-owner-worker-job-tests PRIVATE Qt6::Widgets bts-export-config)
 add_dependencies(bts-cpu-tests bts-owner-worker-job-tests)
 
 # Ordered raw linear RGB must preserve source values until its explicit matrix.

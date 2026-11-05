@@ -181,6 +181,7 @@
 #include <QBoxLayout>
 #include "ViewportHeadlessDemo.hh"
 #include "TextureLoadController.hh"
+#include "LongOperationCancel.hh"
 #include "OrdinaryColorSource.hh"
 #include "TextureImportCpuDemo.hh"
 #include "TextureIoAwait.hh"
@@ -2052,6 +2053,9 @@ int main(int argc, char **argv)
     const auto version = bts::product_version().toUtf8();
     std::printf("mPainter %s\n", version.constData());
     return 0;
+  }
+  if(qEnvironmentVariableIsSet("BTS_MATERIAL_FILTER_UI_TEST")&&!bts::owned_private_xvfb()){
+    std::fprintf(stderr,"Material Filter UI test requires an owned private Xvfb display\n");return 77;
   }
   if(!bts::prepare_test_session(argc,argv))return 77;
 #ifdef _WIN32
@@ -4169,6 +4173,38 @@ bts::FileDialog::prepare_directory_thread();workspace->set_fill_color_spaces(bts
     };
     }
     bts::NativeMaterialHeightUi height_ui(host,std::move(height_hooks));
+    bts::LongOperationCancel escape_long_operation([&]{
+      if(!workspace)return false;
+      return project_opener.pending()||pending_new->pending()||height_ui.pending()||
+        (native_image_ui&&native_image_ui->pending())||
+        (render_controller&&render_controller->active())||
+        (texture_loader&&texture_loader->pending())||
+        (native_material_loader&&native_material_loader->pending())||
+        (parameter_import&&parameter_import->pending())
+#ifdef BTS_WITH_MATERIALX
+        ||(material_importer&&material_importer->pending())
+#endif
+        ;
+    },[&]{
+      if(project_opener.pending()){
+        project_opener.cancel();
+        if(auto *progress=workspace->findChild<QProgressDialog *>("projectOpenProgress")){
+          progress->setLabelText("Stopping project Open…");progress->setCancelButton(nullptr);
+        }
+      }
+      if(pending_new->pending())cancel_pending_new();
+      if(height_ui.pending())height_ui.cancel();
+      if(native_image_ui&&native_image_ui->pending())native_image_ui->cancel();
+      if(render_controller&&render_controller->active())render_controller->set_active(false);
+      if(texture_loader&&texture_loader->pending())texture_loader->cancel_all();
+      if(native_material_loader&&native_material_loader->pending()){++native_apply_serial;native_material_loader->cancel_all();}
+      if(parameter_import&&parameter_import->pending())parameter_import->cancel();
+#ifdef BTS_WITH_MATERIALX
+      if(material_importer&&material_importer->pending())material_importer->cancel();
+#endif
+      if(asset_progress&&asset_progress->active())asset_progress->fail("Cancelled");
+      workspace->set_status("Operation cancelled");
+    });
     if(height_panel){
     height_panel->height_requested=[&](bts::NativeHeightPolicy policy){try{
       if(opening_project||project_opener.pending()||active_save||requested_save||host.save_project_pending()||(render_controller&&render_controller->active()))throw std::runtime_error("Finish project Open/Save or Rendering before selecting authored Height");
@@ -8029,6 +8065,37 @@ state["roughness"]=layer.values.roughness;const int cx=set.texture_resolution/2,
       workspace=nullptr;viewport=nullptr;
     };
     const auto retire_window=qScopeGuard([&]() noexcept {shutdown_ui();});
+    // Explicit headless regression entry point; ordinary launches never run it.
+    QTimer material_filter_test;QElapsedTimer material_filter_timeout;int material_filter_stage=0;
+    if(qEnvironmentVariableIsSet("BTS_MATERIAL_FILTER_UI_TEST")){
+      material_filter_timeout.start();material_filter_test.setInterval(100);
+      QObject::connect(&material_filter_test,&QTimer::timeout,window.get(),[&]{try{
+        if(material_filter_timeout.elapsed()>120000)throw std::runtime_error("Material Filter UI timed out");
+        if(material_filter_stage&&(!document||host.texture_updates_pending()||uniform_before||pending_property_edit))return;
+        const auto directory=qEnvironmentVariable("BTS_MATERIAL_FILTER_UI_TEST");QDir().mkpath(directory);
+        if(material_filter_stage==0){
+          bts::NewProjectOptions options;options.absolute_mesh_path=qEnvironmentVariable("BTS_MATERIAL_FILTER_MESH").toStdString();options.resolution=bts::DocumentResolution::Pixels128;create_project(options);
+        }else if(material_filter_stage==1){
+          edit_material([](bts::TextureSet &set){bts::TextureDocument::add_fill(set);auto &layer=bts::TextureDocument::layer(set,set.selected_layer);layer.values.base_color={.2,.4,.8,1};set.precision[0]=bts::ChannelPrecision::RGB32F;});
+        }else if(material_filter_stage==2){
+          viewport->grabFramebuffer().save(directory+"/before.png");workspace->findChild<QAction *>("addFilterEffect")->trigger();
+        }else if(material_filter_stage==3){workspace->findChild<QAction *>("filterHsv")->trigger();
+        }else if(material_filter_stage==4){workspace->findChild<QDoubleSpinBox *>("filterHue")->setValue(.5);
+        }else{
+          auto &set=document->set(snapshot.materials[selected_material].session_id);const auto &layer=bts::TextureDocument::layer(set,set.selected_layer);
+          const std::array<std::array<int,2>,1> points{{{64,64}}};
+          const auto cpu=bts::TextureDocument::evaluate(set,64,64).authored.base_color;const auto gpu=host.diagnostic_gpu_pixels(set.material_session_uid,0,points);
+          const std::array<float,3> expected{.8,.6,.2};
+          for(int c=0;c<3;++c)if(std::abs(cpu[c]-expected[c])>1e-5||gpu.empty()||std::abs(gpu[0][c]-expected[c])>1e-5)throw std::runtime_error("Material Filter UI did not publish Hue to CPU/GPU");
+          if(layer.effects.empty()||layer.effects.back().filter.resource!=4||layer.effects.back().filter.hue!=.5)throw std::runtime_error("Material Filter UI lost authored settings");
+          viewport->grabFramebuffer().save(directory+"/after.png");QFile proof(directory+"/ui.json");if(!proof.open(QIODevice::WriteOnly))throw std::runtime_error("Cannot write Filter UI proof");
+          proof.write(QJsonDocument(QJsonObject{{"hue",.5},{"cpu",QJsonArray{cpu[0],cpu[1],cpu[2]}},{"gpu",QJsonArray{gpu[0][0],gpu[0][1],gpu[0][2]}},{"renderer",QString::fromStdString(host.renderer())}}).toJson());
+          material_filter_test.stop();app.exit(0);return;
+        }
+        ++material_filter_stage;
+      }catch(const std::exception &error){std::fprintf(stderr,"MATERIAL_FILTER_UI_FAILED %s\n",error.what());material_filter_test.stop();app.exit(1);}});
+      material_filter_test.start();
+    }
     const int result=app.exec();
     shutdown_ui();
     return ui_shutdown_failed?1:result;

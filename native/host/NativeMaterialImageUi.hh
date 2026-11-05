@@ -23,6 +23,7 @@ class NativeMaterialImageUi final:public QObject {
  ~NativeMaterialImageUi();
  bool consume_shelf(const StudioAsset &);
  void cancel();
+ bool pending()const{return bool(active_)||bool(shelf_)||(jobs_&&jobs_->pending());}
  private:
  void refresh();
  void choose(const NativeImageBinding &,bool file,const NativeImageReplacementPolicy &);

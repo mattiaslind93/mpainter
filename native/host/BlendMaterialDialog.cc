@@ -1,3 +1,4 @@
+#include "LongOperationCancel.hh"
 #include "Theme.hh"
 #include "BlendMaterialDialog.hh"
 #include "FileDialogs.hh"
@@ -26,6 +27,7 @@ void choose_blend_material(QWidget *owner,std::function<std::shared_future<Prepa
  QObject::connect(buttons,&QDialogButtonBox::rejected,dialog,&QDialog::reject);
  QObject::connect(list,&QListWidget::currentItemChanged,dialog,[accept](auto *item,auto *){accept->setEnabled(item!=nullptr);});
  struct ImportState{std::shared_future<PreparedBlendMaterial> future;std::shared_ptr<std::atomic_bool> cancel=std::make_shared<std::atomic_bool>(false);};auto pending=std::make_shared<ImportState>();auto *poll=new QTimer(dialog);poll->setInterval(16);
+ new LongOperationCancel([pending]{return pending->future.valid();},[dialog]{dialog->reject();},dialog);
  QObject::connect(dialog,&QDialog::rejected,dialog,[=]{pending->cancel->store(true);owner->setProperty("blendMaterialImporting",false);});
  QObject::connect(dialog,&QObject::destroyed,[pending]{pending->cancel->store(true);});
  QObject::connect(buttons,&QDialogButtonBox::accepted,dialog,[=]{if(!list->currentItem()||pending->future.valid())return;try{pending->cancel=std::make_shared<std::atomic_bool>(false);pending->future=import(path,list->currentItem()->data(Qt::UserRole).toString(),pending->cancel);list->setEnabled(false);accept->setEnabled(false);status->setStyleSheet({});status->setText("Loading material images… Cancel leaves the document unchanged.");owner->setProperty("blendMaterialImporting",true);poll->start();}catch(const std::exception &error){status->setText(QString::fromUtf8(error.what()));status->setStyleSheet(bts::theme::qss("color: @Error@"));}});

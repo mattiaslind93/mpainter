@@ -5,6 +5,8 @@
 #include "GpuPerformance.hh"
 #include "NativeMaterialHostQueueDemo.hh"
 #include "ViewportHeadlessDemo.hh"
+#include "NativeMaterialStackTest.hh"
+#include "MeshBakeCancelTest.hh"
 #include "MaskGeneratorGpuTest.hh"
 #include "BlenderHost.hh"
 #include "OrbitCamera.hh"
@@ -79,8 +81,13 @@ QJsonObject check_mips(){
 }
 }
 int run_viewport_headless_demo(BlenderHost &host,const QString &directory,const QString &project){
+ if(qEnvironmentVariableIsSet("BTS_ESC_CANCEL_TEST"))return run_mesh_bake_cancel_test(directory);
  QDir().mkpath(directory);QOpenGLContext context;context.setFormat(QSurfaceFormat::defaultFormat());require(context.create(),"Cannot create offscreen OpenGL context");QOffscreenSurface surface;surface.setFormat(context.format());surface.create();require(surface.isValid()&&context.makeCurrent(&surface),"Cannot activate offscreen OpenGL surface");QOpenGLFramebufferObject target(1000,700,QOpenGLFramebufferObject::CombinedDepthStencil);require(target.isValid(),"Cannot allocate offscreen Qt framebuffer");
  struct Close{BlenderHost &host;~Close(){host.shutdown();}} close{host};host.initialize_gpu(context,surface,target.handle());
+ if(qEnvironmentVariableIsSet("BTS_MATERIAL_FILTER_TEST")){
+  QJsonObject proof;host.with_gpu([&]{proof=verify_native_material_stack();});proof["renderer"]=QString::fromStdString(host.renderer());
+  QFile file(directory+"/material-filter.json");require(file.open(QIODevice::WriteOnly),"Cannot write material filter proof");file.write(QJsonDocument(proof).toJson());return 0;
+ }
  if(qEnvironmentVariableIsSet("BTS_UNLOAD_REGRESSION")){QJsonObject proof;host.with_gpu([&]{proof=unload_test::run();});QFile file(directory+"/unload-regression.json");if(!file.open(QIODevice::WriteOnly))throw std::runtime_error("Cannot write unload proof");file.write(QJsonDocument(proof).toJson());return 0;}
  if(qEnvironmentVariableIsSet("BTS_NATIVE_FRAGMENT_NORMAL_TEST")){
   // The prepared graph is created on its worker before entering GPU ownership.
