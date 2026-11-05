@@ -5,12 +5,12 @@ from pathlib import Path
 from PIL import Image,ImageStat,ImageChops
 p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);p.add_argument('--check-only',action='store_true');a=p.parse_args();a.output=a.output.resolve();a.output.mkdir(parents=True,exist_ok=True);root=Path(__file__).resolve().parents[2]
 # Two material slots on the existing sphere/companion fixture, without editing artist assets.
-obj=(root/'fixtures/single_tile.obj').read_text();obj=obj.replace('mtllib single_tile.mtl','mtllib shader-sets.mtl');index=0
+obj=(root/'native/tests/fixtures/single_tile.obj').read_text();obj=obj.replace('mtllib single_tile.mtl','mtllib shader-sets.mtl');index=0
 lines=[]
 for line in obj.splitlines():
  if line.startswith('usemtl '):line='usemtl '+['SphereSurface','CubeSurface'][index];index+=1
  lines.append(line)
-mesh=a.output/'shader-sets.obj';mesh.write_text('\n'.join(lines)+'\n');mtl=(root/'fixtures/single_tile.mtl').read_text();(a.output/'shader-sets.mtl').write_text(mtl.replace('FixtureSurface','SphereSurface')+'\n'+mtl.replace('FixtureSurface','CubeSurface'))
+mesh=a.output/'shader-sets.obj';mesh.write_text('\n'.join(lines)+'\n');mtl=(root/'native/tests/fixtures/single_tile.mtl').read_text();(a.output/'shader-sets.mtl').write_text(mtl.replace('FixtureSurface','SphereSurface')+'\n'+mtl.replace('FixtureSurface','CubeSurface'))
 env=dict(os.environ,LANG='sv_SE.UTF-8',LC_ALL='sv_SE.UTF-8',DISPLAY=private_display(),XDG_RUNTIME_DIR='/run/user/1000',XDG_CONFIG_HOME=str(a.output/'config'),BTS_SHADER_DEMO='1',BTS_SKEW_DEMO='1')
 cmd=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(mesh),'--gui-fix-resolution','128','--library-dir',str(a.output/'shelf'),'--recovery-dir',str(a.output/'recovery')]
 if not a.check_only:

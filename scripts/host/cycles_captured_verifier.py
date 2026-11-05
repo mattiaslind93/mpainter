@@ -85,7 +85,7 @@ def runner_identity(repo):
         result['scripts/host/' + name] = sha(repo / 'scripts/host' / name)
     for name in ('run-host.sh', 'gpu-env.sh', 'session_logging.py'):
         result['scripts/host/' + name] = sha(repo / 'scripts/host' / name)
-    result['fixtures/two_tile_udim.obj'] = sha(repo / 'fixtures/two_tile_udim.obj')
+    result['fixtures/two_tile_udim.obj'] = sha(repo / 'native/tests/fixtures/two_tile_udim.obj')
     return result
 
 def validate_record(record):
@@ -247,7 +247,7 @@ def run(snapshot, repo, out, history_root, expected_build_sha):
     for key in ('BTS_BA_CONTROLLED_PROFILE','BTS_TEST_CONTINUOUS_FRAMES','BTS_BA_TRACE_ONLY'): env.pop(key, None)
     source = out / 'run-source'
     command = ['nice','-n','19','bash',str(source/'scripts/host/run-host.sh'),'--workspace','--no-splash','--gui-fix-demo',str(runtime),
-        '--gui-fix-mesh',str(source/'fixtures/two_tile_udim.obj'),'--gui-fix-resolution','2048','--library-dir',str(runtime/'shelf'),'--recovery-dir',str(runtime/'recovery')]
+        '--gui-fix-mesh',str(source/'native/tests/fixtures/two_tile_udim.obj'),'--gui-fix-resolution','2048','--library-dir',str(runtime/'shelf'),'--recovery-dir',str(runtime/'recovery')]
     private_keys = ('XDG_CONFIG_HOME','XDG_DATA_HOME','XDG_CACHE_HOME','XDG_STATE_HOME','BTS_RECOVERY_DIR','BTS_RESOURCE_CACHE','BTS_SESSION_LOG_DIR','TMPDIR','CUDA_CACHE_PATH','__GL_SHADER_DISK_CACHE_PATH','BTS_ROOT','BTS_VERIFY_CYCLES_LIVE','BTS_BA_EXPECT_FIXED','QT_QPA_PLATFORM','BTS_HEADLESS_WORKSPACE','BTS_BLEND_MATERIAL_DEMO','BTS_PROPERTY_PERFORMANCE','BTS_PERFORMANCE_PROFILE','BTS_HOST_EXECUTABLE','QT_PLUGIN_PATH','LD_LIBRARY_PATH','BTS_ENVIRONMENT')
     result = {'profile': PROFILE, 'build_sha256': expected_build_sha, 'command': command, 'cwd': str(source),
         'private_environment': {key: env[key] for key in private_keys},

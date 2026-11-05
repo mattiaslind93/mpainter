@@ -7,7 +7,7 @@ env=dict(os.environ,LANG='sv_SE.UTF-8',LC_ALL='sv_SE.UTF-8',QT_QPA_PLATFORM='off
 for key,folder in [('XDG_CONFIG_HOME','config'),('XDG_DATA_HOME','data'),('XDG_CACHE_HOME','cache'),('TMPDIR','tmp'),('BTS_RECOVERY_DIR','recovery'),('BTS_RESOURCE_CACHE','resources'),('BTS_SESSION_LOG_DIR','logs')]:
  (a.output/folder).mkdir(exist_ok=True);env[key]=str(a.output/folder)
 if a.smudge:env['BTS_STROKE_TARGET_SMUDGE']='1'
-args=['--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(root/'fixtures/profile_two_tiles.obj'),'--gui-fix-resolution',str(a.resolution),'--autosave-seconds','3600','--library-dir',str(a.output/'library')]
+args=['--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(root/'native/tests/fixtures/profile_two_tiles.obj'),'--gui-fix-resolution',str(a.resolution),'--autosave-seconds','3600','--library-dir',str(a.output/'library')]
 if a.project:
  project=a.project.resolve();build=root.parent/'build'
  assert project.is_file()and any(parent.exists()and os.path.samefile(parent,build)for parent in (project.parent,*project.parents)),'Only a private project copy under BTS build'

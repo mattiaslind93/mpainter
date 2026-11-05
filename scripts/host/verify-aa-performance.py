@@ -6,7 +6,7 @@ root=Path(__file__).resolve().parents[2];build=root.parent/'build';out=a.output.
 env={'BTS_ROOT':str(root.parent),'QT_QPA_PLATFORM':'offscreen','BTS_HEADLESS_WORKSPACE':'1','BTS_AA_PERFORMANCE':'1','BTS_PROPERTY_PERFORMANCE':'1','BTS_PERFORMANCE_PROFILE':'1','LANG':'sv_SE.UTF-8','LC_ALL':'sv_SE.UTF-8'}
 for key,folder in [('XDG_CONFIG_HOME','config'),('XDG_DATA_HOME','data'),('XDG_CACHE_HOME','cache'),('BTS_RECOVERY_DIR','recovery'),('BTS_RESOURCE_CACHE','resources'),('BTS_SESSION_LOG_DIR','logs'),('TMPDIR','tmp')]:
  (out/folder).mkdir(exist_ok=True);env[key]=str(out/folder)
-args=['--workspace','--gui-fix-demo',str(out/'workspace'),'--gui-fix-mesh',str(root/'fixtures/two_tile_udim.obj'),'--gui-fix-resolution','2048','--autosave-seconds','3600']
+args=['--workspace','--gui-fix-demo',str(out/'workspace'),'--gui-fix-mesh',str(root/'native/tests/fixtures/two_tile_udim.obj'),'--gui-fix-resolution','2048','--autosave-seconds','3600']
 if a.project:
  project=a.project.resolve();assert project.is_relative_to(build) and project.is_file(),'Only a private project copy inside build may be benchmarked';env['BTS_AA_PROJECT']=str(project);args+=['--open-document',str(project)]
 if a.image:

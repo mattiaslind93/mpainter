@@ -110,7 +110,7 @@ for key, folder in [('BLENDER_USER_CONFIG', 'blender-config'),
     (out / folder).mkdir()
     env[key] = str(out / folder)
 options = ['--workspace', '--gui-fix-demo', str(out), '--gui-fix-mesh',
-           str(root / 'fixtures/single_tile.obj'), '--gui-fix-resolution', '128']
+           str(root / 'native/tests/fixtures/single_tile.obj'), '--gui-fix-resolution', '128']
 if args.phase == 'packed-cold':
     options += ['--open-document', str(project)]
 start = time.monotonic()

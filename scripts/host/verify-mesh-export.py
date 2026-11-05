@@ -4,14 +4,14 @@ import argparse,collections,json,math,os,re,subprocess
 from pathlib import Path
 from PIL import Image,ImageChops,ImageStat
 p=argparse.ArgumentParser();p.add_argument('--output',required=True,type=Path);p.add_argument('--cache',type=Path);p.add_argument('--check-only',action='store_true');p.add_argument('--no-uv',action='store_true');a=p.parse_args();a.output=a.output.resolve();a.output.mkdir(parents=True,exist_ok=True);root=Path(__file__).resolve().parents[2]
-mesh=a.output/'MeshExport.obj';source=(root/'fixtures/single_tile.obj').read_text().replace('mtllib single_tile.mtl','mtllib MeshExport.mtl');lines=[];index=0
+mesh=a.output/'MeshExport.obj';source=(root/'native/tests/fixtures/single_tile.obj').read_text().replace('mtllib single_tile.mtl','mtllib MeshExport.mtl');lines=[];index=0
 for line in source.splitlines():
  if line.startswith('usemtl '):line='usemtl '+['SphereSurface','CubeSurface'][index];index+=1
  if a.no_uv:
   if line.startswith('vt '):continue
   if line.startswith('f '):line='f '+' '.join(t.split('/')[0]+'//'+t.split('/')[-1] for t in line.split()[1:])
  lines.append(line)
-mesh.write_text('\n'.join(lines)+'\n');mtl=(root/'fixtures/single_tile.mtl').read_text();(a.output/'MeshExport.mtl').write_text(mtl.replace('FixtureSurface','SphereSurface')+'\n'+mtl.replace('FixtureSurface','CubeSurface'))
+mesh.write_text('\n'.join(lines)+'\n');mtl=(root/'native/tests/fixtures/single_tile.mtl').read_text();(a.output/'MeshExport.mtl').write_text(mtl.replace('FixtureSurface','SphereSurface')+'\n'+mtl.replace('FixtureSurface','CubeSurface'))
 env=dict(os.environ,LANG='sv_SE.UTF-8',LC_ALL='sv_SE.UTF-8',DISPLAY=private_display(),XDG_RUNTIME_DIR='/run/user/1000',XDG_CONFIG_HOME=str(a.output/'config'),XDG_CACHE_HOME=str((a.cache or a.output/'cache').resolve()),BTS_MESH_EXPORT_DEMO='1',BTS_SKEW_DEMO='1')
 if a.no_uv:env['BTS_MESH_EXPORT_AUTO_UV']='1'
 if not a.check_only:

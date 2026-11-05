@@ -7,7 +7,7 @@ image=a.output/'ao-checker.png';im=Image.new('RGBA',(32,32));im.putdata([(51 if(
 env=dict(os.environ,QT_QPA_PLATFORM='offscreen',BTS_HEADLESS_WORKSPACE='1',BTS_MASK_FILL_GPU_DEMO='1',BTS_MASK_FILL_IMAGE=str(image),LANG='sv_SE.UTF-8',LC_ALL='sv_SE.UTF-8')
 for key,folder in [('XDG_CONFIG_HOME','config'),('XDG_DATA_HOME','data'),('XDG_CACHE_HOME','cache'),('TMPDIR','tmp'),('BTS_RECOVERY_DIR','recovery'),('BTS_RESOURCE_CACHE','resources')]:
  (a.output/folder).mkdir(exist_ok=True);env[key]=str(a.output/folder)
-args=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(root/'fixtures/single_tile.obj'),'--gui-fix-resolution','512','--library-dir',str(a.output/'library'),'--autosave-seconds','3600']
+args=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(root/'native/tests/fixtures/single_tile.obj'),'--gui-fix-resolution','512','--library-dir',str(a.output/'library'),'--autosave-seconds','3600']
 with(a.output/'run.log').open('w')as log:subprocess.run(args,env=env,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=360)
 d=json.loads((a.output/'mask-fill-gpu.json').read_text());assert [c['stage']for c in d['captures']]==['atom','scaled','rotated','triplanar','horizontal','texture','alpha-masked','uniform'];assert d['scale_drag_undo']==1
 texture=next(c for c in d['captures']if c['stage']=='texture');assert max(p[3]for p in texture['samples'])>.1, 'Zero file alpha must not hide raw grayscale'

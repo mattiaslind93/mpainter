@@ -62,7 +62,7 @@ try:
   record={'reload':reload,'complete':False,'actual_exit':None};result['runs'].append(record);save();started=time.monotonic()
   with private_gpu_gui(run,env,source)as(prefix,private):
    private['XDG_CONFIG_HOME']=str(preferences)
-   command=prefix+['nice','-n','19',str(binary),'--workspace','--environment',str(environment),'--new-mesh',str(source/'fixtures/single_tile.obj'),'--navigation-demo-dir',str(run),'--library-dir',str(run/'library'),'--recovery-dir',str(run/'recovery')]
+   command=prefix+['nice','-n','19',str(binary),'--workspace','--environment',str(environment),'--new-mesh',str(source/'native/tests/fixtures/single_tile.obj'),'--navigation-demo-dir',str(run),'--library-dir',str(run/'library'),'--recovery-dir',str(run/'recovery')]
    record['command']=command
    with(run/'run.log').open('x')as log:
     active=subprocess.Popen(command,cwd=source,env=private,stdout=log,stderr=subprocess.STDOUT,start_new_session=True);record['pid']=active.pid;save()

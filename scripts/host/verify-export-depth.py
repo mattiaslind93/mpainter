@@ -4,11 +4,11 @@ import argparse,json,os,struct,subprocess
 from pathlib import Path
 from PIL import Image,ImageChops,ImageStat
 p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);p.add_argument('--cache',type=Path);p.add_argument('--check-only',action='store_true');a=p.parse_args();a.output=a.output.resolve();a.output.mkdir(parents=True,exist_ok=True);root=Path(__file__).resolve().parents[2]
-mesh=a.output/'DepthMesh.obj';source=(root/'fixtures/single_tile.obj').read_text().replace('mtllib single_tile.mtl','mtllib DepthMesh.mtl');lines=[];index=0
+mesh=a.output/'DepthMesh.obj';source=(root/'native/tests/fixtures/single_tile.obj').read_text().replace('mtllib single_tile.mtl','mtllib DepthMesh.mtl');lines=[];index=0
 for line in source.splitlines():
  if line.startswith('usemtl '):line='usemtl '+['SphereSurface','CubeSurface'][index];index+=1
  lines.append(line)
-mesh.write_text('\n'.join(lines)+'\n');mtl=(root/'fixtures/single_tile.mtl').read_text();(a.output/'DepthMesh.mtl').write_text(mtl.replace('FixtureSurface','SphereSurface')+'\n'+mtl.replace('FixtureSurface','CubeSurface'))
+mesh.write_text('\n'.join(lines)+'\n');mtl=(root/'native/tests/fixtures/single_tile.mtl').read_text();(a.output/'DepthMesh.mtl').write_text(mtl.replace('FixtureSurface','SphereSurface')+'\n'+mtl.replace('FixtureSurface','CubeSurface'))
 env=dict(os.environ,LANG='sv_SE.UTF-8',LC_ALL='sv_SE.UTF-8',DISPLAY=private_display(),XDG_RUNTIME_DIR='/run/user/1000',XDG_CONFIG_HOME=str(a.output/'config'),XDG_CACHE_HOME=str((a.cache or a.output/'cache').resolve()),BTS_DERIVED_EXPORT_DEMO='1',BTS_SKEW_DEMO='1',BTS_EXPORT_DEPTH_DEMO='1')
 if not a.check_only:
  cmd=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(mesh),'--gui-fix-resolution','512','--library-dir',str(a.output/'shelf'),'--recovery-dir',str(a.output/'recovery')]

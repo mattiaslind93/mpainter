@@ -6,7 +6,7 @@ p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);a
 root=Path(__file__).resolve().parents[2]
 env=dict(os.environ,LANG='sv_SE.UTF-8',LC_ALL='sv_SE.UTF-8',QT_QPA_PLATFORM='offscreen',BTS_HEADLESS_WORKSPACE='1',DISPLAY=private_display(),XDG_RUNTIME_DIR='/run/user/1000',BTS_LEVELS_EDITOR_DEMO='1',BTS_SKEW_DEMO='1',BTS_PERFORMANCE_PROFILE='1',BTS_TEMPLATE_DIR=str(a.output/'templates'))
 with (a.output/'run.log').open('w')as log:
- subprocess.run(['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(root/'fixtures/single_tile.obj'),'--gui-fix-resolution','128','--autosave-seconds','3600','--library-dir',str(a.output/'library')],env=env,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=240)
+ subprocess.run(['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(root/'native/tests/fixtures/single_tile.obj'),'--gui-fix-resolution','128','--autosave-seconds','3600','--library-dir',str(a.output/'library')],env=env,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=240)
 d=json.loads((a.output/'levels-native.json').read_text());c={x['stage']:x for x in d['captures']}
 for before,edited,undone,redone in [('levels-default','levels-output-drag','levels-undo','levels-redo'),('filter-default','filter-output-drag','filter-undo','filter-redo')]:
  assert c[edited]['undo_count']==c[before]['undo_count']+1

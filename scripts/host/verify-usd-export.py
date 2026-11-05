@@ -5,7 +5,7 @@ from pathlib import Path
 from PIL import Image,ImageChops,ImageStat
 p=argparse.ArgumentParser();p.add_argument('--output',required=True,type=Path);p.add_argument('--cache',type=Path);p.add_argument('--check-only',action='store_true');p.add_argument('--displacement',action='store_true');p.add_argument('--udim',action='store_true');a=p.parse_args();a.output=a.output.resolve();a.output.mkdir(parents=True,exist_ok=True);root=Path(__file__).resolve().parents[2]
 mesh=a.output/'UsdPaint.obj';lines=[];index=0
-for line in (root/'fixtures/single_tile.obj').read_text().replace('mtllib single_tile.mtl','mtllib UsdPaint.mtl').splitlines():
+for line in (root/'native/tests/fixtures/single_tile.obj').read_text().replace('mtllib single_tile.mtl','mtllib UsdPaint.mtl').splitlines():
  if line.startswith('usemtl '):line='usemtl '+['SphereSurface','CubeSurface'][index];index+=1
  lines.append(line)
 if a.udim:
@@ -18,7 +18,7 @@ if a.udim:
   elif line.startswith('f '):line='f '+' '.join('/'.join(str(int(value)+counts[i]) if value else '' for i,value in enumerate(vertex.split('/'))) for vertex in line.split()[1:])
   extra.append(line)
  lines+=extra
-mesh.write_text('\n'.join(lines)+'\n');mtl=(root/'fixtures/single_tile.mtl').read_text();(a.output/'UsdPaint.mtl').write_text(mtl.replace('FixtureSurface','SphereSurface')+'\n'+mtl.replace('FixtureSurface','CubeSurface'))
+mesh.write_text('\n'.join(lines)+'\n');mtl=(root/'native/tests/fixtures/single_tile.mtl').read_text();(a.output/'UsdPaint.mtl').write_text(mtl.replace('FixtureSurface','SphereSurface')+'\n'+mtl.replace('FixtureSurface','CubeSurface'))
 env=dict(os.environ,LANG='sv_SE.UTF-8',LC_ALL='sv_SE.UTF-8',DISPLAY=private_display(),XDG_RUNTIME_DIR='/run/user/1000',XDG_CONFIG_HOME=str(a.output/'config'),XDG_CACHE_HOME=str((a.cache or a.output/'cache').resolve()),BTS_DERIVED_EXPORT_DEMO='1',BTS_USD_EXPORT_DEMO='1',BTS_SKEW_DEMO='1')
 if a.displacement:env['BTS_USD_DISPLACE_DEMO']='1'
 if a.udim:env['BTS_USD_UDIM_DEMO']='1'

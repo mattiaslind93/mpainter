@@ -8,7 +8,7 @@ import numpy as np
 root = pathlib.Path(sys.argv[1])
 results = []
 for name, tolerance in [('displaced', 0.0001), ('shaderball', 0.005)]:
-    reference = np.fromfile(root / 'fixtures' / f'blender-{name}-4.rgba', np.float32).reshape(256, 256, 4)
+    reference = np.fromfile(root / 'native/tests/fixtures' / f'blender-{name}-4.rgba', np.float32).reshape(256, 256, 4)
     errors = {}
     for variant in ['before', 'after']:
         pixels = np.fromfile(root / variant / f'{name}-4.rgba', np.float32).reshape(256, 256, 4)

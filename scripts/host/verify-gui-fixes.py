@@ -20,7 +20,7 @@ a=p.parse_args();a.output.mkdir(parents=True,exist_ok=True)
 root=Path(__file__).resolve().parents[2]
 env=os.environ.copy();env.update(LANG='sv_SE.UTF-8',LC_ALL='sv_SE.UTF-8',DISPLAY=private_display(),XDG_RUNTIME_DIR='/run/user/1000')
 if a.performance:env['BTS_GUI_PERFORMANCE']='1'
-command=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(root/'fixtures/single_tile.obj'),'--gui-fix-resolution',str(a.resolution),'--recovery-dir',str(a.output/'recovery')]
+command=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(root/'native/tests/fixtures/single_tile.obj'),'--gui-fix-resolution',str(a.resolution),'--recovery-dir',str(a.output/'recovery')]
 if a.project:command+=['--project',str(a.project)]
 with (a.output/'run.log').open('w') as log:
     process=subprocess.Popen(command,stdout=log,stderr=subprocess.STDOUT,env=env)

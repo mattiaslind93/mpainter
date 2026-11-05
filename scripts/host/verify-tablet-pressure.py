@@ -7,7 +7,7 @@ from pathlib import Path
 p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);p.add_argument('--existing',action='store_true');a=p.parse_args();a.output=a.output.resolve();a.output.mkdir(parents=True,exist_ok=True);root=Path(__file__).resolve().parents[2]
 for directory in ('config','data','cache','resources','logs','tmp','recovery'):(a.output/directory).mkdir(exist_ok=True)
 env=dict(os.environ,QT_QPA_PLATFORM='offscreen',BTS_HEADLESS_WORKSPACE='1',XDG_CACHE_HOME=str(a.output/'cache'),BTS_RESOURCE_CACHE=str(a.output/'resources'),BTS_SESSION_LOG_DIR=str(a.output/'logs'),BTS_RECOVERY_DIR=str(a.output/'recovery'),TMPDIR=str(a.output/'tmp'),LANG='sv_SE.UTF-8',LC_ALL='sv_SE.UTF-8',DISPLAY=private_display(),XDG_RUNTIME_DIR='/run/user/1000',BTS_TABLET_REGRESSION='1',BTS_TABLET_LOG='1',XDG_CONFIG_HOME=str(a.output/'config'),XDG_DATA_HOME=str(a.output/'data'))
-cmd=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(root/'fixtures/single_tile.obj'),'--gui-fix-resolution','512','--recovery-dir',str(a.output/'recovery')]
+cmd=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(root/'native/tests/fixtures/single_tile.obj'),'--gui-fix-resolution','512','--recovery-dir',str(a.output/'recovery')]
 if not a.existing:
  with (a.output/'run.log').open('w') as log:
   proc=subprocess.Popen(cmd,env=env,stdout=log,stderr=subprocess.STDOUT)

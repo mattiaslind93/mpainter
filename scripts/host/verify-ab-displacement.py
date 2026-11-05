@@ -57,7 +57,7 @@ if a.cpu_only:
     print(json.dumps(result, indent=2))
     raise SystemExit(0)
 run("workspace", ["--workspace", "--gui-fix-demo", str(out / "workspace"),
-                  "--gui-fix-mesh", str(root / "fixtures/two_tile_udim.obj"),
+                  "--gui-fix-mesh", str(root / "native/tests/fixtures/two_tile_udim.obj"),
                   "--gui-fix-resolution", "4096" if a.large else "512"],
     {"BTS_AB_DISPLACEMENT": "1"})
 proof = json.loads((out / "workspace/ab-displacement.json").read_text())

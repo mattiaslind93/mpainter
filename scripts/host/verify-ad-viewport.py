@@ -46,7 +46,7 @@ def main():
         raise SystemExit(77)
     root = Path(__file__).resolve().parents[2]
     out = args.output.resolve()
-    mesh = (root / "fixtures/two_tile_udim.obj").resolve()
+    mesh = (root / "native/tests/fixtures/two_tile_udim.obj").resolve()
     assert out.is_relative_to(root.parent / "build") and mesh.is_file()
     out.mkdir(parents=True, exist_ok=True)
     start = time.monotonic()

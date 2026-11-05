@@ -151,7 +151,7 @@ else:
     source = prior / 'fixtures' / 'owned-projection.blend'
     hidden = (prior / 'fixtures', prior / 'fixtures.hidden-for-bj-cold')
     assert hidden[0].is_dir() and not hidden[1].exists()
-    mesh = root / 'fixtures/single_tile.obj'  # Unused: cold opens packed geometry.
+    mesh = root / 'native/tests/fixtures/single_tile.obj'  # Unused: cold opens packed geometry.
 
 env = {key: value for key, value in os.environ.items()
        if not key.startswith(('BTS_', 'XDG_', 'QT_', 'BLENDER_'))

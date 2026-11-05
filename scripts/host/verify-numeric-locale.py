@@ -6,7 +6,7 @@ env=dict(os.environ,LC_ALL='sv_SE.UTF-8',LANG='sv_SE.UTF-8',QT_QPA_PLATFORM='off
 for name,folder in [('XDG_CONFIG_HOME','config'),('XDG_DATA_HOME','data'),('XDG_CACHE_HOME','cache'),('BTS_RESOURCE_CACHE','resources'),('BTS_RECOVERY_DIR','recovery'),('BTS_SESSION_LOG_DIR','logs'),('TMPDIR','tmp')]:
  (out/folder).mkdir(exist_ok=True);env[name]=str(out/folder)
 if not a.existing:
- with(out/'run.log').open('w')as log:subprocess.run(['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(out),'--gui-fix-mesh',str(root/'fixtures/single_tile.obj'),'--gui-fix-resolution','128','--library-dir',str(out/'studio-library'),'--autosave-seconds','3600'],env=env,stdout=log,stderr=subprocess.STDOUT,timeout=150,check=True)
+ with(out/'run.log').open('w')as log:subprocess.run(['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(out),'--gui-fix-mesh',str(root/'native/tests/fixtures/single_tile.obj'),'--gui-fix-resolution','128','--library-dir',str(out/'studio-library'),'--autosave-seconds','3600'],env=env,stdout=log,stderr=subprocess.STDOUT,timeout=150,check=True)
 for source in (root/'native/host').glob('*'):
  if source.suffix in ('.cc','.hh') and 'Demo'not in source.name:
   assert 'new QDoubleSpinBox'not in source.read_text(),source

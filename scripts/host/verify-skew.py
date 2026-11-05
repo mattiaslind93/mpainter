@@ -6,7 +6,7 @@ p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);p
 if a.history and a.history_multiset:p.error('Choose one history profile')
 if (a.history or a.history_multiset) and a.output.exists():raise ValueError('Choose a fresh history output; preserve the first result')
 a.output.mkdir(parents=True,exist_ok=True);root=Path(__file__).resolve().parents[2]
-env=dict(os.environ,LANG='sv_SE.UTF-8',LC_ALL='sv_SE.UTF-8',DISPLAY=private_display(),XDG_RUNTIME_DIR='/run/user/1000',BTS_SKEW_DEMO='1',BTS_SKEW_HIGH_SOURCE=str(root/'fixtures/skew_high.obj'),BTS_SKEW_SETS_LOW=str(root/'fixtures/skew_sets_low.obj'),BTS_SKEW_SETS_HIGH=str(root/'fixtures/skew_sets_high.obj'))
+env=dict(os.environ,LANG='sv_SE.UTF-8',LC_ALL='sv_SE.UTF-8',DISPLAY=private_display(),XDG_RUNTIME_DIR='/run/user/1000',BTS_SKEW_DEMO='1',BTS_SKEW_HIGH_SOURCE=str(root/'native/tests/fixtures/skew_high.obj'),BTS_SKEW_SETS_LOW=str(root/'native/tests/fixtures/skew_sets_low.obj'),BTS_SKEW_SETS_HIGH=str(root/'native/tests/fixtures/skew_sets_high.obj'))
 if a.history_multiset:
  env={key:value for key,value in env.items() if not key.endswith('_DEMO') and not key.startswith('BTS_PERFORMANCE')}
  env.update(BTS_SKEW_DEMO='1',BTS_BAKE_MULTISET_HISTORY_DEMO='1',QT_QPA_PLATFORM='offscreen',BTS_HEADLESS_WORKSPACE='1')
@@ -17,8 +17,8 @@ if a.history_multiset:
   directory=a.output/name;directory.mkdir();env[key]=str(directory)
  env['__GL_SHADER_DISK_CACHE']='1'
  sha=lambda path:hashlib.sha256(Path(path).read_bytes()).hexdigest()
- originals={str(path):sha(path) for path in [root/'fixtures/skew_sets_low.obj',root/'fixtures/skew_fixture.mtl']}
- command=['nice','-n','19','bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(root/'fixtures/skew_sets_low.obj'),'--gui-fix-resolution','128']
+ originals={str(path):sha(path) for path in [root/'native/tests/fixtures/skew_sets_low.obj',root/'native/tests/fixtures/skew_fixture.mtl']}
+ command=['nice','-n','19','bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(root/'native/tests/fixtures/skew_sets_low.obj'),'--gui-fix-resolution','128']
  admission=dict(command=command,source_sha256=originals,verifier_sha256=sha(__file__),environment={key:value for key,value in env.items() if key.startswith(('BTS_','XDG_','CUDA_','__GL_','QT_')) or key in ('DISPLAY','XAUTHORITY','LANG','LC_ALL','TMPDIR')},private_roots_empty=all(not any((a.output/name).iterdir()) for name in private),performance_claim=False)
  (a.output/'multiset-history-admission.json').write_text(json.dumps(admission,indent=2)+'\n')
  with (a.output/'run.log').open('w') as log:
@@ -71,10 +71,10 @@ if a.history:
  for key,name in [('XDG_CONFIG_HOME','config'),('XDG_DATA_HOME','data'),('XDG_CACHE_HOME','cache'),('XDG_STATE_HOME','state'),('BTS_RESOURCE_CACHE','resources'),('BTS_RECOVERY_DIR','recovery'),('BTS_SESSION_LOG_DIR','sessions'),('CUDA_CACHE_PATH','cuda-cache'),('__GL_SHADER_DISK_CACHE_PATH','gl-cache')]:
   directory=a.output/name;directory.mkdir();env[key]=str(directory)
  env['__GL_SHADER_DISK_CACHE']='1'
- source_files=[root/'fixtures/skew_low.obj',root/'fixtures/skew_fixture.mtl']
+ source_files=[root/'native/tests/fixtures/skew_low.obj',root/'native/tests/fixtures/skew_fixture.mtl']
  sha=lambda path:hashlib.sha256(Path(path).read_bytes()).hexdigest()
  original={str(path):sha(path) for path in source_files}
- command=['nice','-n','19','bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(root/'fixtures/skew_low.obj'),'--gui-fix-resolution','128']
+ command=['nice','-n','19','bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(root/'native/tests/fixtures/skew_low.obj'),'--gui-fix-resolution','128']
  (a.output/'history-admission.json').write_text(json.dumps(dict(command=command,source_sha256=original,environment={key:value for key,value in env.items() if key.startswith(('BTS_','XDG_','CUDA_','__GL_','QT_')) or key in ('DISPLAY','XAUTHORITY','LANG','LC_ALL')},private_caches_empty=all(not any((a.output/name).iterdir()) for name in ['cache','cuda-cache','gl-cache']),performance_claim=False),indent=2)+'\n')
  with (a.output/'run.log').open('w') as log:
   proc=subprocess.Popen(command,env=env,stdout=log,stderr=subprocess.STDOUT)
@@ -115,7 +115,7 @@ if a.history:
  assert not re.search(r'PD150_CONFIGURE_HISTORY_FAILED|BTS_HOST_FAILED|BTS_DRAW_FAILED|Shader compilation failed|OpenColorIO Error|BTS_GPU_STACK_FALLBACK',text,re.I)
  result=dict(pid=proc.pid,real_paint_then_mode_history=True,configure_save_one_history=True,cancel_and_noop_exact=True,empty_recipe_cache_restore=True,reopened_controls_match_undo_redo=True,branch_clears_redo=True,completed_normal_bake_recipe_and_maps_undo_redo=True,original_source_unchanged=True,performance_claim=False)
  (a.output/'verified.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result,indent=2));raise SystemExit(0)
-command=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(root/'fixtures/skew_low.obj'),'--gui-fix-resolution','512','--recovery-dir',str(a.output/'recovery')]
+command=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(root/'native/tests/fixtures/skew_low.obj'),'--gui-fix-resolution','512','--recovery-dir',str(a.output/'recovery')]
 with (a.output/'run.log').open('w') as f:
  proc=subprocess.Popen(command,env=env,stdout=f,stderr=subprocess.STDOUT)
  try:code=proc.wait(timeout=900)

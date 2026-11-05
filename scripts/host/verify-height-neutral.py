@@ -6,7 +6,7 @@ env=dict(os.environ,QT_QPA_PLATFORM='offscreen',BTS_HEADLESS_WORKSPACE='1',BTS_H
 for name,folder in [('XDG_CONFIG_HOME','config'),('XDG_DATA_HOME','data'),('XDG_CACHE_HOME','cache'),('BTS_RESOURCE_CACHE','resources'),('BTS_RECOVERY_DIR','recovery'),('BTS_SESSION_LOG_DIR','logs'),('TMPDIR','tmp')]:
  (out/folder).mkdir(exist_ok=True);env[name]=str(out/folder)
 if not a.existing:
- with(out/'run.log').open('w')as log:subprocess.run(['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(out),'--gui-fix-mesh',str(root/'fixtures/single_tile.obj'),'--gui-fix-resolution','128','--library-dir',str(out/'studio-library'),'--autosave-seconds','3600'],env=env,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=300)
+ with(out/'run.log').open('w')as log:subprocess.run(['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(out),'--gui-fix-mesh',str(root/'native/tests/fixtures/single_tile.obj'),'--gui-fix-resolution','128','--library-dir',str(out/'studio-library'),'--autosave-seconds','3600'],env=env,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=300)
 d=json.loads((out/'height-neutral.json').read_text());c={v['stage']:v for v in d['captures']}
 for name in ['created','fill-neutral','bump-flat','disp-zero','disp-gray','redone','opened']:
  assert abs(c[name]['height_values']['bump']-.5)<1e-6,(name,c[name]['height_values'])

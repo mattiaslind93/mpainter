@@ -125,7 +125,7 @@ def main():
         (out / folder).mkdir(exist_ok=True)
         env[key] = str(out / folder)
     args = ["--workspace", "--open-document", str(project), "--gui-fix-demo", str(out / "workspace"),
-            "--gui-fix-mesh", str(root / "fixtures/two_tile_udim.obj"),
+            "--gui-fix-mesh", str(root / "native/tests/fixtures/two_tile_udim.obj"),
             "--gui-fix-resolution", "2048", "--autosave-seconds", "3600"]
     command = ["distrobox", "enter", "bts-build", "--", "env"]
     command += [f"{k}={v}" for k, v in env.items()]

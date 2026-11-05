@@ -13,7 +13,7 @@ if a.project:
  env['BTS_AE_PROJECT']=str(a.project.resolve())
 for key,folder in (('XDG_CONFIG_HOME','config'),('XDG_DATA_HOME','data'),('XDG_CACHE_HOME','cache'),('BTS_RECOVERY_DIR','recovery'),('BTS_SESSION_LOG_DIR','logs')):
  env[key]=str(out/folder);(out/folder).mkdir(exist_ok=True)
-command=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(out),'--gui-fix-mesh',str(a.mesh.resolve() if a.mesh else root/'fixtures/single_tile.obj'),'--gui-fix-resolution','4096','--autosave-seconds','2']
+command=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(out),'--gui-fix-mesh',str(a.mesh.resolve() if a.mesh else root/'native/tests/fixtures/single_tile.obj'),'--gui-fix-resolution','4096','--autosave-seconds','2']
 with (out/'run.log').open('w') as log:run=subprocess.run(command,env=env,stdout=log,stderr=subprocess.STDOUT,timeout=240)
 log=(out/'run.log').read_text();proof=json.loads((out/'ae-persistence.json').read_text()) if (out/'ae-persistence.json').is_file() else {'error':'No proof written'}
 proof['returncode']=run.returncode

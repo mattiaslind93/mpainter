@@ -11,7 +11,7 @@ source=fixtures/'materials.blend';before=hashlib.sha256(source.read_bytes()).hex
 env=dict(os.environ,LANG='sv_SE.UTF-8',LC_ALL='sv_SE.UTF-8',QT_QPA_PLATFORM='offscreen',BTS_HEADLESS_WORKSPACE='1',DISPLAY=private_display(),XDG_RUNTIME_DIR='/run/user/1000',BTS_BLEND_MATERIAL_DEMO='1',BTS_BLEND_MATERIAL_SOURCE=str(source),BTS_SKEW_DEMO='1',BTS_TEMPLATE_DIR=str(a.output/'templates'))
 try:
  with (a.output/'run.log').open('w')as log:
-  subprocess.run(['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(root/'fixtures/single_tile.obj'),'--gui-fix-resolution','128','--autosave-seconds','3600','--library-dir',str(a.output/'library')],env=env,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=240)
+  subprocess.run(['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(root/'native/tests/fixtures/single_tile.obj'),'--gui-fix-resolution','128','--autosave-seconds','3600','--library-dir',str(a.output/'library')],env=env,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=240)
 finally:
  held=Path(str(source)+'.held')
  if held.exists():held.rename(source)

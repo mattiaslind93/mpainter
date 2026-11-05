@@ -104,7 +104,7 @@ if not a.build_only:
   directory=out/('run-'+variant);directory.mkdir(exist_ok=True);runtime=private(directory)
   runtime.update(BTS_HOST_EXECUTABLE=str(out/'bin'/(variant+'-artist')),BTS_BLEND_MATERIAL_DEMO='1',BTS_BLEND_MATERIAL_SOURCE=str(source),BTS_TEMPLATE_DIR=str(directory/'templates'),BTS_ENVIRONMENT=env.get('BTS_ENVIRONMENT',str(bts/'build/environment-cache/TT_environmentLights_v001.hdr')))
   print('Run actual artist callbacks '+variant,flush=True)
-  with(directory/'run.log').open('w')as log:result=subprocess.run(['nice','-n','19','bash',str(repo/'scripts/host/run-host.sh'),'--no-splash','--workspace','--gui-fix-demo',str(directory),'--gui-fix-mesh',str(repo/'fixtures/single_tile.obj'),'--gui-fix-resolution','128','--autosave-seconds','3600','--library-dir',str(directory/'library')],cwd=repo,env=runtime,stdout=log,stderr=subprocess.STDOUT,timeout=300)
+  with(directory/'run.log').open('w')as log:result=subprocess.run(['nice','-n','19','bash',str(repo/'scripts/host/run-host.sh'),'--no-splash','--workspace','--gui-fix-demo',str(directory),'--gui-fix-mesh',str(repo/'native/tests/fixtures/single_tile.obj'),'--gui-fix-resolution','128','--autosave-seconds','3600','--library-dir',str(directory/'library')],cwd=repo,env=runtime,stdout=log,stderr=subprocess.STDOUT,timeout=300)
   text=(directory/'run.log').read_text();assert'BTS_SHUTDOWN clean'in text and'Not freed memory blocks'not in text
   if variant=='baseline':assert result.returncode!=0 and'BTS_NATIVE_ARTIST_DIFF mask=0'in text and'Native artist edit GPU stale: stage=edited descriptor=0.73'in text,text[-3000:]
   else:

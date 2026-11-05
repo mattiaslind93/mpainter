@@ -5,8 +5,8 @@ from pathlib import Path
 from PIL import Image,ImageChops,ImageStat
 p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);p.add_argument('--mesh',type=Path);p.add_argument('--resolution',type=int,default=512);a=p.parse_args();a.output.mkdir(parents=True,exist_ok=True)
 root=Path(__file__).resolve().parents[2]
-env=dict(os.environ,LANG='sv_SE.UTF-8',LC_ALL='sv_SE.UTF-8',DISPLAY=private_display(),XDG_RUNTIME_DIR='/run/user/1000',BTS_DISPLACEMENT_DEMO='1',BTS_LEGACY_DISPLACEMENT_PROJECT=str(root/'fixtures/legacy/schema45-painted.blend'))
-command=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(a.mesh or root/'fixtures/single_tile.obj'),'--gui-fix-resolution',str(a.resolution),'--recovery-dir',str(a.output/'recovery')]
+env=dict(os.environ,LANG='sv_SE.UTF-8',LC_ALL='sv_SE.UTF-8',DISPLAY=private_display(),XDG_RUNTIME_DIR='/run/user/1000',BTS_DISPLACEMENT_DEMO='1',BTS_LEGACY_DISPLACEMENT_PROJECT=str(root/'native/tests/fixtures/legacy/schema45-painted.blend'))
+command=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(a.mesh or root/'native/tests/fixtures/single_tile.obj'),'--gui-fix-resolution',str(a.resolution),'--recovery-dir',str(a.output/'recovery')]
 with (a.output/'run.log').open('w') as log:
  process=subprocess.Popen(command,env=env,stdout=log,stderr=subprocess.STDOUT)
  try:code=process.wait(timeout=300)

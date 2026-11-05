@@ -10,7 +10,7 @@ for mode in ['eevee','cuda','cpu']:
  env=dict(os.environ,LANG='sv_SE.UTF-8',LC_ALL='sv_SE.UTF-8',DISPLAY=private_display(),XDG_RUNTIME_DIR='/run/user/1000',XDG_CONFIG_HOME=str(folder/'config'),XDG_CACHE_HOME=str(a.output/'cache'),BTS_RENDER_MODE_DEMO='1',BTS_SHADER_DEMO='1',BTS_SKEW_DEMO='1')
  env.pop('BTS_CYCLES_PREVIEW_PROBE',None);env.pop('BTS_CYCLES_PIXEL_PROBE',None)
  if mode!='eevee':env.update(BTS_CYCLES_PREVIEW_PROBE='1',BTS_CYCLES_DEVICE='CPU' if mode=='cpu' else 'CUDA')
- cmd=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(folder),'--gui-fix-mesh',str(root/'fixtures/single_tile.obj'),'--gui-fix-resolution','128','--library-dir',str(folder/'shelf'),'--recovery-dir',str(folder/'recovery')]
+ cmd=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(folder),'--gui-fix-mesh',str(root/'native/tests/fixtures/single_tile.obj'),'--gui-fix-resolution','128','--library-dir',str(folder/'shelf'),'--recovery-dir',str(folder/'recovery')]
  if not a.check_only:
   with (folder/'run.log').open('w') as log:
    proc=subprocess.Popen(cmd,env=env,stdout=log,stderr=subprocess.STDOUT)

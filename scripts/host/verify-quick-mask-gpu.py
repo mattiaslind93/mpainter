@@ -6,7 +6,7 @@ p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);p
 root=Path(__file__).resolve().parents[2];build=root.parent/'build'
 if not a.existing:
  assert a.environment, "--environment must name the NewProject fixture HDRI"
- command=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--project',str(build/'baseline-demo/host-fixture.blend'),'--environment',str(a.environment),'--new-mesh',str(root/'fixtures/single_tile.obj'),'--new-demo-dir',str(a.output),'--quick-mask-demo',str(build/'quick-mask-native/material-projection.obj'),'--recovery-dir',str(a.output/'recovery')]
+ command=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--project',str(build/'baseline-demo/host-fixture.blend'),'--environment',str(a.environment),'--new-mesh',str(root/'native/tests/fixtures/single_tile.obj'),'--new-demo-dir',str(a.output),'--quick-mask-demo',str(build/'quick-mask-native/material-projection.obj'),'--recovery-dir',str(a.output/'recovery')]
  with (a.output/'run.log').open('w') as log:
   child=subprocess.Popen(command,env=dict(os.environ,BTS_VERIFY_GPU_STACK='1',LANG='sv_SE.UTF-8',LC_ALL='sv_SE.UTF-8'),stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
   try:

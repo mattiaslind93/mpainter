@@ -12,7 +12,7 @@ for key,folder in [('XDG_CONFIG_HOME','config'),('XDG_DATA_HOME','data'),('XDG_C
  (out/folder).mkdir(exist_ok=True);env[key]=str(out/folder)
 try:
  if not a.existing:
-  with(out/'run.log').open('w')as log:subprocess.run(['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(out),'--gui-fix-mesh',str(root/'fixtures/two_tile_udim.obj'),'--gui-fix-resolution','128','--autosave-seconds','3600','--library-dir',str(out/'library')],env=env,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=300)
+  with(out/'run.log').open('w')as log:subprocess.run(['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(out),'--gui-fix-mesh',str(root/'native/tests/fixtures/two_tile_udim.obj'),'--gui-fix-resolution','128','--autosave-seconds','3600','--library-dir',str(out/'library')],env=env,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=300)
 finally:
  if Path(str(source)+'.held').exists():Path(str(source)+'.held').rename(source)
  if (fixtures/'images.held').exists()and not(fixtures/'images').exists():(fixtures/'images.held').rename(fixtures/'images')

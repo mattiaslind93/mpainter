@@ -44,7 +44,7 @@ for key, name in [('BLENDER_USER_CONFIG', 'blender-config'),
 if args.phase == 'warm':
     env.update(BTS_BN_SMART_MASK='1', BTS_PERFORMANCE_PROFILE='1', BTS_SESSION_PROFILE='1')
     options = ['--workspace', '--gui-fix-demo', str(out), '--gui-fix-mesh',
-               str(root / 'fixtures/single_tile.obj'), '--gui-fix-resolution', '128']
+               str(root / 'native/tests/fixtures/single_tile.obj'), '--gui-fix-resolution', '128']
 else:
     assert args.warm, 'Cold phase needs the completed warm project'
     warm = args.warm.resolve()

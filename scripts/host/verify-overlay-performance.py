@@ -8,7 +8,7 @@ env=dict(os.environ,BTS_OVERLAY_PROFILE='1',BTS_PERFORMANCE_PROFILE='1',LC_ALL='
 if a.label!='before':env.update(BTS_OVERLAY_TRIANGLE_PROFILE='1',BTS_OVERLAY_SELF_TEST_DIR=str(out))
 if not a.existing:
  with private_gpu_gui(out,env,root)as(prefix,env):
-  with(out/'run.log').open('w')as log:subprocess.run(prefix+[str(binary),'--workspace','--open-document',str(project),'--gui-fix-demo',str(out),'--gui-fix-mesh',str(root/'fixtures/single_tile.obj'),'--gui-fix-resolution','128','--library-dir',str(out/'library'),'--autosave-seconds','3600'],env=env,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=360)
+  with(out/'run.log').open('w')as log:subprocess.run(prefix+[str(binary),'--workspace','--open-document',str(project),'--gui-fix-demo',str(out),'--gui-fix-mesh',str(root/'native/tests/fixtures/single_tile.obj'),'--gui-fix-resolution','128','--library-dir',str(out/'library'),'--autosave-seconds','3600'],env=env,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=360)
 d=json.loads((out/'overlay-performance.json').read_text())
 def stats(v):
  v=sorted(v);return {'count':len(v),'p50_ms':statistics.median(v)if v else 0,'p95_ms':v[max(0,math.ceil(.95*len(v))-1)]if v else 0,'max_ms':max(v,default=0)}

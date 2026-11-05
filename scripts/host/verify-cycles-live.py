@@ -186,7 +186,7 @@ if a.sanitize_bridge:env.update(ASAN_OPTIONS='detect_leaks=1:halt_on_error=1',UB
 if a.cpu_only:
  with(runtime/'cpu-run.log').open('w')as log:subprocess.run(['nice','-n','19',str(binary)],env=env,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=90)
  raise SystemExit(0)
-with(runtime/'run.log').open('w')as log:subprocess.run(['nice','-n','19','bash',str(repo/'scripts/host/run-host.sh'),'--workspace','--no-splash','--gui-fix-demo',str(runtime),'--gui-fix-mesh',str(repo/'fixtures'/('two_tile_udim.obj'if a.udim else'single_tile.obj')),'--gui-fix-resolution','2048'if a.udim else'128','--library-dir',str(runtime/'shelf'),'--recovery-dir',str(runtime/'recovery')],cwd=repo,env=env,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=420)
+with(runtime/'run.log').open('w')as log:subprocess.run(['nice','-n','19','bash',str(repo/'scripts/host/run-host.sh'),'--workspace','--no-splash','--gui-fix-demo',str(runtime),'--gui-fix-mesh',str(repo/'native/tests/fixtures'/('two_tile_udim.obj'if a.udim else'single_tile.obj')),'--gui-fix-resolution','2048'if a.udim else'128','--library-dir',str(runtime/'shelf'),'--recovery-dir',str(runtime/'recovery')],cwd=repo,env=env,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=420)
 if a.burst_profile:
  validate_runner_sources(repo,json.loads((out/'build.json').read_text())['runner_source_sha256'],True)
  # Invoke the admitted classifier by its hashed path; never silently reuse an

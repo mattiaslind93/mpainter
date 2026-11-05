@@ -21,7 +21,7 @@ if not a.gui_only:
  run('cpu',['--cpu-texture-import-test',str(a.output/'fixtures')])
  cpu=json.loads((a.output/'fixtures/texture-import-cpu.json').read_text());assert cpu['per_tile_pack_exact'] and cpu['metadata_ap1_identity'] and cpu['data_ignores_tag']
 if not a.cpu_only:
- run('workspace',['--workspace','--gui-fix-demo',str(a.output/'workspace'),'--gui-fix-mesh',str(root/'fixtures/two_tile_udim.obj'),'--gui-fix-resolution','2048' if a.large else '512'],{'BTS_TEXTURE_IMPORT_DEMO':'1'})
+ run('workspace',['--workspace','--gui-fix-demo',str(a.output/'workspace'),'--gui-fix-mesh',str(root/'native/tests/fixtures/two_tile_udim.obj'),'--gui-fix-resolution','2048' if a.large else '512'],{'BTS_TEXTURE_IMPORT_DEMO':'1'})
  gui=json.loads((a.output/'workspace/texture-import-gui.json').read_text());captures={c['stage']:c for c in gui['captures']};assert gui['sources_absent'];assert captures['color-loaded']['fill_mode']==6
  for tile in captures['color-loaded']['sequence_tiles']:
   assert abs(tile['color'][0]-(.25 if tile['tile']==1001 else .75))<.004,tile

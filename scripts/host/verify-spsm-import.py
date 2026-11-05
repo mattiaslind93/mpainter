@@ -74,7 +74,7 @@ try:
     with (a.output/'run.log').open('w') as log:
         subprocess.run(['nice', '-n', '19', 'bash', str(root/'scripts/host/run-host.sh'),
                         '--no-splash', '--workspace', '--gui-fix-demo', str(a.output),
-                        '--gui-fix-mesh', str(root/'fixtures/two_tile_udim.obj'),
+                        '--gui-fix-mesh', str(root/'native/tests/fixtures/two_tile_udim.obj'),
                         '--gui-fix-resolution', '128', '--autosave-seconds', '3600',
                         '--library-dir', str(a.output/'library')],
                        env=env, stdout=log, stderr=subprocess.STDOUT, check=True, timeout=900)

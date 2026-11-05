@@ -4,12 +4,12 @@ import argparse,json,os,re,subprocess
 from pathlib import Path
 p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);a=p.parse_args();a.output.mkdir(parents=True,exist_ok=True);root=Path(__file__).resolve().parents[2]
 mesh=a.output/'projection.obj';objects=0;lines=[]
-for line in (root/'fixtures/single_tile.obj').read_text().splitlines():
+for line in (root/'native/tests/fixtures/single_tile.obj').read_text().splitlines():
  if line.startswith('o '):objects+=1
  if line.startswith('mtllib '):line='mtllib projection.mtl'
  if objects>1 and line.startswith('usemtl '):line='usemtl OtherSurface'
  lines.append(line)
-mesh.write_text('\n'.join(lines)+'\n');mesh.with_suffix('.mtl').write_text((root/'fixtures/single_tile.mtl').read_text()+'\nnewmtl OtherSurface\nKd .5 .5 .5\n')
+mesh.write_text('\n'.join(lines)+'\n');mesh.with_suffix('.mtl').write_text((root/'native/tests/fixtures/single_tile.mtl').read_text()+'\nnewmtl OtherSurface\nKd .5 .5 .5\n')
 # Projection offsets use the complete scene bounds; center the bounded decal on
 # the first object's native X/-Z/Y coordinates without mutating the mesh.
 points=[];selected=[];object_index=0

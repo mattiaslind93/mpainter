@@ -14,7 +14,7 @@ a=p.parse_args();a.output.mkdir(parents=True,exist_ok=True)
 root=Path(__file__).resolve().parents[2]
 # Preserve the actual sphere/UV geometry, omit the explicit MTL color to test defaults.
 mesh=a.output/'unassigned.obj'
-mesh.write_text('\n'.join(line for line in (root/'fixtures/single_tile.obj').read_text().splitlines() if not line.startswith(('mtllib ','usemtl ')))+'\n')
+mesh.write_text('\n'.join(line for line in (root/'native/tests/fixtures/single_tile.obj').read_text().splitlines() if not line.startswith(('mtllib ','usemtl ')))+'\n')
 env=dict(os.environ,LANG='sv_SE.UTF-8',LC_ALL='sv_SE.UTF-8',DISPLAY=private_display(),XDG_RUNTIME_DIR='/run/user/1000',BTS_COLOR_PICKER_DEMO='1')
 command=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(mesh),'--gui-fix-resolution','512','--recovery-dir',str(a.output/'recovery')]
 with (a.output/'run.log').open('w') as log:

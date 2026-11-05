@@ -435,7 +435,7 @@ def run_profiles(snapshot, repo, out, env, profile, environment, confetti=None, 
                 fixture.get("gpu_context_created") is False and fixture.get("package_sha256") == sha256(package),
                 "Wrong own native Rendering source fixture")
         library = materialize(package, directory)
-        mesh, material = repo / "fixtures/two_tile_udim.obj", repo / "fixtures/two_tile_udim.mtl"
+        mesh, material = repo / "native/tests/fixtures/two_tile_udim.obj", repo / "native/tests/fixtures/two_tile_udim.mtl"
         inputs = (package, library, mesh, material)
         before = {str(path): sha256(path) for path in inputs}
         original.update(before)

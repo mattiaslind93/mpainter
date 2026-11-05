@@ -12,7 +12,7 @@ for key,folder in [('XDG_CONFIG_HOME','config'),('XDG_DATA_HOME','data'),('XDG_C
  (out/folder).mkdir(exist_ok=True);env[key]=str(out/folder)
 if not a.existing:
  try:
-  with(out/'run.log').open('w')as log:subprocess.run(['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(out),'--gui-fix-mesh',str(root/'fixtures/single_tile.obj'),'--gui-fix-resolution','128','--autosave-seconds','3600','--library-dir',str(out/'studio-library')],env=env,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=300)
+  with(out/'run.log').open('w')as log:subprocess.run(['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(out),'--gui-fix-mesh',str(root/'native/tests/fixtures/single_tile.obj'),'--gui-fix-resolution','128','--autosave-seconds','3600','--library-dir',str(out/'studio-library')],env=env,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=300)
  finally:
   if Path(str(library)+'.held').exists():Path(str(library)+'.held').rename(library)
   if(out/'resources.held').exists():

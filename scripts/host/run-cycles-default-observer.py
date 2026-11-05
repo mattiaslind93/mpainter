@@ -99,7 +99,7 @@ def audit(options, repo, writer):
         Path(__file__), Path(writer.__file__), repo / 'scripts/host/cycles_integrated_snapshot.py',
         repo / 'scripts/host/cycles_live_manifest.py', repo / 'scripts/host/run-host.sh',
         repo / 'scripts/host/gpu-env.sh', repo / 'scripts/host/session_logging.py',
-        repo / 'fixtures/two_tile_udim.obj', options.environment)}
+        repo / 'native/tests/fixtures/two_tile_udim.obj', options.environment)}
     return {'profile': PROFILE, 'retained_donor_tests': retained, 'actual_link_inputs': inputs,
             'runtime_sources': sources, 'build': writer.record(options.output / 'build.json'),
             'run_manifest': writer.record(options.output / 'run-manifest.json')}
@@ -198,7 +198,7 @@ def execute(options, repo, writer):
     (runtime / 'runtime').chmod(0o700)
     for folder in ('cuda', 'nvidia'): (runtime / 'cache' / folder).mkdir()
     command = ['nice', '-n', '19', 'bash', str(repo / 'scripts/host/run-host.sh'), '--workspace', '--no-splash',
-               '--gui-fix-demo', str(runtime), '--gui-fix-mesh', str(repo / 'fixtures/two_tile_udim.obj'),
+               '--gui-fix-demo', str(runtime), '--gui-fix-mesh', str(repo / 'native/tests/fixtures/two_tile_udim.obj'),
                '--gui-fix-resolution', '2048', '--library-dir', str(runtime / 'shelf'), '--recovery-dir', str(runtime / 'recovery')]
     result = {'profile': PROFILE, 'command': command, 'runtime': str(runtime), 'returncode': 1}
     resource.setrlimit(resource.RLIMIT_CORE, (0, 0))

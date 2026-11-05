@@ -67,7 +67,7 @@ def main():
             command = prefix + [
                 'nice', '-n', '19', 'bash', str(root / 'scripts/host/run-host.sh'),
                 '--no-splash', '--workspace', '--brush-presets-demo', str(out),
-                '--brush-presets-mesh', str(root / 'fixtures/single_tile.obj'),
+                '--brush-presets-mesh', str(root / 'native/tests/fixtures/single_tile.obj'),
                 '--autosave-seconds', '3600', '--library-dir', str(library),
             ]
             (out / 'command.json').write_text(json.dumps(command, indent=2) + '\n')

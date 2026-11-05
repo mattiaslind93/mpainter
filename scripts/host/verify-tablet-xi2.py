@@ -10,7 +10,7 @@ from pathlib import Path
 p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);a=p.parse_args();a.output.mkdir(parents=True,exist_ok=True);root=Path(__file__).resolve().parents[2]
 env=dict(os.environ,LANG='sv_SE.UTF-8',LC_ALL='sv_SE.UTF-8',DISPLAY=private_display(),XDG_RUNTIME_DIR='/run/user/1000',BTS_TABLET_REGRESSION='1',BTS_TABLET_XI2='1',BTS_TABLET_LOG='1',QT_FORCE_STDERR_LOGGING='1',QT_LOGGING_RULES='qt.qpa.input*=true')
 # The container runs the app; uinput must be created on the compositor's host.
-cmd=['distrobox','enter','bts-build','--','env','XDG_CONFIG_HOME='+str(a.output/'config'),'XDG_DATA_HOME='+str(a.output/'data'),'bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(root/'fixtures/single_tile.obj'),'--gui-fix-resolution','512','--recovery-dir',str(a.output/'recovery')]
+cmd=['distrobox','enter','bts-build','--','env','XDG_CONFIG_HOME='+str(a.output/'config'),'XDG_DATA_HOME='+str(a.output/'data'),'bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(root/'native/tests/fixtures/single_tile.obj'),'--gui-fix-resolution','512','--recovery-dir',str(a.output/'recovery')]
 with (a.output/'run.log').open('w') as log:
  proc=subprocess.Popen(cmd,env=env,stdout=log,stderr=subprocess.STDOUT)
  try:

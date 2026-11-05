@@ -17,7 +17,7 @@ if not env.get('XDG_RUNTIME_DIR'):
  directory=a.output/'runtime';directory.mkdir(mode=0o700,exist_ok=True);env['XDG_RUNTIME_DIR']=str(directory)
 if a.perf and a.apitrace:p.error('Use separate timing and GL audit runs')
 if a.reference:env.update(BTS_EXPORT_REFERENCE='1',BTS_COMPOSITE_SERIAL='1',BTS_COMPOSITE_SAMPLED='1',BTS_GPU_UNIFORM_DISABLE='1',BTS_GPU_STACK_DISABLE='1')
-cmd=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(root/'fixtures/single_tile.obj'),'--gui-fix-resolution',str(a.resolution),'--recovery-dir',str(a.output/'recovery')]
+cmd=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(a.output),'--gui-fix-mesh',str(root/'native/tests/fixtures/single_tile.obj'),'--gui-fix-resolution',str(a.resolution),'--recovery-dir',str(a.output/'recovery')]
 if a.apitrace:cmd=['apitrace','trace','--api','gl','--output',str(a.output/'native.trace')]+cmd
 if a.perf:cmd=['perf','record','-e','cpu-clock','-F','99','--call-graph','dwarf,8192','-o',str(a.output/'perf.data'),'--']+cmd
 if a.private_xvfb:

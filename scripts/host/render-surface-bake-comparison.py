@@ -15,7 +15,7 @@ scene.world.node_tree.nodes['Background'].inputs[0].default_value=(.025,.025,.02
 scene.world.node_tree.nodes['Background'].inputs[1].default_value=1
 for name in ['displaced','shaderball']:
     bpy.ops.object.select_all(action='SELECT');bpy.ops.object.delete(use_global=False)
-    bpy.ops.wm.obj_import(filepath=str(root/'fixtures'/f'{name}-evaluated.obj'),forward_axis='Y',up_axis='Z')
+    bpy.ops.wm.obj_import(filepath=str(root/'native/tests/fixtures'/f'{name}-evaluated.obj'),forward_axis='Y',up_axis='Z')
     objects=[o for o in scene.objects if o.type=='MESH'];bpy.context.view_layer.objects.active=objects[0]
     if len(objects)>1:bpy.ops.object.join()
     obj=bpy.context.object;bpy.ops.object.shade_smooth()
@@ -27,7 +27,7 @@ for name in ['displaced','shaderball']:
     tex=nodes.new('ShaderNodeTexImage');tex.extension='EXTEND';links.new(tex.outputs['Color'],emission.inputs['Color'])
     for role in [3,4,6]:
         for variant in variants:
-            path=root/variant/f'{name}-{role}.rgba' if variant!='blender' else root/'fixtures'/f'blender-{name}-{role}.rgba'
+            path=root/variant/f'{name}-{role}.rgba' if variant!='blender' else root/'native/tests/fixtures'/f'blender-{name}-{role}.rgba'
             pixels=np.fromfile(path,dtype=np.float32).reshape(256,256,4)
             # Same fixed display gain for all curvature maps, never per-image normalization.
             if role==4:pixels[:,:,:3]=.5+3*(pixels[:,:,:3]-.5)

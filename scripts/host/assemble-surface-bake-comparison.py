@@ -12,7 +12,7 @@ for role,label in [(4,'curvature'),(3,'ao'),(6,'thickness')]:
     for row,name in enumerate(['displaced','shaderball']):
         for col,variant in enumerate(['before','after','blender']):canvas.paste(Image.open(root/f'preview-{name}-{variant}-{role}.png').convert('RGB'),(col*512,48+row*540))
         draw.text((16,562+row*540),'Subdivided sphere + height displacement' if row==0 else 'Shader_Ball_JL_01',font=font,fill='white')
-        ref=np.fromfile(root/'fixtures'/f'blender-{name}-{role}.rgba',dtype=np.float32).reshape(256,256,4)
+        ref=np.fromfile(root/'native/tests/fixtures'/f'blender-{name}-{role}.rgba',dtype=np.float32).reshape(256,256,4)
         for variant in ['before','after']:
             p=np.fromfile(root/variant/f'{name}-{role}.rgba',dtype=np.float32).reshape(256,256,4);mask=(p[:,:,3]>.99)&(ref[:,:,3]>.99)
             delta=p[:,:,0][mask]-ref[:,:,0][mask]

@@ -41,7 +41,7 @@ try:
         with private_gpu_gui(out, env, root) as (prefix, private):
             command = prefix + ['nice', '-n', '19', 'bash', str(root / 'scripts/host/run-host.sh'),
                                 '--no-splash', '--workspace', '--gui-fix-demo', str(out),
-                                '--gui-fix-mesh', str(root / 'fixtures/single_tile.obj'),
+                                '--gui-fix-mesh', str(root / 'native/tests/fixtures/single_tile.obj'),
                                 '--gui-fix-resolution', '128', '--autosave-seconds', '3600',
                                 '--library-dir', str(out / 'library')]
             (out / 'command.json').write_text(json.dumps(command, indent=2) + '\n')

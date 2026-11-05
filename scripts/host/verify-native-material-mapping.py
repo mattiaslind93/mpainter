@@ -247,7 +247,7 @@ for cold in(False,True):
  if cold:
   fixture.rename(fixture.with_suffix('.blend.hidden'));runtime['BTS_NATIVE_MAPPING_REOPEN']='1';assert not any(Path(runtime['BTS_RESOURCE_CACHE']).iterdir())
  try:
-  with(directory/'run.log').open('w')as log:subprocess.run(['nice','-n','19','bash',str(repo/'scripts/host/run-host.sh'),'--no-splash','--workspace','--gui-fix-demo',str(directory),'--gui-fix-mesh',str(repo/'fixtures/single_tile.obj'),'--gui-fix-resolution','128','--autosave-seconds','3600','--library-dir',str(Path(runtime['XDG_DATA_HOME'])/'library')],cwd=repo,env=runtime,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=300)
+  with(directory/'run.log').open('w')as log:subprocess.run(['nice','-n','19','bash',str(repo/'scripts/host/run-host.sh'),'--no-splash','--workspace','--gui-fix-demo',str(directory),'--gui-fix-mesh',str(repo/'native/tests/fixtures/single_tile.obj'),'--gui-fix-resolution','128','--autosave-seconds','3600','--library-dir',str(Path(runtime['XDG_DATA_HOME'])/'library')],cwd=repo,env=runtime,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=300)
  finally:
   if cold:fixture.with_suffix('.blend.hidden').rename(fixture)
  text=(directory/'run.log').read_text();assert'BTS_SHUTDOWN clean'in text and'BTS_NATIVE_MAPPING_ARTIST PASS'in text
