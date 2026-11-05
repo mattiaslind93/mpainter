@@ -13,7 +13,7 @@ assert code==0,code
 proof=json.loads((a.output/'bake-fix.json').read_text());assert proof['pid']==process.pid
 c={v['stage']:v for v in proof['captures']};d={v['stage']:v for v in proof['dialogs']}
 assert d['default']['enabled'] and d['default']['project_mesh'] and d['default']['source_visible']
-for stage,word in [('no-source','high-poly'),('no-maps','mesh map'),('no-tiles','texture set/tile'),('no-cage','cage-fil'),('saved-explicit-source-off','high-poly')]:
+for stage,word in [('no-source','high-poly'),('no-maps','mesh map'),('no-tiles','texture set/tile'),('no-cage','cage file'),('saved-explicit-source-off','high-poly')]:
  assert not d[stage]['enabled'] and word in d[stage]['tooltip'] and d[stage]['tooltip']==d[stage]['help'],d[stage]
 assert not d['saved-explicit-source-off']['project_mesh'] and d['ready-ao-curvature']['enabled']
 assert not c['preferences-opened']['bake_configuration']['project_mesh']
