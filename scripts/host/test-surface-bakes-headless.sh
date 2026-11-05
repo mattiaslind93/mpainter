@@ -11,7 +11,7 @@ export XDG_CONFIG_HOME="$root/build/mpainter-test-sessions/curvature/config"
 export XDG_CACHE_HOME="$root/build/curvature/state/cache"
 export XDG_DATA_HOME="$root/build/curvature/state/data"
 export BTS_RECOVERY_DIR="$root/build/mpainter-test-sessions/curvature/recovery"
-export BTS_SURFACE_FIXTURES="$root/build/curvature/fixtures"
+export BTS_SURFACE_FIXTURES="${BTS_SURFACE_FIXTURES:-$root/build/curvature/fixtures}"
 option=--cpu-bake-source-test
 if [[ ${BTS_SURFACE_GPU:-0} == 1 ]]; then
   option=--headless-surface-bake-test

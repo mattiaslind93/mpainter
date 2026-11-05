@@ -87,7 +87,9 @@ SceneSnapshot prepare_bake_surface(const SceneSnapshot &source,const MeshBakeSet
         parts.push_back(base);
       }else parts=displace_bake_mesh({base},field);
       for(const auto &part:parts){
-        auto out=tri;for(int k=0;k<3;++k){out.positions[k]=part.corners[k].position;out.corners[k]=part.corners[k].uv;out.normals[k]=part.corners[k].normal;}triangles.push_back(out);
+        auto out=tri;
+        if(!source.evaluated_subdivision&&field.subdivision>0)out.boundary_edges=7;
+        for(int k=0;k<3;++k){out.positions[k]=part.corners[k].position;out.corners[k]=part.corners[k].uv;out.normals[k]=part.corners[k].normal;}triangles.push_back(out);
       }
     }
     snapshot.uv_triangles=std::move(triangles);
@@ -120,42 +122,8 @@ MeshBakeJob::MeshBakeJob(std::shared_ptr<const SceneSnapshot> source,std::vector
       }
       SurfaceCurvature curvature_field(snapshot,false);
 
-      std::optional<RayScene> scene;scene.emplace(snapshot,settings);double extent=0,radius_squared=0;std::array<double,3> center;for(int i=0;i<3;++i){const double size=snapshot.maximum[i]-snapshot.minimum[i];extent=std::max(extent,size);radius_squared+=size*size*.25;center[i]=(snapshot.maximum[i]+snapshot.minimum[i])*.5;}extent=std::max(extent,1e-5);const double diameter=std::max(2*std::sqrt(radius_squared),1e-5);const float radius=settings.curvature_radius>0?settings.curvature_radius:float(extent*.03);
-      if(settings.enabled[int(MeshMapRole::Curvature)]){
-        curvature_field.calculate(radius);
-        if(settings.normal_detail>0&&!settings.normal_maps.empty()){
-          // Sample tangent normals on the welded surface, then differentiate in
-          // world space. UV island borders use the same radius neighborhood.
-          auto detail=curvature_field;
-          std::vector<std::array<float,3>> sums(detail.vertices.size());
-          std::vector<float> weights(detail.vertices.size());
-          for(std::size_t f=0;f<snapshot.uv_triangles.size();++f){
-            const auto &tri=snapshot.uv_triangles[f];const auto field=settings.normal_maps.find(snapshot.materials.at(tri.material).session_id);
-            float u=0,v=0;for(const auto &uv:tri.corners){u+=uv[0]/3;v+=uv[1]/3;}
-            const int tile=1001+int(std::floor(u))+10*int(std::floor(v));
-            for(int k=0;k<3;++k){
-              const int id=detail.corners[f][k];auto normal=detail.vertices[id].n;
-              if(field!=settings.normal_maps.end()&&field->second.tiles.contains(tile)){
-                const auto &map=field->second;const auto &pixels=map.tiles.at(tile);
-                if(map.width<1||map.height<1||pixels.size()!=std::size_t(map.width)*map.height)throw std::invalid_argument("Invalid curvature normal map");
-                const float x=std::clamp((tri.corners[k][0]-(tile-1001)%10)*map.width-.5f,0.f,float(map.width-1));
-                const float y=std::clamp((tri.corners[k][1]-(tile-1001)/10)*map.height-.5f,0.f,float(map.height-1));
-                const int x0=int(x),y0=int(y),x1=std::min(x0+1,map.width-1),y1=std::min(y0+1,map.height-1);
-                std::array<float,3> tangent{};
-                for(int c=0;c<3;++c)tangent[c]=std::lerp(std::lerp(pixels[y0*map.width+x0][c],pixels[y0*map.width+x1][c],x-x0),std::lerp(pixels[y1*map.width+x0][c],pixels[y1*map.width+x1][c],x-x0),y-y0);
-                const auto frame=fragment_tangent_frame(uv_tangent_frame(tri),normal);normal={};
-                for(int a=0;a<3;++a)for(int c=0;c<3;++c)normal[a]+=frame[c][a]*tangent[c];normal=normalized_normal(normal);
-              }
-              const auto a=normalized_normal(SurfaceCurvature::sub(tri.positions[(k+1)%3],tri.positions[k])),b=normalized_normal(SurfaceCurvature::sub(tri.positions[(k+2)%3],tri.positions[k]));
-              const float w=std::acos(std::clamp(SurfaceCurvature::dot(a,b),-1.f,1.f));
-              for(int c=0;c<3;++c)sums[id][c]+=normal[c]*w;weights[id]+=w;
-            }
-          }
-          for(std::size_t i=0;i<detail.vertices.size();++i)if(weights[i]>0)detail.vertices[i].n=normalized_normal(sums[i]);
-          detail.calculate(radius);
-          for(std::size_t i=0;i<detail.vertices.size();++i)curvature_field.vertices[i].curvature+=settings.normal_detail*(detail.vertices[i].curvature-curvature_field.vertices[i].curvature);
-        }
-      }
+      std::optional<RayScene> scene;scene.emplace(snapshot,settings);double extent=0,radius_squared=0;std::array<double,3> center;for(int i=0;i<3;++i){const double size=snapshot.maximum[i]-snapshot.minimum[i];extent=std::max(extent,size);radius_squared+=size*size*.25;center[i]=(snapshot.maximum[i]+snapshot.minimum[i])*.5;}extent=std::max(extent,1e-5);const double diameter=std::max(2*std::sqrt(radius_squared),1e-5);
+      if(settings.enabled[int(MeshMapRole::Curvature)])curvature_field.calculate_pointiness(settings.curvature_radius);
       const float offset=settings.ray_offset>0?settings.ray_offset:float(extent*1e-6);
       int task=0;
       for(const auto &input:inputs){MeshBakeResult output;output.material_uid=input.material_uid;
@@ -185,7 +153,7 @@ MeshBakeJob::MeshBakeJob(std::shared_ptr<const SceneSnapshot> source,std::vector
               case MeshMapRole::WorldNormal:for(int i=0;i<3;++i)rgb[i]=point.normal[i]*.5f+.5f;break;
               case MeshMapRole::Id:if(settings.external_source)std::copy_n(point.source_color.begin(),3,rgb);else std::copy_n(input.source_material.base_color.begin(),3,rgb);break;
               case MeshMapRole::AmbientOcclusion:if(!gpu_values.empty()){rgb[0]=rgb[1]=rgb[2]=gpu_values[index];break;}rgb[0]=rgb[1]=rgb[2]=ray_average(*scene,point,geometric[index],settings.rays,maximum,offset,false,std::uint32_t(index));break;
-              case MeshMapRole::Curvature:rgb[0]=rgb[1]=rgb[2]=.5f+.5f*std::tanh(.25f*settings.curvature_scale*radius*curvature[index]);break;
+              case MeshMapRole::Curvature:rgb[0]=rgb[1]=rgb[2]=std::clamp(.5f+settings.curvature_scale*(curvature[index]-.5f),0.f,1.f);break;
               case MeshMapRole::Position:for(int i=0;i<3;++i)rgb[i]=float(std::clamp((point.position[i]-center[i])/diameter+.5,0.,1.));break;
               case MeshMapRole::Thickness:if(!gpu_values.empty()){rgb[0]=rgb[1]=rgb[2]=gpu_values[index];break;}rgb[0]=rgb[1]=rgb[2]=ray_average(*scene,point,geometric[index],settings.rays,maximum,offset,true,std::uint32_t(index));break;
             }auto *pixel=pixels.data()+index*4;std::copy_n(rgb,3,pixel);pixel[3]=1;}++rows;}});

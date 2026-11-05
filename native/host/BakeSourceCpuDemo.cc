@@ -3,6 +3,7 @@
 #include "AutoBakeEngine.hh"
 #include "BakeMatch.hh"
 #include "SurfaceBakeProof.hh"
+#include "RebakeProof.hh"
 #include <QDir>
 #include <QFile>
 #include <QJsonDocument>
@@ -11,6 +12,7 @@
 #include <cmath>
 namespace bts {
 int run_bake_source_cpu_demo(BlenderHost &host,const QString &directory){
+ if(qEnvironmentVariableIsSet("BTS_REBAKE_REGRESSION"))return rebake_proof(directory);
  if(qEnvironmentVariableIsSet("BTS_SURFACE_FIXTURES"))return surface_bake_proof(host,directory);
  const auto require=[](bool value,const char *message){if(!value)throw std::runtime_error(message);};
  const auto path=[&](const QString &name){return QDir(directory).filePath("fixtures/"+name).toStdString();};

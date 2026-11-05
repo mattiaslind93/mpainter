@@ -30,7 +30,19 @@
 #include "RE_bake.h"
 namespace bts {
 using namespace blender;
-namespace {std::atomic<std::uint64_t> padding_invocations{0};}
+namespace {
+std::atomic<std::uint64_t> padding_invocations{0};
+void set_bake_normals(Mesh &mesh,MutableSpan<float3> normals){
+  const auto fallback=mesh.corner_normals();
+  for(int i=0;i<normals.size();++i)if(normalize_v3(normals[i])==0)normals[i]=fallback[i];
+  // Welding can collapse a face corner. Legacy short2 fan encoding leaves that
+  // corner's space index uninitialized; free normals need no fan lookup.
+  auto attribute=mesh.attributes_for_write().lookup_or_add_for_write_only_span<float3>(
+      "custom_normal",bke::AttrDomain::Corner);
+  if(!attribute)throw std::runtime_error("Cannot store bake normals");
+  attribute.span.copy_from(normals);attribute.finish();
+}
+}
 struct TexturePadding::Impl {
   SceneSnapshot source;std::uint32_t material_uid=0;
   Mesh *mesh=nullptr,*cached_high_mesh=nullptr;const SceneSnapshot *cached_high_source=nullptr;
@@ -79,7 +91,7 @@ TexturePadding::TexturePadding(const SceneSnapshot &snapshot,std::uint32_t uid):
   auto uv=attributes.lookup_or_add_for_write_only_span<float2>("UVMap",bke::AttrDomain::Corner);
   for(int face=0;face<int(faces.size());++face)for(int i=0;i<3;++i){corners[face*3+i]=vertices.at(faces[face]->vertex_ids[i]);uv.span[face*3+i]=float2(faces[face]->corners[i].data());}
   uv.finish();mesh->tag_topology_changed();bke::mesh_calc_edges(*mesh,false,false);
-  std::vector<float3> custom_normals(faces.size()*3,float3(0));bool have_normals=false;for(std::size_t f=0;f<faces.size();++f)if(faces[f]->has_normals){have_normals=true;for(int c=0;c<3;++c)custom_normals[f*3+c]=float3(faces[f]->normals[c].data());}if(have_normals)bke::mesh_set_custom_normals(*mesh,MutableSpan<float3>(custom_normals.data(),custom_normals.size()));
+  std::vector<float3> custom_normals(faces.size()*3,float3(0));bool have_normals=false;for(std::size_t f=0;f<faces.size();++f)if(faces[f]->has_normals){have_normals=true;for(int c=0;c<3;++c)custom_normals[f*3+c]=float3(faces[f]->normals[c].data());}if(have_normals)set_bake_normals(*mesh,MutableSpan<float3>(custom_normals.data(),custom_normals.size()));
 }
 const std::map<std::uint32_t,std::string> &TexturePadding::mesh_names() const{return impl_->object_names;}
 std::shared_ptr<const GeometryOwnershipTile> TexturePadding::mesh_ownership(int width,int tile,int height){if(!height)height=width;if(width<1||height<1)throw std::invalid_argument("Invalid geometry ownership dimensions");const auto required=std::uint64_t(width)*height*32,budget=texture_available_ram_bytes();if(const auto found=impl_->ownership.find(tile);found!=impl_->ownership.end()&&found->second->width==width&&found->second->height==height)return found->second;auto atlas=std::make_shared<GeometryOwnershipTile>();atlas->width=width;atlas->height=height;atlas->owners.resize(std::size_t(width)*height,0);if(impl_->mesh){const auto pixels=impl_->rasterize(tile,width,height);const auto triangles=impl_->mesh->corner_tris();const auto vertices=impl_->mesh->corner_verts();for(std::size_t i=0;i<atlas->owners.size();++i){const auto primitive=pixels[i].primitive_id;if(primitive>=0&&primitive<triangles.size())atlas->owners[i]=std::uint32_t(impl_->vertex_sources[vertices[triangles[primitive][0]]]>>32);}}impl_->ownership[tile]=atlas;return atlas;}
@@ -127,7 +139,7 @@ BakeMesh source_mesh(const SceneSnapshot &source){
   std::map<std::uint64_t,int> vertices;std::vector<float3> positions;
   for(const auto &triangle:source.uv_triangles)for(int i=0;i<3;++i)if(!vertices.contains(triangle.vertex_ids[i])){vertices.emplace(triangle.vertex_ids[i],int(positions.size()));positions.emplace_back(triangle.positions[i].data());}
   BakeMesh mesh(BKE_mesh_new_nomain(int(positions.size()),0,int(source.uv_triangles.size()),int(source.uv_triangles.size()*3)));
-  if(!mesh)throw std::runtime_error("Cannot allocate native high-poly bake mesh");std::copy(positions.begin(),positions.end(),mesh->vert_positions_for_write().begin());auto offsets=mesh->face_offsets_for_write();for(int i=0;i<=int(source.uv_triangles.size());++i)offsets[i]=i*3;auto corners=mesh->corner_verts_for_write();for(int face=0;face<int(source.uv_triangles.size());++face)for(int i=0;i<3;++i)corners[face*3+i]=vertices.at(source.uv_triangles[face].vertex_ids[i]);mesh->tag_topology_changed();bke::mesh_calc_edges(*mesh,false,false);std::vector<float3> normals(source.uv_triangles.size()*3,float3(0));bool have=false;for(std::size_t f=0;f<source.uv_triangles.size();++f)if(source.uv_triangles[f].has_normals){have=true;for(int c=0;c<3;++c)normals[f*3+c]=float3(source.uv_triangles[f].normals[c].data());}if(have)bke::mesh_set_custom_normals(*mesh,MutableSpan<float3>(normals.data(),normals.size()));return mesh;
+  if(!mesh)throw std::runtime_error("Cannot allocate native high-poly bake mesh");std::copy(positions.begin(),positions.end(),mesh->vert_positions_for_write().begin());auto offsets=mesh->face_offsets_for_write();for(int i=0;i<=int(source.uv_triangles.size());++i)offsets[i]=i*3;auto corners=mesh->corner_verts_for_write();for(int face=0;face<int(source.uv_triangles.size());++face)for(int i=0;i<3;++i)corners[face*3+i]=vertices.at(source.uv_triangles[face].vertex_ids[i]);mesh->tag_topology_changed();bke::mesh_calc_edges(*mesh,false,false);std::vector<float3> normals(source.uv_triangles.size()*3,float3(0));bool have=false;for(std::size_t f=0;f<source.uv_triangles.size();++f)if(source.uv_triangles[f].has_normals){have=true;for(int c=0;c<3;++c)normals[f*3+c]=float3(source.uv_triangles[f].normals[c].data());}if(have)set_bake_normals(*mesh,MutableSpan<float3>(normals.data(),normals.size()));return mesh;
 }
 using ObjectVertices=std::map<std::uint32_t,std::map<std::uint32_t,std::array<float,3>>>;
 ObjectVertices object_vertices(const SceneSnapshot &scene){ObjectVertices objects;for(const auto &triangle:scene.uv_triangles)for(int i=0;i<3;++i)objects[std::uint32_t(triangle.vertex_ids[i]>>32)][std::uint32_t(triangle.vertex_ids[i])]=triangle.positions[i];return objects;}

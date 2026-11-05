@@ -1,0 +1,148 @@
+sphere 0.001 density 12 error 1.19209e-07
+sphere 0.001 density 12 error 1.19209e-07
+sphere 0.001 density 32 error 5.96046e-08
+sphere 0.001 density 32 error 5.96046e-08
+sphere 1 density 12 error 5.96046e-08
+sphere 1 density 12 error 5.96046e-08
+sphere 1 density 32 error 1.19209e-07
+sphere 1 density 32 error 1.19209e-07
+sphere 1000 density 12 error 5.96046e-08
+sphere 1000 density 12 error 5.96046e-08
+sphere 1000 density 32 error 5.96046e-08
+sphere 1000 density 32 error 5.96046e-08
+surface curvature and ray offset PASS
+Bake preferences preserve explicit false, sources, maps and empty tile selection; legacy defaults and validation passed
+BTS_NUMERIC_LOCALE value=C decimal=.
+Blender 5.2.0 LTS
+BTS_SCENE_READY pid=501833 engine=BLENDER_EEVEE native_window=none
+BTS_REBAKE_BEGIN size=64
+BTS_BAKE_TASK uid=1 tile=1001 role=0 width=64 height=64 scratch_estimate=262144 available_ram=7142768640
+BTS_BAKE_TASK uid=1 tile=1001 role=1 width=64 height=64 scratch_estimate=262144 available_ram=7142572032
+BTS_BAKE_TASK uid=1 tile=1001 role=2 width=64 height=64 scratch_estimate=262144 available_ram=7142637568
+BTS_BAKE_TASK uid=1 tile=1001 role=3 width=64 height=64 scratch_estimate=262144 available_ram=7142703104
+BTS_BAKE_TASK uid=1 tile=1001 role=4 width=64 height=64 scratch_estimate=262144 available_ram=7142506496
+BTS_BAKE_TASK uid=1 tile=1001 role=5 width=64 height=64 scratch_estimate=262144 available_ram=7142572032
+BTS_BAKE_TASK uid=1 tile=1001 role=6 width=64 height=64 scratch_estimate=262144 available_ram=7142637568
+BTS_REBAKE_PASS size=64 maps=7
+BTS_REBAKE_BEGIN size=256
+BTS_BAKE_TASK uid=1 tile=1001 role=0 width=256 height=256 scratch_estimate=4194304 available_ram=7134720000
+BTS_BAKE_TASK uid=1 tile=1001 role=1 width=256 height=256 scratch_estimate=4194304 available_ram=7131836416
+BTS_BAKE_TASK uid=1 tile=1001 role=2 width=256 height=256 scratch_estimate=4194304 available_ram=7131836416
+BTS_BAKE_TASK uid=1 tile=1001 role=3 width=256 height=256 scratch_estimate=4194304 available_ram=7131836416
+BTS_BAKE_TASK uid=1 tile=1001 role=4 width=256 height=256 scratch_estimate=4194304 available_ram=7131836416
+BTS_BAKE_TASK uid=1 tile=1001 role=5 width=256 height=256 scratch_estimate=4194304 available_ram=7132110848
+BTS_BAKE_TASK uid=1 tile=1001 role=6 width=256 height=256 scratch_estimate=4194304 available_ram=7131869184
+BTS_REBAKE_PASS size=256 maps=7
+BTS_REBAKE_BEGIN size=1024
+BTS_BAKE_TASK uid=1 tile=1001 role=0 width=1024 height=1024 scratch_estimate=67108864 available_ram=7003676672
+BTS_BAKE_TASK uid=1 tile=1001 role=1 width=1024 height=1024 scratch_estimate=67108864 available_ram=6969311232
+BTS_BAKE_TASK uid=1 tile=1001 role=2 width=1024 height=1024 scratch_estimate=67108864 available_ram=6952873984
+BTS_BAKE_TASK uid=1 tile=1001 role=3 width=1024 height=1024 scratch_estimate=67108864 available_ram=6952968192
+BTS_BAKE_TASK uid=1 tile=1001 role=4 width=1024 height=1024 scratch_estimate=67108864 available_ram=6952976384
+BTS_BAKE_TASK uid=1 tile=1001 role=5 width=1024 height=1024 scratch_estimate=67108864 available_ram=6952722432
+BTS_BAKE_TASK uid=1 tile=1001 role=6 width=1024 height=1024 scratch_estimate=67108864 available_ram=6952464384
+BTS_REBAKE_PASS size=1024 maps=7
+BTS_REBAKE_BEGIN size=256
+BTS_BAKE_TASK uid=1 tile=1001 role=0 width=256 height=256 scratch_estimate=4194304 available_ram=6963310592
+BTS_BAKE_TASK uid=1 tile=1001 role=1 width=256 height=256 scratch_estimate=4194304 available_ram=6963310592
+BTS_BAKE_TASK uid=1 tile=1001 role=2 width=256 height=256 scratch_estimate=4194304 available_ram=6963310592
+BTS_BAKE_TASK uid=1 tile=1001 role=3 width=256 height=256 scratch_estimate=4194304 available_ram=6963310592
+BTS_BAKE_TASK uid=1 tile=1001 role=4 width=256 height=256 scratch_estimate=4194304 available_ram=6963310592
+BTS_BAKE_TASK uid=1 tile=1001 role=5 width=256 height=256 scratch_estimate=4194304 available_ram=6963310592
+BTS_BAKE_TASK uid=1 tile=1001 role=6 width=256 height=256 scratch_estimate=4194304 available_ram=6963310592
+BTS_REBAKE_PASS size=256 maps=7
+BTS_REBAKE_BEGIN size=64
+BTS_BAKE_TASK uid=1 tile=1001 role=0 width=64 height=64 scratch_estimate=262144 available_ram=7081054208
+BTS_BAKE_TASK uid=1 tile=1001 role=1 width=64 height=64 scratch_estimate=262144 available_ram=7081119744
+BTS_BAKE_TASK uid=1 tile=1001 role=2 width=64 height=64 scratch_estimate=262144 available_ram=7081185280
+BTS_BAKE_TASK uid=1 tile=1001 role=3 width=64 height=64 scratch_estimate=262144 available_ram=7081250816
+BTS_BAKE_TASK uid=1 tile=1001 role=4 width=64 height=64 scratch_estimate=262144 available_ram=7081054208
+BTS_BAKE_TASK uid=1 tile=1001 role=5 width=64 height=64 scratch_estimate=262144 available_ram=7081119744
+BTS_BAKE_TASK uid=1 tile=1001 role=6 width=64 height=64 scratch_estimate=262144 available_ram=7080923136
+BTS_REBAKE_PASS size=64 maps=7
+BTS_REBAKE_BEGIN size=1024
+BTS_BAKE_TASK uid=1 tile=1001 role=0 width=1024 height=1024 scratch_estimate=67108864 available_ram=6958567424
+BTS_BAKE_TASK uid=1 tile=1001 role=1 width=1024 height=1024 scratch_estimate=67108864 available_ram=6958841856
+BTS_BAKE_TASK uid=1 tile=1001 role=2 width=1024 height=1024 scratch_estimate=67108864 available_ram=6959222784
+BTS_BAKE_TASK uid=1 tile=1001 role=3 width=1024 height=1024 scratch_estimate=67108864 available_ram=6959230976
+BTS_BAKE_TASK uid=1 tile=1001 role=4 width=1024 height=1024 scratch_estimate=67108864 available_ram=6959468544
+BTS_BAKE_TASK uid=1 tile=1001 role=5 width=1024 height=1024 scratch_estimate=67108864 available_ram=6959718400
+BTS_BAKE_TASK uid=1 tile=1001 role=6 width=1024 height=1024 scratch_estimate=67108864 available_ram=6959726592
+BTS_REBAKE_PASS size=1024 maps=7
+BTS_REBAKE_BEGIN size=64
+BTS_BAKE_TASK uid=1 tile=1001 role=0 width=64 height=64 scratch_estimate=262144 available_ram=6971142144
+BTS_BAKE_TASK uid=1 tile=1001 role=1 width=64 height=64 scratch_estimate=262144 available_ram=7021588480
+BTS_BAKE_TASK uid=1 tile=1001 role=2 width=64 height=64 scratch_estimate=262144 available_ram=7021654016
+BTS_BAKE_TASK uid=1 tile=1001 role=3 width=64 height=64 scratch_estimate=262144 available_ram=7021719552
+BTS_BAKE_TASK uid=1 tile=1001 role=4 width=64 height=64 scratch_estimate=262144 available_ram=7021260800
+BTS_BAKE_TASK uid=1 tile=1001 role=5 width=64 height=64 scratch_estimate=262144 available_ram=7021326336
+BTS_BAKE_TASK uid=1 tile=1001 role=6 width=64 height=64 scratch_estimate=262144 available_ram=7021129728
+BTS_REBAKE_PASS size=64 maps=7
+BTS_SHUTDOWN clean pid=501833
+BTS_NUMERIC_LOCALE value=C decimal=.
+Blender 5.2.0 LTS
+BTS_SCENE_READY pid=501994 engine=BLENDER_EEVEE native_window=none
+BTS_REBAKE_BEGIN size=64
+BTS_BAKE_TASK uid=1 tile=1001 role=0 width=64 height=64 scratch_estimate=262144 available_ram=7143727104
+BTS_BAKE_TASK uid=1 tile=1001 role=1 width=64 height=64 scratch_estimate=262144 available_ram=7143792640
+BTS_BAKE_TASK uid=1 tile=1001 role=2 width=64 height=64 scratch_estimate=262144 available_ram=7143596032
+BTS_BAKE_TASK uid=1 tile=1001 role=3 width=64 height=64 scratch_estimate=262144 available_ram=7143661568
+BTS_BAKE_TASK uid=1 tile=1001 role=4 width=64 height=64 scratch_estimate=262144 available_ram=7143464960
+BTS_BAKE_TASK uid=1 tile=1001 role=5 width=64 height=64 scratch_estimate=262144 available_ram=7143530496
+BTS_BAKE_TASK uid=1 tile=1001 role=6 width=64 height=64 scratch_estimate=262144 available_ram=7143596032
+BTS_REBAKE_PASS size=64 maps=7
+BTS_REBAKE_BEGIN size=256
+BTS_BAKE_TASK uid=1 tile=1001 role=0 width=256 height=256 scratch_estimate=4194304 available_ram=7135506432
+BTS_BAKE_TASK uid=1 tile=1001 role=1 width=256 height=256 scratch_estimate=4194304 available_ram=7132364800
+BTS_BAKE_TASK uid=1 tile=1001 role=2 width=256 height=256 scratch_estimate=4194304 available_ram=7132368896
+BTS_BAKE_TASK uid=1 tile=1001 role=3 width=256 height=256 scratch_estimate=4194304 available_ram=7133151232
+BTS_BAKE_TASK uid=1 tile=1001 role=4 width=256 height=256 scratch_estimate=4194304 available_ram=7133155328
+BTS_BAKE_TASK uid=1 tile=1001 role=5 width=256 height=256 scratch_estimate=4194304 available_ram=7133155328
+BTS_BAKE_TASK uid=1 tile=1001 role=6 width=256 height=256 scratch_estimate=4194304 available_ram=7133155328
+BTS_REBAKE_PASS size=256 maps=7
+BTS_REBAKE_BEGIN size=1024
+BTS_BAKE_TASK uid=1 tile=1001 role=0 width=1024 height=1024 scratch_estimate=67108864 available_ram=7004151808
+BTS_BAKE_TASK uid=1 tile=1001 role=1 width=1024 height=1024 scratch_estimate=67108864 available_ram=6969581568
+BTS_BAKE_TASK uid=1 tile=1001 role=2 width=1024 height=1024 scratch_estimate=67108864 available_ram=6952837120
+BTS_BAKE_TASK uid=1 tile=1001 role=3 width=1024 height=1024 scratch_estimate=67108864 available_ram=6953103360
+BTS_BAKE_TASK uid=1 tile=1001 role=4 width=1024 height=1024 scratch_estimate=67108864 available_ram=6953111552
+BTS_BAKE_TASK uid=1 tile=1001 role=5 width=1024 height=1024 scratch_estimate=67108864 available_ram=6953119744
+BTS_BAKE_TASK uid=1 tile=1001 role=6 width=1024 height=1024 scratch_estimate=67108864 available_ram=6953127936
+BTS_REBAKE_PASS size=1024 maps=7
+BTS_REBAKE_BEGIN size=256
+BTS_BAKE_TASK uid=1 tile=1001 role=0 width=256 height=256 scratch_estimate=4194304 available_ram=6963392512
+BTS_BAKE_TASK uid=1 tile=1001 role=1 width=256 height=256 scratch_estimate=4194304 available_ram=6963392512
+BTS_BAKE_TASK uid=1 tile=1001 role=2 width=256 height=256 scratch_estimate=4194304 available_ram=6963392512
+BTS_BAKE_TASK uid=1 tile=1001 role=3 width=256 height=256 scratch_estimate=4194304 available_ram=6963392512
+BTS_BAKE_TASK uid=1 tile=1001 role=4 width=256 height=256 scratch_estimate=4194304 available_ram=6963392512
+BTS_BAKE_TASK uid=1 tile=1001 role=5 width=256 height=256 scratch_estimate=4194304 available_ram=6963392512
+BTS_BAKE_TASK uid=1 tile=1001 role=6 width=256 height=256 scratch_estimate=4194304 available_ram=6963392512
+BTS_REBAKE_PASS size=256 maps=7
+BTS_REBAKE_BEGIN size=64
+BTS_BAKE_TASK uid=1 tile=1001 role=0 width=64 height=64 scratch_estimate=262144 available_ram=7081754624
+BTS_BAKE_TASK uid=1 tile=1001 role=1 width=64 height=64 scratch_estimate=262144 available_ram=7081558016
+BTS_BAKE_TASK uid=1 tile=1001 role=2 width=64 height=64 scratch_estimate=262144 available_ram=7081627648
+BTS_BAKE_TASK uid=1 tile=1001 role=3 width=64 height=64 scratch_estimate=262144 available_ram=7081693184
+BTS_BAKE_TASK uid=1 tile=1001 role=4 width=64 height=64 scratch_estimate=262144 available_ram=7081758720
+BTS_BAKE_TASK uid=1 tile=1001 role=5 width=64 height=64 scratch_estimate=262144 available_ram=7081562112
+BTS_BAKE_TASK uid=1 tile=1001 role=6 width=64 height=64 scratch_estimate=262144 available_ram=7081627648
+BTS_REBAKE_PASS size=64 maps=7
+BTS_REBAKE_BEGIN size=1024
+BTS_BAKE_TASK uid=1 tile=1001 role=0 width=1024 height=1024 scratch_estimate=67108864 available_ram=6959685632
+BTS_BAKE_TASK uid=1 tile=1001 role=1 width=1024 height=1024 scratch_estimate=67108864 available_ram=6960381952
+BTS_BAKE_TASK uid=1 tile=1001 role=2 width=1024 height=1024 scratch_estimate=67108864 available_ram=6960390144
+BTS_BAKE_TASK uid=1 tile=1001 role=3 width=1024 height=1024 scratch_estimate=67108864 available_ram=6960398336
+BTS_BAKE_TASK uid=1 tile=1001 role=4 width=1024 height=1024 scratch_estimate=67108864 available_ram=6960381952
+BTS_BAKE_TASK uid=1 tile=1001 role=5 width=1024 height=1024 scratch_estimate=67108864 available_ram=6960390144
+BTS_BAKE_TASK uid=1 tile=1001 role=6 width=1024 height=1024 scratch_estimate=67108864 available_ram=6960398336
+BTS_REBAKE_PASS size=1024 maps=7
+BTS_REBAKE_BEGIN size=64
+BTS_BAKE_TASK uid=1 tile=1001 role=0 width=64 height=64 scratch_estimate=262144 available_ram=6971432960
+BTS_BAKE_TASK uid=1 tile=1001 role=1 width=64 height=64 scratch_estimate=262144 available_ram=6971498496
+BTS_BAKE_TASK uid=1 tile=1001 role=2 width=64 height=64 scratch_estimate=262144 available_ram=6971314176
+BTS_BAKE_TASK uid=1 tile=1001 role=3 width=64 height=64 scratch_estimate=262144 available_ram=6971379712
+BTS_BAKE_TASK uid=1 tile=1001 role=4 width=64 height=64 scratch_estimate=262144 available_ram=6971445248
+BTS_BAKE_TASK uid=1 tile=1001 role=5 width=64 height=64 scratch_estimate=262144 available_ram=6971510784
+BTS_BAKE_TASK uid=1 tile=1001 role=6 width=64 height=64 scratch_estimate=262144 available_ram=6971314176
+BTS_REBAKE_PASS size=64 maps=7
+BTS_SHUTDOWN clean pid=501994

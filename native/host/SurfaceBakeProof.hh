@@ -28,15 +28,15 @@ inline void surface_bake_regressions(){
   const auto run=[&](const MeshBakeSettings &o){MeshBakeJob job(scene,{{1,"plane",{},atlas}},o);while(!job.finished.load(std::memory_order_acquire))std::this_thread::sleep_for(std::chrono::milliseconds(2));if(!job.error.empty())throw std::runtime_error(job.error);return std::move(job.result.front().maps);};
   const auto flat=run(options);
   for(int role:{3,4,6}){const auto &p=flat[role]->tiles.at(1001).pixels->rgba;for(std::size_t i=0;i<p.size();i+=4)if(p[i+3])require(std::abs(p[i]-(role==4?.5f:1.f))<1e-6f,"Plane must have neutral curvature and no self-occlusion");}
-  options.normal_detail=1;options.curvature_scale=8;auto &normal=options.normal_maps[1];normal.width=normal.height=32;auto &pixels=normal.tiles[1001];pixels.resize(1024);
+  options.normal_detail=1;auto &normal=options.normal_maps[1];normal.width=normal.height=32;auto &pixels=normal.tiles[1001];pixels.resize(1024);
   for(int y=0;y<32;++y)for(int x=0;x<32;++x)pixels[y*32+x]=normalized_normal({static_cast<float>(.5f*std::sin(2*std::numbers::pi*(x+.5f)/32)),0,1});
-  const auto detailed=run(options);float low=1,high=0;const auto &p=detailed[4]->tiles.at(1001).pixels->rgba;
-  for(std::size_t i=0;i<p.size();i+=4)if(p[i+3]){low=std::min(low,p[i]);high=std::max(high,p[i]);}require(low<.45f&&high>.55f,"Normal-map detail must produce signed curvature on a flat mesh");
-  options.normal_detail=0;const auto neutral=run(options);require(neutral[4]->tiles.at(1001).hash==flat[4]->tiles.at(1001).hash,"Disabling normal detail must restore geometry curvature");
+  const auto detailed=run(options);
+  require(detailed[4]->tiles.at(1001).hash==flat[4]->tiles.at(1001).hash,"Pointiness must ignore normal-map shading");
+  options.normal_detail=0;
   options.displacement[1].strength=-.2f;options.displacement[1].width=options.displacement[1].rows=2;options.displacement[1].samples[1001]={1,1,1,1};
   const auto moved=prepare_bake_surface(scene,options);for(const auto &tri:moved.uv_triangles)for(const auto &v:tri.positions)require(std::abs(v[2]+.1f)<1e-6f,"Signed displacement must affect traced geometry");
   require(scene.maximum[2]==0,"Surface preparation must preserve the source snapshot");
-  std::printf("BTS_SURFACE_REGRESSION plane_visibility=1 normal_detail_signed=1 disable_exact=1 negative_displacement=1 immutable_source=1\n");
+  std::printf("BTS_SURFACE_REGRESSION plane_visibility=1 normal_map_independent=1 negative_displacement=1 immutable_source=1\n");
 }
 // Small, headless production-path fixture. Raw RGBA32F is retained for comparisons.
 inline int surface_bake_proof(BlenderHost &host,const QString &directory){

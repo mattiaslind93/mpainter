@@ -1,0 +1,204 @@
+{
+  "baseline_commit": "fca2b7f",
+  "build_parallel": 2,
+  "headless": "xvfb-run inside bts-build; Blender -b; six render threads",
+  "cpu_clean": [
+    {
+      "deterministic": true,
+      "finite": true,
+      "maps": 7,
+      "resolution": 64
+    },
+    {
+      "deterministic": true,
+      "finite": true,
+      "maps": 7,
+      "resolution": 256
+    },
+    {
+      "deterministic": true,
+      "finite": true,
+      "maps": 7,
+      "resolution": 1024
+    },
+    {
+      "deterministic": true,
+      "finite": true,
+      "maps": 7,
+      "resolution": 256
+    },
+    {
+      "deterministic": true,
+      "finite": true,
+      "maps": 7,
+      "resolution": 64
+    },
+    {
+      "deterministic": true,
+      "finite": true,
+      "maps": 7,
+      "resolution": 1024
+    },
+    {
+      "deterministic": true,
+      "finite": true,
+      "maps": 7,
+      "resolution": 64
+    }
+  ],
+  "cpu_collapsed_debug_allocator": [
+    {
+      "deterministic": true,
+      "finite": true,
+      "maps": 7,
+      "resolution": 64
+    },
+    {
+      "deterministic": true,
+      "finite": true,
+      "maps": 7,
+      "resolution": 256
+    },
+    {
+      "deterministic": true,
+      "finite": true,
+      "maps": 7,
+      "resolution": 1024
+    },
+    {
+      "deterministic": true,
+      "finite": true,
+      "maps": 7,
+      "resolution": 256
+    },
+    {
+      "deterministic": true,
+      "finite": true,
+      "maps": 7,
+      "resolution": 64
+    },
+    {
+      "deterministic": true,
+      "finite": true,
+      "maps": 7,
+      "resolution": 1024
+    },
+    {
+      "deterministic": true,
+      "finite": true,
+      "maps": 7,
+      "resolution": 64
+    }
+  ],
+  "workspace": {
+    "sizes": [
+      64,
+      256,
+      1024,
+      256,
+      64,
+      1024,
+      64
+    ],
+    "maps_per_bake": 7,
+    "gpu_ray_maps": 14,
+    "repeated_hashes_exact": true,
+    "redo_and_reopen_hashes_exact": true,
+    "clean_shutdown": true
+  },
+  "original_crash": {
+    "pc": "0x1b61501",
+    "mapped_function": "blender::bke::mesh::mesh_normals_corner_custom_set",
+    "method": "64 identical instruction bytes matched from preserved stripped AppImage to symbol-bearing build"
+  },
+  "diagnostic": "BTS_DIAG_INVALID_NORMAL_FAN corner=4 space=-1 spaces=99 corners=99",
+  "diagnostic_exit": 134,
+  "diagnostic_removed": true,
+  "pointiness": [
+    {
+      "mesh": "displaced",
+      "variant": "before",
+      "covered": 65408,
+      "mae": 0.008364127017557621,
+      "rmse": 0.00957718025892973,
+      "maximum_error": 0.01852715015411377
+    },
+    {
+      "mesh": "displaced",
+      "variant": "after",
+      "covered": 65408,
+      "mae": 2.4917380869737826e-05,
+      "rmse": 0.00011404348333599046,
+      "maximum_error": 0.0018762946128845215
+    },
+    {
+      "mesh": "shaderball",
+      "variant": "before",
+      "covered": 64410,
+      "mae": 0.06451401114463806,
+      "rmse": 0.1068493202328682,
+      "maximum_error": 0.7320660948753357
+    },
+    {
+      "mesh": "shaderball",
+      "variant": "after",
+      "covered": 64410,
+      "mae": 0.004210231825709343,
+      "rmse": 0.033938463777303696,
+      "maximum_error": 0.5327624082565308
+    }
+  ],
+  "external_sources": {
+    "high.abc": {
+      "maximum_error": 8.940696716308594e-07,
+      "mse": 2.2163224669876264e-14
+    },
+    "high.usdc": {
+      "maximum_error": 8.940696716308594e-07,
+      "mse": 2.2163224669876264e-14
+    },
+    "high-cm.usdc": {
+      "maximum_error": 8.940696716308594e-07,
+      "mse": 2.216635982115837e-14
+    },
+    "centimetre Alembic scale 0.01": {
+      "maximum_error": 8.940696716308594e-07,
+      "mse": 2.2195678454905998e-14
+    },
+    "Alembic custom cage": {
+      "maximum_error": 8.940696716308594e-07,
+      "mse": 2.215175923190223e-14
+    }
+  },
+  "geometry_before_after_identical": true,
+  "pointiness_settings": {
+    "resolution": 256,
+    "strength": 1,
+    "smoothing_radius": 0,
+    "normal_map_contribution": false,
+    "display_gain": 3,
+    "reference": "Blender Cycles Geometry Pointiness -> Emission, baked on exact exported evaluated/displaced triangles",
+    "blender_threads": 6,
+    "subdivision_fixture": "Blender subdivided sphere, then one triangle subdivision and signed height displacement",
+    "shaderball_fixture": "Original source tessellation; additional control, not a subdivision smoothness claim"
+  },
+  "unit_tests": [
+    "bts-surface-curvature-tests",
+    "bts-bake-preferences-tests"
+  ],
+  "production_surface_assertions": [
+    "neutral plane",
+    "normal maps ignored",
+    "negative displacement",
+    "immutable source"
+  ],
+  "marketing_sha256": {
+    "gumroad-en.md": "9c54fc3561bf46f47634e8aa5818bb342b5e869fe44e760c4b7bd3eed51ff08b",
+    "gumroad-sv.md": "c8686dec8005ca9a170fd2e299aaea59900dcf657f3dba8c8cbc810ddc3d17b4",
+    "posts.md": "9439bd50483e6a8d50f3f8a53ad94aac9e7d6eac9a129ca4459c00bf8a4246fd",
+    "video-script-30s.md": "aaa3a560cba5b7de15417c4f41351f5ea84a67ea651fae5730830d919a6072ca",
+    "CHANGES.md": "2ee1d4f042496792e91efccbb87e1d5480529b860f1e408066ccf09f2643ed35",
+    "README.md": "936962964f6658294464d1b8e2afb02eaa8d75bb5b82a68ff9d442da02721012"
+  },
+  "comparison_sha256": "b2cbad2b3c526f3115a8ed2b43a548c53dba7e7e96aba998222ed1255ebe4107"
+}

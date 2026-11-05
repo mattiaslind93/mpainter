@@ -16,7 +16,7 @@ if mode == 'fixtures':
     bpy.ops.object.shade_smooth()
     bpy.ops.wm.obj_export(filepath=str(root/'displaced.obj'),export_selected_objects=True,export_triangulated_mesh=True,forward_axis='Y',up_axis='Z')
     bpy.ops.object.delete()
-    bpy.ops.wm.obj_import(filepath='/home/mlind/bts/blender-texture-studio/assets/shaderball/Shader_Ball_JL_01.obj',forward_axis='Y',up_axis='Z')
+    bpy.ops.wm.obj_import(filepath=str(pathlib.Path(__file__).resolve().parents[2]/'assets/meshes/Shader_Ball_JL_01.obj'),forward_axis='Y',up_axis='Z')
     objs=[o for o in bpy.context.scene.objects if o.type=='MESH']
     # Keep the asset's geometry/UVs; center and uniformly normalize world units.
     coords=[o.matrix_world@v.co for o in objs for v in o.data.vertices]

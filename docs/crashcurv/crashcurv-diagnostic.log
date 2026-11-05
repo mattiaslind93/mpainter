@@ -1,0 +1,6 @@
+BTS_NUMERIC_LOCALE value=C decimal=.
+Blender 5.2.0 LTS
+BTS_SCENE_READY pid=501047 engine=BLENDER_EEVEE native_window=none
+BTS_REBAKE_BEGIN size=64
+BTS_DIAG_INVALID_NORMAL_FAN corner=4 space=-1 spaces=99 corners=99
+/usr/bin/xvfb-run: line 181: 501047 Aborted                    (core dumped) DISPLAY=:$SERVERNUM XAUTHORITY=$AUTHFILE "$@" 2>&1

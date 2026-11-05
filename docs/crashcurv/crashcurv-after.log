@@ -1,0 +1,23 @@
+BTS_NUMERIC_LOCALE value=C decimal=.
+Blender 5.2.0 LTS
+BTS_SCENE_READY pid=504122 engine=BLENDER_EEVEE native_window=none
+BTS_BAKE_TASK uid=1 tile=1001 role=3 width=32 height=32 scratch_estimate=65536 available_ram=6952497152
+BTS_BAKE_TASK uid=1 tile=1001 role=4 width=32 height=32 scratch_estimate=65536 available_ram=6952513536
+BTS_BAKE_TASK uid=1 tile=1001 role=6 width=32 height=32 scratch_estimate=65536 available_ram=6952529920
+BTS_BAKE_TASK uid=1 tile=1001 role=3 width=32 height=32 scratch_estimate=65536 available_ram=6952640512
+BTS_BAKE_TASK uid=1 tile=1001 role=4 width=32 height=32 scratch_estimate=65536 available_ram=6953025536
+BTS_BAKE_TASK uid=1 tile=1001 role=6 width=32 height=32 scratch_estimate=65536 available_ram=6953041920
+BTS_SURFACE_REGRESSION plane_visibility=1 normal_map_independent=1 negative_displacement=1 immutable_source=1
+00:00.731  io.obj           | ERROR OBJ import: cannot read from MTL file: '/mnt/mpainter-phase1/build/crashcurv/fixtures/displaced.mtl'
+OBJ import of 'displaced.obj' took 4.75 ms
+BTS_BAKE_SOURCE file=displaced.obj objects=1 triangles=3968 scale=1 frame=first bounds=(-0.987231,-0.997577,-0.987231)-(0.987231,0.997577,0.987231) ms=89.712
+BTS_BAKE_TASK uid=144 tile=1001 role=3 width=256 height=256 scratch_estimate=4194304 available_ram=6917505024
+BTS_BAKE_TASK uid=144 tile=1001 role=4 width=256 height=256 scratch_estimate=4194304 available_ram=6905196544
+BTS_BAKE_TASK uid=144 tile=1001 role=6 width=256 height=256 scratch_estimate=4194304 available_ram=6905053184
+00:06.992  io.obj           | ERROR OBJ import: cannot read from MTL file: '/mnt/mpainter-phase1/build/crashcurv/fixtures/shaderball.mtl'
+OBJ import of 'shaderball.obj' took 44.71 ms
+BTS_BAKE_SOURCE file=shaderball.obj objects=1 triangles=37292 scale=1 frame=first bounds=(-0.810428,-0.822213,-1)-(0.810428,0.822213,1) ms=68.862
+BTS_BAKE_TASK uid=157 tile=1001 role=3 width=256 height=256 scratch_estimate=4194304 available_ram=6833086464
+BTS_BAKE_TASK uid=157 tile=1001 role=4 width=256 height=256 scratch_estimate=4194304 available_ram=6826582016
+BTS_BAKE_TASK uid=157 tile=1001 role=6 width=256 height=256 scratch_estimate=4194304 available_ram=6826582016
+BTS_SHUTDOWN clean pid=504122

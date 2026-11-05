@@ -14,7 +14,7 @@ struct MeshBakeSettings {
   int resolution=512,height=0,dilation=32,rays=256,sampling=1;
   bool dimensions_locked=true,diffusion=false;
   // World-space distances. Zero selects a scene-relative default once, never per tile.
-  float curvature_radius=0,curvature_scale=2,ao_distance=0,thickness_distance=0,ray_offset=0,normal_detail=0;
+  float curvature_radius=0,curvature_scale=1,ao_distance=0,thickness_distance=0,ray_offset=0,normal_detail=0;
   bool denoise=true;
   struct NormalField {int width=0,height=0;std::map<int,std::vector<std::array<float,3>>> tiles;};
   std::map<std::uint32_t,NormalField> normal_maps;

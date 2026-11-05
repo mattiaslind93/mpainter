@@ -1,0 +1,85 @@
+BTS_NUMERIC_LOCALE value=C decimal=.
+Blender 5.2.0 LTS
+BTS_SCENE_READY pid=506917 engine=BLENDER_EEVEE native_window=none
+OBJ import of 'low.obj' took 0.64 ms
+BTS_BAKE_SOURCE file=low.obj objects=2 triangles=4 scale=1 frame=first bounds=(-1,-0.75,-9.43724e-08)-(4,1.25,5.66234e-08) ms=2.123
+OBJ import of 'high.obj' took 1.01 ms
+BTS_BAKE_SOURCE file=high.obj objects=2 triangles=256 scale=1 frame=first bounds=(-1,-0.75,0.0699999)-(4,1.25,0.31) ms=2.516
+BTS_BAKE_TASK uid=141 tile=1001 role=0 width=64 height=64 scratch_estimate=262144 available_ram=6761922560
+BTS_BAKE_TASK uid=141 tile=1001 role=3 width=64 height=64 scratch_estimate=262144 available_ram=6761725952
+BTS_BAKE_TASK uid=141 tile=1001 role=4 width=64 height=64 scratch_estimate=262144 available_ram=6761791488
+BTS_BAKE_TASK uid=141 tile=1002 role=0 width=64 height=64 scratch_estimate=262144 available_ram=6761840640
+BTS_BAKE_TASK uid=141 tile=1002 role=3 width=64 height=64 scratch_estimate=262144 available_ram=6762106880
+BTS_BAKE_TASK uid=141 tile=1002 role=4 width=64 height=64 scratch_estimate=262144 available_ram=6762356736
+Alembic import /mnt/mpainter-phase1/build/crashcurv/sources/fixtures/high.abc took 5.32 ms
+Alembic import took 5.58 ms
+BTS_BAKE_SOURCE file=high.abc objects=2 triangles=256 scale=1 frame=first bounds=(-1,-0.75,0.07)-(4,1.25,0.31) ms=13.382
+BTS_BAKE_TASK uid=141 tile=1001 role=0 width=64 height=64 scratch_estimate=262144 available_ram=6762160128
+BTS_BAKE_TASK uid=141 tile=1001 role=3 width=64 height=64 scratch_estimate=262144 available_ram=6761963520
+BTS_BAKE_TASK uid=141 tile=1001 role=4 width=64 height=64 scratch_estimate=262144 available_ram=6761766912
+BTS_BAKE_TASK uid=141 tile=1002 role=0 width=64 height=64 scratch_estimate=262144 available_ram=6761816064
+BTS_BAKE_TASK uid=141 tile=1002 role=3 width=64 height=64 scratch_estimate=262144 available_ram=6761619456
+BTS_BAKE_TASK uid=141 tile=1002 role=4 width=64 height=64 scratch_estimate=262144 available_ram=6761689088
+USD import of '/mnt/mpainter-phase1/build/crashcurv/sources/cache/mPainter/import-cache/usd-AMEVQG/sample.usdc' took 2.37 ms
+BTS_BAKE_SOURCE file=high.usdc objects=2 triangles=256 scale=1 frame=first bounds=(-1,-0.75,0.07)-(4,1.25,0.31) ms=53.863
+BTS_BAKE_TASK uid=141 tile=1001 role=0 width=64 height=64 scratch_estimate=262144 available_ram=6757519360
+BTS_BAKE_TASK uid=141 tile=1001 role=3 width=64 height=64 scratch_estimate=262144 available_ram=6757584896
+BTS_BAKE_TASK uid=141 tile=1001 role=4 width=64 height=64 scratch_estimate=262144 available_ram=6757650432
+BTS_BAKE_TASK uid=141 tile=1002 role=0 width=64 height=64 scratch_estimate=262144 available_ram=6757437440
+BTS_BAKE_TASK uid=141 tile=1002 role=3 width=64 height=64 scratch_estimate=262144 available_ram=6757511168
+BTS_BAKE_TASK uid=141 tile=1002 role=4 width=64 height=64 scratch_estimate=262144 available_ram=6757314560
+USD import of '/mnt/mpainter-phase1/build/crashcurv/sources/cache/mPainter/import-cache/usd-IWYnmP/sample.usdc' took 6.84 ms
+BTS_BAKE_SOURCE file=high-cm.usdc objects=2 triangles=256 scale=1 frame=first bounds=(-1,-0.75,0.07)-(4,1.25,0.31) ms=29.057
+BTS_BAKE_TASK uid=141 tile=1001 role=0 width=64 height=64 scratch_estimate=262144 available_ram=6757249024
+BTS_BAKE_TASK uid=141 tile=1001 role=3 width=64 height=64 scratch_estimate=262144 available_ram=6757314560
+BTS_BAKE_TASK uid=141 tile=1001 role=4 width=64 height=64 scratch_estimate=262144 available_ram=6757380096
+BTS_BAKE_TASK uid=141 tile=1002 role=0 width=64 height=64 scratch_estimate=262144 available_ram=6757429248
+BTS_BAKE_TASK uid=141 tile=1002 role=3 width=64 height=64 scratch_estimate=262144 available_ram=6757494784
+BTS_BAKE_TASK uid=141 tile=1002 role=4 width=64 height=64 scratch_estimate=262144 available_ram=6757298176
+Alembic import /mnt/mpainter-phase1/build/crashcurv/sources/fixtures/high-cm.abc took 5.47 ms
+Alembic import took 5.66 ms
+BTS_BAKE_SOURCE file=high-cm.abc objects=2 triangles=256 scale=0.01 frame=first bounds=(-1,-0.75,0.07)-(4,1.25,0.31) ms=13.385
+BTS_BAKE_TASK uid=141 tile=1001 role=0 width=64 height=64 scratch_estimate=262144 available_ram=6757171200
+BTS_BAKE_TASK uid=141 tile=1001 role=3 width=64 height=64 scratch_estimate=262144 available_ram=6756974592
+BTS_BAKE_TASK uid=141 tile=1001 role=4 width=64 height=64 scratch_estimate=262144 available_ram=6757040128
+BTS_BAKE_TASK uid=141 tile=1002 role=0 width=64 height=64 scratch_estimate=262144 available_ram=6756999168
+BTS_BAKE_TASK uid=141 tile=1002 role=3 width=64 height=64 scratch_estimate=262144 available_ram=6757064704
+BTS_BAKE_TASK uid=141 tile=1002 role=4 width=64 height=64 scratch_estimate=262144 available_ram=6756929536
+OBJ import of 'cage.obj' took 1.97 ms
+BTS_BAKE_SOURCE file=cage.obj objects=2 triangles=4 scale=1 frame=first bounds=(-1,-0.75,0.4)-(4,1.25,0.4) ms=6.161
+Alembic import /mnt/mpainter-phase1/build/crashcurv/sources/fixtures/cage.abc took 4.14 ms
+Alembic import took 4.38 ms
+BTS_BAKE_SOURCE file=cage.abc objects=2 triangles=4 scale=1 frame=first bounds=(-1,-0.75,0.4)-(4,1.25,0.4) ms=10.984
+OBJ import of 'high.obj' took 3.77 ms
+BTS_BAKE_SOURCE file=high.obj objects=2 triangles=256 scale=1 frame=first bounds=(-1,-0.75,0.0699999)-(4,1.25,0.31) ms=8.324
+BTS_BAKE_TASK uid=141 tile=1001 role=0 width=64 height=64 scratch_estimate=262144 available_ram=6756749312
+BTS_BAKE_TASK uid=141 tile=1001 role=3 width=64 height=64 scratch_estimate=262144 available_ram=6756814848
+BTS_BAKE_TASK uid=141 tile=1001 role=4 width=64 height=64 scratch_estimate=262144 available_ram=6756880384
+BTS_BAKE_TASK uid=141 tile=1002 role=0 width=64 height=64 scratch_estimate=262144 available_ram=6756569088
+BTS_BAKE_TASK uid=141 tile=1002 role=3 width=64 height=64 scratch_estimate=262144 available_ram=6756634624
+BTS_BAKE_TASK uid=141 tile=1002 role=4 width=64 height=64 scratch_estimate=262144 available_ram=6756700160
+Alembic import /mnt/mpainter-phase1/build/crashcurv/sources/fixtures/high.abc took 6.05 ms
+Alembic import took 6.23 ms
+BTS_BAKE_SOURCE file=high.abc objects=2 triangles=256 scale=1 frame=first bounds=(-1,-0.75,0.07)-(4,1.25,0.31) ms=13.449
+BTS_BAKE_TASK uid=141 tile=1001 role=0 width=64 height=64 scratch_estimate=262144 available_ram=6757199872
+BTS_BAKE_TASK uid=141 tile=1001 role=3 width=64 height=64 scratch_estimate=262144 available_ram=6757003264
+BTS_BAKE_TASK uid=141 tile=1001 role=4 width=64 height=64 scratch_estimate=262144 available_ram=6757117952
+BTS_BAKE_TASK uid=141 tile=1002 role=0 width=64 height=64 scratch_estimate=262144 available_ram=6757072896
+BTS_BAKE_TASK uid=141 tile=1002 role=3 width=64 height=64 scratch_estimate=262144 available_ram=6757027840
+BTS_BAKE_TASK uid=141 tile=1002 role=4 width=64 height=64 scratch_estimate=262144 available_ram=6757113856
+Alembic import /mnt/mpainter-phase1/build/crashcurv/sources/fixtures/animated.abc took 5.68 ms
+Alembic import took 5.88 ms
+BTS_BAKE_SOURCE file=animated.abc objects=2 triangles=256 scale=1 frame=first bounds=(-1,-0.75,0.07)-(4,1.25,0.31) ms=17.970
+Alembic import /mnt/mpainter-phase1/build/crashcurv/sources/fixtures/animated.abc took 5.39 ms
+Alembic import took 5.55 ms
+BTS_BAKE_SOURCE file=animated.abc objects=2 triangles=256 scale=1 frame=2.000000 bounds=(-1,-0.75,0.27)-(4,1.25,0.51) ms=17.927
+USD import of '/mnt/mpainter-phase1/build/crashcurv/sources/cache/mPainter/import-cache/usd-mcXVAQ/sample.usdc' took 6.77 ms
+BTS_BAKE_SOURCE file=animated.usdc objects=2 triangles=256 scale=1 frame=first bounds=(-1,-0.75,0.07)-(4,1.25,0.31) ms=30.518
+USD import of '/mnt/mpainter-phase1/build/crashcurv/sources/cache/mPainter/import-cache/usd-KHbGFy/sample.usdc' took 7.52 ms
+BTS_BAKE_SOURCE file=animated.usdc objects=2 triangles=256 scale=1 frame=2.000000 bounds=(-1,-0.75,0.27)-(4,1.25,0.51) ms=29.126
+Alembic import /mnt/mpainter-phase1/build/crashcurv/sources/fixtures/low.abc took 2.71 ms
+Alembic import took 2.83 ms
+BTS_BAKE_SOURCE file=low.abc objects=2 triangles=4 scale=1 frame=first bounds=(-1,-0.75,0)-(4,1.25,0) ms=7.837
+USD import of '/mnt/mpainter-phase1/build/crashcurv/sources/cache/mPainter/import-cache/usd-KYkUAE/sample.usdc' took 2.59 ms
+BTS_BAKE_SOURCE file=low.usdc objects=2 triangles=4 scale=1 frame=first bounds=(-1,-0.75,0)-(4,1.25,0) ms=13.322
+BTS_SHUTDOWN clean pid=506917

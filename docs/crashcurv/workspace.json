@@ -1,0 +1,4522 @@
+{
+    "captures": [
+        {
+            "bake_configuration": {
+            },
+            "base_color": [
+                1,
+                1,
+                1,
+                1
+            ],
+            "brush_color": [
+                0,
+                0,
+                0,
+                1
+            ],
+            "bump_hash": "cbf29ce484222325",
+            "composite_checked": false,
+            "composite_differences": [
+            ],
+            "composite_failed_jobs": 0,
+            "composite_pending": true,
+            "composite_split_jobs": 0,
+            "compress_mouse": true,
+            "compress_tablet": true,
+            "decimal": ".",
+            "environment": {
+                "alignment": "Local",
+                "blur": 0,
+                "exposure": 0,
+                "lighting_follows_view": true,
+                "opacity": 0,
+                "post_depth_enabled": false,
+                "post_effects": {
+                    "aperture": 0,
+                    "bias": 0,
+                    "brightness": 1,
+                    "color_correction": false,
+                    "contrast": 1,
+                    "dof": false,
+                    "enabled": false,
+                    "exposure": 1,
+                    "focus_distance": 3.725126028060913,
+                    "gamma": 1,
+                    "glare": false,
+                    "glare_luminance": 1,
+                    "glare_remap": 3,
+                    "glare_shape": 0,
+                    "glare_threshold": 0.8999999761581421,
+                    "lens": false,
+                    "lens_fov": 45,
+                    "lens_power": 1,
+                    "lens_roundness": 0.05000000074505806,
+                    "lens_smoothness": 1,
+                    "mapping_factor": 32,
+                    "saturation": 1,
+                    "sepia": 0,
+                    "temperature": 6500,
+                    "tone_function": 0,
+                    "tone_mapping": false,
+                    "version": 4,
+                    "vignette": false,
+                    "vignette_strength": 0.20000000298023224
+                },
+                "resource": "default-studio.hdr",
+                "rotation": 90.00000250447816,
+                "subsurface": {
+                    "enabled": false,
+                    "samples": 16,
+                    "version": 1
+                }
+            },
+            "first_dab_diameter": 0,
+            "has_document": true,
+            "hash": "cbf29ce484222325",
+            "hover_picks": 0,
+            "input_frames": 0,
+            "input_points": 0,
+            "input_pressure": 1,
+            "last_dab_diameter": 0,
+            "layer_color": [
+                1,
+                1,
+                1,
+                1
+            ],
+            "layers": 1,
+            "mesh_maps": [
+            ],
+            "native_color": [
+                0,
+                0,
+                0,
+                0
+            ],
+            "native_color_expected": [
+                0,
+                0,
+                0,
+                0
+            ],
+            "native_color_gpu_resident": false,
+            "padding_calls": 0,
+            "painting": false,
+            "pointer_device": "Mouse",
+            "pressure_overlay": false,
+            "property_dragging": false,
+            "property_idle_ms": -1,
+            "property_pending": false,
+            "render": {
+                "active": false,
+                "available": true,
+                "cpu_fallback": false,
+                "denoise": false,
+                "device": "EEVEE",
+                "device_message": "",
+                "error": "",
+                "image_mirror_paused": false,
+                "samples": 1024,
+                "status": "EEVEE",
+                "view_clip_end": 1000,
+                "view_clip_start": 0.009999999776482582
+            },
+            "render_frames": 6,
+            "render_ui": false,
+            "roughness": 0.30000001192092896,
+            "shader_failures": "",
+            "skew": {
+                "auto_role": -1,
+                "bake_eligible": true,
+                "completed": 0,
+                "dropped": 0,
+                "eligible": false,
+                "error": "",
+                "mode": 0,
+                "pending": false,
+                "queue_size": 0,
+                "role_completed": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "settings_visible": false,
+                "source_loads": 0,
+                "vectors": 0
+            },
+            "skew_hash": "cbf29ce484222325",
+            "skew_metadata": {
+                "edge_contrast": 0,
+                "edge_distance": 0.02,
+                "edge_protection": true,
+                "enabled": true,
+                "resolution": 128,
+                "tiles": [
+                ],
+                "vector_density": 16,
+                "vector_length": 0.05,
+                "vector_opacity": 0.8,
+                "vectors": true
+            },
+            "spline_dabs": [
+            ],
+            "stage": "created",
+            "stroke_batches": 0,
+            "tablet_contact": false,
+            "texture_loading": false,
+            "undo_count": 0,
+            "view": {
+                "active_gesture": "Idle",
+                "clip": {
+                    "far": 1000,
+                    "farthest": 5.487138152943958,
+                    "near": 0.01,
+                    "nearest": 2.800214390371709,
+                    "scene_camera": false
+                },
+                "device_pixel_ratio": 1,
+                "interaction_view": "3D",
+                "last_framed_bounds": {
+                    "maximum": [
+                        0.8104280233383179,
+                        0.8222129344940186,
+                        1
+                    ],
+                    "mesh_objects": 1,
+                    "minimum": [
+                        -0.8104280233383179,
+                        -0.8222130537033081,
+                        -1
+                    ],
+                    "pane_size": [
+                        691,
+                        797
+                    ]
+                },
+                "last_picked_color": [
+                    0,
+                    0,
+                    0,
+                    1
+                ],
+                "layout": "3D only",
+                "panes": [
+                    {
+                        "rect": [
+                            0,
+                            0,
+                            691,
+                            797
+                        ],
+                        "view": "3D"
+                    }
+                ],
+                "reference_image_enabled": false,
+                "reference_image_path": "",
+                "reference_image_size": [
+                    0,
+                    0
+                ],
+                "scene_center": [
+                    0,
+                    -5.960464477539063e-08,
+                    0
+                ],
+                "scene_distance": 4.143676271657833,
+                "scene_pitch": 18,
+                "scene_projection": "Perspective view",
+                "scene_vertical_extent": 3.4327338196085115,
+                "scene_view_matrix": [
+                    0.9063078165054321,
+                    -0.13059622049331665,
+                    0.40193384885787964,
+                    0,
+                    0.4226182699203491,
+                    0.28006452322006226,
+                    -0.8619499206542969,
+                    0,
+                    0,
+                    0.9510565400123596,
+                    0.30901700258255005,
+                    0,
+                    2.5190011854192562e-08,
+                    1.669314642072095e-08,
+                    -4.143676280975342,
+                    1
+                ],
+                "scene_yaw": 25,
+                "selected_material_session_id": 144,
+                "trackball": false,
+                "uv_center": [
+                    0.5,
+                    0.5
+                ],
+                "uv_first": false,
+                "uv_triangles": 37018,
+                "uv_vertical_extent": 1.2999999523162842
+            }
+        },
+        {
+            "bake_configuration": {
+                "ao_distance": 0,
+                "average": true,
+                "cage_file": "",
+                "curvature_radius": 0,
+                "curvature_scale": 1,
+                "denoise": true,
+                "diffusion": false,
+                "dilation": 32,
+                "enabled": [
+                    false,
+                    true,
+                    false,
+                    false,
+                    false,
+                    false,
+                    false
+                ],
+                "frontal": 0.01,
+                "height": 512,
+                "high_files": [
+                ],
+                "high_marker": "_high",
+                "ignore_backface": true,
+                "ignore_marker": "_ignorebf",
+                "locked": true,
+                "low_marker": "_low",
+                "match_names": false,
+                "normal_detail": 0,
+                "project_mesh": false,
+                "ray_offset": 0,
+                "rays": 256,
+                "rear": 0.01,
+                "relative": true,
+                "resolution": 512,
+                "sampling": 1,
+                "source_frame": 1,
+                "source_frame_enabled": false,
+                "source_scale": 1,
+                "thickness_distance": 0,
+                "tiles": {
+                    "{7da933a1-5d2a-40ca-87c9-6a8aaef7276d}": [
+                        1001
+                    ]
+                },
+                "use_cage": false
+            },
+            "base_color": [
+                1,
+                1,
+                1,
+                1
+            ],
+            "brush_color": [
+                0,
+                0,
+                0,
+                1
+            ],
+            "bump_hash": "cbf29ce484222325",
+            "composite_checked": false,
+            "composite_differences": [
+            ],
+            "composite_failed_jobs": 0,
+            "composite_pending": true,
+            "composite_split_jobs": 0,
+            "compress_mouse": true,
+            "compress_tablet": true,
+            "decimal": ".",
+            "environment": {
+                "alignment": "Local",
+                "blur": 0,
+                "exposure": 0,
+                "lighting_follows_view": true,
+                "opacity": 0,
+                "post_depth_enabled": false,
+                "post_effects": {
+                    "aperture": 0,
+                    "bias": 0,
+                    "brightness": 1,
+                    "color_correction": false,
+                    "contrast": 1,
+                    "dof": false,
+                    "enabled": false,
+                    "exposure": 1,
+                    "focus_distance": 3.725126028060913,
+                    "gamma": 1,
+                    "glare": false,
+                    "glare_luminance": 1,
+                    "glare_remap": 3,
+                    "glare_shape": 0,
+                    "glare_threshold": 0.8999999761581421,
+                    "lens": false,
+                    "lens_fov": 45,
+                    "lens_power": 1,
+                    "lens_roundness": 0.05000000074505806,
+                    "lens_smoothness": 1,
+                    "mapping_factor": 32,
+                    "saturation": 1,
+                    "sepia": 0,
+                    "temperature": 6500,
+                    "tone_function": 0,
+                    "tone_mapping": false,
+                    "version": 4,
+                    "vignette": false,
+                    "vignette_strength": 0.20000000298023224
+                },
+                "resource": "default-studio.hdr",
+                "rotation": 90.00000250447816,
+                "subsurface": {
+                    "enabled": false,
+                    "samples": 16,
+                    "version": 1
+                }
+            },
+            "first_dab_diameter": 0,
+            "has_document": true,
+            "hash": "cbf29ce484222325",
+            "hover_picks": 0,
+            "input_frames": 0,
+            "input_points": 0,
+            "input_pressure": 1,
+            "last_dab_diameter": 0,
+            "layer_color": [
+                1,
+                1,
+                1,
+                1
+            ],
+            "layers": 1,
+            "mesh_maps": [
+            ],
+            "native_color": [
+                0,
+                0,
+                0,
+                0
+            ],
+            "native_color_expected": [
+                0,
+                0,
+                0,
+                0
+            ],
+            "native_color_gpu_resident": false,
+            "padding_calls": 0,
+            "painting": false,
+            "pointer_device": "Mouse",
+            "pressure_overlay": false,
+            "property_dragging": false,
+            "property_idle_ms": -1,
+            "property_pending": false,
+            "render": {
+                "active": false,
+                "available": true,
+                "cpu_fallback": false,
+                "denoise": false,
+                "device": "EEVEE",
+                "device_message": "",
+                "error": "",
+                "image_mirror_paused": false,
+                "samples": 1024,
+                "status": "EEVEE",
+                "view_clip_end": 1000,
+                "view_clip_start": 0.009999999776482582
+            },
+            "render_frames": 6,
+            "render_ui": false,
+            "roughness": 0.30000001192092896,
+            "shader_failures": "",
+            "skew": {
+                "auto_role": -1,
+                "bake_eligible": false,
+                "completed": 0,
+                "dropped": 0,
+                "eligible": false,
+                "error": "",
+                "mode": 0,
+                "pending": false,
+                "queue_size": 0,
+                "role_completed": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "settings_visible": false,
+                "source_loads": 0,
+                "vectors": 0
+            },
+            "skew_hash": "cbf29ce484222325",
+            "skew_metadata": {
+                "edge_contrast": 0,
+                "edge_distance": 0.02,
+                "edge_protection": true,
+                "enabled": true,
+                "resolution": 128,
+                "tiles": [
+                ],
+                "vector_density": 16,
+                "vector_length": 0.05,
+                "vector_opacity": 0.8,
+                "vectors": true
+            },
+            "spline_dabs": [
+            ],
+            "stage": "settings-saved",
+            "stroke_batches": 0,
+            "tablet_contact": false,
+            "texture_loading": false,
+            "undo_count": 1,
+            "view": {
+                "active_gesture": "Idle",
+                "clip": {
+                    "far": 1000,
+                    "farthest": 5.487138152943958,
+                    "near": 0.01,
+                    "nearest": 2.800214390371709,
+                    "scene_camera": false
+                },
+                "device_pixel_ratio": 1,
+                "interaction_view": "3D",
+                "last_framed_bounds": {
+                    "maximum": [
+                        0.8104280233383179,
+                        0.8222129344940186,
+                        1
+                    ],
+                    "mesh_objects": 1,
+                    "minimum": [
+                        -0.8104280233383179,
+                        -0.8222130537033081,
+                        -1
+                    ],
+                    "pane_size": [
+                        691,
+                        797
+                    ]
+                },
+                "last_picked_color": [
+                    0,
+                    0,
+                    0,
+                    1
+                ],
+                "layout": "3D only",
+                "panes": [
+                    {
+                        "rect": [
+                            0,
+                            0,
+                            691,
+                            797
+                        ],
+                        "view": "3D"
+                    }
+                ],
+                "reference_image_enabled": false,
+                "reference_image_path": "",
+                "reference_image_size": [
+                    0,
+                    0
+                ],
+                "scene_center": [
+                    0,
+                    -5.960464477539063e-08,
+                    0
+                ],
+                "scene_distance": 4.143676271657833,
+                "scene_pitch": 18,
+                "scene_projection": "Perspective view",
+                "scene_vertical_extent": 3.4327338196085115,
+                "scene_view_matrix": [
+                    0.9063078165054321,
+                    -0.13059622049331665,
+                    0.40193384885787964,
+                    0,
+                    0.4226182699203491,
+                    0.28006452322006226,
+                    -0.8619499206542969,
+                    0,
+                    0,
+                    0.9510565400123596,
+                    0.30901700258255005,
+                    0,
+                    2.5190011854192562e-08,
+                    1.669314642072095e-08,
+                    -4.143676280975342,
+                    1
+                ],
+                "scene_yaw": 25,
+                "selected_material_session_id": 144,
+                "trackball": false,
+                "uv_center": [
+                    0.5,
+                    0.5
+                ],
+                "uv_first": false,
+                "uv_triangles": 37018,
+                "uv_vertical_extent": 1.2999999523162842
+            }
+        },
+        {
+            "bake_configuration": {
+                "ao_distance": 0,
+                "average": true,
+                "cage_file": "",
+                "curvature_radius": 0,
+                "curvature_scale": 1,
+                "denoise": true,
+                "diffusion": false,
+                "dilation": 32,
+                "enabled": [
+                    false,
+                    true,
+                    false,
+                    false,
+                    false,
+                    false,
+                    false
+                ],
+                "frontal": 0.01,
+                "height": 512,
+                "high_files": [
+                ],
+                "high_marker": "_high",
+                "ignore_backface": true,
+                "ignore_marker": "_ignorebf",
+                "locked": true,
+                "low_marker": "_low",
+                "match_names": false,
+                "normal_detail": 0,
+                "project_mesh": false,
+                "ray_offset": 0,
+                "rays": 256,
+                "rear": 0.01,
+                "relative": true,
+                "resolution": 512,
+                "sampling": 1,
+                "source_frame": 1,
+                "source_frame_enabled": false,
+                "source_scale": 1,
+                "thickness_distance": 0,
+                "tiles": {
+                    "{7da933a1-5d2a-40ca-87c9-6a8aaef7276d}": [
+                        1001
+                    ]
+                },
+                "use_cage": false
+            },
+            "base_color": [
+                1,
+                1,
+                1,
+                1
+            ],
+            "brush_color": [
+                0,
+                0,
+                0,
+                1
+            ],
+            "bump_hash": "cbf29ce484222325",
+            "composite_checked": false,
+            "composite_differences": [
+            ],
+            "composite_failed_jobs": 0,
+            "composite_pending": true,
+            "composite_split_jobs": 0,
+            "compress_mouse": true,
+            "compress_tablet": true,
+            "decimal": ".",
+            "environment": {
+                "alignment": "Local",
+                "blur": 0,
+                "exposure": 0,
+                "lighting_follows_view": true,
+                "opacity": 0,
+                "post_depth_enabled": false,
+                "post_effects": {
+                    "aperture": 0,
+                    "bias": 0,
+                    "brightness": 1,
+                    "color_correction": false,
+                    "contrast": 1,
+                    "dof": false,
+                    "enabled": false,
+                    "exposure": 1,
+                    "focus_distance": 3.725126028060913,
+                    "gamma": 1,
+                    "glare": false,
+                    "glare_luminance": 1,
+                    "glare_remap": 3,
+                    "glare_shape": 0,
+                    "glare_threshold": 0.8999999761581421,
+                    "lens": false,
+                    "lens_fov": 45,
+                    "lens_power": 1,
+                    "lens_roundness": 0.05000000074505806,
+                    "lens_smoothness": 1,
+                    "mapping_factor": 32,
+                    "saturation": 1,
+                    "sepia": 0,
+                    "temperature": 6500,
+                    "tone_function": 0,
+                    "tone_mapping": false,
+                    "version": 4,
+                    "vignette": false,
+                    "vignette_strength": 0.20000000298023224
+                },
+                "resource": "default-studio.hdr",
+                "rotation": 90.00000250447816,
+                "subsurface": {
+                    "enabled": false,
+                    "samples": 16,
+                    "version": 1
+                }
+            },
+            "first_dab_diameter": 0,
+            "has_document": true,
+            "hash": "cbf29ce484222325",
+            "hover_picks": 0,
+            "input_frames": 0,
+            "input_points": 0,
+            "input_pressure": 1,
+            "last_dab_diameter": 0,
+            "layer_color": [
+                1,
+                1,
+                1,
+                1
+            ],
+            "layers": 1,
+            "mesh_maps": [
+            ],
+            "native_color": [
+                0,
+                0,
+                0,
+                0
+            ],
+            "native_color_expected": [
+                0,
+                0,
+                0,
+                0
+            ],
+            "native_color_gpu_resident": false,
+            "padding_calls": 0,
+            "painting": false,
+            "pointer_device": "Mouse",
+            "pressure_overlay": false,
+            "property_dragging": false,
+            "property_idle_ms": -1,
+            "property_pending": false,
+            "render": {
+                "active": false,
+                "available": true,
+                "cpu_fallback": false,
+                "denoise": false,
+                "device": "EEVEE",
+                "device_message": "",
+                "error": "",
+                "image_mirror_paused": false,
+                "samples": 1024,
+                "status": "EEVEE",
+                "view_clip_end": 1000,
+                "view_clip_start": 0.009999999776482582
+            },
+            "render_frames": 6,
+            "render_ui": false,
+            "roughness": 0.30000001192092896,
+            "shader_failures": "",
+            "skew": {
+                "auto_role": -1,
+                "bake_eligible": false,
+                "completed": 0,
+                "dropped": 0,
+                "eligible": false,
+                "error": "",
+                "mode": 0,
+                "pending": false,
+                "queue_size": 0,
+                "role_completed": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "settings_visible": false,
+                "source_loads": 0,
+                "vectors": 0
+            },
+            "skew_hash": "cbf29ce484222325",
+            "skew_metadata": {
+                "edge_contrast": 0,
+                "edge_distance": 0.02,
+                "edge_protection": true,
+                "enabled": true,
+                "resolution": 128,
+                "tiles": [
+                ],
+                "vector_density": 16,
+                "vector_length": 0.05,
+                "vector_opacity": 0.8,
+                "vectors": true
+            },
+            "spline_dabs": [
+            ],
+            "stage": "preferences-opened",
+            "stroke_batches": 0,
+            "tablet_contact": false,
+            "texture_loading": false,
+            "undo_count": 0,
+            "view": {
+                "active_gesture": "Idle",
+                "clip": {
+                    "far": 1000,
+                    "farthest": 5.487138152943958,
+                    "near": 0.01,
+                    "nearest": 2.800214390371709,
+                    "scene_camera": false
+                },
+                "device_pixel_ratio": 1,
+                "interaction_view": "3D",
+                "last_framed_bounds": {
+                    "maximum": [
+                        0.8104280233383179,
+                        0.8222129344940186,
+                        1
+                    ],
+                    "mesh_objects": 1,
+                    "minimum": [
+                        -0.8104280233383179,
+                        -0.8222130537033081,
+                        -1
+                    ],
+                    "pane_size": [
+                        691,
+                        797
+                    ]
+                },
+                "last_picked_color": [
+                    0,
+                    0,
+                    0,
+                    1
+                ],
+                "layout": "3D only",
+                "panes": [
+                    {
+                        "rect": [
+                            0,
+                            0,
+                            691,
+                            797
+                        ],
+                        "view": "3D"
+                    }
+                ],
+                "reference_image_enabled": false,
+                "reference_image_path": "",
+                "reference_image_size": [
+                    0,
+                    0
+                ],
+                "scene_center": [
+                    0,
+                    -5.960464477539063e-08,
+                    0
+                ],
+                "scene_distance": 4.143676271657833,
+                "scene_pitch": 18,
+                "scene_projection": "Perspective view",
+                "scene_vertical_extent": 3.4327338196085115,
+                "scene_view_matrix": [
+                    0.9063078165054321,
+                    -0.13059622049331665,
+                    0.40193384885787964,
+                    0,
+                    0.4226182699203491,
+                    0.28006452322006226,
+                    -0.8619499206542969,
+                    0,
+                    0,
+                    0.9510565400123596,
+                    0.30901700258255005,
+                    0,
+                    2.5190011854192562e-08,
+                    1.669314642072095e-08,
+                    -4.143676280975342,
+                    1
+                ],
+                "scene_yaw": 25,
+                "selected_material_session_id": 283,
+                "trackball": false,
+                "uv_center": [
+                    0.5,
+                    0.5
+                ],
+                "uv_first": false,
+                "uv_triangles": 0,
+                "uv_vertical_extent": 1.2999999523162842
+            }
+        },
+        {
+            "bake_configuration": {
+                "ao_distance": 0,
+                "average": true,
+                "cage_file": "",
+                "curvature_radius": 0,
+                "curvature_scale": 1,
+                "denoise": true,
+                "diffusion": false,
+                "dilation": 32,
+                "enabled": [
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    true
+                ],
+                "frontal": 0.01,
+                "height": 64,
+                "high_files": [
+                ],
+                "high_marker": "_high",
+                "ignore_backface": true,
+                "ignore_marker": "_ignorebf",
+                "locked": true,
+                "low_marker": "_low",
+                "match_names": false,
+                "normal_detail": 0,
+                "project_mesh": true,
+                "ray_offset": 0,
+                "rays": 4,
+                "rear": 0.01,
+                "relative": true,
+                "resolution": 64,
+                "sampling": 1,
+                "source_frame": 1,
+                "source_frame_enabled": false,
+                "source_scale": 1,
+                "thickness_distance": 0,
+                "tiles": {
+                    "{7da933a1-5d2a-40ca-87c9-6a8aaef7276d}": [
+                        1001
+                    ]
+                },
+                "use_cage": false
+            },
+            "base_color": [
+                1,
+                1,
+                1,
+                1
+            ],
+            "brush_color": [
+                0,
+                0,
+                0,
+                1
+            ],
+            "bump_hash": "cbf29ce484222325",
+            "composite_checked": false,
+            "composite_differences": [
+            ],
+            "composite_failed_jobs": 0,
+            "composite_pending": true,
+            "composite_split_jobs": 0,
+            "compress_mouse": true,
+            "compress_tablet": true,
+            "decimal": ".",
+            "environment": {
+                "alignment": "Local",
+                "blur": 0,
+                "exposure": 0,
+                "lighting_follows_view": true,
+                "opacity": 0,
+                "post_depth_enabled": false,
+                "post_effects": {
+                    "aperture": 0,
+                    "bias": 0,
+                    "brightness": 1,
+                    "color_correction": false,
+                    "contrast": 1,
+                    "dof": false,
+                    "enabled": false,
+                    "exposure": 1,
+                    "focus_distance": 3.725126028060913,
+                    "gamma": 1,
+                    "glare": false,
+                    "glare_luminance": 1,
+                    "glare_remap": 3,
+                    "glare_shape": 0,
+                    "glare_threshold": 0.8999999761581421,
+                    "lens": false,
+                    "lens_fov": 45,
+                    "lens_power": 1,
+                    "lens_roundness": 0.05000000074505806,
+                    "lens_smoothness": 1,
+                    "mapping_factor": 32,
+                    "saturation": 1,
+                    "sepia": 0,
+                    "temperature": 6500,
+                    "tone_function": 0,
+                    "tone_mapping": false,
+                    "version": 4,
+                    "vignette": false,
+                    "vignette_strength": 0.20000000298023224
+                },
+                "resource": "default-studio.hdr",
+                "rotation": 90.00000250447816,
+                "subsurface": {
+                    "enabled": false,
+                    "samples": 16,
+                    "version": 1
+                }
+            },
+            "first_dab_diameter": 0,
+            "has_document": true,
+            "hash": "cbf29ce484222325",
+            "hover_picks": 0,
+            "input_frames": 0,
+            "input_points": 0,
+            "input_pressure": 1,
+            "last_dab_diameter": 0,
+            "layer_color": [
+                1,
+                1,
+                1,
+                1
+            ],
+            "layers": 1,
+            "mesh_maps": [
+                {
+                    "hashes": [
+                        "46671b5083e00383"
+                    ],
+                    "role": 0
+                },
+                {
+                    "hashes": [
+                        "e181bebb51c05c0b"
+                    ],
+                    "role": 1
+                },
+                {
+                    "hashes": [
+                        "fa6bdbf1f7e00383"
+                    ],
+                    "role": 2
+                },
+                {
+                    "hashes": [
+                        "29f892ae4a39430a"
+                    ],
+                    "role": 3
+                },
+                {
+                    "hashes": [
+                        "e07f95a60f389238"
+                    ],
+                    "role": 4
+                },
+                {
+                    "hashes": [
+                        "a3608f5323bb71ae"
+                    ],
+                    "role": 5
+                },
+                {
+                    "hashes": [
+                        "8e1f71f669c769ce"
+                    ],
+                    "role": 6
+                }
+            ],
+            "native_color": [
+                0,
+                0,
+                0,
+                0
+            ],
+            "native_color_expected": [
+                0,
+                0,
+                0,
+                0
+            ],
+            "native_color_gpu_resident": false,
+            "padding_calls": 0,
+            "painting": false,
+            "pointer_device": "Mouse",
+            "pressure_overlay": false,
+            "property_dragging": false,
+            "property_idle_ms": -1,
+            "property_pending": false,
+            "render": {
+                "active": false,
+                "available": true,
+                "cpu_fallback": false,
+                "denoise": false,
+                "device": "EEVEE",
+                "device_message": "",
+                "error": "",
+                "image_mirror_paused": false,
+                "samples": 1024,
+                "status": "EEVEE",
+                "view_clip_end": 1000,
+                "view_clip_start": 0.009999999776482582
+            },
+            "render_frames": 19,
+            "render_ui": false,
+            "roughness": 0.30000001192092896,
+            "shader_failures": "",
+            "skew": {
+                "auto_role": -1,
+                "bake_eligible": true,
+                "completed": 0,
+                "dropped": 0,
+                "eligible": false,
+                "error": "",
+                "mode": 0,
+                "pending": false,
+                "queue_size": 0,
+                "role_completed": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "settings_visible": false,
+                "source_loads": 0,
+                "vectors": 0
+            },
+            "skew_hash": "cbf29ce484222325",
+            "skew_metadata": {
+                "edge_contrast": 0,
+                "edge_distance": 0.02,
+                "edge_protection": true,
+                "enabled": true,
+                "resolution": 128,
+                "tiles": [
+                ],
+                "vector_density": 16,
+                "vector_length": 0.05,
+                "vector_opacity": 0.8,
+                "vectors": true
+            },
+            "skew_normal_hash": "46671b5083e00383",
+            "spline_dabs": [
+            ],
+            "stage": "baked",
+            "stroke_batches": 0,
+            "tablet_contact": false,
+            "texture_loading": false,
+            "undo_count": 1,
+            "view": {
+                "active_gesture": "Idle",
+                "clip": {
+                    "far": 1000,
+                    "farthest": 5.487138152943958,
+                    "near": 0.01,
+                    "nearest": 2.800214390371709,
+                    "scene_camera": false
+                },
+                "device_pixel_ratio": 1,
+                "interaction_view": "3D",
+                "last_framed_bounds": {
+                    "maximum": [
+                        0.8104280233383179,
+                        0.8222129344940186,
+                        1
+                    ],
+                    "mesh_objects": 1,
+                    "minimum": [
+                        -0.8104280233383179,
+                        -0.8222130537033081,
+                        -1
+                    ],
+                    "pane_size": [
+                        691,
+                        797
+                    ]
+                },
+                "last_picked_color": [
+                    0,
+                    0,
+                    0,
+                    1
+                ],
+                "layout": "3D only",
+                "panes": [
+                    {
+                        "rect": [
+                            0,
+                            0,
+                            691,
+                            797
+                        ],
+                        "view": "3D"
+                    }
+                ],
+                "reference_image_enabled": false,
+                "reference_image_path": "",
+                "reference_image_size": [
+                    0,
+                    0
+                ],
+                "scene_center": [
+                    0,
+                    -5.960464477539063e-08,
+                    0
+                ],
+                "scene_distance": 4.143676271657833,
+                "scene_pitch": 18,
+                "scene_projection": "Perspective view",
+                "scene_vertical_extent": 3.4327338196085115,
+                "scene_view_matrix": [
+                    0.9063078165054321,
+                    -0.13059622049331665,
+                    0.40193384885787964,
+                    0,
+                    0.4226182699203491,
+                    0.28006452322006226,
+                    -0.8619499206542969,
+                    0,
+                    0,
+                    0.9510565400123596,
+                    0.30901700258255005,
+                    0,
+                    2.5190011854192562e-08,
+                    1.669314642072095e-08,
+                    -4.143676280975342,
+                    1
+                ],
+                "scene_yaw": 25,
+                "selected_material_session_id": 283,
+                "trackball": false,
+                "uv_center": [
+                    0.5,
+                    0.5
+                ],
+                "uv_first": false,
+                "uv_triangles": 37018,
+                "uv_vertical_extent": 1.2999999523162842
+            }
+        },
+        {
+            "bake_configuration": {
+                "ao_distance": 0,
+                "average": true,
+                "cage_file": "",
+                "curvature_radius": 0,
+                "curvature_scale": 1,
+                "denoise": true,
+                "diffusion": false,
+                "dilation": 32,
+                "enabled": [
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    true
+                ],
+                "frontal": 0.01,
+                "height": 256,
+                "high_files": [
+                ],
+                "high_marker": "_high",
+                "ignore_backface": true,
+                "ignore_marker": "_ignorebf",
+                "locked": true,
+                "low_marker": "_low",
+                "match_names": false,
+                "normal_detail": 0,
+                "project_mesh": true,
+                "ray_offset": 0,
+                "rays": 4,
+                "rear": 0.01,
+                "relative": true,
+                "resolution": 256,
+                "sampling": 1,
+                "source_frame": 1,
+                "source_frame_enabled": false,
+                "source_scale": 1,
+                "thickness_distance": 0,
+                "tiles": {
+                    "{7da933a1-5d2a-40ca-87c9-6a8aaef7276d}": [
+                        1001
+                    ]
+                },
+                "use_cage": false
+            },
+            "base_color": [
+                1,
+                1,
+                1,
+                1
+            ],
+            "brush_color": [
+                0,
+                0,
+                0,
+                1
+            ],
+            "bump_hash": "cbf29ce484222325",
+            "composite_checked": false,
+            "composite_differences": [
+            ],
+            "composite_failed_jobs": 0,
+            "composite_pending": true,
+            "composite_split_jobs": 0,
+            "compress_mouse": true,
+            "compress_tablet": true,
+            "decimal": ".",
+            "environment": {
+                "alignment": "Local",
+                "blur": 0,
+                "exposure": 0,
+                "lighting_follows_view": true,
+                "opacity": 0,
+                "post_depth_enabled": false,
+                "post_effects": {
+                    "aperture": 0,
+                    "bias": 0,
+                    "brightness": 1,
+                    "color_correction": false,
+                    "contrast": 1,
+                    "dof": false,
+                    "enabled": false,
+                    "exposure": 1,
+                    "focus_distance": 3.725126028060913,
+                    "gamma": 1,
+                    "glare": false,
+                    "glare_luminance": 1,
+                    "glare_remap": 3,
+                    "glare_shape": 0,
+                    "glare_threshold": 0.8999999761581421,
+                    "lens": false,
+                    "lens_fov": 45,
+                    "lens_power": 1,
+                    "lens_roundness": 0.05000000074505806,
+                    "lens_smoothness": 1,
+                    "mapping_factor": 32,
+                    "saturation": 1,
+                    "sepia": 0,
+                    "temperature": 6500,
+                    "tone_function": 0,
+                    "tone_mapping": false,
+                    "version": 4,
+                    "vignette": false,
+                    "vignette_strength": 0.20000000298023224
+                },
+                "resource": "default-studio.hdr",
+                "rotation": 90.00000250447816,
+                "subsurface": {
+                    "enabled": false,
+                    "samples": 16,
+                    "version": 1
+                }
+            },
+            "first_dab_diameter": 0,
+            "has_document": true,
+            "hash": "cbf29ce484222325",
+            "hover_picks": 0,
+            "input_frames": 0,
+            "input_points": 0,
+            "input_pressure": 1,
+            "last_dab_diameter": 0,
+            "layer_color": [
+                1,
+                1,
+                1,
+                1
+            ],
+            "layers": 1,
+            "mesh_maps": [
+                {
+                    "hashes": [
+                        "0b78acba7acd0383"
+                    ],
+                    "role": 0
+                },
+                {
+                    "hashes": [
+                        "cd0b93045d563408"
+                    ],
+                    "role": 1
+                },
+                {
+                    "hashes": [
+                        "0c500398b8cd0383"
+                    ],
+                    "role": 2
+                },
+                {
+                    "hashes": [
+                        "269071198ab342c2"
+                    ],
+                    "role": 3
+                },
+                {
+                    "hashes": [
+                        "5c1c559668b937d7"
+                    ],
+                    "role": 4
+                },
+                {
+                    "hashes": [
+                        "b3cda2d0381aad17"
+                    ],
+                    "role": 5
+                },
+                {
+                    "hashes": [
+                        "64676b774177430f"
+                    ],
+                    "role": 6
+                }
+            ],
+            "native_color": [
+                0,
+                0,
+                0,
+                0
+            ],
+            "native_color_expected": [
+                0,
+                0,
+                0,
+                0
+            ],
+            "native_color_gpu_resident": false,
+            "padding_calls": 0,
+            "painting": false,
+            "pointer_device": "Mouse",
+            "pressure_overlay": false,
+            "property_dragging": false,
+            "property_idle_ms": -1,
+            "property_pending": false,
+            "render": {
+                "active": false,
+                "available": true,
+                "cpu_fallback": false,
+                "denoise": false,
+                "device": "EEVEE",
+                "device_message": "",
+                "error": "",
+                "image_mirror_paused": false,
+                "samples": 1024,
+                "status": "EEVEE",
+                "view_clip_end": 1000,
+                "view_clip_start": 0.009999999776482582
+            },
+            "render_frames": 32,
+            "render_ui": false,
+            "roughness": 0.30000001192092896,
+            "shader_failures": "",
+            "skew": {
+                "auto_role": -1,
+                "bake_eligible": true,
+                "completed": 0,
+                "dropped": 0,
+                "eligible": false,
+                "error": "",
+                "mode": 0,
+                "pending": false,
+                "queue_size": 0,
+                "role_completed": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "settings_visible": false,
+                "source_loads": 0,
+                "vectors": 0
+            },
+            "skew_hash": "cbf29ce484222325",
+            "skew_metadata": {
+                "edge_contrast": 0,
+                "edge_distance": 0.02,
+                "edge_protection": true,
+                "enabled": true,
+                "resolution": 128,
+                "tiles": [
+                ],
+                "vector_density": 16,
+                "vector_length": 0.05,
+                "vector_opacity": 0.8,
+                "vectors": true
+            },
+            "skew_normal_hash": "0b78acba7acd0383",
+            "spline_dabs": [
+            ],
+            "stage": "baked",
+            "stroke_batches": 0,
+            "tablet_contact": false,
+            "texture_loading": false,
+            "undo_count": 2,
+            "view": {
+                "active_gesture": "Idle",
+                "clip": {
+                    "far": 1000,
+                    "farthest": 5.487138152943958,
+                    "near": 0.01,
+                    "nearest": 2.800214390371709,
+                    "scene_camera": false
+                },
+                "device_pixel_ratio": 1,
+                "interaction_view": "3D",
+                "last_framed_bounds": {
+                    "maximum": [
+                        0.8104280233383179,
+                        0.8222129344940186,
+                        1
+                    ],
+                    "mesh_objects": 1,
+                    "minimum": [
+                        -0.8104280233383179,
+                        -0.8222130537033081,
+                        -1
+                    ],
+                    "pane_size": [
+                        691,
+                        797
+                    ]
+                },
+                "last_picked_color": [
+                    0,
+                    0,
+                    0,
+                    1
+                ],
+                "layout": "3D only",
+                "panes": [
+                    {
+                        "rect": [
+                            0,
+                            0,
+                            691,
+                            797
+                        ],
+                        "view": "3D"
+                    }
+                ],
+                "reference_image_enabled": false,
+                "reference_image_path": "",
+                "reference_image_size": [
+                    0,
+                    0
+                ],
+                "scene_center": [
+                    0,
+                    -5.960464477539063e-08,
+                    0
+                ],
+                "scene_distance": 4.143676271657833,
+                "scene_pitch": 18,
+                "scene_projection": "Perspective view",
+                "scene_vertical_extent": 3.4327338196085115,
+                "scene_view_matrix": [
+                    0.9063078165054321,
+                    -0.13059622049331665,
+                    0.40193384885787964,
+                    0,
+                    0.4226182699203491,
+                    0.28006452322006226,
+                    -0.8619499206542969,
+                    0,
+                    0,
+                    0.9510565400123596,
+                    0.30901700258255005,
+                    0,
+                    2.5190011854192562e-08,
+                    1.669314642072095e-08,
+                    -4.143676280975342,
+                    1
+                ],
+                "scene_yaw": 25,
+                "selected_material_session_id": 283,
+                "trackball": false,
+                "uv_center": [
+                    0.5,
+                    0.5
+                ],
+                "uv_first": false,
+                "uv_triangles": 37018,
+                "uv_vertical_extent": 1.2999999523162842
+            }
+        },
+        {
+            "bake_configuration": {
+                "ao_distance": 0,
+                "average": true,
+                "cage_file": "",
+                "curvature_radius": 0,
+                "curvature_scale": 1,
+                "denoise": true,
+                "diffusion": false,
+                "dilation": 32,
+                "enabled": [
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    true
+                ],
+                "frontal": 0.01,
+                "height": 1024,
+                "high_files": [
+                ],
+                "high_marker": "_high",
+                "ignore_backface": true,
+                "ignore_marker": "_ignorebf",
+                "locked": true,
+                "low_marker": "_low",
+                "match_names": false,
+                "normal_detail": 0,
+                "project_mesh": true,
+                "ray_offset": 0,
+                "rays": 4,
+                "rear": 0.01,
+                "relative": true,
+                "resolution": 1024,
+                "sampling": 1,
+                "source_frame": 1,
+                "source_frame_enabled": false,
+                "source_scale": 1,
+                "thickness_distance": 0,
+                "tiles": {
+                    "{7da933a1-5d2a-40ca-87c9-6a8aaef7276d}": [
+                        1001
+                    ]
+                },
+                "use_cage": false
+            },
+            "base_color": [
+                1,
+                1,
+                1,
+                1
+            ],
+            "brush_color": [
+                0,
+                0,
+                0,
+                1
+            ],
+            "bump_hash": "cbf29ce484222325",
+            "composite_checked": false,
+            "composite_differences": [
+            ],
+            "composite_failed_jobs": 0,
+            "composite_pending": true,
+            "composite_split_jobs": 0,
+            "compress_mouse": true,
+            "compress_tablet": true,
+            "decimal": ".",
+            "environment": {
+                "alignment": "Local",
+                "blur": 0,
+                "exposure": 0,
+                "lighting_follows_view": true,
+                "opacity": 0,
+                "post_depth_enabled": false,
+                "post_effects": {
+                    "aperture": 0,
+                    "bias": 0,
+                    "brightness": 1,
+                    "color_correction": false,
+                    "contrast": 1,
+                    "dof": false,
+                    "enabled": false,
+                    "exposure": 1,
+                    "focus_distance": 3.725126028060913,
+                    "gamma": 1,
+                    "glare": false,
+                    "glare_luminance": 1,
+                    "glare_remap": 3,
+                    "glare_shape": 0,
+                    "glare_threshold": 0.8999999761581421,
+                    "lens": false,
+                    "lens_fov": 45,
+                    "lens_power": 1,
+                    "lens_roundness": 0.05000000074505806,
+                    "lens_smoothness": 1,
+                    "mapping_factor": 32,
+                    "saturation": 1,
+                    "sepia": 0,
+                    "temperature": 6500,
+                    "tone_function": 0,
+                    "tone_mapping": false,
+                    "version": 4,
+                    "vignette": false,
+                    "vignette_strength": 0.20000000298023224
+                },
+                "resource": "default-studio.hdr",
+                "rotation": 90.00000250447816,
+                "subsurface": {
+                    "enabled": false,
+                    "samples": 16,
+                    "version": 1
+                }
+            },
+            "first_dab_diameter": 0,
+            "has_document": true,
+            "hash": "cbf29ce484222325",
+            "hover_picks": 0,
+            "input_frames": 0,
+            "input_points": 0,
+            "input_pressure": 1,
+            "last_dab_diameter": 0,
+            "layer_color": [
+                1,
+                1,
+                1,
+                1
+            ],
+            "layers": 1,
+            "mesh_maps": [
+                {
+                    "hashes": [
+                        "6d78855d799d0383"
+                    ],
+                    "role": 0
+                },
+                {
+                    "hashes": [
+                        "9cb1c11b3e5eec76"
+                    ],
+                    "role": 1
+                },
+                {
+                    "hashes": [
+                        "3243d83f349d0383"
+                    ],
+                    "role": 2
+                },
+                {
+                    "hashes": [
+                        "78e2f8ea2fe5551e"
+                    ],
+                    "role": 3
+                },
+                {
+                    "hashes": [
+                        "d756f20345b120a8"
+                    ],
+                    "role": 4
+                },
+                {
+                    "hashes": [
+                        "02e055d3b64015fa"
+                    ],
+                    "role": 5
+                },
+                {
+                    "hashes": [
+                        "fbdb551ff95b2e95"
+                    ],
+                    "role": 6
+                }
+            ],
+            "native_color": [
+                0,
+                0,
+                0,
+                0
+            ],
+            "native_color_expected": [
+                0,
+                0,
+                0,
+                0
+            ],
+            "native_color_gpu_resident": false,
+            "padding_calls": 0,
+            "painting": false,
+            "pointer_device": "Mouse",
+            "pressure_overlay": false,
+            "property_dragging": false,
+            "property_idle_ms": -1,
+            "property_pending": false,
+            "render": {
+                "active": false,
+                "available": true,
+                "cpu_fallback": false,
+                "denoise": false,
+                "device": "EEVEE",
+                "device_message": "",
+                "error": "",
+                "image_mirror_paused": false,
+                "samples": 1024,
+                "status": "EEVEE",
+                "view_clip_end": 1000,
+                "view_clip_start": 0.009999999776482582
+            },
+            "render_frames": 43,
+            "render_ui": false,
+            "roughness": 0.30000001192092896,
+            "shader_failures": "",
+            "skew": {
+                "auto_role": -1,
+                "bake_eligible": true,
+                "completed": 0,
+                "dropped": 0,
+                "eligible": false,
+                "error": "",
+                "mode": 0,
+                "pending": false,
+                "queue_size": 0,
+                "role_completed": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "settings_visible": false,
+                "source_loads": 0,
+                "vectors": 0
+            },
+            "skew_hash": "cbf29ce484222325",
+            "skew_metadata": {
+                "edge_contrast": 0,
+                "edge_distance": 0.02,
+                "edge_protection": true,
+                "enabled": true,
+                "resolution": 128,
+                "tiles": [
+                ],
+                "vector_density": 16,
+                "vector_length": 0.05,
+                "vector_opacity": 0.8,
+                "vectors": true
+            },
+            "skew_normal_hash": "6d78855d799d0383",
+            "spline_dabs": [
+            ],
+            "stage": "baked",
+            "stroke_batches": 0,
+            "tablet_contact": false,
+            "texture_loading": false,
+            "undo_count": 3,
+            "view": {
+                "active_gesture": "Idle",
+                "clip": {
+                    "far": 1000,
+                    "farthest": 5.487138152943958,
+                    "near": 0.01,
+                    "nearest": 2.800214390371709,
+                    "scene_camera": false
+                },
+                "device_pixel_ratio": 1,
+                "interaction_view": "3D",
+                "last_framed_bounds": {
+                    "maximum": [
+                        0.8104280233383179,
+                        0.8222129344940186,
+                        1
+                    ],
+                    "mesh_objects": 1,
+                    "minimum": [
+                        -0.8104280233383179,
+                        -0.8222130537033081,
+                        -1
+                    ],
+                    "pane_size": [
+                        691,
+                        797
+                    ]
+                },
+                "last_picked_color": [
+                    0,
+                    0,
+                    0,
+                    1
+                ],
+                "layout": "3D only",
+                "panes": [
+                    {
+                        "rect": [
+                            0,
+                            0,
+                            691,
+                            797
+                        ],
+                        "view": "3D"
+                    }
+                ],
+                "reference_image_enabled": false,
+                "reference_image_path": "",
+                "reference_image_size": [
+                    0,
+                    0
+                ],
+                "scene_center": [
+                    0,
+                    -5.960464477539063e-08,
+                    0
+                ],
+                "scene_distance": 4.143676271657833,
+                "scene_pitch": 18,
+                "scene_projection": "Perspective view",
+                "scene_vertical_extent": 3.4327338196085115,
+                "scene_view_matrix": [
+                    0.9063078165054321,
+                    -0.13059622049331665,
+                    0.40193384885787964,
+                    0,
+                    0.4226182699203491,
+                    0.28006452322006226,
+                    -0.8619499206542969,
+                    0,
+                    0,
+                    0.9510565400123596,
+                    0.30901700258255005,
+                    0,
+                    2.5190011854192562e-08,
+                    1.669314642072095e-08,
+                    -4.143676280975342,
+                    1
+                ],
+                "scene_yaw": 25,
+                "selected_material_session_id": 283,
+                "trackball": false,
+                "uv_center": [
+                    0.5,
+                    0.5
+                ],
+                "uv_first": false,
+                "uv_triangles": 37018,
+                "uv_vertical_extent": 1.2999999523162842
+            }
+        },
+        {
+            "bake_configuration": {
+                "ao_distance": 0,
+                "average": true,
+                "cage_file": "",
+                "curvature_radius": 0,
+                "curvature_scale": 1,
+                "denoise": true,
+                "diffusion": false,
+                "dilation": 32,
+                "enabled": [
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    true
+                ],
+                "frontal": 0.01,
+                "height": 256,
+                "high_files": [
+                ],
+                "high_marker": "_high",
+                "ignore_backface": true,
+                "ignore_marker": "_ignorebf",
+                "locked": true,
+                "low_marker": "_low",
+                "match_names": false,
+                "normal_detail": 0,
+                "project_mesh": true,
+                "ray_offset": 0,
+                "rays": 4,
+                "rear": 0.01,
+                "relative": true,
+                "resolution": 256,
+                "sampling": 1,
+                "source_frame": 1,
+                "source_frame_enabled": false,
+                "source_scale": 1,
+                "thickness_distance": 0,
+                "tiles": {
+                    "{7da933a1-5d2a-40ca-87c9-6a8aaef7276d}": [
+                        1001
+                    ]
+                },
+                "use_cage": false
+            },
+            "base_color": [
+                1,
+                1,
+                1,
+                1
+            ],
+            "brush_color": [
+                0,
+                0,
+                0,
+                1
+            ],
+            "bump_hash": "cbf29ce484222325",
+            "composite_checked": false,
+            "composite_differences": [
+            ],
+            "composite_failed_jobs": 0,
+            "composite_pending": true,
+            "composite_split_jobs": 0,
+            "compress_mouse": true,
+            "compress_tablet": true,
+            "decimal": ".",
+            "environment": {
+                "alignment": "Local",
+                "blur": 0,
+                "exposure": 0,
+                "lighting_follows_view": true,
+                "opacity": 0,
+                "post_depth_enabled": false,
+                "post_effects": {
+                    "aperture": 0,
+                    "bias": 0,
+                    "brightness": 1,
+                    "color_correction": false,
+                    "contrast": 1,
+                    "dof": false,
+                    "enabled": false,
+                    "exposure": 1,
+                    "focus_distance": 3.725126028060913,
+                    "gamma": 1,
+                    "glare": false,
+                    "glare_luminance": 1,
+                    "glare_remap": 3,
+                    "glare_shape": 0,
+                    "glare_threshold": 0.8999999761581421,
+                    "lens": false,
+                    "lens_fov": 45,
+                    "lens_power": 1,
+                    "lens_roundness": 0.05000000074505806,
+                    "lens_smoothness": 1,
+                    "mapping_factor": 32,
+                    "saturation": 1,
+                    "sepia": 0,
+                    "temperature": 6500,
+                    "tone_function": 0,
+                    "tone_mapping": false,
+                    "version": 4,
+                    "vignette": false,
+                    "vignette_strength": 0.20000000298023224
+                },
+                "resource": "default-studio.hdr",
+                "rotation": 90.00000250447816,
+                "subsurface": {
+                    "enabled": false,
+                    "samples": 16,
+                    "version": 1
+                }
+            },
+            "first_dab_diameter": 0,
+            "has_document": true,
+            "hash": "cbf29ce484222325",
+            "hover_picks": 0,
+            "input_frames": 0,
+            "input_points": 0,
+            "input_pressure": 1,
+            "last_dab_diameter": 0,
+            "layer_color": [
+                1,
+                1,
+                1,
+                1
+            ],
+            "layers": 1,
+            "mesh_maps": [
+                {
+                    "hashes": [
+                        "0b78acba7acd0383"
+                    ],
+                    "role": 0
+                },
+                {
+                    "hashes": [
+                        "cd0b93045d563408"
+                    ],
+                    "role": 1
+                },
+                {
+                    "hashes": [
+                        "0c500398b8cd0383"
+                    ],
+                    "role": 2
+                },
+                {
+                    "hashes": [
+                        "269071198ab342c2"
+                    ],
+                    "role": 3
+                },
+                {
+                    "hashes": [
+                        "5c1c559668b937d7"
+                    ],
+                    "role": 4
+                },
+                {
+                    "hashes": [
+                        "b3cda2d0381aad17"
+                    ],
+                    "role": 5
+                },
+                {
+                    "hashes": [
+                        "64676b774177430f"
+                    ],
+                    "role": 6
+                }
+            ],
+            "native_color": [
+                0,
+                0,
+                0,
+                0
+            ],
+            "native_color_expected": [
+                0,
+                0,
+                0,
+                0
+            ],
+            "native_color_gpu_resident": false,
+            "padding_calls": 0,
+            "painting": false,
+            "pointer_device": "Mouse",
+            "pressure_overlay": false,
+            "property_dragging": false,
+            "property_idle_ms": -1,
+            "property_pending": false,
+            "render": {
+                "active": false,
+                "available": true,
+                "cpu_fallback": false,
+                "denoise": false,
+                "device": "EEVEE",
+                "device_message": "",
+                "error": "",
+                "image_mirror_paused": false,
+                "samples": 1024,
+                "status": "EEVEE",
+                "view_clip_end": 1000,
+                "view_clip_start": 0.009999999776482582
+            },
+            "render_frames": 54,
+            "render_ui": false,
+            "roughness": 0.30000001192092896,
+            "shader_failures": "",
+            "skew": {
+                "auto_role": -1,
+                "bake_eligible": true,
+                "completed": 0,
+                "dropped": 0,
+                "eligible": false,
+                "error": "",
+                "mode": 0,
+                "pending": false,
+                "queue_size": 0,
+                "role_completed": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "settings_visible": false,
+                "source_loads": 0,
+                "vectors": 0
+            },
+            "skew_hash": "cbf29ce484222325",
+            "skew_metadata": {
+                "edge_contrast": 0,
+                "edge_distance": 0.02,
+                "edge_protection": true,
+                "enabled": true,
+                "resolution": 128,
+                "tiles": [
+                ],
+                "vector_density": 16,
+                "vector_length": 0.05,
+                "vector_opacity": 0.8,
+                "vectors": true
+            },
+            "skew_normal_hash": "0b78acba7acd0383",
+            "spline_dabs": [
+            ],
+            "stage": "baked",
+            "stroke_batches": 0,
+            "tablet_contact": false,
+            "texture_loading": false,
+            "undo_count": 4,
+            "view": {
+                "active_gesture": "Idle",
+                "clip": {
+                    "far": 1000,
+                    "farthest": 5.487138152943958,
+                    "near": 0.01,
+                    "nearest": 2.800214390371709,
+                    "scene_camera": false
+                },
+                "device_pixel_ratio": 1,
+                "interaction_view": "3D",
+                "last_framed_bounds": {
+                    "maximum": [
+                        0.8104280233383179,
+                        0.8222129344940186,
+                        1
+                    ],
+                    "mesh_objects": 1,
+                    "minimum": [
+                        -0.8104280233383179,
+                        -0.8222130537033081,
+                        -1
+                    ],
+                    "pane_size": [
+                        691,
+                        797
+                    ]
+                },
+                "last_picked_color": [
+                    0,
+                    0,
+                    0,
+                    1
+                ],
+                "layout": "3D only",
+                "panes": [
+                    {
+                        "rect": [
+                            0,
+                            0,
+                            691,
+                            797
+                        ],
+                        "view": "3D"
+                    }
+                ],
+                "reference_image_enabled": false,
+                "reference_image_path": "",
+                "reference_image_size": [
+                    0,
+                    0
+                ],
+                "scene_center": [
+                    0,
+                    -5.960464477539063e-08,
+                    0
+                ],
+                "scene_distance": 4.143676271657833,
+                "scene_pitch": 18,
+                "scene_projection": "Perspective view",
+                "scene_vertical_extent": 3.4327338196085115,
+                "scene_view_matrix": [
+                    0.9063078165054321,
+                    -0.13059622049331665,
+                    0.40193384885787964,
+                    0,
+                    0.4226182699203491,
+                    0.28006452322006226,
+                    -0.8619499206542969,
+                    0,
+                    0,
+                    0.9510565400123596,
+                    0.30901700258255005,
+                    0,
+                    2.5190011854192562e-08,
+                    1.669314642072095e-08,
+                    -4.143676280975342,
+                    1
+                ],
+                "scene_yaw": 25,
+                "selected_material_session_id": 283,
+                "trackball": false,
+                "uv_center": [
+                    0.5,
+                    0.5
+                ],
+                "uv_first": false,
+                "uv_triangles": 37018,
+                "uv_vertical_extent": 1.2999999523162842
+            }
+        },
+        {
+            "bake_configuration": {
+                "ao_distance": 0,
+                "average": true,
+                "cage_file": "",
+                "curvature_radius": 0,
+                "curvature_scale": 1,
+                "denoise": true,
+                "diffusion": false,
+                "dilation": 32,
+                "enabled": [
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    true
+                ],
+                "frontal": 0.01,
+                "height": 64,
+                "high_files": [
+                ],
+                "high_marker": "_high",
+                "ignore_backface": true,
+                "ignore_marker": "_ignorebf",
+                "locked": true,
+                "low_marker": "_low",
+                "match_names": false,
+                "normal_detail": 0,
+                "project_mesh": true,
+                "ray_offset": 0,
+                "rays": 4,
+                "rear": 0.01,
+                "relative": true,
+                "resolution": 64,
+                "sampling": 1,
+                "source_frame": 1,
+                "source_frame_enabled": false,
+                "source_scale": 1,
+                "thickness_distance": 0,
+                "tiles": {
+                    "{7da933a1-5d2a-40ca-87c9-6a8aaef7276d}": [
+                        1001
+                    ]
+                },
+                "use_cage": false
+            },
+            "base_color": [
+                1,
+                1,
+                1,
+                1
+            ],
+            "brush_color": [
+                0,
+                0,
+                0,
+                1
+            ],
+            "bump_hash": "cbf29ce484222325",
+            "composite_checked": false,
+            "composite_differences": [
+            ],
+            "composite_failed_jobs": 0,
+            "composite_pending": true,
+            "composite_split_jobs": 0,
+            "compress_mouse": true,
+            "compress_tablet": true,
+            "decimal": ".",
+            "environment": {
+                "alignment": "Local",
+                "blur": 0,
+                "exposure": 0,
+                "lighting_follows_view": true,
+                "opacity": 0,
+                "post_depth_enabled": false,
+                "post_effects": {
+                    "aperture": 0,
+                    "bias": 0,
+                    "brightness": 1,
+                    "color_correction": false,
+                    "contrast": 1,
+                    "dof": false,
+                    "enabled": false,
+                    "exposure": 1,
+                    "focus_distance": 3.725126028060913,
+                    "gamma": 1,
+                    "glare": false,
+                    "glare_luminance": 1,
+                    "glare_remap": 3,
+                    "glare_shape": 0,
+                    "glare_threshold": 0.8999999761581421,
+                    "lens": false,
+                    "lens_fov": 45,
+                    "lens_power": 1,
+                    "lens_roundness": 0.05000000074505806,
+                    "lens_smoothness": 1,
+                    "mapping_factor": 32,
+                    "saturation": 1,
+                    "sepia": 0,
+                    "temperature": 6500,
+                    "tone_function": 0,
+                    "tone_mapping": false,
+                    "version": 4,
+                    "vignette": false,
+                    "vignette_strength": 0.20000000298023224
+                },
+                "resource": "default-studio.hdr",
+                "rotation": 90.00000250447816,
+                "subsurface": {
+                    "enabled": false,
+                    "samples": 16,
+                    "version": 1
+                }
+            },
+            "first_dab_diameter": 0,
+            "has_document": true,
+            "hash": "cbf29ce484222325",
+            "hover_picks": 0,
+            "input_frames": 0,
+            "input_points": 0,
+            "input_pressure": 1,
+            "last_dab_diameter": 0,
+            "layer_color": [
+                1,
+                1,
+                1,
+                1
+            ],
+            "layers": 1,
+            "mesh_maps": [
+                {
+                    "hashes": [
+                        "46671b5083e00383"
+                    ],
+                    "role": 0
+                },
+                {
+                    "hashes": [
+                        "e181bebb51c05c0b"
+                    ],
+                    "role": 1
+                },
+                {
+                    "hashes": [
+                        "fa6bdbf1f7e00383"
+                    ],
+                    "role": 2
+                },
+                {
+                    "hashes": [
+                        "29f892ae4a39430a"
+                    ],
+                    "role": 3
+                },
+                {
+                    "hashes": [
+                        "e07f95a60f389238"
+                    ],
+                    "role": 4
+                },
+                {
+                    "hashes": [
+                        "a3608f5323bb71ae"
+                    ],
+                    "role": 5
+                },
+                {
+                    "hashes": [
+                        "8e1f71f669c769ce"
+                    ],
+                    "role": 6
+                }
+            ],
+            "native_color": [
+                0,
+                0,
+                0,
+                0
+            ],
+            "native_color_expected": [
+                0,
+                0,
+                0,
+                0
+            ],
+            "native_color_gpu_resident": false,
+            "padding_calls": 0,
+            "painting": false,
+            "pointer_device": "Mouse",
+            "pressure_overlay": false,
+            "property_dragging": false,
+            "property_idle_ms": -1,
+            "property_pending": false,
+            "render": {
+                "active": false,
+                "available": true,
+                "cpu_fallback": false,
+                "denoise": false,
+                "device": "EEVEE",
+                "device_message": "",
+                "error": "",
+                "image_mirror_paused": false,
+                "samples": 1024,
+                "status": "EEVEE",
+                "view_clip_end": 1000,
+                "view_clip_start": 0.009999999776482582
+            },
+            "render_frames": 65,
+            "render_ui": false,
+            "roughness": 0.30000001192092896,
+            "shader_failures": "",
+            "skew": {
+                "auto_role": -1,
+                "bake_eligible": true,
+                "completed": 0,
+                "dropped": 0,
+                "eligible": false,
+                "error": "",
+                "mode": 0,
+                "pending": false,
+                "queue_size": 0,
+                "role_completed": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "settings_visible": false,
+                "source_loads": 0,
+                "vectors": 0
+            },
+            "skew_hash": "cbf29ce484222325",
+            "skew_metadata": {
+                "edge_contrast": 0,
+                "edge_distance": 0.02,
+                "edge_protection": true,
+                "enabled": true,
+                "resolution": 128,
+                "tiles": [
+                ],
+                "vector_density": 16,
+                "vector_length": 0.05,
+                "vector_opacity": 0.8,
+                "vectors": true
+            },
+            "skew_normal_hash": "46671b5083e00383",
+            "spline_dabs": [
+            ],
+            "stage": "baked",
+            "stroke_batches": 0,
+            "tablet_contact": false,
+            "texture_loading": false,
+            "undo_count": 5,
+            "view": {
+                "active_gesture": "Idle",
+                "clip": {
+                    "far": 1000,
+                    "farthest": 5.487138152943958,
+                    "near": 0.01,
+                    "nearest": 2.800214390371709,
+                    "scene_camera": false
+                },
+                "device_pixel_ratio": 1,
+                "interaction_view": "3D",
+                "last_framed_bounds": {
+                    "maximum": [
+                        0.8104280233383179,
+                        0.8222129344940186,
+                        1
+                    ],
+                    "mesh_objects": 1,
+                    "minimum": [
+                        -0.8104280233383179,
+                        -0.8222130537033081,
+                        -1
+                    ],
+                    "pane_size": [
+                        691,
+                        797
+                    ]
+                },
+                "last_picked_color": [
+                    0,
+                    0,
+                    0,
+                    1
+                ],
+                "layout": "3D only",
+                "panes": [
+                    {
+                        "rect": [
+                            0,
+                            0,
+                            691,
+                            797
+                        ],
+                        "view": "3D"
+                    }
+                ],
+                "reference_image_enabled": false,
+                "reference_image_path": "",
+                "reference_image_size": [
+                    0,
+                    0
+                ],
+                "scene_center": [
+                    0,
+                    -5.960464477539063e-08,
+                    0
+                ],
+                "scene_distance": 4.143676271657833,
+                "scene_pitch": 18,
+                "scene_projection": "Perspective view",
+                "scene_vertical_extent": 3.4327338196085115,
+                "scene_view_matrix": [
+                    0.9063078165054321,
+                    -0.13059622049331665,
+                    0.40193384885787964,
+                    0,
+                    0.4226182699203491,
+                    0.28006452322006226,
+                    -0.8619499206542969,
+                    0,
+                    0,
+                    0.9510565400123596,
+                    0.30901700258255005,
+                    0,
+                    2.5190011854192562e-08,
+                    1.669314642072095e-08,
+                    -4.143676280975342,
+                    1
+                ],
+                "scene_yaw": 25,
+                "selected_material_session_id": 283,
+                "trackball": false,
+                "uv_center": [
+                    0.5,
+                    0.5
+                ],
+                "uv_first": false,
+                "uv_triangles": 37018,
+                "uv_vertical_extent": 1.2999999523162842
+            }
+        },
+        {
+            "bake_configuration": {
+                "ao_distance": 0,
+                "average": true,
+                "cage_file": "",
+                "curvature_radius": 0,
+                "curvature_scale": 1,
+                "denoise": true,
+                "diffusion": false,
+                "dilation": 32,
+                "enabled": [
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    true
+                ],
+                "frontal": 0.01,
+                "height": 1024,
+                "high_files": [
+                ],
+                "high_marker": "_high",
+                "ignore_backface": true,
+                "ignore_marker": "_ignorebf",
+                "locked": true,
+                "low_marker": "_low",
+                "match_names": false,
+                "normal_detail": 0,
+                "project_mesh": true,
+                "ray_offset": 0,
+                "rays": 4,
+                "rear": 0.01,
+                "relative": true,
+                "resolution": 1024,
+                "sampling": 1,
+                "source_frame": 1,
+                "source_frame_enabled": false,
+                "source_scale": 1,
+                "thickness_distance": 0,
+                "tiles": {
+                    "{7da933a1-5d2a-40ca-87c9-6a8aaef7276d}": [
+                        1001
+                    ]
+                },
+                "use_cage": false
+            },
+            "base_color": [
+                1,
+                1,
+                1,
+                1
+            ],
+            "brush_color": [
+                0,
+                0,
+                0,
+                1
+            ],
+            "bump_hash": "cbf29ce484222325",
+            "composite_checked": false,
+            "composite_differences": [
+            ],
+            "composite_failed_jobs": 0,
+            "composite_pending": true,
+            "composite_split_jobs": 0,
+            "compress_mouse": true,
+            "compress_tablet": true,
+            "decimal": ".",
+            "environment": {
+                "alignment": "Local",
+                "blur": 0,
+                "exposure": 0,
+                "lighting_follows_view": true,
+                "opacity": 0,
+                "post_depth_enabled": false,
+                "post_effects": {
+                    "aperture": 0,
+                    "bias": 0,
+                    "brightness": 1,
+                    "color_correction": false,
+                    "contrast": 1,
+                    "dof": false,
+                    "enabled": false,
+                    "exposure": 1,
+                    "focus_distance": 3.725126028060913,
+                    "gamma": 1,
+                    "glare": false,
+                    "glare_luminance": 1,
+                    "glare_remap": 3,
+                    "glare_shape": 0,
+                    "glare_threshold": 0.8999999761581421,
+                    "lens": false,
+                    "lens_fov": 45,
+                    "lens_power": 1,
+                    "lens_roundness": 0.05000000074505806,
+                    "lens_smoothness": 1,
+                    "mapping_factor": 32,
+                    "saturation": 1,
+                    "sepia": 0,
+                    "temperature": 6500,
+                    "tone_function": 0,
+                    "tone_mapping": false,
+                    "version": 4,
+                    "vignette": false,
+                    "vignette_strength": 0.20000000298023224
+                },
+                "resource": "default-studio.hdr",
+                "rotation": 90.00000250447816,
+                "subsurface": {
+                    "enabled": false,
+                    "samples": 16,
+                    "version": 1
+                }
+            },
+            "first_dab_diameter": 0,
+            "has_document": true,
+            "hash": "cbf29ce484222325",
+            "hover_picks": 0,
+            "input_frames": 0,
+            "input_points": 0,
+            "input_pressure": 1,
+            "last_dab_diameter": 0,
+            "layer_color": [
+                1,
+                1,
+                1,
+                1
+            ],
+            "layers": 1,
+            "mesh_maps": [
+                {
+                    "hashes": [
+                        "6d78855d799d0383"
+                    ],
+                    "role": 0
+                },
+                {
+                    "hashes": [
+                        "9cb1c11b3e5eec76"
+                    ],
+                    "role": 1
+                },
+                {
+                    "hashes": [
+                        "3243d83f349d0383"
+                    ],
+                    "role": 2
+                },
+                {
+                    "hashes": [
+                        "78e2f8ea2fe5551e"
+                    ],
+                    "role": 3
+                },
+                {
+                    "hashes": [
+                        "d756f20345b120a8"
+                    ],
+                    "role": 4
+                },
+                {
+                    "hashes": [
+                        "02e055d3b64015fa"
+                    ],
+                    "role": 5
+                },
+                {
+                    "hashes": [
+                        "fbdb551ff95b2e95"
+                    ],
+                    "role": 6
+                }
+            ],
+            "native_color": [
+                0,
+                0,
+                0,
+                0
+            ],
+            "native_color_expected": [
+                0,
+                0,
+                0,
+                0
+            ],
+            "native_color_gpu_resident": false,
+            "padding_calls": 0,
+            "painting": false,
+            "pointer_device": "Mouse",
+            "pressure_overlay": false,
+            "property_dragging": false,
+            "property_idle_ms": -1,
+            "property_pending": false,
+            "render": {
+                "active": false,
+                "available": true,
+                "cpu_fallback": false,
+                "denoise": false,
+                "device": "EEVEE",
+                "device_message": "",
+                "error": "",
+                "image_mirror_paused": false,
+                "samples": 1024,
+                "status": "EEVEE",
+                "view_clip_end": 1000,
+                "view_clip_start": 0.009999999776482582
+            },
+            "render_frames": 79,
+            "render_ui": false,
+            "roughness": 0.30000001192092896,
+            "shader_failures": "",
+            "skew": {
+                "auto_role": -1,
+                "bake_eligible": true,
+                "completed": 0,
+                "dropped": 0,
+                "eligible": false,
+                "error": "",
+                "mode": 0,
+                "pending": false,
+                "queue_size": 0,
+                "role_completed": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "settings_visible": false,
+                "source_loads": 0,
+                "vectors": 0
+            },
+            "skew_hash": "cbf29ce484222325",
+            "skew_metadata": {
+                "edge_contrast": 0,
+                "edge_distance": 0.02,
+                "edge_protection": true,
+                "enabled": true,
+                "resolution": 128,
+                "tiles": [
+                ],
+                "vector_density": 16,
+                "vector_length": 0.05,
+                "vector_opacity": 0.8,
+                "vectors": true
+            },
+            "skew_normal_hash": "6d78855d799d0383",
+            "spline_dabs": [
+            ],
+            "stage": "baked",
+            "stroke_batches": 0,
+            "tablet_contact": false,
+            "texture_loading": false,
+            "undo_count": 6,
+            "view": {
+                "active_gesture": "Idle",
+                "clip": {
+                    "far": 1000,
+                    "farthest": 5.487138152943958,
+                    "near": 0.01,
+                    "nearest": 2.800214390371709,
+                    "scene_camera": false
+                },
+                "device_pixel_ratio": 1,
+                "interaction_view": "3D",
+                "last_framed_bounds": {
+                    "maximum": [
+                        0.8104280233383179,
+                        0.8222129344940186,
+                        1
+                    ],
+                    "mesh_objects": 1,
+                    "minimum": [
+                        -0.8104280233383179,
+                        -0.8222130537033081,
+                        -1
+                    ],
+                    "pane_size": [
+                        691,
+                        797
+                    ]
+                },
+                "last_picked_color": [
+                    0,
+                    0,
+                    0,
+                    1
+                ],
+                "layout": "3D only",
+                "panes": [
+                    {
+                        "rect": [
+                            0,
+                            0,
+                            691,
+                            797
+                        ],
+                        "view": "3D"
+                    }
+                ],
+                "reference_image_enabled": false,
+                "reference_image_path": "",
+                "reference_image_size": [
+                    0,
+                    0
+                ],
+                "scene_center": [
+                    0,
+                    -5.960464477539063e-08,
+                    0
+                ],
+                "scene_distance": 4.143676271657833,
+                "scene_pitch": 18,
+                "scene_projection": "Perspective view",
+                "scene_vertical_extent": 3.4327338196085115,
+                "scene_view_matrix": [
+                    0.9063078165054321,
+                    -0.13059622049331665,
+                    0.40193384885787964,
+                    0,
+                    0.4226182699203491,
+                    0.28006452322006226,
+                    -0.8619499206542969,
+                    0,
+                    0,
+                    0.9510565400123596,
+                    0.30901700258255005,
+                    0,
+                    2.5190011854192562e-08,
+                    1.669314642072095e-08,
+                    -4.143676280975342,
+                    1
+                ],
+                "scene_yaw": 25,
+                "selected_material_session_id": 283,
+                "trackball": false,
+                "uv_center": [
+                    0.5,
+                    0.5
+                ],
+                "uv_first": false,
+                "uv_triangles": 37018,
+                "uv_vertical_extent": 1.2999999523162842
+            }
+        },
+        {
+            "bake_configuration": {
+                "ao_distance": 0,
+                "average": true,
+                "cage_file": "",
+                "curvature_radius": 0,
+                "curvature_scale": 1,
+                "denoise": true,
+                "diffusion": false,
+                "dilation": 32,
+                "enabled": [
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    true
+                ],
+                "frontal": 0.01,
+                "height": 64,
+                "high_files": [
+                ],
+                "high_marker": "_high",
+                "ignore_backface": true,
+                "ignore_marker": "_ignorebf",
+                "locked": true,
+                "low_marker": "_low",
+                "match_names": false,
+                "normal_detail": 0,
+                "project_mesh": true,
+                "ray_offset": 0,
+                "rays": 4,
+                "rear": 0.01,
+                "relative": true,
+                "resolution": 64,
+                "sampling": 1,
+                "source_frame": 1,
+                "source_frame_enabled": false,
+                "source_scale": 1,
+                "thickness_distance": 0,
+                "tiles": {
+                    "{7da933a1-5d2a-40ca-87c9-6a8aaef7276d}": [
+                        1001
+                    ]
+                },
+                "use_cage": false
+            },
+            "base_color": [
+                1,
+                1,
+                1,
+                1
+            ],
+            "brush_color": [
+                0,
+                0,
+                0,
+                1
+            ],
+            "bump_hash": "cbf29ce484222325",
+            "composite_checked": false,
+            "composite_differences": [
+            ],
+            "composite_failed_jobs": 0,
+            "composite_pending": true,
+            "composite_split_jobs": 0,
+            "compress_mouse": true,
+            "compress_tablet": true,
+            "decimal": ".",
+            "environment": {
+                "alignment": "Local",
+                "blur": 0,
+                "exposure": 0,
+                "lighting_follows_view": true,
+                "opacity": 0,
+                "post_depth_enabled": false,
+                "post_effects": {
+                    "aperture": 0,
+                    "bias": 0,
+                    "brightness": 1,
+                    "color_correction": false,
+                    "contrast": 1,
+                    "dof": false,
+                    "enabled": false,
+                    "exposure": 1,
+                    "focus_distance": 3.725126028060913,
+                    "gamma": 1,
+                    "glare": false,
+                    "glare_luminance": 1,
+                    "glare_remap": 3,
+                    "glare_shape": 0,
+                    "glare_threshold": 0.8999999761581421,
+                    "lens": false,
+                    "lens_fov": 45,
+                    "lens_power": 1,
+                    "lens_roundness": 0.05000000074505806,
+                    "lens_smoothness": 1,
+                    "mapping_factor": 32,
+                    "saturation": 1,
+                    "sepia": 0,
+                    "temperature": 6500,
+                    "tone_function": 0,
+                    "tone_mapping": false,
+                    "version": 4,
+                    "vignette": false,
+                    "vignette_strength": 0.20000000298023224
+                },
+                "resource": "default-studio.hdr",
+                "rotation": 90.00000250447816,
+                "subsurface": {
+                    "enabled": false,
+                    "samples": 16,
+                    "version": 1
+                }
+            },
+            "first_dab_diameter": 0,
+            "has_document": true,
+            "hash": "cbf29ce484222325",
+            "hover_picks": 0,
+            "input_frames": 0,
+            "input_points": 0,
+            "input_pressure": 1,
+            "last_dab_diameter": 0,
+            "layer_color": [
+                1,
+                1,
+                1,
+                1
+            ],
+            "layers": 1,
+            "mesh_maps": [
+                {
+                    "hashes": [
+                        "46671b5083e00383"
+                    ],
+                    "role": 0
+                },
+                {
+                    "hashes": [
+                        "e181bebb51c05c0b"
+                    ],
+                    "role": 1
+                },
+                {
+                    "hashes": [
+                        "fa6bdbf1f7e00383"
+                    ],
+                    "role": 2
+                },
+                {
+                    "hashes": [
+                        "29f892ae4a39430a"
+                    ],
+                    "role": 3
+                },
+                {
+                    "hashes": [
+                        "e07f95a60f389238"
+                    ],
+                    "role": 4
+                },
+                {
+                    "hashes": [
+                        "a3608f5323bb71ae"
+                    ],
+                    "role": 5
+                },
+                {
+                    "hashes": [
+                        "8e1f71f669c769ce"
+                    ],
+                    "role": 6
+                }
+            ],
+            "native_color": [
+                0,
+                0,
+                0,
+                0
+            ],
+            "native_color_expected": [
+                0,
+                0,
+                0,
+                0
+            ],
+            "native_color_gpu_resident": false,
+            "padding_calls": 0,
+            "painting": false,
+            "pointer_device": "Mouse",
+            "pressure_overlay": false,
+            "property_dragging": false,
+            "property_idle_ms": -1,
+            "property_pending": false,
+            "render": {
+                "active": false,
+                "available": true,
+                "cpu_fallback": false,
+                "denoise": false,
+                "device": "EEVEE",
+                "device_message": "",
+                "error": "",
+                "image_mirror_paused": false,
+                "samples": 1024,
+                "status": "EEVEE",
+                "view_clip_end": 1000,
+                "view_clip_start": 0.009999999776482582
+            },
+            "render_frames": 90,
+            "render_ui": false,
+            "roughness": 0.30000001192092896,
+            "shader_failures": "",
+            "skew": {
+                "auto_role": -1,
+                "bake_eligible": true,
+                "completed": 0,
+                "dropped": 0,
+                "eligible": false,
+                "error": "",
+                "mode": 0,
+                "pending": false,
+                "queue_size": 0,
+                "role_completed": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "settings_visible": false,
+                "source_loads": 0,
+                "vectors": 0
+            },
+            "skew_hash": "cbf29ce484222325",
+            "skew_metadata": {
+                "edge_contrast": 0,
+                "edge_distance": 0.02,
+                "edge_protection": true,
+                "enabled": true,
+                "resolution": 128,
+                "tiles": [
+                ],
+                "vector_density": 16,
+                "vector_length": 0.05,
+                "vector_opacity": 0.8,
+                "vectors": true
+            },
+            "skew_normal_hash": "46671b5083e00383",
+            "spline_dabs": [
+            ],
+            "stage": "baked",
+            "stroke_batches": 0,
+            "tablet_contact": false,
+            "texture_loading": false,
+            "undo_count": 7,
+            "view": {
+                "active_gesture": "Idle",
+                "clip": {
+                    "far": 1000,
+                    "farthest": 5.487138152943958,
+                    "near": 0.01,
+                    "nearest": 2.800214390371709,
+                    "scene_camera": false
+                },
+                "device_pixel_ratio": 1,
+                "interaction_view": "3D",
+                "last_framed_bounds": {
+                    "maximum": [
+                        0.8104280233383179,
+                        0.8222129344940186,
+                        1
+                    ],
+                    "mesh_objects": 1,
+                    "minimum": [
+                        -0.8104280233383179,
+                        -0.8222130537033081,
+                        -1
+                    ],
+                    "pane_size": [
+                        691,
+                        797
+                    ]
+                },
+                "last_picked_color": [
+                    0,
+                    0,
+                    0,
+                    1
+                ],
+                "layout": "3D only",
+                "panes": [
+                    {
+                        "rect": [
+                            0,
+                            0,
+                            691,
+                            797
+                        ],
+                        "view": "3D"
+                    }
+                ],
+                "reference_image_enabled": false,
+                "reference_image_path": "",
+                "reference_image_size": [
+                    0,
+                    0
+                ],
+                "scene_center": [
+                    0,
+                    -5.960464477539063e-08,
+                    0
+                ],
+                "scene_distance": 4.143676271657833,
+                "scene_pitch": 18,
+                "scene_projection": "Perspective view",
+                "scene_vertical_extent": 3.4327338196085115,
+                "scene_view_matrix": [
+                    0.9063078165054321,
+                    -0.13059622049331665,
+                    0.40193384885787964,
+                    0,
+                    0.4226182699203491,
+                    0.28006452322006226,
+                    -0.8619499206542969,
+                    0,
+                    0,
+                    0.9510565400123596,
+                    0.30901700258255005,
+                    0,
+                    2.5190011854192562e-08,
+                    1.669314642072095e-08,
+                    -4.143676280975342,
+                    1
+                ],
+                "scene_yaw": 25,
+                "selected_material_session_id": 283,
+                "trackball": false,
+                "uv_center": [
+                    0.5,
+                    0.5
+                ],
+                "uv_first": false,
+                "uv_triangles": 37018,
+                "uv_vertical_extent": 1.2999999523162842
+            }
+        },
+        {
+            "bake_configuration": {
+                "ao_distance": 0,
+                "average": true,
+                "cage_file": "",
+                "curvature_radius": 0,
+                "curvature_scale": 1,
+                "denoise": true,
+                "diffusion": false,
+                "dilation": 32,
+                "enabled": [
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    true
+                ],
+                "frontal": 0.01,
+                "height": 1024,
+                "high_files": [
+                ],
+                "high_marker": "_high",
+                "ignore_backface": true,
+                "ignore_marker": "_ignorebf",
+                "locked": true,
+                "low_marker": "_low",
+                "match_names": false,
+                "normal_detail": 0,
+                "project_mesh": true,
+                "ray_offset": 0,
+                "rays": 4,
+                "rear": 0.01,
+                "relative": true,
+                "resolution": 1024,
+                "sampling": 1,
+                "source_frame": 1,
+                "source_frame_enabled": false,
+                "source_scale": 1,
+                "thickness_distance": 0,
+                "tiles": {
+                    "{7da933a1-5d2a-40ca-87c9-6a8aaef7276d}": [
+                        1001
+                    ]
+                },
+                "use_cage": false
+            },
+            "base_color": [
+                1,
+                1,
+                1,
+                1
+            ],
+            "brush_color": [
+                0,
+                0,
+                0,
+                1
+            ],
+            "bump_hash": "cbf29ce484222325",
+            "composite_checked": false,
+            "composite_differences": [
+            ],
+            "composite_failed_jobs": 0,
+            "composite_pending": false,
+            "composite_split_jobs": 0,
+            "compress_mouse": true,
+            "compress_tablet": true,
+            "decimal": ".",
+            "environment": {
+                "alignment": "Local",
+                "blur": 0,
+                "exposure": 0,
+                "lighting_follows_view": true,
+                "opacity": 0,
+                "post_depth_enabled": false,
+                "post_effects": {
+                    "aperture": 0,
+                    "bias": 0,
+                    "brightness": 1,
+                    "color_correction": false,
+                    "contrast": 1,
+                    "dof": false,
+                    "enabled": false,
+                    "exposure": 1,
+                    "focus_distance": 3.725126028060913,
+                    "gamma": 1,
+                    "glare": false,
+                    "glare_luminance": 1,
+                    "glare_remap": 3,
+                    "glare_shape": 0,
+                    "glare_threshold": 0.8999999761581421,
+                    "lens": false,
+                    "lens_fov": 45,
+                    "lens_power": 1,
+                    "lens_roundness": 0.05000000074505806,
+                    "lens_smoothness": 1,
+                    "mapping_factor": 32,
+                    "saturation": 1,
+                    "sepia": 0,
+                    "temperature": 6500,
+                    "tone_function": 0,
+                    "tone_mapping": false,
+                    "version": 4,
+                    "vignette": false,
+                    "vignette_strength": 0.20000000298023224
+                },
+                "resource": "default-studio.hdr",
+                "rotation": 90.00000250447816,
+                "subsurface": {
+                    "enabled": false,
+                    "samples": 16,
+                    "version": 1
+                }
+            },
+            "first_dab_diameter": 0,
+            "has_document": true,
+            "hash": "cbf29ce484222325",
+            "hover_picks": 0,
+            "input_frames": 0,
+            "input_points": 0,
+            "input_pressure": 1,
+            "last_dab_diameter": 0,
+            "layer_color": [
+                1,
+                1,
+                1,
+                1
+            ],
+            "layers": 1,
+            "mesh_maps": [
+                {
+                    "hashes": [
+                        "6d78855d799d0383"
+                    ],
+                    "role": 0
+                },
+                {
+                    "hashes": [
+                        "9cb1c11b3e5eec76"
+                    ],
+                    "role": 1
+                },
+                {
+                    "hashes": [
+                        "3243d83f349d0383"
+                    ],
+                    "role": 2
+                },
+                {
+                    "hashes": [
+                        "78e2f8ea2fe5551e"
+                    ],
+                    "role": 3
+                },
+                {
+                    "hashes": [
+                        "d756f20345b120a8"
+                    ],
+                    "role": 4
+                },
+                {
+                    "hashes": [
+                        "02e055d3b64015fa"
+                    ],
+                    "role": 5
+                },
+                {
+                    "hashes": [
+                        "fbdb551ff95b2e95"
+                    ],
+                    "role": 6
+                }
+            ],
+            "native_color": [
+                0,
+                0,
+                0,
+                0
+            ],
+            "native_color_expected": [
+                0,
+                0,
+                0,
+                0
+            ],
+            "native_color_gpu_resident": false,
+            "padding_calls": 0,
+            "painting": false,
+            "pointer_device": "Mouse",
+            "pressure_overlay": false,
+            "property_dragging": false,
+            "property_idle_ms": -1,
+            "property_pending": false,
+            "render": {
+                "active": false,
+                "available": true,
+                "cpu_fallback": false,
+                "denoise": false,
+                "device": "EEVEE",
+                "device_message": "",
+                "error": "",
+                "image_mirror_paused": false,
+                "samples": 1024,
+                "status": "EEVEE",
+                "view_clip_end": 1000,
+                "view_clip_start": 0.009999999776482582
+            },
+            "render_frames": 101,
+            "render_ui": false,
+            "roughness": 0.30000001192092896,
+            "shader_failures": "",
+            "skew": {
+                "auto_role": -1,
+                "bake_eligible": true,
+                "completed": 0,
+                "dropped": 0,
+                "eligible": false,
+                "error": "",
+                "mode": 0,
+                "pending": false,
+                "queue_size": 0,
+                "role_completed": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "settings_visible": false,
+                "source_loads": 0,
+                "vectors": 0
+            },
+            "skew_hash": "cbf29ce484222325",
+            "skew_metadata": {
+                "edge_contrast": 0,
+                "edge_distance": 0.02,
+                "edge_protection": true,
+                "enabled": true,
+                "resolution": 128,
+                "tiles": [
+                ],
+                "vector_density": 16,
+                "vector_length": 0.05,
+                "vector_opacity": 0.8,
+                "vectors": true
+            },
+            "skew_normal_hash": "6d78855d799d0383",
+            "spline_dabs": [
+            ],
+            "stage": "undo",
+            "stroke_batches": 0,
+            "tablet_contact": false,
+            "texture_loading": false,
+            "undo_count": 6,
+            "view": {
+                "active_gesture": "Idle",
+                "clip": {
+                    "far": 1000,
+                    "farthest": 5.487138152943958,
+                    "near": 0.01,
+                    "nearest": 2.800214390371709,
+                    "scene_camera": false
+                },
+                "device_pixel_ratio": 1,
+                "interaction_view": "3D",
+                "last_framed_bounds": {
+                    "maximum": [
+                        0.8104280233383179,
+                        0.8222129344940186,
+                        1
+                    ],
+                    "mesh_objects": 1,
+                    "minimum": [
+                        -0.8104280233383179,
+                        -0.8222130537033081,
+                        -1
+                    ],
+                    "pane_size": [
+                        691,
+                        797
+                    ]
+                },
+                "last_picked_color": [
+                    0,
+                    0,
+                    0,
+                    1
+                ],
+                "layout": "3D only",
+                "panes": [
+                    {
+                        "rect": [
+                            0,
+                            0,
+                            691,
+                            797
+                        ],
+                        "view": "3D"
+                    }
+                ],
+                "reference_image_enabled": false,
+                "reference_image_path": "",
+                "reference_image_size": [
+                    0,
+                    0
+                ],
+                "scene_center": [
+                    0,
+                    -5.960464477539063e-08,
+                    0
+                ],
+                "scene_distance": 4.143676271657833,
+                "scene_pitch": 18,
+                "scene_projection": "Perspective view",
+                "scene_vertical_extent": 3.4327338196085115,
+                "scene_view_matrix": [
+                    0.9063078165054321,
+                    -0.13059622049331665,
+                    0.40193384885787964,
+                    0,
+                    0.4226182699203491,
+                    0.28006452322006226,
+                    -0.8619499206542969,
+                    0,
+                    0,
+                    0.9510565400123596,
+                    0.30901700258255005,
+                    0,
+                    2.5190011854192562e-08,
+                    1.669314642072095e-08,
+                    -4.143676280975342,
+                    1
+                ],
+                "scene_yaw": 25,
+                "selected_material_session_id": 283,
+                "trackball": false,
+                "uv_center": [
+                    0.5,
+                    0.5
+                ],
+                "uv_first": false,
+                "uv_triangles": 37018,
+                "uv_vertical_extent": 1.2999999523162842
+            }
+        },
+        {
+            "bake_configuration": {
+                "ao_distance": 0,
+                "average": true,
+                "cage_file": "",
+                "curvature_radius": 0,
+                "curvature_scale": 1,
+                "denoise": true,
+                "diffusion": false,
+                "dilation": 32,
+                "enabled": [
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    true
+                ],
+                "frontal": 0.01,
+                "height": 64,
+                "high_files": [
+                ],
+                "high_marker": "_high",
+                "ignore_backface": true,
+                "ignore_marker": "_ignorebf",
+                "locked": true,
+                "low_marker": "_low",
+                "match_names": false,
+                "normal_detail": 0,
+                "project_mesh": true,
+                "ray_offset": 0,
+                "rays": 4,
+                "rear": 0.01,
+                "relative": true,
+                "resolution": 64,
+                "sampling": 1,
+                "source_frame": 1,
+                "source_frame_enabled": false,
+                "source_scale": 1,
+                "thickness_distance": 0,
+                "tiles": {
+                    "{7da933a1-5d2a-40ca-87c9-6a8aaef7276d}": [
+                        1001
+                    ]
+                },
+                "use_cage": false
+            },
+            "base_color": [
+                1,
+                1,
+                1,
+                1
+            ],
+            "brush_color": [
+                0,
+                0,
+                0,
+                1
+            ],
+            "bump_hash": "cbf29ce484222325",
+            "composite_checked": false,
+            "composite_differences": [
+            ],
+            "composite_failed_jobs": 0,
+            "composite_pending": false,
+            "composite_split_jobs": 0,
+            "compress_mouse": true,
+            "compress_tablet": true,
+            "decimal": ".",
+            "environment": {
+                "alignment": "Local",
+                "blur": 0,
+                "exposure": 0,
+                "lighting_follows_view": true,
+                "opacity": 0,
+                "post_depth_enabled": false,
+                "post_effects": {
+                    "aperture": 0,
+                    "bias": 0,
+                    "brightness": 1,
+                    "color_correction": false,
+                    "contrast": 1,
+                    "dof": false,
+                    "enabled": false,
+                    "exposure": 1,
+                    "focus_distance": 3.725126028060913,
+                    "gamma": 1,
+                    "glare": false,
+                    "glare_luminance": 1,
+                    "glare_remap": 3,
+                    "glare_shape": 0,
+                    "glare_threshold": 0.8999999761581421,
+                    "lens": false,
+                    "lens_fov": 45,
+                    "lens_power": 1,
+                    "lens_roundness": 0.05000000074505806,
+                    "lens_smoothness": 1,
+                    "mapping_factor": 32,
+                    "saturation": 1,
+                    "sepia": 0,
+                    "temperature": 6500,
+                    "tone_function": 0,
+                    "tone_mapping": false,
+                    "version": 4,
+                    "vignette": false,
+                    "vignette_strength": 0.20000000298023224
+                },
+                "resource": "default-studio.hdr",
+                "rotation": 90.00000250447816,
+                "subsurface": {
+                    "enabled": false,
+                    "samples": 16,
+                    "version": 1
+                }
+            },
+            "first_dab_diameter": 0,
+            "has_document": true,
+            "hash": "cbf29ce484222325",
+            "hover_picks": 0,
+            "input_frames": 0,
+            "input_points": 0,
+            "input_pressure": 1,
+            "last_dab_diameter": 0,
+            "layer_color": [
+                1,
+                1,
+                1,
+                1
+            ],
+            "layers": 1,
+            "mesh_maps": [
+                {
+                    "hashes": [
+                        "46671b5083e00383"
+                    ],
+                    "role": 0
+                },
+                {
+                    "hashes": [
+                        "e181bebb51c05c0b"
+                    ],
+                    "role": 1
+                },
+                {
+                    "hashes": [
+                        "fa6bdbf1f7e00383"
+                    ],
+                    "role": 2
+                },
+                {
+                    "hashes": [
+                        "29f892ae4a39430a"
+                    ],
+                    "role": 3
+                },
+                {
+                    "hashes": [
+                        "e07f95a60f389238"
+                    ],
+                    "role": 4
+                },
+                {
+                    "hashes": [
+                        "a3608f5323bb71ae"
+                    ],
+                    "role": 5
+                },
+                {
+                    "hashes": [
+                        "8e1f71f669c769ce"
+                    ],
+                    "role": 6
+                }
+            ],
+            "native_color": [
+                0,
+                0,
+                0,
+                0
+            ],
+            "native_color_expected": [
+                0,
+                0,
+                0,
+                0
+            ],
+            "native_color_gpu_resident": false,
+            "padding_calls": 0,
+            "painting": false,
+            "pointer_device": "Mouse",
+            "pressure_overlay": false,
+            "property_dragging": false,
+            "property_idle_ms": -1,
+            "property_pending": false,
+            "render": {
+                "active": false,
+                "available": true,
+                "cpu_fallback": false,
+                "denoise": false,
+                "device": "EEVEE",
+                "device_message": "",
+                "error": "",
+                "image_mirror_paused": false,
+                "samples": 1024,
+                "status": "EEVEE",
+                "view_clip_end": 1000,
+                "view_clip_start": 0.009999999776482582
+            },
+            "render_frames": 112,
+            "render_ui": false,
+            "roughness": 0.30000001192092896,
+            "shader_failures": "",
+            "skew": {
+                "auto_role": -1,
+                "bake_eligible": true,
+                "completed": 0,
+                "dropped": 0,
+                "eligible": false,
+                "error": "",
+                "mode": 0,
+                "pending": false,
+                "queue_size": 0,
+                "role_completed": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "settings_visible": false,
+                "source_loads": 0,
+                "vectors": 0
+            },
+            "skew_hash": "cbf29ce484222325",
+            "skew_metadata": {
+                "edge_contrast": 0,
+                "edge_distance": 0.02,
+                "edge_protection": true,
+                "enabled": true,
+                "resolution": 128,
+                "tiles": [
+                ],
+                "vector_density": 16,
+                "vector_length": 0.05,
+                "vector_opacity": 0.8,
+                "vectors": true
+            },
+            "skew_normal_hash": "46671b5083e00383",
+            "spline_dabs": [
+            ],
+            "stage": "redo",
+            "stroke_batches": 0,
+            "tablet_contact": false,
+            "texture_loading": false,
+            "undo_count": 7,
+            "view": {
+                "active_gesture": "Idle",
+                "clip": {
+                    "far": 1000,
+                    "farthest": 5.487138152943958,
+                    "near": 0.01,
+                    "nearest": 2.800214390371709,
+                    "scene_camera": false
+                },
+                "device_pixel_ratio": 1,
+                "interaction_view": "3D",
+                "last_framed_bounds": {
+                    "maximum": [
+                        0.8104280233383179,
+                        0.8222129344940186,
+                        1
+                    ],
+                    "mesh_objects": 1,
+                    "minimum": [
+                        -0.8104280233383179,
+                        -0.8222130537033081,
+                        -1
+                    ],
+                    "pane_size": [
+                        691,
+                        797
+                    ]
+                },
+                "last_picked_color": [
+                    0,
+                    0,
+                    0,
+                    1
+                ],
+                "layout": "3D only",
+                "panes": [
+                    {
+                        "rect": [
+                            0,
+                            0,
+                            691,
+                            797
+                        ],
+                        "view": "3D"
+                    }
+                ],
+                "reference_image_enabled": false,
+                "reference_image_path": "",
+                "reference_image_size": [
+                    0,
+                    0
+                ],
+                "scene_center": [
+                    0,
+                    -5.960464477539063e-08,
+                    0
+                ],
+                "scene_distance": 4.143676271657833,
+                "scene_pitch": 18,
+                "scene_projection": "Perspective view",
+                "scene_vertical_extent": 3.4327338196085115,
+                "scene_view_matrix": [
+                    0.9063078165054321,
+                    -0.13059622049331665,
+                    0.40193384885787964,
+                    0,
+                    0.4226182699203491,
+                    0.28006452322006226,
+                    -0.8619499206542969,
+                    0,
+                    0,
+                    0.9510565400123596,
+                    0.30901700258255005,
+                    0,
+                    2.5190011854192562e-08,
+                    1.669314642072095e-08,
+                    -4.143676280975342,
+                    1
+                ],
+                "scene_yaw": 25,
+                "selected_material_session_id": 283,
+                "trackball": false,
+                "uv_center": [
+                    0.5,
+                    0.5
+                ],
+                "uv_first": false,
+                "uv_triangles": 37018,
+                "uv_vertical_extent": 1.2999999523162842
+            }
+        },
+        {
+            "bake_configuration": {
+                "ao_distance": 0,
+                "average": true,
+                "cage_file": "",
+                "curvature_radius": 0,
+                "curvature_scale": 1,
+                "denoise": true,
+                "diffusion": false,
+                "dilation": 32,
+                "enabled": [
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    true
+                ],
+                "frontal": 0.01,
+                "height": 64,
+                "high_files": [
+                ],
+                "high_marker": "_high",
+                "ignore_backface": true,
+                "ignore_marker": "_ignorebf",
+                "locked": true,
+                "low_marker": "_low",
+                "match_names": false,
+                "normal_detail": 0,
+                "project_mesh": true,
+                "ray_offset": 0,
+                "rays": 4,
+                "rear": 0.01,
+                "relative": true,
+                "resolution": 64,
+                "sampling": 1,
+                "source_frame": 1,
+                "source_frame_enabled": false,
+                "source_scale": 1,
+                "thickness_distance": 0,
+                "tiles": {
+                    "{7da933a1-5d2a-40ca-87c9-6a8aaef7276d}": [
+                        1001
+                    ]
+                },
+                "use_cage": false
+            },
+            "base_color": [
+                1,
+                1,
+                1,
+                1
+            ],
+            "brush_color": [
+                0,
+                0,
+                0,
+                1
+            ],
+            "bump_hash": "cbf29ce484222325",
+            "composite_checked": false,
+            "composite_differences": [
+            ],
+            "composite_failed_jobs": 0,
+            "composite_pending": true,
+            "composite_split_jobs": 0,
+            "compress_mouse": true,
+            "compress_tablet": true,
+            "decimal": ".",
+            "environment": {
+                "alignment": "Local",
+                "blur": 0,
+                "exposure": 0,
+                "lighting_follows_view": true,
+                "opacity": 0,
+                "post_depth_enabled": false,
+                "post_effects": {
+                    "aperture": 0,
+                    "bias": 0,
+                    "brightness": 1,
+                    "color_correction": false,
+                    "contrast": 1,
+                    "dof": false,
+                    "enabled": false,
+                    "exposure": 1,
+                    "focus_distance": 3.725126028060913,
+                    "gamma": 1,
+                    "glare": false,
+                    "glare_luminance": 1,
+                    "glare_remap": 3,
+                    "glare_shape": 0,
+                    "glare_threshold": 0.8999999761581421,
+                    "lens": false,
+                    "lens_fov": 45,
+                    "lens_power": 1,
+                    "lens_roundness": 0.05000000074505806,
+                    "lens_smoothness": 1,
+                    "mapping_factor": 32,
+                    "saturation": 1,
+                    "sepia": 0,
+                    "temperature": 6500,
+                    "tone_function": 0,
+                    "tone_mapping": false,
+                    "version": 4,
+                    "vignette": false,
+                    "vignette_strength": 0.20000000298023224
+                },
+                "resource": "default-studio.hdr",
+                "rotation": 90.00000250447816,
+                "subsurface": {
+                    "enabled": false,
+                    "samples": 16,
+                    "version": 1
+                }
+            },
+            "first_dab_diameter": 0,
+            "has_document": true,
+            "hash": "cbf29ce484222325",
+            "hover_picks": 0,
+            "input_frames": 0,
+            "input_points": 0,
+            "input_pressure": 1,
+            "last_dab_diameter": 0,
+            "layer_color": [
+                1,
+                1,
+                1,
+                1
+            ],
+            "layers": 1,
+            "mesh_maps": [
+                {
+                    "hashes": [
+                        "46671b5083e00383"
+                    ],
+                    "role": 0
+                },
+                {
+                    "hashes": [
+                        "e181bebb51c05c0b"
+                    ],
+                    "role": 1
+                },
+                {
+                    "hashes": [
+                        "fa6bdbf1f7e00383"
+                    ],
+                    "role": 2
+                },
+                {
+                    "hashes": [
+                        "29f892ae4a39430a"
+                    ],
+                    "role": 3
+                },
+                {
+                    "hashes": [
+                        "e07f95a60f389238"
+                    ],
+                    "role": 4
+                },
+                {
+                    "hashes": [
+                        "a3608f5323bb71ae"
+                    ],
+                    "role": 5
+                },
+                {
+                    "hashes": [
+                        "8e1f71f669c769ce"
+                    ],
+                    "role": 6
+                }
+            ],
+            "native_color": [
+                0,
+                0,
+                0,
+                0
+            ],
+            "native_color_expected": [
+                0,
+                0,
+                0,
+                0
+            ],
+            "native_color_gpu_resident": false,
+            "padding_calls": 0,
+            "painting": false,
+            "pointer_device": "Mouse",
+            "pressure_overlay": false,
+            "property_dragging": false,
+            "property_idle_ms": -1,
+            "property_pending": false,
+            "render": {
+                "active": false,
+                "available": true,
+                "cpu_fallback": false,
+                "denoise": false,
+                "device": "EEVEE",
+                "device_message": "",
+                "error": "",
+                "image_mirror_paused": false,
+                "samples": 1024,
+                "status": "EEVEE",
+                "view_clip_end": 1000,
+                "view_clip_start": 0.009999999776482582
+            },
+            "render_frames": 113,
+            "render_ui": false,
+            "roughness": 0.30000001192092896,
+            "shader_failures": "",
+            "skew": {
+                "auto_role": -1,
+                "bake_eligible": true,
+                "completed": 0,
+                "dropped": 0,
+                "eligible": false,
+                "error": "",
+                "mode": 0,
+                "pending": false,
+                "queue_size": 0,
+                "role_completed": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "settings_visible": false,
+                "source_loads": 0,
+                "vectors": 0
+            },
+            "skew_hash": "cbf29ce484222325",
+            "skew_metadata": {
+                "edge_contrast": 0,
+                "edge_distance": 0.02,
+                "edge_protection": true,
+                "enabled": true,
+                "resolution": 128,
+                "tiles": [
+                ],
+                "vector_density": 16,
+                "vector_length": 0.05,
+                "vector_opacity": 0.8,
+                "vectors": true
+            },
+            "skew_normal_hash": "46671b5083e00383",
+            "spline_dabs": [
+            ],
+            "stage": "maps-opened",
+            "stroke_batches": 0,
+            "tablet_contact": false,
+            "texture_loading": false,
+            "undo_count": 0,
+            "view": {
+                "active_gesture": "Idle",
+                "clip": {
+                    "far": 1000,
+                    "farthest": 5.487138152943958,
+                    "near": 0.01,
+                    "nearest": 2.800214390371709,
+                    "scene_camera": false
+                },
+                "device_pixel_ratio": 1,
+                "interaction_view": "3D",
+                "last_framed_bounds": {
+                    "maximum": [
+                        0.8104280233383179,
+                        0.8222129344940186,
+                        1
+                    ],
+                    "mesh_objects": 1,
+                    "minimum": [
+                        -0.8104280233383179,
+                        -0.8222130537033081,
+                        -1
+                    ],
+                    "pane_size": [
+                        691,
+                        797
+                    ]
+                },
+                "last_picked_color": [
+                    0,
+                    0,
+                    0,
+                    1
+                ],
+                "layout": "3D only",
+                "panes": [
+                    {
+                        "rect": [
+                            0,
+                            0,
+                            691,
+                            797
+                        ],
+                        "view": "3D"
+                    }
+                ],
+                "reference_image_enabled": false,
+                "reference_image_path": "",
+                "reference_image_size": [
+                    0,
+                    0
+                ],
+                "scene_center": [
+                    0,
+                    -5.960464477539063e-08,
+                    0
+                ],
+                "scene_distance": 4.143676271657833,
+                "scene_pitch": 18,
+                "scene_projection": "Perspective view",
+                "scene_vertical_extent": 3.4327338196085115,
+                "scene_view_matrix": [
+                    0.9063078165054321,
+                    -0.13059622049331665,
+                    0.40193384885787964,
+                    0,
+                    0.4226182699203491,
+                    0.28006452322006226,
+                    -0.8619499206542969,
+                    0,
+                    0,
+                    0.9510565400123596,
+                    0.30901700258255005,
+                    0,
+                    2.5190011854192562e-08,
+                    1.669314642072095e-08,
+                    -4.143676280975342,
+                    1
+                ],
+                "scene_yaw": 25,
+                "selected_material_session_id": 451,
+                "trackball": false,
+                "uv_center": [
+                    0.5,
+                    0.5
+                ],
+                "uv_first": false,
+                "uv_triangles": 37018,
+                "uv_vertical_extent": 1.2999999523162842
+            }
+        }
+    ],
+    "dialogs": [
+        {
+            "enabled": true,
+            "help": "Ready to bake using the project mesh",
+            "project_mesh": true,
+            "source_visible": true,
+            "stage": "default",
+            "tooltip": ""
+        },
+        {
+            "enabled": false,
+            "help": "Add a high-poly mesh or enable Use Low Poly Mesh as High Poly Mesh",
+            "project_mesh": false,
+            "source_visible": true,
+            "stage": "no-source",
+            "tooltip": "Add a high-poly mesh or enable Use Low Poly Mesh as High Poly Mesh"
+        },
+        {
+            "enabled": false,
+            "help": "Select at least one mesh map",
+            "project_mesh": true,
+            "source_visible": true,
+            "stage": "no-maps",
+            "tooltip": "Select at least one mesh map"
+        },
+        {
+            "enabled": false,
+            "help": "Select at least one texture set/tile",
+            "project_mesh": true,
+            "source_visible": true,
+            "stage": "no-tiles",
+            "tooltip": "Select at least one texture set/tile"
+        },
+        {
+            "enabled": false,
+            "help": "Select a cage file or disable Use Cage",
+            "project_mesh": true,
+            "source_visible": true,
+            "stage": "no-cage",
+            "tooltip": "Select a cage file or disable Use Cage"
+        },
+        {
+            "enabled": false,
+            "help": "Add a high-poly mesh or enable Use Low Poly Mesh as High Poly Mesh",
+            "project_mesh": false,
+            "source_visible": true,
+            "stage": "saved-explicit-source-off",
+            "tooltip": "Add a high-poly mesh or enable Use Low Poly Mesh as High Poly Mesh"
+        },
+        {
+            "enabled": true,
+            "help": "Ready to bake using the project mesh",
+            "project_mesh": true,
+            "source_visible": true,
+            "stage": "ready-ao-curvature",
+            "tooltip": ""
+        },
+        {
+            "enabled": true,
+            "help": "Ready to bake using the project mesh",
+            "project_mesh": true,
+            "source_visible": true,
+            "stage": "saved-explicit-source-off",
+            "tooltip": ""
+        },
+        {
+            "enabled": true,
+            "help": "Ready to bake using the project mesh",
+            "project_mesh": true,
+            "source_visible": true,
+            "stage": "ready-ao-curvature",
+            "tooltip": ""
+        },
+        {
+            "enabled": true,
+            "help": "Ready to bake using the project mesh",
+            "project_mesh": true,
+            "source_visible": true,
+            "stage": "saved-explicit-source-off",
+            "tooltip": ""
+        },
+        {
+            "enabled": true,
+            "help": "Ready to bake using the project mesh",
+            "project_mesh": true,
+            "source_visible": true,
+            "stage": "ready-ao-curvature",
+            "tooltip": ""
+        },
+        {
+            "enabled": true,
+            "help": "Ready to bake using the project mesh",
+            "project_mesh": true,
+            "source_visible": true,
+            "stage": "saved-explicit-source-off",
+            "tooltip": ""
+        },
+        {
+            "enabled": true,
+            "help": "Ready to bake using the project mesh",
+            "project_mesh": true,
+            "source_visible": true,
+            "stage": "ready-ao-curvature",
+            "tooltip": ""
+        },
+        {
+            "enabled": true,
+            "help": "Ready to bake using the project mesh",
+            "project_mesh": true,
+            "source_visible": true,
+            "stage": "saved-explicit-source-off",
+            "tooltip": ""
+        },
+        {
+            "enabled": true,
+            "help": "Ready to bake using the project mesh",
+            "project_mesh": true,
+            "source_visible": true,
+            "stage": "ready-ao-curvature",
+            "tooltip": ""
+        },
+        {
+            "enabled": true,
+            "help": "Ready to bake using the project mesh",
+            "project_mesh": true,
+            "source_visible": true,
+            "stage": "saved-explicit-source-off",
+            "tooltip": ""
+        },
+        {
+            "enabled": true,
+            "help": "Ready to bake using the project mesh",
+            "project_mesh": true,
+            "source_visible": true,
+            "stage": "ready-ao-curvature",
+            "tooltip": ""
+        },
+        {
+            "enabled": true,
+            "help": "Ready to bake using the project mesh",
+            "project_mesh": true,
+            "source_visible": true,
+            "stage": "saved-explicit-source-off",
+            "tooltip": ""
+        },
+        {
+            "enabled": true,
+            "help": "Ready to bake using the project mesh",
+            "project_mesh": true,
+            "source_visible": true,
+            "stage": "ready-ao-curvature",
+            "tooltip": ""
+        }
+    ],
+    "pid": 502803
+}

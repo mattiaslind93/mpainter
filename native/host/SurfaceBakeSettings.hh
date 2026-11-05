@@ -4,9 +4,9 @@
 #include <QJsonObject>
 namespace bts {
 inline void read_surface_bake_settings(MeshBakeSettings &o,const QJsonObject &r){
-  o.curvature_radius=r["curvature_radius"].toDouble(0);o.curvature_scale=r["curvature_scale"].toDouble(2);
+  o.curvature_radius=r["curvature_radius"].toDouble(0);o.curvature_scale=r["curvature_scale"].toDouble(1);
   o.ao_distance=r["ao_distance"].toDouble(0);o.thickness_distance=r["thickness_distance"].toDouble(0);
-  o.ray_offset=r["ray_offset"].toDouble(0);o.normal_detail=r["normal_detail"].toDouble(0);o.denoise=r["denoise"].toBool(true);
+  o.ray_offset=r["ray_offset"].toDouble(0);o.normal_detail=0;o.denoise=r["denoise"].toBool(true);
 }
 // Snapshot active authored channels on the owner thread. Include occluder sets,
 // not only the selected output set. Disabled/unloaded tiles remain excluded.
@@ -25,14 +25,7 @@ inline void capture_bake_channels(MeshBakeSettings &options,const TextureDocumen
       }
       options.displacement[set.material_session_uid]=std::move(field);
     }
-    if(options.normal_detail>0&&set.channels[3]){
-      MeshBakeSettings::NormalField field;field.width=options.resolution*options.sampling;field.height=options.rows()*options.sampling;
-      for(int tile:set.loaded_tiles()){
-        auto &pixels=field.tiles[tile];pixels.resize(std::size_t(field.width)*field.height);std::array<bool,6> wanted{};wanted[3]=true;
-        for(int y=0;y<field.height;++y)for(int x=0;x<field.width;++x){const auto material=TextureDocument::evaluate_channels(set,wanted,std::min(set.width(tile)-1,int((x+.5)*set.width(tile)/field.width)),std::min(set.rows(tile)-1,int((y+.5)*set.rows(tile)/field.height)),tile).material;pixels[std::size_t(y)*field.width+x]=normalized_normal(material.normal);}
-      }
-      options.normal_maps[set.material_session_uid]=std::move(field);
-    }
+
   }
 }
 }
