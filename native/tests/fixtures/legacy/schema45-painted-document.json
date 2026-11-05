@@ -1,0 +1,1127 @@
+{
+  "auto_unwrap": {
+    "enabled": false,
+    "islands": 0,
+    "margin": 1,
+    "packing": 0,
+    "seams": 0
+  },
+  "export_configuration": {},
+  "id": "c0a91e2f-c824-4e40-94c4-3cb214863c86",
+  "import_cameras": true,
+  "normal_format": "OpenGL",
+  "resolution": 1024,
+  "schema": 45,
+  "source_mesh": "/home/mlind/bts/blender-texture-studio/replica/specs/fixtures/two_materials.obj",
+  "tangent_per_fragment": false,
+  "texture_sets": [
+    {
+      "ao_channel": false,
+      "ao_mixing": 0,
+      "base_values": {
+        "ao": 1,
+        "color": [
+          0.699999988079071,
+          0.699999988079071,
+          0.699999988079071,
+          1
+        ],
+        "height": 0,
+        "metallic": 0,
+        "normal": [
+          0,
+          0,
+          1
+        ],
+        "roughness": 0
+      },
+      "channels": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "disabled": false,
+      "height": 1024,
+      "height_method": 0,
+      "id": "09de2331-84f7-40eb-9960-6867b5289e2e",
+      "layers": [
+        {
+          "ao": {
+            "blending": "Normal",
+            "enabled": true,
+            "opacity": 1,
+            "tiles": []
+          },
+          "author_resolution": 0,
+          "blending": [
+            "Normal",
+            "Normal",
+            "Normal",
+            "Normal Map Detail",
+            "Normal"
+          ],
+          "channel_opacity": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "channels": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "coverage": "empty",
+          "effects": [],
+          "fill_projection": {
+            "asset_size_cm": [
+              0,
+              0,
+              0
+            ],
+            "atom": false,
+            "border_dots": true,
+            "border_width": 0.9,
+            "custom_size": true,
+            "custom_size_cm": [
+              10,
+              10,
+              10
+            ],
+            "gizmo": 0,
+            "gizmo_size": 0.4,
+            "hardness": 0.5,
+            "invert": false,
+            "linked": true,
+            "linked3": false,
+            "manipulator": true,
+            "middle_dot": true,
+            "mode": 0,
+            "offset": [
+              0,
+              0
+            ],
+            "offset3": [
+              0,
+              0,
+              0
+            ],
+            "physical": false,
+            "rotation": 0,
+            "rotation3": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1
+            ],
+            "scale3": [
+              1,
+              1,
+              1
+            ]
+          },
+          "geometry_mask": {
+            "default_include": true,
+            "meshes": [],
+            "tiles": [],
+            "tiles_default_include": true,
+            "type": 0
+          },
+          "id": "3b94ef19-8730-407d-bfd6-c40c9907efa9",
+          "instance": null,
+          "kind": "paint",
+          "mask": null,
+          "name": "Layer 1",
+          "paint_hashes": [
+            "cbf29ce484222325",
+            "cbf29ce484222325",
+            "cbf29ce484222325",
+            "cbf29ce484222325",
+            "cbf29ce484222325"
+          ],
+          "paint_pages": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "paint_tiles": [],
+          "parent": "",
+          "strokes": null,
+          "users": [
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": true,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": true,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": true,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": true,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": true,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": true,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": true,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": true,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            }
+          ],
+          "values": {
+            "ao": 1,
+            "color": [
+              0.5,
+              0.5,
+              0.5,
+              1
+            ],
+            "height": 0,
+            "metallic": 0,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "roughness": 0.30000001192092896
+          },
+          "visible": true
+        }
+      ],
+      "mesh_maps": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "name": "CubeSurface",
+      "next_fill_number": 1,
+      "next_folder_number": 1,
+      "next_paint_number": 2,
+      "normal_mixing": 0,
+      "padding_3d": true,
+      "precision": [
+        0,
+        1,
+        1,
+        6,
+        5,
+        1
+      ],
+      "resolution": 1024,
+      "selected_effect": "",
+      "selected_geometry": false,
+      "selected_layer": "3b94ef19-8730-407d-bfd6-c40c9907efa9",
+      "selected_mask": false,
+      "size_linked": true,
+      "tile_resolutions": {},
+      "tiles": [
+        1001
+      ],
+      "users": [
+        {
+          "allocated": false,
+          "name": "User0",
+          "precision": 7,
+          "present": false,
+          "scattering": false
+        },
+        {
+          "allocated": false,
+          "name": "User1",
+          "precision": 7,
+          "present": false,
+          "scattering": false
+        },
+        {
+          "allocated": false,
+          "name": "User2",
+          "precision": 7,
+          "present": false,
+          "scattering": false
+        },
+        {
+          "allocated": false,
+          "name": "User3",
+          "precision": 7,
+          "present": false,
+          "scattering": false
+        },
+        {
+          "allocated": false,
+          "name": "User4",
+          "precision": 7,
+          "present": false,
+          "scattering": false
+        },
+        {
+          "allocated": false,
+          "name": "User5",
+          "precision": 7,
+          "present": false,
+          "scattering": false
+        },
+        {
+          "allocated": false,
+          "name": "User6",
+          "precision": 7,
+          "present": false,
+          "scattering": false
+        },
+        {
+          "allocated": false,
+          "name": "User7",
+          "precision": 7,
+          "present": false,
+          "scattering": false
+        }
+      ]
+    },
+    {
+      "ao_channel": false,
+      "ao_mixing": 0,
+      "base_values": {
+        "ao": 1,
+        "color": [
+          0.699999988079071,
+          0.699999988079071,
+          0.699999988079071,
+          1
+        ],
+        "height": 0,
+        "metallic": 0,
+        "normal": [
+          0,
+          0,
+          1
+        ],
+        "roughness": 0
+      },
+      "channels": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "disabled": false,
+      "height": 1024,
+      "height_method": 0,
+      "id": "980c62e9-fa72-4eb6-98cc-954cdd80abfb",
+      "layers": [
+        {
+          "ao": {
+            "blending": "Normal",
+            "enabled": true,
+            "opacity": 1,
+            "tiles": []
+          },
+          "author_resolution": 0,
+          "blending": [
+            "Normal",
+            "Normal",
+            "Normal",
+            "Normal Map Detail",
+            "Normal"
+          ],
+          "channel_opacity": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "channels": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "coverage": "empty",
+          "effects": [],
+          "fill_projection": {
+            "asset_size_cm": [
+              0,
+              0,
+              0
+            ],
+            "atom": false,
+            "border_dots": true,
+            "border_width": 0.9,
+            "custom_size": true,
+            "custom_size_cm": [
+              10,
+              10,
+              10
+            ],
+            "gizmo": 0,
+            "gizmo_size": 0.4,
+            "hardness": 0.5,
+            "invert": false,
+            "linked": true,
+            "linked3": false,
+            "manipulator": true,
+            "middle_dot": true,
+            "mode": 0,
+            "offset": [
+              0,
+              0
+            ],
+            "offset3": [
+              0,
+              0,
+              0
+            ],
+            "physical": false,
+            "rotation": 0,
+            "rotation3": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1
+            ],
+            "scale3": [
+              1,
+              1,
+              1
+            ]
+          },
+          "geometry_mask": {
+            "default_include": true,
+            "meshes": [],
+            "tiles": [],
+            "tiles_default_include": true,
+            "type": 0
+          },
+          "id": "2e983e7b-2cd4-474e-b8d0-e784940458a2",
+          "instance": null,
+          "kind": "paint",
+          "mask": null,
+          "name": "Layer 1",
+          "paint_hashes": [
+            "cbf29ce484222325",
+            "cbf29ce484222325",
+            "cbf29ce484222325",
+            "cbf29ce484222325",
+            "cbf29ce484222325"
+          ],
+          "paint_pages": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "paint_tiles": [],
+          "parent": "",
+          "strokes": null,
+          "users": [
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": true,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": true,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": true,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": true,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": true,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": true,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": true,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": true,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            }
+          ],
+          "values": {
+            "ao": 1,
+            "color": [
+              0.5,
+              0.5,
+              0.5,
+              1
+            ],
+            "height": 0,
+            "metallic": 0,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "roughness": 0.30000001192092896
+          },
+          "visible": true
+        },
+        {
+          "ao": {
+            "blending": "Normal",
+            "enabled": true,
+            "opacity": 1,
+            "tiles": []
+          },
+          "author_resolution": 0,
+          "blending": [
+            "Normal",
+            "Normal",
+            "Normal",
+            "Normal Map Detail",
+            "Normal"
+          ],
+          "channel_opacity": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "channels": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "coverage": "full",
+          "effects": [],
+          "fill_projection": {
+            "asset_size_cm": [
+              0,
+              0,
+              0
+            ],
+            "atom": false,
+            "border_dots": true,
+            "border_width": 0.9,
+            "custom_size": true,
+            "custom_size_cm": [
+              10,
+              10,
+              10
+            ],
+            "gizmo": 0,
+            "gizmo_size": 0.4,
+            "hardness": 0.5,
+            "invert": false,
+            "linked": true,
+            "linked3": false,
+            "manipulator": true,
+            "middle_dot": true,
+            "mode": 0,
+            "offset": [
+              0,
+              0
+            ],
+            "offset3": [
+              0,
+              0,
+              0
+            ],
+            "physical": false,
+            "rotation": 0,
+            "rotation3": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1
+            ],
+            "scale3": [
+              1,
+              1,
+              1
+            ]
+          },
+          "geometry_mask": {
+            "default_include": true,
+            "meshes": [],
+            "tiles": [],
+            "tiles_default_include": true,
+            "type": 0
+          },
+          "id": "a17a19e8-0abe-472f-ba76-c82f630f13ed",
+          "instance": null,
+          "kind": "fill",
+          "mask": null,
+          "name": "Fill layer 1",
+          "paint_hashes": [
+            "cbf29ce484222325",
+            "cbf29ce484222325",
+            "cbf29ce484222325",
+            "cbf29ce484222325",
+            "cbf29ce484222325"
+          ],
+          "paint_pages": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "paint_tiles": [],
+          "parent": "",
+          "strokes": null,
+          "users": [
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": false,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": false,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": false,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": false,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": false,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": false,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": false,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": false,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            }
+          ],
+          "values": {
+            "ao": 1,
+            "color": [
+              0.5,
+              0.5,
+              0.5,
+              1
+            ],
+            "height": 0,
+            "metallic": 0,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "roughness": 0.30000001192092896
+          },
+          "visible": true
+        },
+        {
+          "ao": {
+            "blending": "Normal",
+            "enabled": true,
+            "opacity": 1,
+            "tiles": []
+          },
+          "author_resolution": 1024,
+          "blending": [
+            "Normal",
+            "Normal",
+            "Normal",
+            "Normal Map Detail",
+            "Normal"
+          ],
+          "channel_opacity": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "channels": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "coverage": "painted",
+          "effects": [],
+          "fill_projection": {
+            "asset_size_cm": [
+              0,
+              0,
+              0
+            ],
+            "atom": false,
+            "border_dots": true,
+            "border_width": 0.9,
+            "custom_size": true,
+            "custom_size_cm": [
+              10,
+              10,
+              10
+            ],
+            "gizmo": 0,
+            "gizmo_size": 0.4,
+            "hardness": 0.5,
+            "invert": false,
+            "linked": true,
+            "linked3": false,
+            "manipulator": true,
+            "middle_dot": true,
+            "mode": 0,
+            "offset": [
+              0,
+              0
+            ],
+            "offset3": [
+              0,
+              0,
+              0
+            ],
+            "physical": false,
+            "rotation": 0,
+            "rotation3": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1
+            ],
+            "scale3": [
+              1,
+              1,
+              1
+            ]
+          },
+          "geometry_mask": {
+            "default_include": true,
+            "meshes": [],
+            "tiles": [],
+            "tiles_default_include": true,
+            "type": 0
+          },
+          "id": "7114083d-5099-49f6-aead-bb5d47d56680",
+          "instance": null,
+          "kind": "paint",
+          "mask": null,
+          "name": "Layer 2",
+          "paint_hashes": [
+            "9274ac1a11bb1403",
+            "4e322e267aa11c10",
+            "c3791ee18bdaf8e9",
+            "2703159350d1bdbd",
+            "f8cea457dd723e79"
+          ],
+          "paint_pages": [
+            24,
+            24,
+            20,
+            24,
+            24
+          ],
+          "paint_tiles": [
+            {
+              "hashes": [
+                "9274ac1a11bb1403",
+                "4e322e267aa11c10",
+                "c3791ee18bdaf8e9",
+                "2703159350d1bdbd",
+                "f8cea457dd723e79"
+              ],
+              "number": 1001,
+              "pages": [
+                24,
+                24,
+                20,
+                24,
+                24
+              ]
+            }
+          ],
+          "parent": "",
+          "strokes": {
+            "flat_hash": [
+              "9274ac1a11bb1403",
+              "4e322e267aa11c10",
+              "c3791ee18bdaf8e9",
+              "2703159350d1bdbd",
+              "f8cea457dd723e79",
+              "cbf29ce484222325"
+            ],
+            "operations": 3,
+            "spatial": 2,
+            "version": 1
+          },
+          "users": [
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": true,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": true,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": true,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": true,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": true,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": true,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": true,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            },
+            {
+              "author_resolution": 0,
+              "blending": 0,
+              "enabled": true,
+              "opacity": 1,
+              "strokes": null,
+              "tiles": [],
+              "value": 1
+            }
+          ],
+          "values": {
+            "ao": 1,
+            "color": [
+              0.5,
+              0.5,
+              0.5,
+              1
+            ],
+            "height": 0,
+            "metallic": 0,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "roughness": 0.30000001192092896
+          },
+          "visible": true
+        }
+      ],
+      "mesh_maps": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "name": "SphereSurface",
+      "next_fill_number": 2,
+      "next_folder_number": 1,
+      "next_paint_number": 3,
+      "normal_mixing": 0,
+      "padding_3d": true,
+      "precision": [
+        0,
+        1,
+        1,
+        6,
+        5,
+        1
+      ],
+      "resolution": 1024,
+      "selected_effect": "",
+      "selected_geometry": false,
+      "selected_layer": "7114083d-5099-49f6-aead-bb5d47d56680",
+      "selected_mask": false,
+      "size_linked": true,
+      "tile_resolutions": {},
+      "tiles": [
+        1001
+      ],
+      "users": [
+        {
+          "allocated": false,
+          "name": "User0",
+          "precision": 7,
+          "present": false,
+          "scattering": false
+        },
+        {
+          "allocated": false,
+          "name": "User1",
+          "precision": 7,
+          "present": false,
+          "scattering": false
+        },
+        {
+          "allocated": false,
+          "name": "User2",
+          "precision": 7,
+          "present": false,
+          "scattering": false
+        },
+        {
+          "allocated": false,
+          "name": "User3",
+          "precision": 7,
+          "present": false,
+          "scattering": false
+        },
+        {
+          "allocated": false,
+          "name": "User4",
+          "precision": 7,
+          "present": false,
+          "scattering": false
+        },
+        {
+          "allocated": false,
+          "name": "User5",
+          "precision": 7,
+          "present": false,
+          "scattering": false
+        },
+        {
+          "allocated": false,
+          "name": "User6",
+          "precision": 7,
+          "present": false,
+          "scattering": false
+        },
+        {
+          "allocated": false,
+          "name": "User7",
+          "precision": 7,
+          "present": false,
+          "scattering": false
+        }
+      ]
+    }
+  ],
+  "units": {
+    "auto_physical": false,
+    "cm_per_file": 1,
+    "custom_cm": 1,
+    "exact": true,
+    "internal": true,
+    "native_per_file": 1
+  },
+  "usd": {
+    "explicit_frame": false,
+    "frame": 0,
+    "scope": "/",
+    "subdivision": 0,
+    "variants": {}
+  },
+  "uv_workflow": "single_tile"
+}

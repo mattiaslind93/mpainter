@@ -14,7 +14,7 @@ if not a.existing:
   raw=b''.join(b'\0'+bytes([128,64,32])*2 for _ in range(2))
   (out/'anchor-color.png').write_bytes(b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('!2I5B',2,2,8,2,0,0,0))+chunk(b'IDAT',zlib.compress(raw))+chunk(b'IEND',b''))
  env.update({name:str(out/sub) for name,sub in [('XDG_CONFIG_HOME','config'),('XDG_DATA_HOME','data'),('XDG_CACHE_HOME','cache'),('TMPDIR','tmp'),('BTS_RECOVERY_DIR','recovery'),('BTS_SESSION_LOG_DIR','logs'),('BTS_RESOURCE_CACHE','resources')]})
- command=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--project',str(base/'build/baseline-demo/host-fixture.blend'),'--environment',str(base/'build/environment-cache/TT_environmentLights_v001.hdr'),'--new-mesh',str(root/'replica/specs/fixtures/two_materials.obj'),'--new-demo-dir',str(out),'--anchor-reference-demo',str(base/'build/mesh-maps-native/mesh-maps.blend'),'--recovery-dir',str(out/'recovery')]
+ command=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--project',str(base/'build/baseline-demo/host-fixture.blend'),'--environment',str(base/'build/environment-cache/TT_environmentLights_v001.hdr'),'--new-mesh',str(root/'native/tests/fixtures/two_materials.obj'),'--new-demo-dir',str(out),'--anchor-reference-demo',str(base/'build/mesh-maps-native/mesh-maps.blend'),'--recovery-dir',str(out/'recovery')]
  with (out/'run.log').open('w') as log:process=subprocess.run(command,stdout=log,stderr=subprocess.STDOUT,env=env,timeout=240)
  assert process.returncode==0,process.returncode
 log=(out/'run.log').read_text();assert 'BTS_SHUTDOWN clean' in log

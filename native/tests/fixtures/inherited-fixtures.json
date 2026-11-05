@@ -42,6 +42,40 @@
       "path": "legacy/schema45-painted.blend",
       "bytes": 5778282,
       "sha256": "ab9d50715c0ad3bd14b1371cf392a1b5d645927f46acacbfb01ae6ee047c73aa"
+    },
+    {
+      "path": "legacy/schema45-painted-document.json",
+      "bytes": 26057,
+      "sha256": "a62dbb71cc0565f36d007f0cc30d747f3d40900cbe2927aec0b4ea1f624b8d9d"
+    },
+    {
+      "path": "legacy/README.md",
+      "bytes": 667,
+      "sha256": "819840c44bbd1e4a3e7968a31b1ad0aabef381c25499decd8b8dc7a48ccfbde8"
+    },
+    {
+      "path": "camera_card.dae",
+      "source_path": "replica/specs/fixtures/camera_card.dae",
+      "source_commit": null,
+      "provenance": "Retained locally generated synthetic predecessor fixture, not tracked in the predecessor Git commit.",
+      "bytes": 2665,
+      "sha256": "095ddf03e061a5b8148d4cf8ec1d84913d9424454a7cefc8d255ca6c4e14de50"
+    },
+    {
+      "path": "two_materials.obj",
+      "source_path": "replica/specs/fixtures/two_materials.obj",
+      "source_commit": null,
+      "provenance": "Retained locally generated synthetic predecessor fixture, not tracked in the predecessor Git commit.",
+      "bytes": 173846,
+      "sha256": "0ed738a0db56a7dd0fbb1cdba9dc97dce70c5930f07f127db1d356d6667a5bf4"
+    },
+    {
+      "path": "two_materials.mtl",
+      "source_path": "replica/specs/fixtures/two_materials.mtl",
+      "source_commit": null,
+      "provenance": "Retained locally generated synthetic predecessor fixture, not tracked in the predecessor Git commit.",
+      "bytes": 87,
+      "sha256": "db5cef7989d9ecb34d2e6f8f7d2f2a98a92eb271b911bb514b7c4b65441a1eeb"
     }
   ]
 }

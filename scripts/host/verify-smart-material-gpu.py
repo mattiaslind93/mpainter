@@ -4,7 +4,7 @@ from pathlib import Path
 p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);p.add_argument('--existing',action='store_true');a=p.parse_args();out=a.output.resolve();out.mkdir(parents=True,exist_ok=True)
 root=Path(__file__).resolve().parents[2];base=root.parent
 assert os.environ.get('QT_QPA_PLATFORM')=='offscreen','An isolated offscreen invocation is required'
-cmd=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--project',str(base/'build/baseline-demo/host-fixture.blend'),'--environment',str(base/'build/environment-cache/TT_environmentLights_v001.hdr'),'--new-mesh',str(root/'replica/specs/fixtures/two_materials.obj'),'--new-demo-dir',str(out),'--smart-material-demo',str(base/'build/mesh-maps-native/mesh-maps.blend'),'--library-dir',str(out/'library'),'--recovery-dir',str(out/'recovery')]
+cmd=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--project',str(base/'build/baseline-demo/host-fixture.blend'),'--environment',str(base/'build/environment-cache/TT_environmentLights_v001.hdr'),'--new-mesh',str(root/'native/tests/fixtures/two_materials.obj'),'--new-demo-dir',str(out),'--smart-material-demo',str(base/'build/mesh-maps-native/mesh-maps.blend'),'--library-dir',str(out/'library'),'--recovery-dir',str(out/'recovery')]
 if not a.existing:
  with (out/'run.log').open('w') as log:
   proc=subprocess.run(cmd,stdout=log,stderr=subprocess.STDOUT,timeout=300,env={**os.environ,'BTS_SMART_MATERIAL_GPU_CHECK':'1'})

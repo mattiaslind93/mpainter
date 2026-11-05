@@ -1,0 +1,7 @@
+newmtl SphereSurface
+Kd 0.7 0.7 0.7
+illum 2
+
+newmtl CubeSurface
+Kd 0.7 0.7 0.7
+illum 2

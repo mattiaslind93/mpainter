@@ -25,7 +25,7 @@ if not a.existing:
  png(fixtures/'normal-up.png',128,128,lambda x,y:(128,128,255))
  png(fixtures/'normal-side.png',128,128,lambda x,y:(255,128,128))
  png(fixtures/'invalid.png',31,64,lambda x,y:(0,0,0))
- cmd=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--project',str(base/'build/baseline-demo/host-fixture.blend'),'--environment',str(base/'build/environment-cache/TT_environmentLights_v001.hdr'),'--new-mesh',str(root/'replica/specs/fixtures/two_materials.obj'),'--new-demo-dir',str(out),'--mesh-generator-demo',str(base/'build/mesh-maps-native/mesh-maps.blend'),'--generator-fixtures',str(fixtures),'--recovery-dir',str(out/'recovery')]
+ cmd=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--project',str(base/'build/baseline-demo/host-fixture.blend'),'--environment',str(base/'build/environment-cache/TT_environmentLights_v001.hdr'),'--new-mesh',str(root/'native/tests/fixtures/two_materials.obj'),'--new-demo-dir',str(out),'--mesh-generator-demo',str(base/'build/mesh-maps-native/mesh-maps.blend'),'--generator-fixtures',str(fixtures),'--recovery-dir',str(out/'recovery')]
  with (out/'run.log').open('w') as log:
   proc=subprocess.run(cmd,stdout=log,stderr=subprocess.STDOUT,timeout=420,env={**os.environ,**private_env,'BTS_MESH_GENERATORS':'1',**({'BTS_CONTENT_GENERATORS':'1'} if a.content else {}),'LANG':'sv_SE.UTF-8','LC_ALL':'sv_SE.UTF-8'})
  assert proc.returncode==0,proc.returncode

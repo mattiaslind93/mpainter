@@ -11,7 +11,7 @@ if not a.existing:
  image.write_bytes(b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('!2I5B',32,32,8,2,0,0,0))+chunk(b'IDAT',zlib.compress(raw))+chunk(b'IEND',b''))
  # This is our generated export fixture, never an artist-owned file.
  (out/'own-material.btsmaterial').unlink(missing_ok=True)
- cmd=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--project',str(base/'build/baseline-demo/host-fixture.blend'),'--environment',str(base/'build/environment-cache/TT_environmentLights_v001.hdr'),'--new-mesh',str(root/'replica/specs/fixtures/two_materials.obj'),'--new-demo-dir',str(out),'--smart-material-demo',str(base/'build/mesh-maps-native/mesh-maps.blend'),'--library-dir',str(out/'library'),'--recovery-dir',str(out/'recovery')]
+ cmd=['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--project',str(base/'build/baseline-demo/host-fixture.blend'),'--environment',str(base/'build/environment-cache/TT_environmentLights_v001.hdr'),'--new-mesh',str(root/'native/tests/fixtures/two_materials.obj'),'--new-demo-dir',str(out),'--smart-material-demo',str(base/'build/mesh-maps-native/mesh-maps.blend'),'--library-dir',str(out/'library'),'--recovery-dir',str(out/'recovery')]
  with (out/'run.log').open('w') as log:
   proc=subprocess.run(cmd,stdout=log,stderr=subprocess.STDOUT,timeout=420,env={**os.environ,'BTS_SMART_MATERIAL_GPU_CHECK':'1','BTS_SMART_MATERIAL_USER':'1','BTS_SMART_MATERIAL_SOURCE':str(image)})
  assert proc.returncode==0,proc.returncode
