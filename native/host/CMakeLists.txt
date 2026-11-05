@@ -453,6 +453,10 @@ target_link_libraries(bts-spsm-asset-tests PRIVATE bts-export-config)
 add_executable(bts-smart-material-preset-tests ${BTS_HOST_SOURCE_DIR}/../tests/smart_material_preset_test.cc ${BTS_HOST_SOURCE_DIR}/AssetCatalog.cc)
 target_link_libraries(bts-smart-material-preset-tests PRIVATE bts-export-config)
 
+# Explicit, headless Blender interchange. Uses the same archive codecs as the shelf.
+add_executable(bts-blender-presets ${BTS_HOST_SOURCE_DIR}/BlenderPresetBridge.cc ${BTS_HOST_SOURCE_DIR}/AssetCatalog.cc)
+target_link_libraries(bts-blender-presets PRIVATE bts-builtin-smartmasks)
+
 add_executable(bts-export-config-tests ${BTS_HOST_SOURCE_DIR}/../tests/export_configuration_test.cc)
 target_link_libraries(bts-export-config-tests PRIVATE bts-export-config)
 
