@@ -39,7 +39,8 @@ inline QList<qint64> user_session_pids(const QString &proc="/proc"){
 // never permits a test window on the artist's display.
 inline bool owned_private_xvfb(const QString &proc="/proc",const QString &locks="/tmp"){
 #ifdef Q_OS_LINUX
- if(qEnvironmentVariable("QT_QPA_PLATFORM")!="xcb"||!qEnvironmentVariableIsEmpty("WAYLAND_DISPLAY"))return false;
+ const auto platform=qEnvironmentVariable("QT_QPA_PLATFORM");
+ if((platform!="xcb"&&platform!="offscreen")||!qEnvironmentVariableIsEmpty("WAYLAND_DISPLAY"))return false;
  const auto config=qEnvironmentVariable("XDG_CONFIG_HOME");if((!config.contains("/bts/build/")&&!config.contains("/mpainter-test-sessions/"))||!(config.endsWith("/config")||config.endsWith("/.config")))return false;
  auto display=qEnvironmentVariable("DISPLAY");if(display.endsWith(".0"))display.chop(2);bool number_ok=false,pid_ok=false;const int number=display.startsWith(':')?display.mid(1).toInt(&number_ok):-1;const auto pid=qEnvironmentVariable("BTS_PRIVATE_XVFB_PID").toLongLong(&pid_ok);if(!number_ok||number<=1||number>65535||!pid_ok||pid<=1)return false;
  const auto base=proc+"/"+QString::number(pid);if(QFileInfo(base).ownerId()!=::getuid())return false;

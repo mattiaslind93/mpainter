@@ -5,8 +5,8 @@ import json,os,subprocess,time
 
 @contextmanager
 def private_gpu_gui(output,environment,root):
-    from session_guard import require_gui_allowed
-    require_gui_allowed(environment=environment)
+    from session_guard import require_gpu_idle, require_gui_allowed
+    require_gpu_idle(environment=environment)
     output=Path(output).resolve();root=Path(root).resolve()
     bts_root=Path(environment.get('BTS_ROOT',root.parent)).resolve()
     build=bts_root/'build'
@@ -20,8 +20,10 @@ def private_gpu_gui(output,environment,root):
     env.update(QT_QPA_PLATFORM='xcb',BTS_HEADLESS_WORKSPACE='0',QT_XCB_GL_INTEGRATION='xcb_glx',XDG_RUNTIME_DIR=str(runtime),VGL_EGLLIB='/usr/lib64/libEGL.so.1')
     for key,folder in [('XDG_CONFIG_HOME','config'),('XDG_DATA_HOME','data'),('XDG_CACHE_HOME','cache'),('TMPDIR','tmp'),('BTS_RECOVERY_DIR','recovery'),('BTS_RESOURCE_CACHE','resources')]:
         (output/folder).mkdir(exist_ok=True);env[key]=str(output/folder)
-    env['BTS_ROOT']=str(bts_root);env['QT_PLUGIN_PATH']=str(bts_root/'qt/6.8.3/plugins')
-    env['LD_LIBRARY_PATH']=str(bts_root/'qt/6.8.3/lib')+':'+env.get('LD_LIBRARY_PATH','')
+    qt_root=Path(env.get('QT_ROOT_DIR',bts_root/'toolchains/qt'))
+    if not qt_root.is_dir():qt_root=bts_root/'qt/6.8.3'
+    env['BTS_ROOT']=str(bts_root);env['QT_PLUGIN_PATH']=str(qt_root/'plugins')
+    env['LD_LIBRARY_PATH']=str(qt_root/'lib')+':'+env.get('LD_LIBRARY_PATH','')
     if not env.get('BTS_ENVIRONMENT'):
         config=Path(env.get('BTS_USER_CONFIG_DIR',root.parent.parent/'.config'))
         for version in ('5.2','5.1','5.0'):
@@ -40,6 +42,7 @@ def private_gpu_gui(output,environment,root):
             else:raise RuntimeError('Owned Xvfb readiness timed out')
             env['BTS_PRIVATE_XVFB_PID']=str(server.pid)
             env['DISPLAY']=':'+number
+            require_gui_allowed(allow_private_xvfb=True,environment=env)
             # The 3D backend is an EGL device, never the default :0 X display.
             prefix=['bash','-lc','source "$1/scripts/host/gpu-env.sh"; unset WAYLAND_DISPLAY XAUTHORITY; shift; exec vglrun -nodl -d egl -c proxy "$@"','bts-private',str(root)]
             with (output/'private-renderer.log').open('w')as renderer:

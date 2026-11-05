@@ -29,6 +29,12 @@ with tempfile.TemporaryDirectory(prefix='session-guard-') as d:
   assert not cpu_test_arguments(['app','--prepare-native-craftypack','/tmp/assets',*suffix])
  process(8,['--prepare-native-craftypack','/tmp/assets','--craftypack-source','/tmp/source'])
  assert all(x['pid']!=8 for x in graphics_sessions(root,exclude=-1))
+ process(9,[],'/artist/config');(root/'9/comm').write_text('mpainter\n')
+ assert any(x['pid']==9 for x in graphics_sessions(root,exclude=-1))
+ assert any(x['pid']==9 for x in user_sessions(root,exclude=-1))
+ process(10,['--cpu-export-test','/tmp/proof']);(root/'10/comm').write_text('mpainter\n')
+ assert all(x['pid']!=10 for x in graphics_sessions(root,exclude=-1))
+ assert all(x['pid']!=10 for x in user_sessions(root,exclude=-1))
  for args in (['app','--cpu-unknown'],['app','--headless-viewport-test','/tmp/proof'],['app','--cpu-export-test','/tmp/proof','--gui-fix-demo','/tmp/proof'],['app','--cpu-export-test','/tmp/proof','--workspace']):assert not cpu_test_arguments(args)
  import subprocess,sys,ctypes,time,os
  fake=subprocess.Popen([sys.executable,'-c',"import ctypes,time;ctypes.CDLL(None).prctl(15,b'bts-host',0,0,0);print('ready',flush=True);time.sleep(20)",'--workspace'],stdout=subprocess.PIPE,text=True)
@@ -44,13 +50,35 @@ with tempfile.TemporaryDirectory(prefix='session-guard-') as d:
  locks=root/'locks';locks.mkdir();lock=locks/'.X99-lock';lock.write_text('700\n')
  env={'BTS_ROOT':'/home/mlind/bts','XDG_CONFIG_HOME':'/home/mlind/bts/build/owned/config','QT_QPA_PLATFORM':'xcb','DISPLAY':':99','BTS_PRIVATE_XVFB_PID':'700'}
  def owned(changes=None):return owned_private_xvfb(root,locks,environment=env|dict(changes or {}),caller_pid=500)
- assert owned() and owned({'DISPLAY':':99.0'})
+ assert owned() and owned({'DISPLAY':':99.0'}) and owned({'QT_QPA_PLATFORM':'offscreen'})
+ # Verifiers and cleanup wrappers may sit between xvfb-run and run-host.
+ wrapper=root/'450';wrapper.mkdir();(wrapper/'status').write_text('PPid:\t400\n')
+ (caller/'status').write_text('PPid:\t450\n');assert owned()
+ (wrapper/'status').write_text('PPid:\t450\n');assert not owned()
+ (caller/'status').write_text('PPid:\t400\n')
  for change in ({'DISPLAY':':0'},{'DISPLAY':':98'},{'DISPLAY':':65536'},{'BTS_PRIVATE_XVFB_PID':'0'},{'BTS_PRIVATE_XVFB_PID':'701'},{'WAYLAND_DISPLAY':'wayland-0'},{'QT_QPA_PLATFORM':'wayland'},{'XDG_CONFIG_HOME':'/home/mlind/.config'},{'XDG_CONFIG_HOME':'/home/mlind/bts/build/owned/../../outside/config'}):assert not owned(change),change
  (server/'comm').write_text('ordinary\n');assert not owned();(server/'comm').write_text('Xvfb\n')
  (server/'cmdline').write_bytes(b'/usr/bin/Xvfb\0:98\0');assert not owned();(server/'cmdline').write_bytes(b'/usr/bin/Xvfb\0:99\0')
  (caller/'status').write_text('PPid:\t401\n');assert not owned();(caller/'status').write_text('PPid:\t400\n')
  lock.write_text('701\n');assert not owned();lock.write_text('700\n')
  with patch('session_guard.os.getuid',return_value=os.getuid()+1):assert not owned()
+ with patch.dict(os.environ,{'BTS_NO_BACKGROUND_GPU':'0'}),patch('session_guard.graphics_sessions',return_value=[]),patch('session_guard.user_sessions',return_value=[]),patch('session_guard.display_dpms_off',return_value=True),patch('session_guard.owned_private_xvfb',return_value=True):
+  require_gui_allowed(allow_private_xvfb=True,caller_pid=500)
+  try:require_gui_allowed(caller_pid=500)
+  except SystemExit as blocked:assert blocked.code==77
+  else:raise AssertionError('Unverified display bypassed sleeping monitor guard')
+  with patch('session_guard.owned_private_xvfb',return_value=False):
+   try:require_gui_allowed(allow_private_xvfb=True,caller_pid=500)
+   except SystemExit as blocked:assert blocked.code==77
+   else:raise AssertionError('Private flag without ownership bypassed sleeping monitor guard')
+  with patch.dict(os.environ,{'BTS_NO_BACKGROUND_GPU':'1'}):
+   try:require_gui_allowed(allow_private_xvfb=True,caller_pid=500)
+   except SystemExit as blocked:assert blocked.code==77
+   else:raise AssertionError('Private display bypassed explicit GPU ban')
+  with patch('session_guard.graphics_sessions',return_value=[{'pid':42}]):
+   try:require_gui_allowed(allow_private_xvfb=True,caller_pid=500)
+   except SystemExit as blocked:assert blocked.code==77
+   else:raise AssertionError('Private display bypassed active graphics session')
  with patch('session_guard.user_sessions',return_value=[{'pid':42}]),patch('session_guard.owned_private_xvfb',return_value=True):
   try:require_gui_allowed()
   except SystemExit as blocked:assert blocked.code==77

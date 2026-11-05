@@ -13,7 +13,7 @@ export BTS_CPU_TEST_ONLY=$(python3 -c 'import sys;sys.path.insert(0,sys.argv[1])
 if [[ "$BTS_CPU_TEST_ONLY" == 1 ]]; then
   export QT_QPA_PLATFORM=offscreen QT_QPA_OFFSCREEN_NO_GLX=1
 elif "$bts_test_run" || [[ "${BTS_NO_BACKGROUND_GPU:-0}" == 1 ]]; then
-  python3 -c 'import os,sys;sys.path.insert(0,sys.argv[1]);from session_guard import require_gui_allowed;require_gui_allowed(caller_pid=os.getppid())' "$project_dir/scripts/host"
+  python3 -c 'import os,sys;sys.path.insert(0,sys.argv[1]);from session_guard import require_gui_allowed;require_gui_allowed(allow_private_xvfb=True,caller_pid=os.getppid())' "$project_dir/scripts/host"
 fi
 if "$bts_headless_run"; then export QT_QPA_PLATFORM=${QT_QPA_PLATFORM:-offscreen}; fi
 if "$bts_test_run" && ! "$bts_headless_run" && [[ "${QT_QPA_PLATFORM:-xcb}" != offscreen && "${QT_QPA_PLATFORM:-xcb}" != minimal ]]; then
