@@ -1,5 +1,6 @@
 #include "NumericLocale.hh"
 #pragma once
+#include "Theme.hh"
 #include "TextureDocument.hh"
 #include "HistogramMetadata.hh"
 #include "LevelsRampEditor.hh"
@@ -20,14 +21,14 @@ class LevelsPanel final:public QWidget {
  public:
   explicit LevelsPanel(QWidget *parent):QWidget(parent){
     histogram_timer_=new QTimer(this);histogram_timer_->setInterval(16);connect(histogram_timer_,&QTimer::timeout,this,[this]{poll_histogram();});
-    setObjectName("levelsProperties");auto *layout=new QVBoxLayout(this);layout->setContentsMargins(0,0,0,0);layout->setSpacing(7);
+    setObjectName("levelsProperties");auto *layout=new QVBoxLayout(this);layout->setContentsMargins(0,0,0,0);layout->setSpacing(bts::theme::SpaceLoose);
     title_=new QLabel(this);layout->addWidget(title_);channel_=new QComboBox(this);channel_->setObjectName("levelsChannel");channel_->setAccessibleName("Affected channel");layout->addWidget(channel_);
     auto *inputs=new QHBoxLayout;inputs->setSpacing(4);
     const std::array<const char *,5> names{"levelsInputLow","levelsGamma","levelsInputHigh","levelsOutputLow","levelsOutputHigh"};
     const std::array<const char *,5> labels{"Input black","Gamma","Input white","Output black","Output white"};
     for(int i=0;i<5;++i){fields_[i]=new bts::NumericSpinBox(this);fields_[i]->setObjectName(names[i]);fields_[i]->setLocale(QLocale::c());fields_[i]->setAccessibleName(labels[i]);fields_[i]->setToolTip(labels[i]);fields_[i]->setRange(i==1?.01:-65504,i==1?100:65504);fields_[i]->setDecimals(4);fields_[i]->setSingleStep(.05);fields_[i]->setKeyboardTracking(false);fields_[i]->setMinimumWidth(0);fields_[i]->setSizePolicy(QSizePolicy::Ignored,QSizePolicy::Fixed);if(i<3)inputs->addWidget(fields_[i]);connect(fields_[i],&QDoubleSpinBox::valueChanged,this,[this,i](double value){auto e=effect_;auto &curve=edited_levels_curve(e);if(i==0)curve.input_low=std::min(float(value),std::min(curve.input_high-1e-4f,std::nextafter(curve.input_high,-INFINITY)));if(i==1)curve.gamma=value;if(i==2)curve.input_high=std::max(float(value),std::max(curve.input_low+1e-4f,std::nextafter(curve.input_low,INFINITY)));if(i==3)curve.output_low=value;if(i==4)curve.output_high=value;publish(e);});}
     graph_=new LevelsRampEditor(this);graph_->setObjectName("levelsHistogram");layout->addWidget(graph_);layout->addWidget(new QLabel("Precision",this));layout->addLayout(inputs);auto *outputs=new QHBoxLayout;outputs->addWidget(fields_[3]);outputs->addWidget(fields_[4]);layout->addLayout(outputs);
-    auto *buttons=new QHBoxLayout;buttons->setSpacing(3);component_=new QComboBox(this);component_->setObjectName("levelsComponent");component_->setAccessibleName("Levels component");component_->setFixedWidth(62);buttons->addWidget(component_);connect(component_,&QComboBox::currentIndexChanged,this,[this](int index){if(index>=0){effect_.component=component_->itemData(index).toInt();if(component_selected)component_selected(effect_.id,effect_.component);}});buttons->addStretch();
+    auto *buttons=new QHBoxLayout;buttons->setSpacing(bts::theme::Space);component_=new QComboBox(this);component_->setObjectName("levelsComponent");component_->setAccessibleName("Levels component");component_->setFixedWidth(62);buttons->addWidget(component_);connect(component_,&QComboBox::currentIndexChanged,this,[this](int index){if(index>=0){effect_.component=component_->itemData(index).toInt();if(component_selected)component_selected(effect_.id,effect_.component);}});buttons->addStretch();
     for(const auto *text:{"Reset","Auto","Invert"}){auto *button=new QPushButton(text,this);button->setObjectName(QString("levels%1").arg(text));if(QString(text)=="Auto")auto_button_=button;button->setFixedWidth(44);button->setStyleSheet("QPushButton {padding:2px 4px;min-width:0;}");button->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Fixed);buttons->addWidget(button);connect(button,&QPushButton::clicked,this,[this,text]{auto e=effect_;if(QString(text)=="Reset"){const auto id=e.id;const auto channel=e.channel,component=e.component;const bool enabled=e.enabled;e={};e.id=id;e.channel=channel;e.component=component;e.enabled=enabled;}else if(QString(text)=="Invert"){auto &curve=edited_levels_curve(e);std::swap(curve.output_low,curve.output_high);}else if(maximum_-minimum_>1e-6f){auto &curve=edited_levels_curve(e);curve.input_low=minimum_;curve.input_high=maximum_;}publish(e);});}
     clamp_=new QCheckBox("Clamp",this);clamp_->setObjectName("levelsClamp");buttons->addWidget(clamp_);layout->addLayout(buttons);
     connect(clamp_,&QCheckBox::toggled,this,[this](bool value){auto e=effect_;e.clamp=value;publish(e);});

@@ -54,6 +54,20 @@ inline constexpr auto Status = "#303030";
 inline constexpr auto Tab = "#2B2B2B";
 inline constexpr auto TabText = "#989898";
 inline constexpr auto ToolbarItem = "#313131";
+// Geometry tokens. Blender's wcol roundness is a fraction of a widget's height,
+// so the XML value cannot be copied as a pixel radius. Turquoise Dark rounds
+// nearly every widget (roundness 0.75), which maps here to one shared control
+// radius: buttons, tool buttons, fields and painted cells agree instead of
+// mixing 0, 1, 2 and 3 px. Circles (slider handles, the Fill invert button)
+// stay half of their own fixed size and are not this token.
+inline constexpr auto Radius = "3px";
+inline constexpr int RadiusPx = 3;
+// Spacing scale in logical pixels. Layouts pick one of these instead of an
+// ad-hoc number, so panels line up with each other.
+inline constexpr int SpaceTight = 2;
+inline constexpr int Space = 4;
+inline constexpr int SpaceWide = 6;
+inline constexpr int SpaceLoose = 8;
 inline QColor alpha(const char *token, int opacity) { QColor result(token); result.setAlpha(opacity); return result; }
 inline QString qss(QString source) {
   source.replace("@Viewport@", QLatin1String(Viewport));
@@ -100,6 +114,7 @@ inline QString qss(QString source) {
   source.replace("@Tab@", QLatin1String(Tab));
   source.replace("@TabText@", QLatin1String(TabText));
   source.replace("@ToolbarItem@", QLatin1String(ToolbarItem));
+  source.replace("@Radius@", QLatin1String(Radius));
   return source;
 }
 QPalette palette();

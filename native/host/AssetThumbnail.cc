@@ -82,7 +82,7 @@ QImage build_thumbnail(const StudioAsset &asset,bool &native_missing){
   }
   if(image.size()!=QSize(84,84))image=image.scaled(58,58,Qt::KeepAspectRatio,Qt::SmoothTransformation);if(asset.alpha&&asset.alpha->kind==AlphaKind::DynamicOutline){QPainter painter(&image);painter.setPen(Qt::NoPen);painter.setBrush(QColor(bts::theme::Warning));painter.drawPolygon(QPolygonF{{46,58},{58,46},{58,58}});}
   const int tile_count=!asset.texture_files.empty()&&asset.texture_files.front().tile?int(asset.texture_files.size()):int(sequence.size());
-  if(tile_count){QPainter painter(&image);painter.setPen(QColor(bts::theme::Heading));painter.setBrush(bts::theme::alpha(bts::theme::Canvas, 220));painter.drawRoundedRect(QRectF(32,32,25,25),3,3);auto font=painter.font();font.setBold(true);font.setPixelSize(17);painter.setFont(font);painter.drawText(QRectF(32,32,25,25),Qt::AlignCenter,QString::number(tile_count));}
+  if(tile_count){QPainter painter(&image);painter.setPen(QColor(bts::theme::Heading));painter.setBrush(bts::theme::alpha(bts::theme::Canvas, 220));painter.drawRoundedRect(QRectF(32,32,25,25),bts::theme::RadiusPx,bts::theme::RadiusPx);auto font=painter.font();font.setBold(true);font.setPixelSize(17);painter.setFont(font);painter.drawText(QRectF(32,32,25,25),Qt::AlignCenter,QString::number(tile_count));}
   if(!cached_path.isEmpty()){QSaveFile cached(cached_path);if(cached.open(QIODevice::WriteOnly)&&image.save(&cached,"PNG"))cached.commit();}
   return image;
 }

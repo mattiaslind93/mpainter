@@ -1,5 +1,6 @@
 #include "NumericLocale.hh"
 #pragma once
+#include "Theme.hh"
 #include "TextureDocument.hh"
 #include <QDoubleSpinBox>
 #include <QHBoxLayout>
@@ -14,7 +15,7 @@ namespace bts {
 class ColorSelectionPanel final:public QWidget {
  public:
   explicit ColorSelectionPanel(QWidget *parent):QWidget(parent){
-    setObjectName("colorSelectionProperties");auto *layout=new QVBoxLayout(this);layout->setContentsMargins(0,0,0,0);layout->setSpacing(7);layout->addWidget(new QLabel("COLOR SELECTION",this));
+    setObjectName("colorSelectionProperties");auto *layout=new QVBoxLayout(this);layout->setContentsMargins(0,0,0,0);layout->setSpacing(bts::theme::SpaceLoose);layout->addWidget(new QLabel("COLOR SELECTION",this));
     auto *resource=new QHBoxLayout;card_=new QPushButton(this);card_->setObjectName("selectionIdMap");card_->setToolTip("Use this Texture Set's baked ID map");card_->setMinimumWidth(0);card_->setSizePolicy(QSizePolicy::Ignored,QSizePolicy::Fixed);resource->addWidget(card_);auto *clear=new QPushButton("×",this);clear->setObjectName("selectionClearIdMap");clear->setFixedWidth(22);resource->addWidget(clear);layout->addLayout(resource);
     connect(card_,&QPushButton::clicked,this,[this]{auto e=effect_;e.use_id_map=true;publish(e);});connect(clear,&QPushButton::clicked,this,[this]{auto e=effect_;e.use_id_map=false;publish(e);});
     const std::array<const char *,3> names{"Output value","Hardness","Tolerance"};const std::array<const char *,3> objects{"selectionOutput","selectionHardness","selectionTolerance"};

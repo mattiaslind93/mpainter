@@ -1,5 +1,6 @@
 #include "NumericLocale.hh"
 #pragma once
+#include "Theme.hh"
 #include "BrushSettings.hh"
 #include "Performance.hh"
 #include <QCheckBox>
@@ -24,7 +25,7 @@ class AlphaPanel final:public QWidget {
   std::function<void(const DynamicStrokeParameters &)> dynamic_changed;
   std::function<void(bool,double,double)> parameters_changed;
   explicit AlphaPanel(QWidget *parent):QWidget(parent) {
-    setObjectName("alphaPanel");auto *layout=new QVBoxLayout(this);layout->setContentsMargins(0,8,0,0);layout->setSpacing(5);
+    setObjectName("alphaPanel");auto *layout=new QVBoxLayout(this);layout->setContentsMargins(0,8,0,0);layout->setSpacing(bts::theme::Space);
     layout->addWidget(new QLabel("ALPHA",this));auto *card=new QHBoxLayout;
     preview_=new QLabel(this);preview_->setObjectName("alphaThumbnailPreview");preview_->setFixedSize(48,48);card->addWidget(preview_);
     name_=new QLabel(this);name_->setObjectName("alphaResourceName");name_->setWordWrap(true);card->addWidget(name_,1);

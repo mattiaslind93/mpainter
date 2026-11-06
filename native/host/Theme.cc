@@ -55,7 +55,7 @@ class OptionStyle final : public QProxyStyle {
     painter->setPen(QPen(QColor(hovered ? Accent : texture_row ? Muted : OptionOutline), hovered ? 2 : 1));
     painter->setBrush(QColor(enabled ? OptionInner : Raised));
     if (radio) painter->drawEllipse(box);
-    else painter->drawRoundedRect(box, 2, 2);
+    else painter->drawRoundedRect(box, RadiusPx, RadiusPx);
     if (checked || mixed || element == PE_IndicatorMenuCheckMark) {
       // XML's item is white; Mattias requests the XML turquoise accent for the mark.
       const QColor mark = enabled ? QColor(Accent) : QColor(Accent).lighter(125);
@@ -173,15 +173,15 @@ void apply(QApplication &app)
   QDialog, QMessageBox, QMainWindow, QDockWidget, QScrollArea, QStackedWidget {
     background: @Surface@;
   }
-  QLabel { background: transparent; }
   QWidget:disabled { color: @Disabled@; }
   QDockWidget::title { background: @Surface@; color: @Heading@; padding: 6px; }
-  QToolBar { background: @Surface@; border: 0; spacing: 3px; }
+  QToolBar { background: @Surface@; border: 0; spacing: 4px; }
   QToolBar::separator { background: @Border@; width: 1px; margin: 4px; }
-  QGroupBox { background: @Panel@; border: 1px solid @Border@; margin-top: 12px; padding-top: 8px; }
+  QGroupBox { background: @Panel@; border: 1px solid @Border@; border-radius: @Radius@;
+    margin-top: 12px; padding-top: 8px; }
   QGroupBox::title { color: @Heading@; subcontrol-origin: margin; left: 8px; padding: 0 4px; }
   QPushButton { background: @Raised@; color: @ButtonText@; border: 1px solid @Border@;
-    border-radius: 2px; padding: 4px 10px; min-height: 20px; }
+    border-radius: @Radius@; padding: 4px 10px; min-height: 20px; }
   QPushButton:hover { background: @Hover@; }
   QPushButton:pressed, QPushButton:checked { background: @Selection@; color: @Heading@; }
   QPushButton:default, QPushButton:focus { border-color: @Accent@; }
@@ -195,7 +195,7 @@ void apply(QApplication &app)
     background: @Surface@; color: @Heading@; border: 0; padding: 4px;
   }
   QTextEdit, QPlainTextEdit, QLineEdit, QComboBox, QAbstractSpinBox {
-    background: @Canvas@; color: @Text@; border: 1px solid @Border@;
+    background: @Canvas@; color: @Text@; border: 1px solid @Border@; border-radius: @Radius@;
     selection-background-color: @Selection@; selection-color: @Heading@; padding: 2px 4px;
   }
   QAbstractSpinBox:focus { border-color: @Accent@; }
@@ -204,9 +204,9 @@ void apply(QApplication &app)
   QCheckBox, QRadioButton { spacing: 6px; background: transparent; }
   QCheckBox::indicator, QRadioButton::indicator, QGroupBox::indicator,
   QAbstractItemView::indicator { width: 16px; height: 16px; }
-  QProgressBar { background: @Canvas@; color: @Heading@; border: 1px solid @Border@; text-align: center; }
+  QProgressBar { background: @Canvas@; color: @Heading@; border: 1px solid @Border@;
+    border-radius: @Radius@; text-align: center; }
   QProgressBar::chunk { background: @Selection@; }
-  QScrollBar::handle:hover { background: @ScrollHover@; }
   QLabel#projectSection { color: @Heading@; font-weight: 600; }
   QLabel#projectValidationError { color: @Error@; }
   QLabel#uvWorkflowDescription { color: @Muted@; }
@@ -215,7 +215,6 @@ void apply(QApplication &app)
   QWidget#materialProperties, QScrollArea#propertiesScroll {
     background: @Surface@; color: @Heading@;
   }
-  QWidget#materialProperties, QScrollArea#propertiesScroll { background: @Surface@; }
   QWidget#contextToolbar, QWidget#shelfFilter { background: @Header@; }
   QWidget#dockHeader { background: @Surface@; border-bottom: 1px solid @Separator@; }
   QLabel#dockTitle { color: @Heading@; font-size: 11px; font-weight: 600; }
@@ -224,7 +223,7 @@ void apply(QApplication &app)
   QLabel:disabled { color: @Muted@; }
   QSplitter::handle { background: @Separator@; }
   QSplitter::handle:hover { background: @Accent@; }
-  QToolButton { background: @Tool@; border: 1px solid transparent; border-radius: 0; color: @Text@; }
+  QToolButton { background: @Tool@; border: 1px solid transparent; border-radius: @Radius@; color: @Text@; }
   QToolButton:hover { background: @Hover@; border-color: @Hover@; }
   QToolButton:checked { background: @Selection@; color: @Heading@; border-color: @Accent@; }
   QWidget#assetShelf, QWidget#textureSetPanel { background: @Canvas@; }
@@ -241,7 +240,7 @@ void apply(QApplication &app)
   QToolButton#shelfCategoryChip { background: @Canvas@; border: 1px solid @Hover@; padding: 2px 4px; }
   QLineEdit, QComboBox, QDoubleSpinBox {
     background: @Canvas@; color: @Text@; border: 1px solid @Border@;
-    border-radius: 1px; min-height: 20px; padding: 0 4px;
+    border-radius: @Radius@; min-height: 20px; padding: 0 4px;
   }
   QLineEdit:focus, QDoubleSpinBox:focus, QComboBox:focus { border-color: @Accent@; }
   QLineEdit:disabled, QDoubleSpinBox:disabled, QComboBox:disabled { color: @Muted@; }
@@ -250,12 +249,12 @@ void apply(QApplication &app)
   QTabWidget::pane { background: @Surface@; border: none; border-top: 1px solid @Separator@; }
   QTabBar::tab {
     color: @TabText@; background: @Tab@; border: 1px solid transparent;
-    padding: 0 7px; height: 32px; font-size: 10px; font-weight: 600;
+    padding: 0 8px; height: 32px; font-size: 10px; font-weight: 600;
   }
   QTabBar::tab:selected { background: @Surface@; border-top-color: @Accent@; color: @Heading@; }
   QTabBar::tab:hover { background: @Hover@; }
   QListWidget { background: @Canvas@; color: @Heading@; border: none; outline: none; }
-  QListWidget::item { min-height: 22px; border: 1px solid transparent; padding: 0 5px; }
+  QListWidget::item { min-height: 22px; border: 1px solid transparent; padding: 0 4px; }
   QListWidget::item:selected { background: @ListSelection@; border-color: @Accent@; color: @Heading@; }
   QListWidget::item:hover { background: @Hover@; }
   QListWidget#layerStack::item { padding: 0; }
@@ -282,9 +281,9 @@ void apply(QApplication &app)
   QMenuBar::item:selected { background: @Selection@; }
   QToolTip { background: @Menu@; color: @Heading@; border: 1px solid @Hover@; }
   QCheckBox[fillChannelToggle="true"] {
-    spacing: 0; padding: 3px 6px; color: @Text@; background: @Hover@; border: 1px solid @Hover@;
+    spacing: 6px; padding: 4px 6px; color: @Text@; background: @Hover@; border: 1px solid @Hover@;
+    border-radius: @Radius@;
   }
-  QCheckBox[fillChannelToggle="true"] { spacing: 5px; }
   QCheckBox[fillChannelToggle="true"]:checked { background: @Selection@; border-color: @Accent@; color: @Heading@; }
   QToolButton[artistChannelToggle="true"] { background: @Hover@; border: 1px solid @Hover@; color: @Text@; }
   QToolButton[artistChannelToggle="true"]:checked { background: @Selection@; border-color: @Accent@; color: @Heading@; }

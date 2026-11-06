@@ -402,7 +402,7 @@ class ShelfCategoryDelegate final : public QStyledItemDelegate {
     const QColor border = selected ? QColor(bts::theme::Accent) : (hovered ? QColor(bts::theme::Border) : QColor(bts::theme::Separator));
     painter->setPen(QPen(border, 1.0));
     painter->setBrush(bg);
-    painter->drawRoundedRect(cell, 3.0, 3.0);
+    painter->drawRoundedRect(cell, bts::theme::RadiusPx, bts::theme::RadiusPx);
 
     const QString text = index.data(Qt::DisplayRole).toString();
     const QColor fg = selected ? QColor(bts::theme::Heading) : (hovered ? QColor(bts::theme::Heading) : QColor(bts::theme::Text));
@@ -580,8 +580,8 @@ WorkspaceShell::WorkspaceShell(QWidget *viewport, Callbacks callbacks, QWidget *
   left->setObjectName("toolRail");
   left->setFixedWidth(rail_width);
   auto *left_layout = column(left);
-  left_layout->setContentsMargins(4, 5, 4, 5);
-  left_layout->setSpacing(3);
+  left_layout->setContentsMargins(bts::theme::Space,bts::theme::Space,bts::theme::Space,bts::theme::Space);
+  left_layout->setSpacing(bts::theme::Space);
   for (const auto &[glyph, name] : {
            std::pair{Glyph::Brush, "Paint"}, {Glyph::Eraser, "Eraser"},
            {Glyph::Projection, "Projection"}, {Glyph::Fill, "Polygon fill"}, {Glyph::Smudge,"Smudge"},
@@ -816,7 +816,7 @@ WorkspaceShell::WorkspaceShell(QWidget *viewport, Callbacks callbacks, QWidget *
   search->setObjectName("shelfSearch");
   search->setPlaceholderText("Search assets…");
   search->setToolTip("Combine n:name s:library u:usage p:path; append = for exact matches");
-  search->setStyleSheet(bts::theme::qss("QLineEdit#shelfSearch { margin: 4px 6px 2px 6px; padding: 2px 6px; min-height: 22px; background: @Separator@; border: 1px solid @Hover@; border-radius: 3px; } QLineEdit#shelfSearch:focus { border-color: @Accent@; }"));
+  search->setStyleSheet(bts::theme::qss("QLineEdit#shelfSearch { margin: 4px 6px 2px 6px; padding: 2px 6px; min-height: 22px; background: @Separator@; border: 1px solid @Hover@; border-radius: @Radius@; } QLineEdit#shelfSearch:focus { border-color: @Accent@; }"));
   connect(search,&QLineEdit::textChanged,this,[this](const QString &text){alpha_search_=text;refresh_alpha_shelf();});
   shelf_layout->addWidget(search);
   shelf_layout->addWidget(filter);
@@ -844,7 +844,7 @@ WorkspaceShell::WorkspaceShell(QWidget *viewport, Callbacks callbacks, QWidget *
   assets->setMovement(QListView::Static);
   assets->setIconSize(QSize(84, 84));
   assets->setGridSize(QSize(90, 114));
-  assets->setSpacing(1);
+  assets->setSpacing(bts::theme::SpaceTight);
   shelf_body_layout->addWidget(assets, 1);
   {auto *empty_materials=new QWidget(shelf_body);empty_materials->setObjectName("emptyMaterials");
   auto *empty_layout=column(empty_materials);
@@ -1574,8 +1574,8 @@ WorkspaceShell::WorkspaceShell(QWidget *viewport, Callbacks callbacks, QWidget *
   right->setObjectName("utilityRail");
   right->setFixedWidth(rail_width);
   auto *right_layout = column(right);
-  right_layout->setContentsMargins(4, 5, 4, 5);
-  right_layout->setSpacing(3);
+  right_layout->setContentsMargins(bts::theme::Space,bts::theme::Space,bts::theme::Space,bts::theme::Space);
+  right_layout->setSpacing(bts::theme::Space);
   environment_panel_=new EnvironmentPanel(this);
   environment_panel_->resource_requested=[this]{if(callbacks_.environment_resource_requested)callbacks_.environment_resource_requested();};
   environment_panel_->changed=[this](const QString &key,double value){if(callbacks_.environment_changed)callbacks_.environment_changed(key,value);};

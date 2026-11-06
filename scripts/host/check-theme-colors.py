@@ -25,11 +25,13 @@ source = (root / 'native/host/Theme.hh').read_text()
 colors = dict(re.findall(r'inline constexpr auto (\w+) = "(#[0-9A-Fa-f]{6})";', source))
 for name, alias in re.findall(r'inline constexpr auto (\w+) = (\w+);', source):
     colors[name] = colors[alias]
+# Theme.hh also carries non-color QSS tokens, such as the shared control radius.
+metrics = dict(re.findall(r'inline constexpr auto (\w+) = "([^"#][^"]*)";', source))
 for path in (root / 'native/host').iterdir():
     if path.suffix not in ('.cc', '.hh'):
         continue
     for token in re.findall(r'@([A-Za-z]+)@', path.read_text()):
-        if token not in colors:
+        if token not in colors and token not in metrics:
             raise SystemExit(f'{path.name}: unknown QSS token {token}')
 # Exact source colors take precedence over the previous theme's contrast targets.
 import xml.etree.ElementTree as ET
