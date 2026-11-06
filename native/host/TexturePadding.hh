@@ -11,7 +11,7 @@
 namespace blender {struct ImBuf;}
 namespace bts {
 struct GpuMarginPlan;
-struct BakeRayOptions {double frontal=.01,rear=.01;bool use_cage=false,relative=true,average_normals=true,ignore_backface=true,directx=false,match_names=false,per_fragment=false;std::string low_marker="_low",high_marker="_high",ignore_marker="_ignorebf";
+struct BakeRayOptions {double frontal=.01,rear=.01;bool use_cage=false,relative=true,average_normals=true,ignore_backface=false,directx=false,match_names=false,per_fragment=false;std::string low_marker="_low",high_marker="_high",ignore_marker="_ignorebf";
   // Scalar per tile/local UV. Only distance-based, averaged-normal high-to-low projection.
   std::function<float(int,double,double)> skew_weight;
   std::function<float(int,double,double,const std::array<float,3> &,std::uint32_t)> skew_weight_at;

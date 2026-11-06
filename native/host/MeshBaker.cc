@@ -1,6 +1,7 @@
 #include "TextureExtent.hh"
 #include "MeshBaker.hh"
 #include "GpuBakeRays.hh"
+#include "GpuPointiness.hh"
 #include "TextureMemory.hh"
 #include "MeshBakeFilter.hh"
 #include "SurfaceCurvature.hh"
@@ -128,7 +129,12 @@ MeshBakeJob::MeshBakeJob(std::shared_ptr<const SceneSnapshot> source,std::vector
       check_cancel();
 
       std::optional<RayScene> scene;scene.emplace(snapshot,settings);double extent=0,radius_squared=0;std::array<double,3> center;for(int i=0;i<3;++i){const double size=snapshot.maximum[i]-snapshot.minimum[i];extent=std::max(extent,size);radius_squared+=size*size*.25;center[i]=(snapshot.maximum[i]+snapshot.minimum[i])*.5;}extent=std::max(extent,1e-5);const double diameter=std::max(2*std::sqrt(radius_squared),1e-5);
-      if(settings.enabled[int(MeshMapRole::Curvature)])curvature_field.calculate_pointiness(settings.curvature_radius);
+      bool gpu_pointiness=false;GpuBakeRayStats pointiness_stats;std::string pointiness_error;
+      if(settings.enabled[int(MeshMapRole::Curvature)]){
+        if(settings.with_gpu)gpu_pointiness=request_gpu([&]{gpu_calculate_pointiness(curvature_field,settings.curvature_radius,&pointiness_stats);},settings.with_gpu,pointiness_error);
+        check_cancel();
+        if(!gpu_pointiness)curvature_field.calculate_pointiness(settings.curvature_radius);
+      }
       check_cancel();
       const float offset=settings.ray_offset>0?settings.ray_offset:float(extent*1e-6);
       int task=0;
@@ -145,12 +151,16 @@ MeshBakeJob::MeshBakeJob(std::shared_ptr<const SceneSnapshot> source,std::vector
             const bool inward=role==int(MeshMapRole::Thickness);
             const float maximum=inward?(settings.thickness_distance>0?settings.thickness_distance:float(extent*.25)):(settings.ao_distance>0?settings.ao_distance:float(extent));
             const bool ray_map=role==int(MeshMapRole::AmbientOcclusion)||role==int(MeshMapRole::Thickness);
-            if(ray_map&&settings.with_gpu&&settings.matched_objects.empty()&&settings.ignore_backface_objects.empty()){
-              std::string gpu_error;GpuBakeRayStats stats;
-              const bool success=request_gpu([&]{gpu_values=gpu_bake_cosine_occlusion(scene->triangles,surface,settings.rays,maximum,inward,&stats,nullptr,offset,true,geometric);},settings.with_gpu,gpu_error);
+            if(ray_map&&settings.with_gpu){
+              std::string gpu_error;GpuBakeRayStats stats;const GpuBakeRayFilter filter{scene->objects,scene->matches,scene->ignore_backfaces};
+              const bool success=request_gpu([&]{gpu_values=gpu_bake_cosine_occlusion(scene->triangles,surface,settings.rays,maximum,inward,&stats,nullptr,offset,true,geometric,&filter);},settings.with_gpu,gpu_error);
               if(cancelled)throw std::runtime_error("Bake cancelled");
               if(success){++gpu_maps;std::printf("BTS_BAKE_GPU_MAP uid=%u tile=%d role=%d batches=%llu buffers_released=1\n",input.material_uid,tile,role,(unsigned long long)stats.batches);}
               else{gpu_values.clear();cpu_fallback=true;std::fprintf(stderr,"BTS_BAKE_GPU_FALLBACK uid=%u tile=%d role=%d reason=%s; continuing full-resolution CPU bake\n",input.material_uid,tile,role,gpu_error.c_str());}
+            }
+            if(role==int(MeshMapRole::Curvature)&&settings.with_gpu){
+              if(gpu_pointiness){++gpu_maps;std::printf("BTS_BAKE_GPU_MAP uid=%u tile=%d role=%d batches=%llu buffers_released=1\n",input.material_uid,tile,role,(unsigned long long)pointiness_stats.batches);}
+              else{cpu_fallback=true;std::fprintf(stderr,"BTS_BAKE_GPU_FALLBACK uid=%u tile=%d role=%d reason=%s; continuing full-resolution CPU bake\n",input.material_uid,tile,role,pointiness_error.c_str());}
             }
             if(ray_map&&gpu_values.empty())++cpu_ray_maps;
             std::vector<float> pixels(std::size_t(resolution)*height*4,0);

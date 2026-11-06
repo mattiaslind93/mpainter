@@ -36,7 +36,7 @@ void append(SceneSnapshot &to,SceneSnapshot source){
 }
 SkewBakeOptions skew_options(const QJsonObject &r){
  SkewBakeOptions o;o.resolution=r["resolution"].toInt(512);o.height=r["height"].toInt(o.resolution);o.sampling=r["sampling"].toInt(1);o.dilation=r["dilation"].toInt(32);o.diffusion=r["diffusion"].toBool();
- auto &ray=o.ray;ray.frontal=r["frontal"].toDouble(.01);ray.rear=r["rear"].toDouble(.01);ray.relative=r["relative"].toBool(true);ray.average_normals=r["average"].toBool(true);ray.use_cage=r["use_cage"].toBool();ray.ignore_backface=r["ignore_backface"].toBool(true);ray.match_names=r["match_names"].toBool();ray.low_marker=r["low_marker"].toString("_low").toStdString();ray.high_marker=r["high_marker"].toString("_high").toStdString();ray.ignore_marker=r["ignore_marker"].toString("_ignorebf").toStdString();ray.per_fragment=r["per_fragment"].toBool();ray.directx=r["directx"].toBool();return o;
+ auto &ray=o.ray;ray.frontal=r["frontal"].toDouble(.01);ray.rear=r["rear"].toDouble(.01);ray.relative=r["relative"].toBool(true);ray.average_normals=r["average"].toBool(true);ray.use_cage=r["use_cage"].toBool();ray.ignore_backface=r["ignore_backface"].toBool(false);ray.match_names=r["match_names"].toBool();ray.low_marker=r["low_marker"].toString("_low").toStdString();ray.high_marker=r["high_marker"].toString("_high").toStdString();ray.ignore_marker=r["ignore_marker"].toString("_ignorebf").toStdString();ray.per_fragment=r["per_fragment"].toBool();ray.directx=r["directx"].toBool();return o;
 }
 }
 SkewController::SkewController(QMainWindow *owner,SkewHooks hooks):QObject(owner),hooks_(std::move(hooks)){
@@ -57,7 +57,17 @@ SkewController::SkewController(QMainWindow *owner,SkewHooks hooks):QObject(owner
  debounce_.setSingleShot(true);debounce_.setInterval(100);connect(&debounce_,&QTimer::timeout,this,[this]{start_job();});
  poll_.setInterval(30);connect(&poll_,&QTimer::timeout,this,[this]{poll();});
 }
-SkewController::~SkewController(){if(cancel_)cancel_->store(true);if(job_.valid())job_.wait();}
+SkewController::~SkewController(){
+ if(cancel_)cancel_->store(true);
+ if(job_.valid())while(job_.wait_for(std::chrono::milliseconds(1))!=std::future_status::ready)process_gpu();
+}
+void SkewController::request_gpu(const std::function<void()> &work,const std::shared_ptr<std::atomic<bool>> &cancel){
+ std::packaged_task<void()> task([&]{if(cancel->load())throw std::runtime_error("Bake cancelled");hooks_.with_gpu(work);});auto result=task.get_future();
+ {std::lock_guard lock(gpu_mutex_);gpu_task_=std::move(task);}result.get();
+}
+void SkewController::process_gpu(){
+ std::packaged_task<void()> task;{std::lock_guard lock(gpu_mutex_);task=std::move(gpu_task_);}if(task.valid())task();
+}
 void SkewController::reset_document(){dock_->hide();idle_.stop();debounce_.stop();before_.reset();settings_before_.reset();requests_.clear();regions_.clear();if(cancel_)cancel_->store(true);engine_.reset();general_.reset();geometry_.reset();low_.reset();high_.reset();cage_.reset();source_key_.clear();seen_token_.clear();failed_token_.clear();vector_key_.clear();vectors_.clear();error_.clear();setProperty("sourceLoads",0);prior_mode_=0;}
 int SkewController::mode()const{const auto *doc=hooks_.document();return doc?doc->bake_configuration()["ui_mode"].toInt():0;}
 int SkewController::auto_role()const{const auto *doc=hooks_.document();return doc?doc->bake_configuration()["auto_role"].toInt(-1):-1;}
@@ -169,6 +179,7 @@ void SkewController::start_job(){performance::Scope timing("bake_submit");
   const auto &set=doc->set(uid);const auto field=set.skew;const auto name=set.name;const auto base=set.base_values;
   const auto area=pending.full?std::map<int,PaintPixels::Bounds>{}:regions_[uid];const auto wanted=token(uid,role);const auto id=doc->id();
   auto engine=engine_;auto general=general_;auto low=low_,high=high_,cage=cage_;cancel_=std::make_shared<std::atomic<bool>>(false);auto cancel=cancel_;requests_.erase(chosen);
+  if(hooks_.with_gpu)automatic.maps.with_gpu=[this,cancel](const std::function<void()> &work){request_gpu(work,cancel);};
   job_=std::async(std::launch::async,[=]()mutable{
    MeshMap map;
    if(skew_normal){if(!engine)engine=std::make_shared<SkewBakeEngine>(low,high);map=engine->bake(uid,field,selected,opts,area,*cancel);}
@@ -178,6 +189,7 @@ void SkewController::start_job(){performance::Scope timing("bake_submit");
  }catch(const std::exception &e){error_=QString::fromUtf8(e.what());failed_token_=source+token(uid,role);requests_.clear();panel_->progress(false,error_);hooks_.log(error_);}
 }
 void SkewController::poll(){performance::Scope timing("bake_result_poll");
+ process_gpu();
  if(!job_.valid()||job_.wait_for(std::chrono::seconds(0))!=std::future_status::ready)return;
  try{
   auto result=job_.get();auto *doc=hooks_.document();
@@ -207,11 +219,12 @@ bool SkewController::flush(){
 QJsonObject SkewController::reference(){
  if(!flush()||!low_||!high_)return {{"exact",false}};auto *doc=hooks_.document();const auto uid=hooks_.material();const int role=auto_role()>=0?auto_role():hooks_.preview_role?std::max(0,hooks_.preview_role()):0;const auto recipe=options(uid,role);const auto opts=skew_options(recipe);const auto field=doc->set(uid).skew;const auto selected=tiles(uid);const auto name=doc->set(uid).name;const auto base=doc->set(uid).base_values;auto low=low_,high=high_,cage=cage_;
  MeshBakeSettings channels;channels.use_project_mesh=recipe["project_mesh"].toBool(true);read_surface_bake_settings(channels,recipe);capture_bake_channels(channels,*doc,*low);
- auto task=std::async(std::launch::async,[=]{
+ auto reference_cancel=std::make_shared<std::atomic<bool>>(false);
+ auto task=std::async(std::launch::async,[=,this]{
   std::atomic<bool> cancel=false;if(role==0&&!recipe["project_mesh"].toBool(true)&&!opts.ray.use_cage&&opts.ray.average_normals){SkewBakeEngine engine(low,high);return engine.bake(uid,field,selected,opts,{},cancel);}
-  AutoBakeOptions o;o.ray=opts.ray;o.maps.resolution=opts.resolution;o.maps.height=opts.height;o.maps.sampling=opts.sampling;o.maps.dilation=opts.dilation;o.maps.diffusion=opts.diffusion;o.maps.rays=recipe["rays"].toInt(256);o.maps.use_project_mesh=recipe["project_mesh"].toBool(true);o.maps.enabled.fill(false);o.maps.enabled[role]=true;read_surface_bake_settings(o.maps,recipe);o.maps.displacement=channels.displacement;o.maps.normal_maps=channels.normal_maps;AutoBakeEngine engine(low,high,cage);auto maps=engine.bake(uid,name,base,selected,field,o,cancel);return maps[role]?std::move(*maps[role]):MeshMap{};
+  AutoBakeOptions o;o.ray=opts.ray;o.maps.resolution=opts.resolution;o.maps.height=opts.height;o.maps.sampling=opts.sampling;o.maps.dilation=opts.dilation;o.maps.diffusion=opts.diffusion;o.maps.rays=recipe["rays"].toInt(256);o.maps.use_project_mesh=recipe["project_mesh"].toBool(true);o.maps.enabled.fill(false);o.maps.enabled[role]=true;read_surface_bake_settings(o.maps,recipe);o.maps.displacement=channels.displacement;o.maps.normal_maps=channels.normal_maps;if(hooks_.with_gpu)o.maps.with_gpu=[this,reference_cancel](const auto &work){request_gpu(work,reference_cancel);};AutoBakeEngine engine(low,high,cage);auto maps=engine.bake(uid,name,base,selected,field,o,cancel);return maps[role]?std::move(*maps[role]):MeshMap{};
  });
- while(task.wait_for(std::chrono::seconds(0))!=std::future_status::ready){QCoreApplication::processEvents(QEventLoop::AllEvents,20);QThread::msleep(1);}
+ while(task.wait_for(std::chrono::seconds(0))!=std::future_status::ready){process_gpu();QCoreApplication::processEvents(QEventLoop::AllEvents,20);QThread::msleep(1);}
  const auto expected=task.get();const auto &current=doc->set(uid).mesh_maps[role];bool exact=current&&!expected.tiles.empty();for(const auto &[tile,plane]:expected.tiles)exact&=current&&current->tiles.contains(tile)&&current->tiles.at(tile).hash==plane.hash;
  return {{"exact",exact},{"role",role},{"tiles",int(expected.tiles.size())}};
 }

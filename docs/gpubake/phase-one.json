@@ -1,0 +1,197 @@
+{
+  "filters": [
+    {
+      "change_from_unfiltered": 0,
+      "gpu_maps": 2,
+      "ignore_backface": false,
+      "match_names": false,
+      "max_error": 0,
+      "role": 3,
+      "suffix": ""
+    },
+    {
+      "change_from_unfiltered": 0,
+      "gpu_maps": 2,
+      "ignore_backface": false,
+      "match_names": false,
+      "max_error": 0,
+      "role": 6,
+      "suffix": ""
+    },
+    {
+      "change_from_unfiltered": 0.59765625,
+      "gpu_maps": 2,
+      "ignore_backface": true,
+      "match_names": false,
+      "max_error": 0,
+      "role": 3,
+      "suffix": "_ignorebf"
+    },
+    {
+      "change_from_unfiltered": 0,
+      "gpu_maps": 2,
+      "ignore_backface": true,
+      "match_names": false,
+      "max_error": 0,
+      "role": 6,
+      "suffix": "_ignorebf"
+    },
+    {
+      "change_from_unfiltered": 0.59765625,
+      "gpu_maps": 2,
+      "ignore_backface": true,
+      "match_names": false,
+      "max_error": 0,
+      "role": 3,
+      "suffix": ""
+    },
+    {
+      "change_from_unfiltered": 0.953125,
+      "gpu_maps": 2,
+      "ignore_backface": true,
+      "match_names": false,
+      "max_error": 0,
+      "role": 6,
+      "suffix": ""
+    },
+    {
+      "change_from_unfiltered": 0.59765625,
+      "gpu_maps": 2,
+      "ignore_backface": false,
+      "match_names": true,
+      "max_error": 0,
+      "role": 3,
+      "suffix": ""
+    },
+    {
+      "change_from_unfiltered": 0.953125,
+      "gpu_maps": 2,
+      "ignore_backface": false,
+      "match_names": true,
+      "max_error": 0,
+      "role": 6,
+      "suffix": ""
+    },
+    {
+      "change_from_unfiltered": 0.59765625,
+      "gpu_maps": 2,
+      "ignore_backface": true,
+      "match_names": true,
+      "max_error": 0,
+      "role": 3,
+      "suffix": "_ignorebf"
+    },
+    {
+      "change_from_unfiltered": 0.953125,
+      "gpu_maps": 2,
+      "ignore_backface": true,
+      "match_names": true,
+      "max_error": 0,
+      "role": 6,
+      "suffix": "_ignorebf"
+    },
+    {
+      "change_from_unfiltered": 0.59765625,
+      "gpu_maps": 2,
+      "ignore_backface": true,
+      "match_names": true,
+      "max_error": 0,
+      "role": 3,
+      "suffix": ""
+    },
+    {
+      "change_from_unfiltered": 0.953125,
+      "gpu_maps": 2,
+      "ignore_backface": true,
+      "match_names": true,
+      "max_error": 0,
+      "role": 6,
+      "suffix": ""
+    }
+  ],
+  "gui_bakes": [
+    {
+      "gpu_calls": 1,
+      "ignore_backface": false,
+      "role": 3,
+      "ui": "Baking panel"
+    },
+    {
+      "gpu_calls": 1,
+      "ignore_backface": false,
+      "role": 4,
+      "ui": "Baking panel"
+    },
+    {
+      "gpu_calls": 1,
+      "ignore_backface": false,
+      "role": 6,
+      "ui": "Baking panel"
+    },
+    {
+      "gpu_calls": 1,
+      "ignore_backface": true,
+      "role": 3,
+      "ui": "Baking panel"
+    },
+    {
+      "gpu_calls": 1,
+      "ignore_backface": true,
+      "role": 4,
+      "ui": "Baking panel"
+    },
+    {
+      "gpu_calls": 1,
+      "ignore_backface": true,
+      "role": 6,
+      "ui": "Baking panel"
+    },
+    {
+      "gpu_calls": 2,
+      "ignore_backface": false,
+      "ui": "Bake Mesh Maps"
+    },
+    {
+      "gpu_calls": 2,
+      "ignore_backface": true,
+      "ui": "Bake Mesh Maps"
+    }
+  ],
+  "pointiness": [
+    {
+      "batches": 2,
+      "max_error": 1.7881393432617188e-07,
+      "maximum": 0.751634955406189,
+      "minimum": 0.24999955296516418,
+      "radius": 0,
+      "vertices": 15332
+    },
+    {
+      "batches": 3,
+      "max_error": 1.1920928955078125e-07,
+      "maximum": 0.7500306963920593,
+      "minimum": 0.24999995529651642,
+      "radius": 0.351385235786438,
+      "vertices": 15332
+    },
+    {
+      "fallback_bit_exact": true,
+      "map_max_error": 1.7881393432617188e-07,
+      "map_radius": 0
+    },
+    {
+      "fallback_bit_exact": true,
+      "map_max_error": 1.1920928955078125e-07,
+      "map_radius": 0.351385235786438
+    }
+  ],
+  "renderer": "NVIDIA GeForce RTX 3090/PCIe/SSE2",
+  "widgets": {
+    "both_common_checkboxes": true,
+    "default_off": true,
+    "draft_final_controls": true,
+    "old_explicit_on_preserved": true,
+    "project_json_roundtrip": true,
+    "template_roundtrip": true
+  }
+}

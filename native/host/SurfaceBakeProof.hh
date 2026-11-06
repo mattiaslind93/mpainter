@@ -79,7 +79,7 @@ inline int surface_bake_proof(BlenderHost &host,const QString &directory){
     MeshBakeJob job(scene,{{uid,name.toStdString(),{},atlas}},settings);
     while(!job.finished.load(std::memory_order_acquire)){job.process_gpu();std::this_thread::sleep_for(std::chrono::milliseconds(10));}
     if(!job.error.empty())throw std::runtime_error(job.error);
-    if(settings.with_gpu&&job.gpu_maps!=2)throw std::runtime_error("Surface proof did not use GPU for both ray maps");
+    if(settings.with_gpu&&job.gpu_maps!=3)throw std::runtime_error("Surface proof did not use GPU for AO, Thickness and Pointiness");
     for(int role:{3,4,6}){
       const auto &pixels=job.result.front().maps[role]->tiles.at(1001).pixels->rgba;
       QFile file(directory+"/"+name+"-"+QString::number(role)+".rgba");

@@ -26,6 +26,7 @@ class SkewPanel final:public QWidget {
  QUuid set_;
  std::array<QCheckBox *,7> map_selected_{};
  std::array<QToolButton *,7> map_preview_{},map_bake_{},map_auto_{},map_sync_{};
+ QComboBox *quality_preset_;QCheckBox *ignore_backface_,*denoise_;
  QComboBox *quality_role_,*samples_,*width_,*height_,*common_samples_=nullptr,*common_rays_preset_=nullptr;QSpinBox *dilation_,*rays_,*common_rays_=nullptr;QCheckBox *diffusion_,*locked_;
  QLineEdit *cage_path_;
  QLineEdit *high_;QCheckBox *project_,*cage_,*average_,*relative_,*enabled_,*edge_,*vectors_,*automatic_;

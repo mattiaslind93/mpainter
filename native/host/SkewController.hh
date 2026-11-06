@@ -21,6 +21,7 @@ struct SkewHooks {
  std::function<void(int)> preview;std::function<int()> preview_role;
  std::function<void(bool,std::optional<SkewField>,const std::vector<SkewSurfaceVector> &,std::shared_ptr<const SkewGeometry>)> view;
  std::function<void()> end_input,refresh,configure;
+ std::function<void(const std::function<void()> &)> with_gpu;
  std::function<void(const QString &)> log;
 };
 class SkewController final:public QObject {
@@ -33,6 +34,8 @@ class SkewController final:public QObject {
  bool cancel_transient();void invert();void request(bool full=true);bool flush();bool pending()const;
  QJsonObject state()const;QJsonObject reference();
  private:
+ std::mutex gpu_mutex_;std::packaged_task<void()> gpu_task_;
+ void process_gpu();void request_gpu(const std::function<void()> &,const std::shared_ptr<std::atomic<bool>> &);
  SkewHooks hooks_;SkewPanel *panel_;QDialog *dock_;QTimer idle_,poll_,debounce_;
  std::unique_ptr<TextureDocument> before_,settings_before_;TilePaintPixels ink_,prefix_;PaintPixels::Bounds dirty_{},tail_{};std::uint32_t stroke_uid_=0;float opacity_=1,value_=1;bool erase_=false,settings_bake_=false;
  std::vector<SkewSurfaceVector> vectors_;QString vector_key_,seen_token_,source_key_;int prior_mode_=0;

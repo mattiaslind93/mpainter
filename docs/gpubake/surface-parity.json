@@ -1,0 +1,48 @@
+[
+  {
+    "mesh": "displaced",
+    "role": 3,
+    "cpu_gpu_max": 0.0,
+    "cpu_gpu_mae": 0.0
+  },
+  {
+    "mesh": "displaced",
+    "role": 4,
+    "cpu_gpu_max": 1.7881393432617188e-07,
+    "cpu_gpu_mae": 2.4510654839104973e-08,
+    "cpu_blender_mae": 2.4917381934078005e-05,
+    "cpu_blender_max": 0.0018762946128845215,
+    "gpu_blender_mae": 2.49168379031807e-05,
+    "gpu_blender_max": 0.0018762946128845215,
+    "covered": 65408
+  },
+  {
+    "mesh": "displaced",
+    "role": 6,
+    "cpu_gpu_max": 0.0,
+    "cpu_gpu_mae": 0.0
+  },
+  {
+    "mesh": "shaderball",
+    "role": 3,
+    "cpu_gpu_max": 0.0,
+    "cpu_gpu_mae": 0.0
+  },
+  {
+    "mesh": "shaderball",
+    "role": 4,
+    "cpu_gpu_max": 2.384185791015625e-07,
+    "cpu_gpu_mae": 1.6608623809588607e-08,
+    "cpu_blender_mae": 0.004210231680595955,
+    "cpu_blender_max": 0.5327624082565308,
+    "gpu_blender_mae": 0.004210231518189261,
+    "gpu_blender_max": 0.5327624082565308,
+    "covered": 64410
+  },
+  {
+    "mesh": "shaderball",
+    "role": 6,
+    "cpu_gpu_max": 0.0,
+    "cpu_gpu_mae": 0.0
+  }
+]

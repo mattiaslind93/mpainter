@@ -37,7 +37,7 @@ struct AutoBakeEngine::Impl {
       const auto found=low->object_names.find(uid);if(found==low->object_names.end())continue;
       auto lp=std::make_shared<SceneSnapshot>(),hp=std::make_shared<SceneSnapshot>();
       lp->materials=low->materials;lp->minimum=low->minimum;lp->maximum=low->maximum;lp->has_bounds=low->has_bounds;
-      hp->materials=high->materials;hp->minimum=high->minimum;hp->maximum=high->maximum;hp->has_bounds=high->has_bounds;
+      hp->object_names=high->object_names;hp->materials=high->materials;hp->minimum=high->minimum;hp->maximum=high->maximum;hp->has_bounds=high->has_bounds;
       for(const auto &t:low->uv_triangles)if(std::uint32_t(t.vertex_ids[0]>>32)==uid)lp->uv_triangles.push_back(t);
       std::set<std::uint32_t> matches;
       for(const auto &[id,name]:high->object_names)
@@ -77,8 +77,8 @@ MeshMaps AutoBakeEngine::bake(std::uint32_t material,const std::string &name,con
   if(options.ray.use_cage){if(!s.cage)throw std::invalid_argument("Choose a cage file");TexturePadding::validate_cage(*s.low,*s.cage);}
   settings.external_source=!settings.use_project_mesh||options.ray.use_cage;
   const auto source=settings.use_project_mesh?s.low:s.high;
-  for(const auto &[uid,label]:source->object_names)
-    if(bake_ignores_backfaces(label,options.ray.ignore_marker))settings.ignore_backface_objects.insert(uid);
+  settings.ignore_backface_objects=bake_backface_objects(*source,options.ray.ignore_backface,options.ray.ignore_marker);
+  if(options.ray.match_names&&settings.use_project_mesh)for(const auto &tri:source->uv_triangles){const auto object=std::uint32_t(tri.vertex_ids[0]>>32);settings.matched_objects[object].insert(object);}
   auto &set=s.prepare(material,options);
   if(set.parts.size()==1&&settings.use_project_mesh&&!options.ray.use_cage){
     TexturePadding geometry(*s.low,material);auto atlas=geometry.projection_geometry(width,tiles,false,height);

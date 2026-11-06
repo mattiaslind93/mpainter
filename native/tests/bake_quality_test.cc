@@ -1,6 +1,14 @@
 #include "BakeQuality.hh"
+#ifdef NDEBUG
+# undef NDEBUG
+#endif
 #include <cassert>
 int main(){
+ int rays=256,sampling=4;bool denoise=true;
+ bts::apply_bake_preset(bts::BakePreset::Draft,rays,sampling,denoise);assert(rays==64&&sampling==1&&!denoise);
+ assert(bts::detect_bake_preset(rays,sampling,denoise)==bts::BakePreset::Draft);
+ bts::apply_bake_preset(bts::BakePreset::Final,rays,sampling,denoise);assert(rays==256&&denoise);
+ assert(bts::detect_bake_preset(17,1,true)==bts::BakePreset::Custom);
  const auto a=QUuid::createUuid(),b=QUuid::createUuid();QJsonObject legacy{{"rays",16},{"sampling",2},{"dilation",8},{"diffusion",true}};
  assert(bts::bake_quality(legacy,a,3)["rays"].toInt()==16);
  auto recipe=bts::with_bake_quality(legacy,a,3,{{"rays",128},{"dilation",2}});

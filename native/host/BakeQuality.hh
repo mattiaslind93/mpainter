@@ -50,4 +50,20 @@ inline QJsonObject synchronized_bake_quality(QJsonObject recipe,const QUuid &sou
   for(const auto &target:targets)recipe=with_bake_quality(std::move(recipe),target,role,quality);
   return recipe;
 }
+enum class BakePreset { Draft = 0, Final = 1, Custom = 2 };
+inline BakePreset detect_bake_preset(int rays, int sampling, bool denoise) {
+  if (rays == 64 && sampling == 1 && !denoise) return BakePreset::Draft;
+  if (rays == 256 && denoise) return BakePreset::Final;
+  return BakePreset::Custom;
+}
+inline void apply_bake_preset(BakePreset preset, int &rays, int &sampling, bool &denoise) {
+  if (preset == BakePreset::Draft) {
+    rays = 64;
+    sampling = 1;
+    denoise = false;
+  } else if (preset == BakePreset::Final) {
+    rays = 256;
+    denoise = true;
+  }
+}
 }

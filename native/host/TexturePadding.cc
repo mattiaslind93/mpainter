@@ -2,6 +2,7 @@
 #include "ResourceAvailability.hh"
 #include <atomic>
 #include "TexturePadding.hh"
+#include "BakeMatch.hh"
 #include "Performance.hh"
 #include "TextureMemory.hh"
 #include "GpuMarginPlan.hh"
@@ -176,7 +177,7 @@ std::shared_ptr<const FillSurfaceAtlas> TexturePadding::project_source(const Sce
       else if(override_normals&&!is_zero_v3(override_normals[i])){copy_v3_v3(direction,override_normals[i]);negate_v3(direction);}
       else if(options.average_normals){float normals[3][3];const auto low_corners=low_triangles[low[i].primitive_id];for(int k=0;k<3;++k)std::copy_n(&low_normals[low_vertices[low_corners[k]]].x,3,normals[k]);interp_barycentric_tri_v3(normals,low[i].uv[0],low[i].uv[1],direction);negate_v3(direction);}
       else {copy_v3_v3(direction,low_face_normals[low_faces[low[i].primitive_id]]);negate_v3(direction);}
-      if(options.ignore_backface&&dot_v3v3(direction,normal)>=0){point.valid=false;low[i].primitive_id=-1;continue;}
+      if(bake_filters_backface(high,std::uint32_t(high.uv_triangles[hit.primitive_id].vertex_ids[0]>>32),options.ignore_backface,options.ignore_marker)&&dot_v3v3(direction,normal)>=0){point.valid=false;low[i].primitive_id=-1;continue;}
       if(transfer){auto &sample=transfer->tiles.at(tile)[i];const auto &triangle=high.uv_triangles[hit.primitive_id];for(int axis=0;axis<2;++axis)sample.source[axis]=hit.uv[0]*triangle.corners[0][axis]+hit.uv[1]*triangle.corners[1][axis]+(1-hit.uv[0]-hit.uv[1])*triangle.corners[2][axis];sample.normal=uv_normal_transform(high_frames.at(hit.primitive_id),low_frames.at(low[i].primitive_id));sample.valid=true;}
       float positions[3][3];for(int k=0;k<3;++k)std::copy_n(&high_positions[high_vertices[corners[k]]].x,3,positions[k]);interp_barycentric_tri_v3(positions,hit.uv[0],hit.uv[1],point.position.data());for(int k=0;k<3;++k)std::copy_n(&high_corner_normals[corners[k]].x,3,positions[k]);interp_barycentric_tri_v3(positions,hit.uv[0],hit.uv[1],point.normal.data());normalize_v3(point.normal.data());for(int c=0;c<3;++c)tangent_normals[i*3+c]=point.normal[c]; // Native tangent conversion compresses signed world vectors itself.
       const auto material=high.uv_triangles[hit.primitive_id].material;std::copy_n(high.materials.at(material).values.base_color.begin(),3,point.source_color.begin());

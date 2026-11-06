@@ -1,6 +1,7 @@
 #pragma once
 #include "BlenderHost.hh"
 #include "GpuBakeRays.hh"
+#include "../tests/GpuBakePhaseOneTest.hh"
 #include "BakeCacheProof.hh"
 #include "BakeJobGpuProof.hh"
 #include "../tests/gpu_bake_ray_reference.hh"
@@ -46,7 +47,7 @@ inline QJsonObject verify_gpu_bake_bvh(){
  std::vector<FillSurfacePoint> points(2049);for(std::size_t i=0;i<points.size();++i){points[i].valid=true;points[i].normal={i%2?.2f:-.15f,i%3?.1f:0.f,1};points[i].position={float(int(i%31)-15)*.01f,float(int(i%29)-14)*.01f,0};}
  const auto old_work=resource_product(resource_product(triangles.size(),points.size()),8);require(old_work>8000000,"GPU fixture did not exceed the former total-work cap");
  bool old_rejected=false;try{legacy_gpu_bake_cosine_occlusion(triangles,points,8,4);}catch(const std::length_error &){old_rejected=true;}require(old_rejected,"Legacy GPU fixture did not reproduce the old rejection");
- ResourceAvailability limited;limited.vram_known=true;limited.available_vram=1024*1024;
+ ResourceAvailability limited;limited.vram_known=true;limited.available_vram=512*1024;
  GpuBakeRayStats stats;QElapsedTimer timer;timer.start();const auto actual=gpu_bake_cosine_occlusion(triangles,points,8,4,false,&stats,&limited);const auto gpu_ms=timer.elapsed();require(stats.batches>1,"GPU fixture did not exercise global sampling seeds across batches");
  double maximum_error=0;
  for(std::size_t i=0;i<points.size();++i){const auto expected=bake_cosine_occlusion(triangles,points[i].position,points[i].normal,8,4,std::uint32_t(i));maximum_error=std::max(maximum_error,std::abs(double(actual[i])-expected));}
@@ -71,6 +72,7 @@ inline QJsonObject verify_resource_manifest_bounds(){
  return {{"resources_roundtripped",4097},{"encoded_manifest_bytes",qint64(json.size())},{"low_ram_telemetry_does_not_block",true},{"idproperty_signed_int_length_preserved",true}};
 }
 inline int run_gpu_bake_ray_demo(BlenderHost &host,const QString &directory){
+ if(qEnvironmentVariableIsSet("BTS_GPU_PHASE1_TEST"))return gpu_phase_one::run(host,directory);
  if(qEnvironmentVariableIsSet("BTS_BAKE_JOB_GPU_TEST")){auto proof=verify_production_bake_gpu(host);proof["renderer"]=QString::fromStdString(host.renderer());proof["visible_windows"]=0;QFile output(directory+"/production-bake-gpu.json");if(!output.open(QIODevice::WriteOnly))throw std::runtime_error("Cannot write production bake proof");output.write(QJsonDocument(proof).toJson());return 0;}
  if(qEnvironmentVariableIsSet("BTS_BAKE_CACHE_TEST")){QJsonObject proof;host.with_gpu([&]{proof=verify_bake_cache_release();});proof["renderer"]=QString::fromStdString(host.renderer());proof["visible_windows"]=0;QFile output(directory+"/bake-cache-release.json");if(!output.open(QIODevice::WriteOnly))throw std::runtime_error("Cannot write cache release proof");output.write(QJsonDocument(proof).toJson());return 0;}
  if(qEnvironmentVariableIsSet("BTS_FULL_RES_BAKE_TEST")){QJsonObject proof;host.with_gpu([&]{proof=verify_full_resolution_bake_rays();});proof["renderer"]=QString::fromStdString(host.renderer());proof["visible_windows"]=0;QFile output(directory+"/full-resolution-bake-rays.json");if(!output.open(QIODevice::WriteOnly))throw std::runtime_error("Cannot write full-resolution ray proof");output.write(QJsonDocument(proof).toJson());return 0;}
