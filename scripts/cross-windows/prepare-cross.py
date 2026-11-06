@@ -46,3 +46,9 @@ replace(root / 'intern/cycles/kernel/osl/shaders/CMakeLists.txt',
         '${OSL_COMPILER} -q -O2', f'{runner} ${{OSL_COMPILER}} -q -O2')
 replace(platform, 'set(PLATFORM_ENV_BUILD "PATH=${PLATFORM_ENV_BUILD_DIRS}")',
         'set(PLATFORM_ENV_BUILD "MP_WIN_BUILD_HEADLESS=1")')
+
+# Preserve Blender's explicit scalable allocations, but do not inject its
+# process-wide CRT detours into the Qt host before main() runs.
+replace(root / 'source/creator/creator.cc',
+        '#if defined(WITH_TBB_MALLOC) && defined(_MSC_VER) && defined(NDEBUG)\n',
+        '#if defined(WITH_TBB_MALLOC) && defined(_MSC_VER) && defined(NDEBUG) && !defined(WITH_BTS_HOST)\n')

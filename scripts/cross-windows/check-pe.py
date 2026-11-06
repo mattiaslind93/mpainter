@@ -46,6 +46,10 @@ for f in files:
     if 'IMAGE_FILE_MACHINE_AMD64' not in out:
         raise SystemExit(f'Not Windows x64: {f}')
     imports = re.findall(r'^  Name: (.+\.dll)\s*$', out, flags=re.M | re.I)
+    # Its CRT detours run before main() and crash this embedded Qt/Blender host
+    # on Windows. A complete DLL closure alone cannot detect this failure.
+    if f.name.casefold() == 'mpainter.exe' and 'tbbmalloc_proxy.dll' in {n.casefold() for n in imports}:
+        raise SystemExit('Unsafe mPainter startup: process-wide tbbmalloc_proxy.dll import')
     resolved = {}
     for name in imports:
         key = name.casefold()
