@@ -2,7 +2,9 @@
 
 Ready-made Early Access Alpha builds are on [Gumroad](https://mattiaslind.gumroad.com/l/mpainter).
 
-<video src="docs/marketing/2026-11-06-mpainter-launch.mp4" controls width="100%"></video>
+![mPainter launch](docs/marketing/2026-11-06-mpainter-launch.mp4)
+
+[Watch the launch video](docs/marketing/2026-11-06-mpainter-launch.mp4)
 
 mPainter is a GPL-licensed 3D texture painting application by Mattias Lind. It combines a Qt workspace with Blender rendering in one process.
 
