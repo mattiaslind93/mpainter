@@ -2,7 +2,7 @@
 
 Ready-made Early Access Alpha builds are on [Gumroad](https://mattiaslind.gumroad.com/l/mpainter).
 
-![mPainter launch](docs/marketing/2026-11-06-mpainter-launch.mp4)
+[![mPainter launch](docs/marketing/2026-11-06-mpainter-launch.jpg)](docs/marketing/2026-11-06-mpainter-launch.mp4)
 
 [Watch the launch video](docs/marketing/2026-11-06-mpainter-launch.mp4)
 
