@@ -12,7 +12,7 @@ Paint in 3D and UV views, organize layers and masks, work with texture sets and 
 
 The application starts with an empty material library. [Download free materials from Poly Haven](https://polyhaven.com/textures): its materials are CC0. Unpack downloads, then import or drop the image files into Assets. Nothing is downloaded automatically.
 
-Build and packaging instructions are in [docs/building.md](docs/building.md). Linux is the locally tested platform. Windows CI is prepared but unverified. The macOS native viewport requires a Metal integration port; no working macOS release is claimed.
+Build and packaging instructions are in [docs/building.md](docs/building.md). Linux x86_64 and macOS arm64 are the platforms mPainter is run and tested on. The macOS viewport uses a Metal port that is not yet merged into this repository: until it lands, the macOS section of `docs/building.md` describes the state before the port and these sources alone do not build a working Mac package. Windows x64 compiles and packages, but the current package does not start; that is being fixed.
 
 The supplied splash artwork and Mattias Lind’s m-mark icon establish mPainter's own identity. Source and asset attributions are in [NOTICE.md](NOTICE.md); see [LICENSE](LICENSE) for GPL-3.0.
 
