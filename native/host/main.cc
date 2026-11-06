@@ -3642,7 +3642,7 @@ if(material_importer)material_importer->cancel();
       auto *asset_view_drop=new bts::AssetViewportDrop(viewport);
       asset_view_drop->accepts=[&](const QString &id){
         if(!document||asset_progress->active())return false;
-        for(const auto &asset:assets.assets())if(asset.id==QUuid(id))return !asset.projection_weave&&(asset.material||asset.smart_material||asset.usages.contains("texture")||bts::is_spsm_asset(asset));
+        for(const auto &asset:assets.assets())if(asset.id==QUuid(id))return !asset.projection_weave&&(asset.material||asset.smart_material||asset.smart_mask||asset.usages.contains("texture")||bts::is_spsm_asset(asset)||bts::is_spmsk_asset(asset));
         return false;
       };
       asset_view_drop->pick=[&](QPointF point)->std::optional<bts::AssetMeshHit>{
@@ -3669,6 +3669,13 @@ if(material_importer)material_importer->cancel();
           // A viewport drop adds above the entire stack, independently of the
           // previously selected layer, and constrains coverage to the hit mesh.
           const QUuid top=set.layers.empty()?QUuid{}:set.layers.back().id;
+          // A mask attaches to a layer that already exists, so a mask drop needs
+          // one; the material paths create their own first layer. Mask generators
+          // then reach apply_smart_mask_asset through asset_dropped, exactly as a
+          // drop on the layer stack does.
+          if(top.isNull()&&(asset.smart_mask||bts::is_spmsk_asset(asset))){
+            workspace->set_error_status("Add a layer to this Texture Set before dropping a mask generator");return;
+          }
           begin_asset_apply(asset,[drop_asset,top](const bts::StudioAsset &ready){drop_asset(ready,top,true,false);},hit,top,true);return;
         }
       };
