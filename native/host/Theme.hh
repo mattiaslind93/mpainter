@@ -68,6 +68,10 @@ inline constexpr int SpaceTight = 2;
 inline constexpr int Space = 4;
 inline constexpr int SpaceWide = 6;
 inline constexpr int SpaceLoose = 8;
+// Between two titled sections in a panel, and between major regions in a
+// dialog. Sections are separated by space before they are separated by a line.
+inline constexpr int SpaceSection = 12;
+inline constexpr int SpaceRegion = 16;
 // Small square buttons that sit inside a list row, such as the mesh map remove
 // button. Themed padding alone sized those as wide as the text beside them, so
 // a row button states its own size and the column it lives in matches.

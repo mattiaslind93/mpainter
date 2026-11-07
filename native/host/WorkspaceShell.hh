@@ -39,6 +39,7 @@ class QSplitter;
 class QTabWidget;
 
 namespace bts {
+class PropertySection;
 class NativeMaterialPanel;
 class LayerThumbnailJobs;
 class DisplacementPanel;class ColorPicker;class BrushPreview;class StencilPanel;class ProjectionPanel;
@@ -310,6 +311,7 @@ class WorkspaceShell final : public QMainWindow {
   QSplitter *viewport_shelf_splitter_ = nullptr;
   QSplitter *inspector_splitter_ = nullptr;
   QWidget *properties_slot_=nullptr,*properties_panel_=nullptr;
+  PropertySection *content_section_=nullptr,*blending_section_=nullptr,*projection_section_=nullptr;
   QWidget *update_notice_=nullptr;QLabel *update_label_=nullptr;QUrl update_page_;
   QDialog *properties_float_=nullptr;
   QAction *properties_action_=nullptr;
