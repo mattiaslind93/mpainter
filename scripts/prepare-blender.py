@@ -9,6 +9,9 @@ dest = a.destination.absolute()
 patch = pathlib.Path(__file__).resolve().parents[1] / 'third_party/blender/patches/0001-native-host.patch'
 def run(*args):
     return subprocess.check_output(['git', '-C', str(dest), *args], text=True).strip()
+def applies(*args):
+    return subprocess.run(['git', '-C', str(dest), 'apply', *args, '--check'],
+                          capture_output=True).returncode == 0
 if not dest.exists():
     subprocess.run(['git', 'clone', '--depth', '1', '--branch', 'v5.2.0',
                     'https://projects.blender.org/blender/blender.git', str(dest)], check=True)
@@ -38,6 +41,12 @@ for extra in sorted(patch.parent.glob('[0-9]*.patch')):
         if extra_receipt.read_text().strip() != extra_fingerprint:
             raise SystemExit('Follow-up patch changed; prepare a fresh Blender source directory.')
         run('apply', '--reverse', '--check', str(extra))
+    elif applies('--reverse', str(extra)):
+        # A build workspace may already carry a follow-up change through its own
+        # platform adaptation, such as scripts/cross-windows/prepare-cross.py.
+        # The identical change is a receipt rather than a conflict; only a tree
+        # that neither accepts nor already contains the patch is an error.
+        extra_receipt.write_text(extra_fingerprint + '\n')
     else:
         run('apply', '--check', str(extra))
         run('apply', str(extra))

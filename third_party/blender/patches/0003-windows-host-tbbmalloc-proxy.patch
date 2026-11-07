@@ -1,0 +1,27 @@
+Do not inject tbbmalloc_proxy into the embedded Windows host.
+
+tbbmalloc_proxy detours the CRT allocator process wide when the module is
+loaded, before main() runs, and the forced __TBB_malloc_proxy reference makes
+that happen for anything linking creator.cc. In the embedded Qt/Blender host
+that detour crashes Windows startup. Blender's own executable keeps the proxy,
+and the explicit scalable_allocator uses, including the GMP workaround below,
+are untouched: only the process-wide interception is dropped, and only for
+WITH_BTS_HOST, which native/host/CMakeLists.txt defines on the bts-host target
+alone.
+
+The same edit is made by scripts/cross-windows/prepare-cross.py for the
+Linux-hosted cross build. Carrying it here as well gives the native MSVC path
+in docs/building.md and the release workflow the same fix.
+
+diff --git a/source/creator/creator.cc b/source/creator/creator.cc
+--- a/source/creator/creator.cc
++++ b/source/creator/creator.cc
+@@ -20,7 +20,7 @@
+ #  endif
+ #endif
+ 
+-#if defined(WITH_TBB_MALLOC) && defined(_MSC_VER) && defined(NDEBUG)
++#if defined(WITH_TBB_MALLOC) && defined(_MSC_VER) && defined(NDEBUG) && !defined(WITH_BTS_HOST)
+ #  pragma comment(lib, "tbbmalloc_proxy.lib")
+ #  pragma comment(linker, "/include:__TBB_malloc_proxy")
+ #endif
