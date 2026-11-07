@@ -15,7 +15,7 @@ namespace bts {
 class ProjectionPanel final:public QWidget {
  public:
   explicit ProjectionPanel(QWidget *parent):QWidget(parent){
-    setObjectName("projectionProperties");auto *layout=new QVBoxLayout(this);layout->setContentsMargins(0,0,0,0);layout->addWidget(new QLabel("PROJECTION",this));auto *form=new QFormLayout;layout->addLayout(form);
+    setObjectName("projectionProperties");auto *layout=new QVBoxLayout(this);layout->setContentsMargins(0,0,0,0);/* The heading belongs to the PropertySection around this panel. */auto *form=new QFormLayout;layout->addLayout(form);
     tiling_=new QComboBox(this);tiling_->setObjectName("projectionTiling");tiling_->addItems({"No Tiling","Horizontal Tiling","Vertical Tiling","H and V Tiling"});form->addRow("Tiling mode",tiling_);connect(tiling_,&QComboBox::currentIndexChanged,this,[this](int value){source_.transform.tiling=value;publish();});
     resource_=new QToolButton(this);resource_->setObjectName("projectionResource");resource_->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);resource_->setPopupMode(QToolButton::InstantPopup);auto *menu=new QMenu(resource_);resource_->setMenu(menu);layout->addWidget(resource_);auto *uniform=menu->addAction("uniform color");uniform->setObjectName("projectionUniform");connect(uniform,&QAction::triggered,this,[this]{if(resource_selected)resource_selected(false);});auto *weave=menu->addAction("Blue Weave");weave->setObjectName("projectionBlueWeave");connect(weave,&QAction::triggered,this,[this]{if(resource_selected)resource_selected(true);});
     auto *parameters=new QFormLayout;layout->addLayout(parameters);

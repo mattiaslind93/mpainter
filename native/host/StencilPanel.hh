@@ -20,7 +20,7 @@ class StencilPanel final:public QWidget {
  public:
   explicit StencilPanel(QWidget *parent):QWidget(parent){
     setObjectName("stencilProperties");setAcceptDrops(true);
-    auto *layout=new QVBoxLayout(this);layout->setContentsMargins(0,0,0,0);layout->addWidget(new QLabel("STENCIL",this));
+    auto *layout=new QVBoxLayout(this);layout->setContentsMargins(0,0,0,0);/* The heading belongs to the PropertySection around this panel. */
     auto *form=new QFormLayout;tiling_=new QComboBox(this);tiling_->setObjectName("stencilTiling");tiling_->addItems({"No Tiling","Horizontal Tiling","Vertical Tiling","H and V Tiling"});form->addRow("Tiling mode",tiling_);layout->addLayout(form);
     connect(tiling_,&QComboBox::currentIndexChanged,this,[this](int value){settings_.tiling=value;publish();});
     resource_=new QToolButton(this);resource_->setObjectName("stencilResource");resource_->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);resource_->setPopupMode(QToolButton::InstantPopup);auto *menu=new QMenu(resource_);resource_->setMenu(menu);layout->addWidget(resource_);

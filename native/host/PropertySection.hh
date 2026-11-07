@@ -4,15 +4,18 @@
 // section. It hides itself whenever everything inside it is hidden, so a
 // heading never stands over empty space — docs/design/ui.md §7.2.
 #include "Theme.hh"
+#include <QEasingCurve>
+#include <QPropertyAnimation>
 #include <QSettings>
 #include <QToolButton>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <algorithm>
 namespace bts {
 class PropertySection final : public QWidget {
  public:
   explicit PropertySection(const QString &title,QWidget *parent=nullptr,bool folded_by_default=false)
-      :QWidget(parent),key_("properties/section/"+QString(title).remove(' ').toLower())
+      :QWidget(parent),key_("properties/folded/"+QString(title).remove(' ').toLower())
   {
     setObjectName("propertySection"+QString(title).remove(' '));
     auto *layout=new QVBoxLayout(this);
@@ -35,12 +38,22 @@ class PropertySection final : public QWidget {
     layout->addWidget(content_);
     // Folding is only a convenience if it is remembered. A section that springs
     // back open on every selection is an extra click, not a simplification.
+    // A short move gives the fold somewhere to come from; without it the panel
+    // reflows in a single frame and the eye loses its place. ui.md §8.
+    fold_=new QPropertyAnimation(content_,"maximumHeight",this);
+    fold_->setDuration(120);
+    fold_->setEasingCurve(QEasingCurve::OutCubic);
+    connect(fold_,&QPropertyAnimation::finished,this,[this]{
+      const bool folded=heading_->isChecked();
+      content_->setVisible(!folded);
+      if(!folded)content_->setMaximumHeight(QWIDGETSIZE_MAX);
+    });
     heading_->setChecked(QSettings().value(key_,folded_by_default).toBool());
     connect(heading_,&QToolButton::toggled,this,[this](bool folded){
       QSettings().setValue(key_,folded);
-      apply_fold();
+      apply_fold(true);
     });
-    apply_fold();
+    apply_fold(false);
     hide();
   }
   void add(QWidget *widget){content_layout_->addWidget(widget);}
@@ -56,13 +69,25 @@ class PropertySection final : public QWidget {
   bool folded()const{return heading_->isChecked();}
 
  private:
-  void apply_fold()
+  // Restoring a remembered fold at startup must not animate; only a click does.
+  void apply_fold(bool animate)
   {
     const bool folded=heading_->isChecked();
     heading_->setArrowType(folded?Qt::RightArrow:Qt::DownArrow);
-    content_->setVisible(!folded);
+    fold_->stop();
+    if(!animate){
+      content_->setMaximumHeight(folded?0:QWIDGETSIZE_MAX);
+      content_->setVisible(!folded);
+      return;
+    }
+    if(!folded)content_->setVisible(true);
+    const int open=std::max(content_->sizeHint().height(),content_->minimumSizeHint().height());
+    fold_->setStartValue(folded?content_->height():0);
+    fold_->setEndValue(folded?0:open);
+    fold_->start();
   }
   QToolButton *heading_=nullptr;QWidget *content_=nullptr;QVBoxLayout *content_layout_=nullptr;
+  QPropertyAnimation *fold_=nullptr;
   QString key_;
 };
 }

@@ -26,7 +26,7 @@ class AlphaPanel final:public QWidget {
   std::function<void(bool,double,double)> parameters_changed;
   explicit AlphaPanel(QWidget *parent):QWidget(parent) {
     setObjectName("alphaPanel");auto *layout=new QVBoxLayout(this);layout->setContentsMargins(0,8,0,0);layout->setSpacing(bts::theme::Space);
-    layout->addWidget(new QLabel("ALPHA",this));auto *card=new QHBoxLayout;
+    /* The heading belongs to the PropertySection around this panel. */auto *card=new QHBoxLayout;
     preview_=new QLabel(this);preview_->setObjectName("alphaThumbnailPreview");preview_->setFixedSize(48,48);card->addWidget(preview_);
     name_=new QLabel(this);name_->setObjectName("alphaResourceName");name_->setWordWrap(true);card->addWidget(name_,1);
     auto *clear=new QPushButton("×",this);clear->setObjectName("clearBrushAlpha");clear->setToolTip("Clear to uniform color");clear->setFixedWidth(24);card->addWidget(clear);layout->addLayout(card);

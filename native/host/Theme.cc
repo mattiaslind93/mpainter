@@ -219,11 +219,15 @@ void apply(QApplication &app)
   QWidget#dockHeader { background: @Surface@; border-bottom: 1px solid @Separator@; }
   QLabel#dockTitle { color: @Heading@; font-size: 11px; font-weight: 600; }
   QLabel#sectionTitle { color: @Heading@; font-weight: 600; }
+  /* A section heading sits one step up the surface ladder from the panel it
+     divides, so the band itself says "this is a heading". ui.md §3.1, §7.1. */
   QLabel#propertySectionTitle, QToolButton#propertySectionTitle {
     color: @Muted@; font-weight: 600; letter-spacing: 0.5px;
-    background: transparent; border: none; padding: 0; text-align: left;
+    background: @Header@; border: none; border-radius: @Radius@;
+    padding: 4px 6px; text-align: left;
   }
-  QToolButton#propertySectionTitle:hover { color: @Text@; }
+  QToolButton#propertySectionTitle:hover { background: @Hover@; color: @Text@; }
+  QToolButton#propertySectionTitle:pressed { background: @Raised@; }
   QLabel { color: @Text@; background: transparent; }
   QLabel:disabled { color: @Muted@; }
   QSplitter::handle { background: @Separator@; }

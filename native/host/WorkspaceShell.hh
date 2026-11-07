@@ -258,6 +258,8 @@ class WorkspaceShell final : public QMainWindow {
   // takes the tab away rather than leaving an empty page behind.
   void show_properties_tab();
   void hide_properties_tab();
+  // Every section is registered so that one pass can settle them all.
+  PropertySection *make_section(const QString &title,QWidget *parent,bool folded=false);
   // Shown only once a newer release has actually been confirmed; the row is
   // empty and hidden otherwise.
   void show_update_available(const QString &release,const QUrl &page);
@@ -312,6 +314,7 @@ class WorkspaceShell final : public QMainWindow {
   QSplitter *inspector_splitter_ = nullptr;
   QWidget *properties_slot_=nullptr,*properties_panel_=nullptr;
   PropertySection *content_section_=nullptr,*blending_section_=nullptr,*projection_section_=nullptr;
+  std::vector<PropertySection *> property_sections_;
   QWidget *update_notice_=nullptr;QLabel *update_label_=nullptr;QUrl update_page_;
   QDialog *properties_float_=nullptr;
   QAction *properties_action_=nullptr;
