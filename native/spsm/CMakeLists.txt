@@ -38,10 +38,22 @@ if(NOT HDF5_FOUND OR HDF5_VERSION VERSION_LESS 1.12)
   set(HDF5_ENABLE_SZIP_SUPPORT OFF)
   set(HDF5_NO_PACKAGES ON)
   set(HDF5_EXTERNALLY_CONFIGURED ON)
+  # HDF5 writes the compiler flags it was configured with into a C string in a
+  # generated source file, without escaping them. Blender's build leaves
+  # -fmacro-prefix-map="/path/"="" in the flags for every subdirectory of ours,
+  # and those quotes close that string early: the path spills out as bare words
+  # and the file stops compiling. The quotes carry no meaning to the compiler
+  # here, so drop them for this subproject only and put ours back afterwards.
+  set(BTS_C_FLAGS_WAS "${CMAKE_C_FLAGS}")
+  set(BTS_CXX_FLAGS_WAS "${CMAKE_CXX_FLAGS}")
+  string(REPLACE "\"" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+  string(REPLACE "\"" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   FetchContent_Declare(bts_hdf5
     URL https://github.com/HDFGroup/hdf5/archive/refs/tags/hdf5_${BTS_HDF5_VERSION}.tar.gz
     URL_HASH SHA256=09ee1c671a87401a5201c06106650f62badeea5a3b3941e9b1e2e1e08317357f)
   FetchContent_MakeAvailable(bts_hdf5)
+  set(CMAKE_C_FLAGS "${BTS_C_FLAGS_WAS}")
+  set(CMAKE_CXX_FLAGS "${BTS_CXX_FLAGS_WAS}")
   set(BUILD_TESTING ${BTS_BUILD_TESTING_WAS})
   set(HDF5_LIBRARIES hdf5-static)
   set(HDF5_INCLUDE_DIRS ${bts_hdf5_SOURCE_DIR}/src ${bts_hdf5_BINARY_DIR}/src)
