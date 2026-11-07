@@ -1436,9 +1436,15 @@ add_executable(bts-file-browser-native-check EXCLUDE_FROM_ALL ${SRC} ${BTS_HOST_
 # BLO thumbnail reads share Blender's real creator symbols and complete target
 # dependency closure. ${LIB} is mutable in included CMake files; do not reuse its
 # late value here or guess a subset of static libraries.
-target_include_directories(bts-file-browser-native-check PRIVATE $<TARGET_PROPERTY:bts-host,INCLUDE_DIRECTORIES>)
-target_compile_definitions(bts-file-browser-native-check PRIVATE $<TARGET_PROPERTY:bts-host,COMPILE_DEFINITIONS>)
-target_link_options(bts-file-browser-native-check PRIVATE $<TARGET_PROPERTY:bts-host,LINK_OPTIONS>)
+# TARGET_PROPERTY hands back the property's raw text, and generator
+# expressions inside that text are not evaluated again, so they would be
+# written into the build graph verbatim: Blender's pinned Windows libraries
+# arrive as per-config expressions, and ninja refuses a whole graph over one
+# unexpanded dollar. GENEX_EVAL evaluates what comes back, and does nothing
+# where there is nothing to evaluate.
+target_include_directories(bts-file-browser-native-check PRIVATE $<GENEX_EVAL:$<TARGET_PROPERTY:bts-host,INCLUDE_DIRECTORIES>>)
+target_compile_definitions(bts-file-browser-native-check PRIVATE $<GENEX_EVAL:$<TARGET_PROPERTY:bts-host,COMPILE_DEFINITIONS>>)
+target_link_options(bts-file-browser-native-check PRIVATE $<GENEX_EVAL:$<TARGET_PROPERTY:bts-host,LINK_OPTIONS>>)
 get_target_property(_bts_browser_link_flags bts-host LINK_FLAGS)
 if(_bts_browser_link_flags)
   set_target_properties(bts-file-browser-native-check PROPERTIES LINK_FLAGS "${_bts_browser_link_flags}")
@@ -1453,7 +1459,7 @@ target_compile_features(bts-file-browser-native-check PRIVATE cxx_std_20)
 # that are deliberately absent from Release blenlib).
 set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/../tests/file_browser_native_test.cc
   APPEND PROPERTY COMPILE_OPTIONS "$<IF:$<CXX_COMPILER_ID:MSVC>,/UNDEBUG,-UNDEBUG>")
-target_link_libraries(bts-file-browser-native-check PRIVATE $<TARGET_PROPERTY:bts-host,LINK_LIBRARIES>)
+target_link_libraries(bts-file-browser-native-check PRIVATE $<GENEX_EVAL:$<TARGET_PROPERTY:bts-host,LINK_LIBRARIES>>)
 
 # This fixture-aware check deliberately stays outside verify-cpu.py's no-args
 # bts-*-tests glob. CTest supplies explicit pinned fixtures and isolated paths.
