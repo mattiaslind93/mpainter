@@ -40,6 +40,10 @@ class PropertySection final : public QWidget {
     content_layout_->setContentsMargins(0,0,0,0);
     content_layout_->setSpacing(theme::Space);
     content_->setSizePolicy(QSizePolicy::Preferred,QSizePolicy::Maximum);
+    // Somewhere to put spare height. A column whose items have all reached
+    // their maximum spreads what is left over as equal gaps between them, so
+    // folding a section elsewhere changed the spacing of every row in here.
+    content_layout_->addStretch(1);
     layout->addWidget(content_);
     // Folding is only a convenience if it is remembered. A section that springs
     // back open on every selection is an extra click, not a simplification.
@@ -61,7 +65,10 @@ class PropertySection final : public QWidget {
     apply_fold(false);
     hide();
   }
-  void add(QWidget *widget){content_layout_->addWidget(widget);}
+  void add(QWidget *widget){content_layout_->insertWidget(content_layout_->count()-1,widget);}
+  // The rows live in here, so the panel's own alignment pass needs to reach
+  // them: findChildren on the panel stops at the section.
+  QWidget *content()const{return content_;}
   // Called once the panel has decided what each control should show. isHidden()
   // reports an explicit hide rather than "not on screen", so a section nested in
   // a hidden parent still reads its own contents correctly.

@@ -323,21 +323,32 @@ class TangentBumpBar final : public QWidget {
 // carries a trailing button keeps the button outside the field column, and a
 // row without one reserves the same width, so no field is left shorter than the
 // field above it. docs/design/ui.md §5.3.
-void align_property_rows(QWidget *group,int trailing_width)
+// One label column across the whole panel, and a row that is exactly as tall as
+// its contents. Rows moved into folding sections, so a single container is no
+// longer enough: each section's contents is a container of its own, and the
+// column is measured across all of them together.
+void align_property_rows(const std::vector<QWidget *> &groups,int trailing_width)
 {
   std::vector<QLabel *> labels;int widest=0;
-  for(auto *line:group->findChildren<QWidget *>(QString(),Qt::FindDirectChildrenOnly)){
-    auto *layout=qobject_cast<QHBoxLayout *>(line->layout());
-    if(!layout||layout->count()<2)continue;
-    auto *label=qobject_cast<QLabel *>(layout->itemAt(0)->widget());
-    if(!label||label->text().isEmpty())continue;
-    labels.push_back(label);
-    widest=std::max(widest,label->sizeHint().width());
-    if(layout->count()==2&&trailing_width>0)layout->addSpacing(trailing_width);
-    line->setSizePolicy(line->sizePolicy().horizontalPolicy(),QSizePolicy::Maximum);
+  for(auto *group:groups){
+    if(!group)continue;
+    for(auto *line:group->findChildren<QWidget *>(QString(),Qt::FindDirectChildrenOnly)){
+      auto *layout=qobject_cast<QHBoxLayout *>(line->layout());
+      if(!layout||layout->count()<2)continue;
+      auto *label=qobject_cast<QLabel *>(layout->itemAt(0)->widget());
+      if(!label||label->text().isEmpty())continue;
+      labels.push_back(label);
+      widest=std::max(widest,label->sizeHint().width());
+      if(layout->count()==2&&trailing_width>0)layout->addSpacing(trailing_width);
+      // Without this the column is stretched to the scroll viewport and the
+      // spare height is shared out among the rows, so unfolding a section
+      // changed the height and the spacing of every row on the panel.
+      line->setSizePolicy(line->sizePolicy().horizontalPolicy(),QSizePolicy::Maximum);
+    }
   }
   for(auto *label:labels)label->setFixedWidth(widest);
 }
+void align_property_rows(QWidget *group,int trailing_width){align_property_rows(std::vector<QWidget *>{group},trailing_width);}
 
 QToolButton *tool(QWidget *parent, Glyph glyph, const QString &name, bool enabled = false)
 {
@@ -1547,7 +1558,11 @@ WorkspaceShell::WorkspaceShell(QWidget *viewport, Callbacks callbacks, QWidget *
   for(auto *track:brush_jitter_sliders_)if(track)track->hide();
   // The pen-pressure buttons made their rows' fields narrower than the rest, so
   // the values did not line up down the panel.
-  align_property_rows(brush_controls_,28);
+  // The brush rows sit inside the sections now, so each section's contents is
+  // its own container for the pass. ui.md §7.3.
+  std::vector<QWidget *> row_groups{brush_controls_};
+  for(auto *section:property_sections_)row_groups.push_back(section->content());
+  align_property_rows(row_groups,28);
   material_layout->addWidget(brush_controls_);brush_controls_->hide();
   color_row_ = new QWidget(material);
   auto *color_layout = column(color_row_);
