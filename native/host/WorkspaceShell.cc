@@ -319,6 +319,25 @@ class TangentBumpBar final : public QWidget {
 };
 
 
+// One label column and one field column, for every row in a group. A row that
+// carries a trailing button keeps the button outside the field column, and a
+// row without one reserves the same width, so no field is left shorter than the
+// field above it. docs/design/ui.md §5.3.
+void align_property_rows(QWidget *group,int trailing_width)
+{
+  std::vector<QLabel *> labels;int widest=0;
+  for(auto *line:group->findChildren<QWidget *>(QString(),Qt::FindDirectChildrenOnly)){
+    auto *layout=qobject_cast<QHBoxLayout *>(line->layout());
+    if(!layout||layout->count()<2)continue;
+    auto *label=qobject_cast<QLabel *>(layout->itemAt(0)->widget());
+    if(!label||label->text().isEmpty())continue;
+    labels.push_back(label);
+    widest=std::max(widest,label->sizeHint().width());
+    if(layout->count()==2&&trailing_width>0)layout->addSpacing(trailing_width);
+  }
+  for(auto *label:labels)label->setFixedWidth(widest);
+}
+
 QToolButton *tool(QWidget *parent, Glyph glyph, const QString &name, bool enabled = false)
 {
   auto *button = new QToolButton(parent);
@@ -1499,6 +1518,9 @@ WorkspaceShell::WorkspaceShell(QWidget *viewport, Callbacks callbacks, QWidget *
   alpha_panel_->cleared=[this]{BrushAlpha alpha;alpha.kind=AlphaKind::Uniform;if(callbacks_.alpha_selected)callbacks_.alpha_selected(alpha);};
   alpha_panel_->import_requested=[this]{if(callbacks_.alpha_import_requested)callbacks_.alpha_import_requested();};
   alpha_panel_->parameters_changed=[this](bool invert,double uniform,double hardness){if(callbacks_.alpha_parameters_changed)callbacks_.alpha_parameters_changed(invert,uniform,hardness);};
+  // The pen-pressure buttons made their rows' fields narrower than the rest, so
+  // the values did not line up down the panel.
+  align_property_rows(brush_controls_,28);
   material_layout->addWidget(brush_controls_);brush_controls_->hide();
   color_row_ = new QWidget(material);
   auto *color_layout = column(color_row_);

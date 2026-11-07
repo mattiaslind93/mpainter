@@ -262,12 +262,15 @@ void apply(QApplication &app)
   QListWidget#shelfCategories { border-right: 1px solid @Separator@; font-size: 10px; }
   QListWidget#shelfCategories::item { min-height: 18px; }
   QPlainTextEdit { background: @Canvas@; color: @Text@; border: 1px solid @Border@; }
-  QSlider::groove:horizontal { height: 2px; background: @Muted@; }
+  QSlider::groove:horizontal { height: 2px; background: @Border@; }
   QSlider::handle:horizontal {
-    width: 7px; height: 7px; margin: -3px 0; border-radius: 4px; background: @Text@;
+    width: 7px; height: 7px; margin: -3px 0; border-radius: 4px; background: @Accent@;
   }
   QSlider::handle:horizontal:disabled { background: @Muted@; }
-  QSlider::sub-page:horizontal { background: @Accent@; }
+  /* The filled part of a slider shows a value; it is not the thing being acted
+     on, and a panel of them carried every bit of accent on screen at once. The
+     accent stays on the handle. docs/design/ui.md §3.4, §7.4. */
+  QSlider::sub-page:horizontal { background: @Number@; }
   QSlider::sub-page:horizontal:disabled { background: @Hover@; }
   QScrollBar:vertical { background: @Surface@; width: 8px; margin: 0; }
   QScrollBar:horizontal { background: @Surface@; height: 8px; margin: 0; }
