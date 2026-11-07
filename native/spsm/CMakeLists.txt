@@ -8,9 +8,43 @@ endif()
 # HDF5's config package accepts only its own minor series for versioned
 # requests. Discover first, then enforce our minimum so 1.14 is not rejected
 # in favor of a host h5cc while cross-compiling a 1.12-or-newer consumer.
-find_package(HDF5 REQUIRED COMPONENTS C)
-if(HDF5_VERSION VERSION_LESS 1.12)
-  message(FATAL_ERROR "The SPSM reader requires HDF5 1.12 or newer")
+set(BTS_HDF5_VERSION 1.14.6)
+find_package(HDF5 COMPONENTS C)
+if(NOT HDF5_FOUND OR HDF5_VERSION VERSION_LESS 1.12)
+  # The reader calls H5Lget_info1 and its relatives, which arrived in 1.12.
+  # Ubuntu 24.04 still packages 1.10, so a release build there used to stop
+  # here with nothing built. Compile the pinned upstream source instead; it is
+  # the same archive the macOS and Windows dependency trees already use, and a
+  # new enough system HDF5 is still preferred and still used where it exists.
+  message(STATUS "HDF5 ${HDF5_VERSION} is unusable here; building pinned HDF5 ${BTS_HDF5_VERSION}")
+  if(POLICY CMP0135)
+    cmake_policy(SET CMP0135 NEW)
+  endif()
+  include(FetchContent)
+  # HDF5 reads these as ordinary variables and would otherwise build its tools,
+  # examples, language bindings and test suite into our build. BUILD_TESTING is
+  # ours as well as theirs, so it goes back to what it was straight afterwards.
+  set(BTS_BUILD_TESTING_WAS ${BUILD_TESTING})
+  set(BUILD_TESTING OFF)
+  set(BUILD_STATIC_LIBS ON)
+  set(BUILD_SHARED_LIBS OFF)
+  set(HDF5_BUILD_TOOLS OFF)
+  set(HDF5_BUILD_EXAMPLES OFF)
+  set(HDF5_BUILD_UTILS OFF)
+  set(HDF5_BUILD_CPP_LIB OFF)
+  set(HDF5_BUILD_FORTRAN OFF)
+  set(HDF5_BUILD_HL_LIB OFF)
+  set(HDF5_ENABLE_Z_LIB_SUPPORT OFF)
+  set(HDF5_ENABLE_SZIP_SUPPORT OFF)
+  set(HDF5_NO_PACKAGES ON)
+  set(HDF5_EXTERNALLY_CONFIGURED ON)
+  FetchContent_Declare(bts_hdf5
+    URL https://github.com/HDFGroup/hdf5/archive/refs/tags/hdf5_${BTS_HDF5_VERSION}.tar.gz
+    URL_HASH SHA256=09ee1c671a87401a5201c06106650f62badeea5a3b3941e9b1e2e1e08317357f)
+  FetchContent_MakeAvailable(bts_hdf5)
+  set(BUILD_TESTING ${BTS_BUILD_TESTING_WAS})
+  set(HDF5_LIBRARIES hdf5-static)
+  set(HDF5_INCLUDE_DIRS ${bts_hdf5_SOURCE_DIR}/src ${bts_hdf5_BINARY_DIR}/src)
 endif()
 find_package(Threads REQUIRED)
 # Direct HDF5 consumers need its include paths and DLL import definitions as
