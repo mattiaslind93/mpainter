@@ -5,9 +5,9 @@ together. It fixes the values — type sizes, colors, spacing, control sizes,
 depth — and says where each one applies and why.
 
 It exists because the interface drifted. An audit of the current build found
-six different corner radii before they were unified, twelve different spacing
+six different corner radii before they were unified, nine different spacing
 values, eleven different control heights, and a Properties panel holding
-thirty-one widgets in one flat column under two headings. None of that was a
+sixteen panels in one flat column under a single heading. None of that was a
 bad decision; it was many small decisions made separately. This document is the
 place those decisions now get made once.
 
@@ -232,22 +232,29 @@ lightness is the whole effect.
 
 ### 4.2 When a shadow is allowed
 
-Only on something that genuinely floats free of the window plane:
+Only on something that genuinely floats free of the window plane.
 
-| Layer | Shadow |
+**Qt Style Sheets have no `box-shadow`.** Writing one does nothing — it is
+silently ignored, with no warning, which is the worst kind of not working.
+There are two real mechanisms:
+
+| Layer | How |
 |---|---|
-| Menu, popover, combo box list | `0 4px 12px rgba(0, 0, 0, 0.45)` |
-| Dialog, undocked Properties window | `0 8px 24px rgba(0, 0, 0, 0.5)` |
-| Drag ghost following the pointer | `0 2px 8px rgba(0, 0, 0, 0.4)` |
+| Menu, popover, combo box list, dialog | The platform draws it. These are separate native windows, and macOS and Windows shadow them already. Add nothing. |
+| Something floating inside the window — a drag ghost, an overlay card | `QGraphicsDropShadowEffect`: blur radius 12, offset (0, 4), color `rgba(0, 0, 0, 115)`. |
 
 Nothing else. A button does not have a shadow. A panel does not have a shadow.
 A list row does not have a shadow. Shadows are never used to separate two
 things that are on the same plane — that is what §5 spacing is for.
 
-Where the platform already draws a native shadow (macOS menus, native window
-frames), let it, and do not add a second one.
+`QGraphicsDropShadowEffect` costs a software render pass on everything beneath
+it, so it never goes on a widget that repaints while painting or dragging a
+slider.
 
 ### 4.3 Gradients
+
+Unlike shadows, gradients are supported: `qlineargradient` works in QSS. The
+stylesheet uses none today.
 
 A gradient is allowed only to suggest a light source from above, and only at a
 lightness delta small enough that nobody notices it as a gradient:
@@ -414,11 +421,13 @@ A section is: title, then its controls, then 12 px before the next section.
 
 ### 7.3 Properties, specifically
 
-This panel is the clearest example of what this document is for. It currently
-adds **thirty-one widgets directly to one vertical layout**, with two headings
-between them. Each widget shows and hides itself depending on the selection, so
-the panel is correct — but it reads as an undifferentiated list, because
-structurally that is exactly what it is.
+This panel is the clearest example of what this document is for. It makes
+thirty-one `addWidget` calls into its layout, though that number overstates the
+flatness: eight of those are channel rows that `FillPanel::register_uniform_controls`
+immediately re-homes into the Fill panel's own channel panel. What is genuinely
+flat is **sixteen panels in a single column under one heading**. Each shows and
+hides itself depending on the selection, so the panel is correct — but it reads
+as an undifferentiated list, because structurally that is exactly what it is.
 
 The fix is not to move controls around. It is to put the existing controls into
 named sections, in a fixed order:
@@ -491,14 +500,15 @@ Found while auditing the present build. Each is small on its own.
 | Type sizes | 10, 11, 12, 14, 17, 34 px, three without a role | Six roles, §2.2 |
 | Control heights | Eleven different values | Three, §6.1 |
 | Spacing | Nine different gap values | Six, §5.1 |
-| Properties panel | 31 widgets, one column, 2 headings | Seven sections, §7.3 |
+| Properties panel | 16 panels, one column, 1 heading | Named sections, §7.3 |
 | `Muted` vs `Disabled` | Used interchangeably in places | §3.3 |
 | Surface grays | Nineteen, with no stated order | The ladder, §3.1 |
-| Shadows | None anywhere, including on menus and dialogs | §4.2 |
+| Shadows | None in the stylesheet, and QSS cannot carry one | §4.2 — on macOS the platform already does this; Linux and Windows need checking |
 | Gradients | None | Two places only, §4.3 |
 
 Already fixed: corner radii (six values → one), the mesh map thumbnails and
-remove buttons, the toolbar's text-character icons, and the Properties tab.
+remove buttons, the toolbar's text-character icons, the Properties tab, and the
+Properties sections in §7.3.
 
 ## 11. Before you commit interface code
 
