@@ -1359,6 +1359,14 @@ set_source_files_properties(${BTS_HOST_SOURCE_DIR}/../tests/ordinary_color_sourc
 # Source-level include properties bypass CMake's usual filtering of compiler
 # implicit paths. Re-adding /usr/include as -isystem breaks GCC include_next.
 get_target_property(BTS_HDF5_FIXTURE_INCLUDES bts-hdf5 INTERFACE_INCLUDE_DIRECTORIES)
+# The lowering fixture this file pulls in includes <lz4.h> as well as <hdf5.h>,
+# and lz4 belongs to the bitmaps library alone, so it is not on bts-host's own
+# include path. Where lz4 is built from the pinned source there is no system
+# copy to fall back on, which is where the Windows build stopped.
+get_target_property(BTS_LZ4_FIXTURE_INCLUDES bts-lz4-usage INTERFACE_INCLUDE_DIRECTORIES)
+if(BTS_LZ4_FIXTURE_INCLUDES)
+  list(APPEND BTS_HDF5_FIXTURE_INCLUDES ${BTS_LZ4_FIXTURE_INCLUDES})
+endif()
 list(REMOVE_ITEM BTS_HDF5_FIXTURE_INCLUDES ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES})
 target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/../tests/spsm_bitmap_color_test.cc)
 set_source_files_properties(${BTS_HOST_SOURCE_DIR}/../tests/spsm_bitmap_color_test.cc

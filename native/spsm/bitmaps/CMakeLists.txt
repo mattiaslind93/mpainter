@@ -30,6 +30,13 @@ if(NOT LZ4_INCLUDE_DIR OR NOT LZ4_LIBRARY)
   set(LZ4_INCLUDE_DIR ${bts_lz4_SOURCE_DIR}/lib)
   set(LZ4_LIBRARY bts-lz4)
 endif()
+# Mirrors bts-hdf5 next door: a named target carrying whichever lz4 this build
+# settled on, the system one or the pinned source, so another directory can
+# borrow it without reaching for variables that only exist in this one.
+add_library(bts-lz4-usage INTERFACE)
+target_include_directories(bts-lz4-usage INTERFACE ${LZ4_INCLUDE_DIR})
+target_link_libraries(bts-lz4-usage INTERFACE ${LZ4_LIBRARY})
+
 add_library(bts-spsm-bitmaps STATIC SpsmBitmap.cc)
 target_compile_features(bts-spsm-bitmaps PUBLIC cxx_std_20)
 target_include_directories(bts-spsm-bitmaps PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} PRIVATE ${LZ4_INCLUDE_DIR})
