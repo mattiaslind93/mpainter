@@ -9,7 +9,7 @@
 #include <cassert>
 int main(int argc,char **argv){
  QApplication app(argc,argv);QTemporaryDir temp;assert(temp.isValid());
- assert(bts::product_version()=="0.9.1");assert(!bts::product_icon().isNull());
+ assert(bts::product_version()=="0.9.2");assert(!bts::product_icon().isNull());
  // Bright artwork makes any accidental painting into the footer detectable.
  QImage fixture(852,531,QImage::Format_RGB32);fixture.fill(Qt::magenta);
  const auto fixture_path=temp.filePath("portrait.png");assert(fixture.save(fixture_path));
