@@ -10,6 +10,8 @@
 #include <QPainterPath>
 #include <QVector3D>
 #include <QWidget>
+#include <QMimeData>
+#include <QStringList>
 #include <functional>
 #include <optional>
 #include <limits>
@@ -44,11 +46,29 @@ class AssetDropHighlight final : public QWidget {
   explicit AssetDropHighlight(QWidget *parent):QWidget(parent){setObjectName("assetDropHighlight");setAttribute(Qt::WA_TransparentForMouseEvents);setAttribute(Qt::WA_NoSystemBackground);setStyleSheet("background:transparent;");hide();}
   QPainterPath silhouette;QString label;QRectF clip;
  protected:
-  void paintEvent(QPaintEvent *)override {QPainter painter(this);painter.setRenderHint(QPainter::Antialiasing);painter.save();if(!clip.isEmpty())painter.setClipRect(clip);painter.setPen(QPen(QColor(bts::theme::Accent),2));painter.setBrush(bts::theme::alpha(bts::theme::Accent, 65));painter.drawPath(silhouette);painter.restore();painter.setPen(QColor(bts::theme::Heading));painter.fillRect(QRect(12,12,std::min(width()-24,500),30),bts::theme::alpha(bts::theme::Accent, 230));painter.drawText(QRect(20,12,width()-40,30),Qt::AlignVCenter,"Apply to "+label);}
+  void paintEvent(QPaintEvent *)override {
+    QPainter painter(this);
+    painter.save();
+    if(!clip.isEmpty())painter.setClipRect(clip);
+    // The path is one closed polygon per mesh triangle. Stroking it outlines
+    // every single triangle, which is why the mesh appeared as a wireframe
+    // instead of a filled shape, and stroking thousands of edges is what made
+    // the drag stall. Fill the union and draw no outline at all.
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(bts::theme::alpha(bts::theme::Accent, 65));
+    painter.drawPath(silhouette);
+    painter.restore();
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setPen(QColor(bts::theme::Heading));
+    painter.fillRect(QRect(12,12,std::min(width()-24,500),30),bts::theme::alpha(bts::theme::Accent, 230));
+    painter.drawText(QRect(20,12,width()-40,30),Qt::AlignVCenter,"Apply to "+label);
+  }
 };
 class AssetViewportDrop final : public QObject {
  public:
-  explicit AssetViewportDrop(QWidget *view):QObject(view),view_(view),highlight_(new AssetDropHighlight(view)){view_->setAcceptDrops(true);view_->installEventFilter(this);}
+  explicit AssetViewportDrop(QWidget *view):QObject(view),view_(view),highlight_(new AssetDropHighlight(view)){
+    view_->setAcceptDrops(true);view_->installEventFilter(this);
+  }
   std::function<bool(const QString &)> accepts;
   std::function<std::optional<AssetMeshHit>(QPointF)> pick;
   std::function<QPainterPath(const AssetMeshHit &)> silhouette;
@@ -62,6 +82,14 @@ class AssetViewportDrop final : public QObject {
     auto *drop=static_cast<QDropEvent *>(event);const auto *mime=drop->mimeData();
     const QString id=QString::fromUtf8(mime->data("application/x-bts-asset"));
     if(!mime->hasFormat("application/x-bts-asset")||!accepts||!accepts(id)){clear();drop->ignore();return false;}
+    if(event->type()==QEvent::DragEnter){
+      // The pointer always crosses into this view at an edge, where there is no
+      // mesh under it yet. Refusing the entry takes the view out of the drag for
+      // the rest of the session, so it could never be offered the mesh the user
+      // was heading for. Accept the entry and judge each position on its own.
+      hovered_.reset();highlight_->hide();
+      drop->setDropAction(Qt::CopyAction);drop->accept();return true;
+    }
     const auto previous=hovered_;hovered_=pick?pick(drop->position()):std::nullopt;
     if(!hovered_){clear();drop->ignore();return true;}
     drop->setDropAction(Qt::CopyAction);drop->accept();

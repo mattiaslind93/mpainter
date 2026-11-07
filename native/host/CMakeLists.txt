@@ -1,4 +1,4 @@
-find_package(Qt6 6.8.3 EXACT REQUIRED COMPONENTS Widgets OpenGLWidgets)
+find_package(Qt6 6.8.3 EXACT REQUIRED COMPONENTS Widgets OpenGLWidgets Network)
 find_package(assimp CONFIG REQUIRED)
 
 qt6_add_resources(BTS_FILE_BROWSER_RESOURCES ${BTS_HOST_SOURCE_DIR}/../../assets/file-browser/file-browser.qrc)
@@ -280,7 +280,7 @@ if(WITH_CPU_CHECK)
 endif()
 
 
-target_link_libraries(bts-host PRIVATE ${LIB} bf_io_wavefront_obj bf_io_alembic bf::imbuf bf::dependencies::epoxy Qt6::Widgets Qt6::OpenGLWidgets Qt6::GuiPrivate)
+target_link_libraries(bts-host PRIVATE ${LIB} bf_io_wavefront_obj bf_io_alembic bf::imbuf bf::dependencies::epoxy Qt6::Widgets Qt6::OpenGLWidgets Qt6::Network Qt6::GuiPrivate)
 target_link_libraries(bts-host PRIVATE bf::dependencies::optional::openimagedenoise)
 if(WITH_IO_FBX)
   target_link_libraries(bts-host PRIVATE bf_io_fbx)

@@ -7,6 +7,7 @@
 #include "AssetApplicationTarget.hh"
 #include "AssetApplyProgress.hh"
 #include "AssetViewportDrop.hh"
+#include "UpdateNotice.hh"
 #include "MaterialIdDialog.hh"
 #include "BrushPresetDemo.hh"
 #include "ReferenceImage.hh"
@@ -3679,6 +3680,12 @@ if(material_importer)material_importer->cancel();
           begin_asset_apply(asset,[drop_asset,top](const bts::StudioAsset &ready){drop_asset(ready,top,true,false);},hit,top,true);return;
         }
       };
+
+      // One check, a few seconds after the window is up so it never competes
+      // with loading. Nothing is shown unless a newer release is confirmed.
+      auto *updates=new bts::UpdateNotice(workspace);
+      updates->available=[workspace](const QString &release,const QUrl &page){if(workspace)workspace->show_update_available(release,page);};
+      QTimer::singleShot(5000,workspace,[updates]{updates->check(bts::product_version(),QUrl("https://api.github.com/repos/mattiaslind93/mpainter/releases/latest"));});
 
       {
         const auto ref_prefs = bts::load_reference_image_preferences();

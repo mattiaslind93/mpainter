@@ -253,6 +253,13 @@ class WorkspaceShell final : public QMainWindow {
   void reset_reference_layout();
   void float_properties();
   void dock_properties();
+  // Properties lives in the tab bar beside Layers and Texture Sets. Closing it
+  // takes the tab away rather than leaving an empty page behind.
+  void show_properties_tab();
+  void hide_properties_tab();
+  // Shown only once a newer release has actually been confirmed; the row is
+  // empty and hidden otherwise.
+  void show_update_available(const QString &release,const QUrl &page);
   QByteArray save_layout() const;
   bool restore_layout(const QByteArray &state);
 
@@ -303,6 +310,7 @@ class WorkspaceShell final : public QMainWindow {
   QSplitter *viewport_shelf_splitter_ = nullptr;
   QSplitter *inspector_splitter_ = nullptr;
   QWidget *properties_slot_=nullptr,*properties_panel_=nullptr;
+  QWidget *update_notice_=nullptr;QLabel *update_label_=nullptr;QUrl update_page_;
   QDialog *properties_float_=nullptr;
   QAction *properties_action_=nullptr;
   QToolButton *properties_undock_=nullptr;

@@ -31,6 +31,7 @@
 #include "LayerThumbnail.hh"
 #include "LayerThumbnailJobs.hh"
 #include "LayerStackList.hh"
+#include "BugReportDialog.hh"
 #include "ImageDropFilter.hh"
 #include <QProgressBar>
 #include <QTreeWidget>
@@ -136,9 +137,15 @@ constexpr int inspector_width = 374;
 constexpr int shelf_minimum_height = 180;
 constexpr int properties_minimum_height = 130;
 
+// The published documentation. One constant so the menu, and anything else that
+// links to it later, cannot drift apart.
+constexpr auto documentation_url="https://bluedino.se/mpainter/documentation";
 enum class Glyph {
   Brush, Eraser, Projection, Smudge, Fill, Clone, Path, Picker, Folder, Mask, Trash, Settings, History, Material,
   Console, Shelf, Reset, Close, Plus, Undo, Redo, Filter, View,
+  // Drawn marks for the toolbar buttons that used to carry a bare text
+  // character. A glyph at icon size reads at a glance; "⋈" and "◩" did not.
+  Symmetry, SymmetryManipulator, HideExcluded, LazyMouse, More,
 };
 
 QIcon icon(Glyph glyph)
@@ -154,6 +161,19 @@ QIcon icon(Glyph glyph)
                  Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
     p.setBrush(Qt::NoBrush);
     switch (glyph) {
+      case Glyph::Symmetry:{const QColor tint=p.pen().color();p.drawLine(QPointF(8,1.5),QPointF(8,14.5));p.setBrush(tint);p.drawPolygon(QPolygonF({{6,4},{6,12},{2,8}}));p.setBrush(Qt::NoBrush);p.drawPolygon(QPolygonF({{10,4},{10,12},{14,8}}));break;}
+      case Glyph::SymmetryManipulator:
+        p.drawLine(QPointF(8,1.5),QPointF(8,14.5));
+        p.drawLine(QPointF(2,8),QPointF(14,8));
+        p.drawLine(QPointF(2,8),QPointF(5,5));p.drawLine(QPointF(2,8),QPointF(5,11));
+        p.drawLine(QPointF(14,8),QPointF(11,5));p.drawLine(QPointF(14,8),QPointF(11,11));
+        break;
+      case Glyph::HideExcluded:{const QColor tint=p.pen().color();p.drawRect(QRectF(2,2,12,12));p.fillRect(QRectF(2.7,2.7,5.3,10.6),tint);break;}
+      case Glyph::LazyMouse:{const QColor tint=p.pen().color();p.drawEllipse(QRectF(2.5,2.5,11,11));p.drawLine(QPointF(5.2,10.8),QPointF(9,7));p.setBrush(tint);p.drawEllipse(QPointF(10.4,5.6),2,2);p.setBrush(Qt::NoBrush);break;}
+      case Glyph::More:
+        p.drawLine(QPointF(4.5,6.5),QPointF(8,10));
+        p.drawLine(QPointF(8,10),QPointF(11.5,6.5));
+        break;
       case Glyph::Material:
         p.drawEllipse(QRectF(2,2,12,12));p.drawArc(QRectF(2,5,12,6),0,180*16);p.drawArc(QRectF(5,2,6,12),90*16,180*16);break;
       case Glyph::Path:{QPainterPath curve;curve.moveTo(3,13);curve.cubicTo(5,1,10,15,13,3);p.drawPath(curve);p.drawEllipse(QPointF(3,13),1.5,1.5);p.drawEllipse(QPointF(13,3),1.5,1.5);break;}
@@ -302,8 +322,10 @@ QToolButton *tool(QWidget *parent, Glyph glyph, const QString &name, bool enable
 {
   auto *button = new QToolButton(parent);
   button->setIcon(icon(glyph));
-  button->setIconSize(QSize(16, 16));
-  button->setFixedSize(26, 26);
+  // 16 px marks in a 26 px button read as specks on a Retina panel; one step up
+  // keeps the row the same shape while making each symbol identifiable.
+  button->setIconSize(QSize(18, 18));
+  button->setFixedSize(28, 28);
   button->setAutoRaise(true);
   button->setAccessibleName(name);
   button->setToolTip(enabled ? name : name + QStringLiteral(" is unavailable."));
@@ -571,6 +593,15 @@ WorkspaceShell::WorkspaceShell(QWidget *viewport, Callbacks callbacks, QWidget *
   window_menu->addSeparator();
   window_menu->addAction(reset_action);
 
+  auto *help_menu = menuBar()->addMenu("&Help");
+  help_menu->setObjectName("helpMenu");
+  auto *documentation = help_menu->addAction("Documentation");
+  documentation->setObjectName("openDocumentation");
+  connect(documentation,&QAction::triggered,this,[]{QDesktopServices::openUrl(QUrl(documentation_url));});
+  auto *report_bug = help_menu->addAction("Report Bug…");
+  report_bug->setObjectName("reportBug");
+  connect(report_bug,&QAction::triggered,this,[this]{BugReportDialog(this).exec();});
+
   auto *workspace_menu = new QMenu(this);
   workspace_menu->addActions({shelf_action_, console_action_, properties_action_});
   workspace_menu->addSeparator();
@@ -704,7 +735,7 @@ WorkspaceShell::WorkspaceShell(QWidget *viewport, Callbacks callbacks, QWidget *
       continue;
     }
   }
-  lazy_toggle_=new QToolButton(toolbar);lazy_toggle_->setText("◌•");lazy_toggle_->setCheckable(true);lazy_toggle_->setObjectName("lazyMouseToggle");lazy_toggle_->setToolTip("Lazy mouse (D)");brush_toolbar_layout->addWidget(lazy_toggle_);
+  lazy_toggle_=tool(toolbar,Glyph::LazyMouse,"Lazy mouse",true);lazy_toggle_->setCheckable(true);lazy_toggle_->setObjectName("lazyMouseToggle");lazy_toggle_->setToolTip("Lazy mouse (D)");brush_toolbar_layout->addWidget(lazy_toggle_);
   lazy_controls_=new QWidget(toolbar);auto *lazy_layout=column(lazy_controls_);lazy_controls_->setFixedWidth(108);
   auto *lazy_line=new QWidget(lazy_controls_);auto *lazy_row=row(lazy_line,0);lazy_row->addWidget(new QLabel("Distance",lazy_line));
   lazy_distance_=new bts::NumericSpinBox(lazy_line);lazy_distance_->setObjectName("lazyMouseDistance");lazy_distance_->setRange(.1,100);lazy_distance_->setDecimals(1);lazy_distance_->setValue(8);lazy_distance_->setFixedHeight(19);lazy_distance_->setKeyboardTracking(false);lazy_distance_->setToolTip("Radius as a percentage of view height");lazy_row->addWidget(lazy_distance_);lazy_layout->addWidget(lazy_line);
@@ -714,11 +745,28 @@ WorkspaceShell::WorkspaceShell(QWidget *viewport, Callbacks callbacks, QWidget *
   connect(lazy_toggle_,&QToolButton::toggled,this,[this](bool v){if(callbacks_.lazy_mouse_changed)callbacks_.lazy_mouse_changed(v,lazy_distance_->value());});
   lazy_action_=new QAction("Lazy mouse",this);lazy_action_->setObjectName("toggleLazyMouse");lazy_action_->setShortcut(QKeySequence(Qt::Key_D));addAction(lazy_action_);connect(lazy_action_,&QAction::triggered,lazy_toggle_,&QToolButton::click);
   toolbar_layout->addStretch();
+  // A quiet line at the end of the toolbar. It carries no space of its own until
+  // a newer release has been confirmed, so nothing is shown when nothing is new.
+  update_notice_=new QWidget(toolbar);
+  update_notice_->setObjectName("updateNotice");
+  auto *update_layout=row(update_notice_,0);
+  update_label_=new QLabel(update_notice_);
+  update_label_->setObjectName("updateNoticeText");
+  update_layout->addWidget(update_label_);
+  auto *update_get=new QToolButton(update_notice_);
+  update_get->setObjectName("updateNoticeGet");
+  update_get->setText("Get");
+  update_get->setAutoRaise(true);
+  update_get->setToolTip("Open the download page for this release");
+  update_layout->addWidget(update_get);
+  toolbar_layout->addWidget(update_notice_);
+  update_notice_->hide();
+  connect(update_get,&QToolButton::clicked,this,[this]{if(update_page_.isValid())QDesktopServices::openUrl(update_page_);});
   auto *undo_toolbar=tool(toolbar,Glyph::Undo,"Undo");undo_toolbar->setObjectName("undoToolbar");toolbar_layout->addWidget(undo_toolbar);
   auto *redo_toolbar=tool(toolbar,Glyph::Redo,"Redo");redo_toolbar->setObjectName("redoToolbar");toolbar_layout->addWidget(redo_toolbar);
-  auto *hide_excluded=new QToolButton(toolbar);hide_excluded->setObjectName("hideExcludedGeometry");hide_excluded->setText("◩");hide_excluded->setCheckable(true);hide_excluded->setAccessibleName("Paint strokes ignore masked UV Tiles");hide_excluded->setToolTip("Hide/Ignore excluded geometry (Alt+H)");toolbar_layout->addWidget(hide_excluded);connect(hide_excluded,&QToolButton::toggled,this,[this](bool enabled){if(callbacks_.hide_excluded_changed)callbacks_.hide_excluded_changed(enabled);});auto *hide_action=new QAction(this);hide_action->setObjectName("toggleHideExcludedGeometry");hide_action->setShortcut(QKeySequence(Qt::ALT|Qt::Key_H));addAction(hide_action);connect(hide_action,&QAction::triggered,hide_excluded,&QToolButton::toggle);
-  symmetry_toggle_=new QToolButton(toolbar);symmetry_toggle_->setText("⋈");symmetry_toggle_->setCheckable(true);symmetry_toggle_->setObjectName("symmetryToggle");symmetry_toggle_->setToolTip("3D mirror / radial symmetry (L)");toolbar_layout->addWidget(symmetry_toggle_);
-  auto *symmetry_menu_button=new QToolButton(toolbar);symmetry_menu_button->setText("▾");symmetry_menu_button->setObjectName("symmetryMenuButton");symmetry_menu_button->setPopupMode(QToolButton::InstantPopup);toolbar_layout->addWidget(symmetry_menu_button);
+  auto *hide_excluded=tool(toolbar,Glyph::HideExcluded,"Hide excluded geometry",true);hide_excluded->setObjectName("hideExcludedGeometry");hide_excluded->setCheckable(true);hide_excluded->setAccessibleName("Paint strokes ignore masked UV Tiles");hide_excluded->setToolTip("Hide/Ignore excluded geometry (Alt+H)");toolbar_layout->addWidget(hide_excluded);connect(hide_excluded,&QToolButton::toggled,this,[this](bool enabled){if(callbacks_.hide_excluded_changed)callbacks_.hide_excluded_changed(enabled);});auto *hide_action=new QAction(this);hide_action->setObjectName("toggleHideExcludedGeometry");hide_action->setShortcut(QKeySequence(Qt::ALT|Qt::Key_H));addAction(hide_action);connect(hide_action,&QAction::triggered,hide_excluded,&QToolButton::toggle);
+  symmetry_toggle_=tool(toolbar,Glyph::Symmetry,"Symmetry",true);symmetry_toggle_->setCheckable(true);symmetry_toggle_->setObjectName("symmetryToggle");symmetry_toggle_->setToolTip("3D mirror / radial symmetry (L)");toolbar_layout->addWidget(symmetry_toggle_);
+  auto *symmetry_menu_button=tool(toolbar,Glyph::More,"Symmetry settings",true);symmetry_menu_button->setObjectName("symmetryMenuButton");symmetry_menu_button->setToolTip("Symmetry settings");symmetry_menu_button->setPopupMode(QToolButton::InstantPopup);toolbar_layout->addWidget(symmetry_menu_button);
   auto *symmetry_menu=new QMenu(symmetry_menu_button);symmetry_menu_button->setMenu(symmetry_menu);auto *symmetry_action=new QWidgetAction(symmetry_menu);auto *symmetry_panel=new QWidget(symmetry_menu);auto *symmetry_layout=column(symmetry_panel);symmetry_layout->setContentsMargins(12,12,12,12);
   symmetry_mode_=new QComboBox(symmetry_panel);symmetry_mode_->setObjectName("symmetryMode");symmetry_mode_->addItems({"Mirror","Radial"});symmetry_layout->addWidget(new QLabel("Symmetry mode",symmetry_panel));symmetry_layout->addWidget(symmetry_mode_);
   symmetry_axis_=new QComboBox(symmetry_panel);symmetry_axis_->setObjectName("symmetryAxis");symmetry_axis_->addItems({"X","Y","Z"});symmetry_layout->addWidget(new QLabel("World axis",symmetry_panel));symmetry_layout->addWidget(symmetry_axis_);
@@ -726,7 +774,7 @@ WorkspaceShell::WorkspaceShell(QWidget *viewport, Callbacks callbacks, QWidget *
   symmetry_copies_=new QSpinBox(symmetry_panel);symmetry_copies_->setObjectName("symmetryCopies");symmetry_copies_->setRange(2,32);symmetry_layout->addWidget(new QLabel("Radial copies",symmetry_panel));symmetry_layout->addWidget(symmetry_copies_);
   for(int i=0;i<3;++i){symmetry_center_[i]=new bts::NumericSpinBox(symmetry_panel);symmetry_center_[i]->setObjectName(QString("symmetryCenter%1").arg(i));symmetry_center_[i]->setRange(-1e6,1e6);symmetry_center_[i]->setDecimals(4);symmetry_center_[i]->setSingleStep(.1);symmetry_center_[i]->setKeyboardTracking(false);symmetry_layout->addWidget(new QLabel(QString("Radial center %1").arg(QChar::fromLatin1("XYZ"[i])),symmetry_panel));symmetry_layout->addWidget(symmetry_center_[i]);}
   symmetry_intersection_=new QCheckBox("Show intersection",symmetry_panel);symmetry_intersection_->setObjectName("symmetryIntersection");symmetry_layout->addWidget(symmetry_intersection_);symmetry_action->setDefaultWidget(symmetry_panel);symmetry_menu->addAction(symmetry_action);
-  symmetry_manipulator_=new QToolButton(toolbar);symmetry_manipulator_->setText("↔");symmetry_manipulator_->setCheckable(true);symmetry_manipulator_->setObjectName("symmetryManipulator");symmetry_manipulator_->setToolTip("Show/Hide symmetry manipulator");toolbar_layout->addWidget(symmetry_manipulator_);
+  symmetry_manipulator_=tool(toolbar,Glyph::SymmetryManipulator,"Symmetry manipulator",true);symmetry_manipulator_->setCheckable(true);symmetry_manipulator_->setObjectName("symmetryManipulator");symmetry_manipulator_->setToolTip("Show/Hide symmetry manipulator");toolbar_layout->addWidget(symmetry_manipulator_);
   const auto change_symmetry=[this]{auto s=symmetry_;s.enabled=symmetry_toggle_->isChecked();s.manipulator=symmetry_manipulator_->isChecked();s.mode=SymmetryMode(symmetry_mode_->currentIndex());s.axis=symmetry_axis_->currentIndex();s.offset=symmetry_offset_->value();s.copies=symmetry_copies_->value();s.intersection=symmetry_intersection_->isChecked();for(int i=0;i<3;++i)s.center[i]=symmetry_center_[i]->value();if(callbacks_.symmetry_changed)callbacks_.symmetry_changed(s);};
   connect(symmetry_toggle_,&QToolButton::toggled,this,change_symmetry);connect(symmetry_manipulator_,&QToolButton::toggled,this,change_symmetry);connect(symmetry_mode_,&QComboBox::currentIndexChanged,this,change_symmetry);connect(symmetry_axis_,&QComboBox::currentIndexChanged,this,change_symmetry);connect(symmetry_offset_,&QDoubleSpinBox::valueChanged,this,change_symmetry);connect(symmetry_copies_,&QSpinBox::valueChanged,this,change_symmetry);connect(symmetry_intersection_,&QCheckBox::toggled,this,change_symmetry);for(auto *control:symmetry_center_)connect(control,&QDoubleSpinBox::valueChanged,this,change_symmetry);
   auto *symmetry_shortcut=new QAction(this);symmetry_shortcut->setObjectName("toggleSymmetry");symmetry_shortcut->setShortcut(QKeySequence(Qt::Key_L));addAction(symmetry_shortcut);connect(symmetry_shortcut,&QAction::triggered,symmetry_toggle_,&QToolButton::click);set_symmetry(SymmetrySettings{});
@@ -838,10 +886,16 @@ WorkspaceShell::WorkspaceShell(QWidget *viewport, Callbacks callbacks, QWidget *
   categories->update_grid();
   shelf_body_layout->addWidget(categories);
   auto *assets = new EmptyList("No assets", shelf_body);
-  alpha_assets_=assets;assets->setObjectName("shelfAssets");auto *asset_names=new ShelfCardDelegate(assets);assets->setItemDelegate(asset_names);assets->setEditTriggers(QAbstractItemView::EditKeyPressed);new NameListShortcuts(assets);asset_names->renamed=[this](const QModelIndex &index,const QString &name){const QUuid id(index.data(Qt::UserRole).toString());QTimer::singleShot(0,this,[this,id,name]{if(callbacks_.asset_renamed)callbacks_.asset_renamed(id,name);});};assets->setDragEnabled(true);assets->setDragDropMode(QAbstractItemView::DragOnly);assets->setDefaultDropAction(Qt::CopyAction);
+  alpha_assets_=assets;assets->setObjectName("shelfAssets");auto *asset_names=new ShelfCardDelegate(assets);assets->setItemDelegate(asset_names);assets->setEditTriggers(QAbstractItemView::EditKeyPressed);new NameListShortcuts(assets);asset_names->renamed=[this](const QModelIndex &index,const QString &name){const QUuid id(index.data(Qt::UserRole).toString());QTimer::singleShot(0,this,[this,id,name]{if(callbacks_.asset_renamed)callbacks_.asset_renamed(id,name);});};
   assets->setViewMode(QListView::IconMode);
   assets->setResizeMode(QListView::Adjust);
   assets->setMovement(QListView::Static);
+  // QListView::setMovement turns dragging off for Static, so the shelf has to
+  // be made draggable after that call and not before it. Setting it first is
+  // silently undone, which is what stopped assets being dragged onto a mesh.
+  assets->setDragEnabled(true);
+  assets->setDragDropMode(QAbstractItemView::DragOnly);
+  assets->setDefaultDropAction(Qt::CopyAction);
   assets->setIconSize(QSize(84, 84));
   assets->setGridSize(QSize(90, 114));
   assets->setSpacing(bts::theme::SpaceTight);
@@ -1267,9 +1321,12 @@ WorkspaceShell::WorkspaceShell(QWidget *viewport, Callbacks callbacks, QWidget *
   texture_page->setStretchFactor(1, 1);
   texture_page->setSizes({260, 240});
 
-  properties_slot_=new QWidget(inspector_splitter_);
+  // Properties is a tab beside Layers and Texture Sets, and the tab that opens
+  // first, instead of a second panel competing for the same column.
+  properties_slot_=new QWidget(layer_settings_tabs_);
   properties_slot_->setObjectName("propertiesSlot");
-  inspector_splitter_->addWidget(properties_slot_);
+  layer_settings_tabs_->addTab(properties_slot_,"Properties");
+  layer_settings_tabs_->setCurrentWidget(properties_slot_);
   auto *properties_slot_layout=new QVBoxLayout(properties_slot_);
   properties_slot_layout->setContentsMargins(0,0,0,0);
   auto *properties = properties_panel_=new QWidget(properties_slot_);
@@ -1291,8 +1348,8 @@ WorkspaceShell::WorkspaceShell(QWidget *viewport, Callbacks callbacks, QWidget *
   properties_undock_->setFixedSize(22,22);
   static_cast<QHBoxLayout *>(properties_header->layout())->insertWidget(static_cast<QHBoxLayout *>(properties_header->layout())->indexOf(properties_close), properties_undock_);
   connect(properties_undock_,&QToolButton::clicked,this,[this]{if(properties_float_)dock_properties();else float_properties();});
-  connect(properties_close,&QToolButton::clicked,this,[this]{if(properties_float_)dock_properties();properties_slot_->hide();const QSignalBlocker block(properties_action_);properties_action_->setChecked(false);});
-  connect(properties_action_,&QAction::toggled,this,[this](bool visible){if(visible){if(!properties_float_)properties_slot_->show();}else{if(properties_float_)dock_properties();properties_slot_->hide();}});
+  connect(properties_close,&QToolButton::clicked,this,[this]{if(properties_float_)dock_properties();hide_properties_tab();const QSignalBlocker block(properties_action_);properties_action_->setChecked(false);});
+  connect(properties_action_,&QAction::toggled,this,[this](bool visible){if(visible){if(!properties_float_)show_properties_tab();}else{if(properties_float_)dock_properties();hide_properties_tab();}});
   properties->findChild<QLabel *>("dockTitle")->setObjectName("propertiesDockTitle");
   auto *properties_scroll = new QScrollArea(properties);
   properties_scroll->setObjectName("propertiesScroll");
@@ -1885,7 +1942,9 @@ void WorkspaceShell::show_texture_set(const TextureSet *set, const NewProjectOpt
     if(index>=0)layer_channel_=layer_context_->currentData().toInt();
     layer_context_->setEnabled(index>=0);
   }
-  {const QSignalBlocker block(uv_tiles_);if(!set||displayed_set_!=set->id||!set->tiles.contains(active_tile_))active_tile_=0;uv_tiles_->setVisible(set!=nullptr);
+  {const QSignalBlocker block(uv_tiles_);if(!set||displayed_set_!=set->id||!set->tiles.contains(active_tile_))active_tile_=0;// A mesh without UDIMs has the single 1001 tile and nothing to choose between,
+    // so the list is only shown once there is more than one tile.
+    uv_tiles_->setVisible(set!=nullptr&&set->tiles.size()>1);
     bool rebuild=uv_tiles_->topLevelItemCount()!=1;if(set&&!rebuild){const auto *root=uv_tiles_->topLevelItem(0);rebuild=root->childCount()!=int(set->tiles.size());int index=0;for(int number:set->tiles)if(!rebuild&&root->child(index++)->data(0,Qt::UserRole).toInt()!=number)rebuild=true;}if(!set)rebuild=true;
     if(rebuild){uv_tiles_->clear();if(set){auto *root=new QTreeWidgetItem(uv_tiles_,{QString("UV Tiles (%1)").arg(set->tiles.size())});for(int number:set->tiles){auto *item=new QTreeWidgetItem(root,{QString::number(number)});item->setData(0,Qt::UserRole,number);if(number==active_tile_)uv_tiles_->setCurrentItem(item);}root->setExpanded(true);}}
     if(set&&uv_tiles_->topLevelItemCount()){auto *root=uv_tiles_->topLevelItem(0);for(int i=0;i<root->childCount();++i){auto *item=root->child(i);const int tile=item->data(0,Qt::UserRole).toInt();item->setFlags(item->flags()|Qt::ItemIsUserCheckable);item->setCheckState(0,set->tile_loaded(tile)?Qt::Checked:Qt::Unchecked);item->setForeground(0,QColor(set->tile_loaded(tile)?theme::Text:theme::Disabled));item->setToolTip(0,set->tile_loaded(tile)?"Loaded — uncheck to hide and unload":"Unloaded — check to load from cache");item->setDisabled(!set->loaded);}}
@@ -2144,7 +2203,7 @@ void WorkspaceShell::set_console_visible(bool visible)
 void WorkspaceShell::reset_reference_layout()
 {
   if(properties_float_)dock_properties();
-  if(properties_slot_)properties_slot_->show();
+  if(properties_slot_)show_properties_tab();
   if(properties_action_){const QSignalBlocker block(properties_action_);properties_action_->setChecked(true);}
   set_shelf_visible(true);
   set_console_visible(false);
@@ -2166,7 +2225,7 @@ void WorkspaceShell::reset_reference_layout()
 void WorkspaceShell::float_properties()
 {
   if(properties_float_||!properties_panel_)return;
-  properties_slot_->hide();
+  hide_properties_tab();
   properties_float_=new QDialog(this, Qt::Tool);
   properties_float_->setObjectName("propertiesFloat");
   properties_float_->setAttribute(Qt::WA_DeleteOnClose, false);
@@ -2179,12 +2238,33 @@ void WorkspaceShell::float_properties()
   properties_float_->resize(340,720);
   properties_undock_->setToolTip("Dock properties");
   properties_undock_->setAccessibleName("Dock properties");
-  connect(properties_float_,&QDialog::finished,this,[this]{if(!properties_float_)return;auto *dialog=properties_float_;properties_float_=nullptr;properties_panel_->setParent(properties_slot_);static_cast<QVBoxLayout *>(properties_slot_->layout())->addWidget(properties_panel_);properties_slot_->hide();properties_undock_->setToolTip("Undock properties");properties_undock_->setAccessibleName("Undock properties");const QSignalBlocker block(properties_action_);properties_action_->setChecked(false);dialog->deleteLater();});
+  connect(properties_float_,&QDialog::finished,this,[this]{if(!properties_float_)return;auto *dialog=properties_float_;properties_float_=nullptr;properties_panel_->setParent(properties_slot_);static_cast<QVBoxLayout *>(properties_slot_->layout())->addWidget(properties_panel_);hide_properties_tab();properties_undock_->setToolTip("Undock properties");properties_undock_->setAccessibleName("Undock properties");const QSignalBlocker block(properties_action_);properties_action_->setChecked(false);dialog->deleteLater();});
   properties_float_->show();
   const QSignalBlocker block(properties_action_);
   properties_action_->setChecked(true);
 }
 
+void WorkspaceShell::show_update_available(const QString &release,const QUrl &page)
+{
+  if(!update_notice_||!update_label_)return;
+  update_page_=page;
+  update_label_->setText(QString("Update available — %1").arg(release));
+  update_notice_->show();
+}
+void WorkspaceShell::show_properties_tab()
+{
+  if(!properties_slot_||!layer_settings_tabs_)return;
+  if(layer_settings_tabs_->indexOf(properties_slot_)<0)layer_settings_tabs_->addTab(properties_slot_,"Properties");
+  properties_slot_->show();
+  layer_settings_tabs_->setCurrentWidget(properties_slot_);
+}
+void WorkspaceShell::hide_properties_tab()
+{
+  if(!properties_slot_||!layer_settings_tabs_)return;
+  const int index=layer_settings_tabs_->indexOf(properties_slot_);
+  if(index>=0)layer_settings_tabs_->removeTab(index);
+  properties_slot_->hide();
+}
 void WorkspaceShell::dock_properties()
 {
   if(!properties_float_)return;
@@ -2193,7 +2273,7 @@ void WorkspaceShell::dock_properties()
   dialog->disconnect(this);
   properties_panel_->setParent(properties_slot_);
   static_cast<QVBoxLayout *>(properties_slot_->layout())->addWidget(properties_panel_);
-  properties_slot_->show();
+  show_properties_tab();
   properties_undock_->setToolTip("Undock properties");
   properties_undock_->setAccessibleName("Undock properties");
   dialog->close();

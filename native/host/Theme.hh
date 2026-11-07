@@ -68,6 +68,11 @@ inline constexpr int SpaceTight = 2;
 inline constexpr int Space = 4;
 inline constexpr int SpaceWide = 6;
 inline constexpr int SpaceLoose = 8;
+// Small square buttons that sit inside a list row, such as the mesh map remove
+// button. Themed padding alone sized those as wide as the text beside them, so
+// a row button states its own size and the column it lives in matches.
+inline constexpr int RemoveButtonPx = 20;
+inline constexpr int RemoveColumnPx = 28;
 inline QColor alpha(const char *token, int opacity) { QColor result(token); result.setAlpha(opacity); return result; }
 inline QString qss(QString source) {
   source.replace("@Viewport@", QLatin1String(Viewport));
