@@ -549,16 +549,23 @@ Found while auditing the present build. Each is small on its own.
 | Control heights | Eleven different values | Three, §6.1 |
 | Spacing | Nine different gap values | Six, §5.1 |
 | Properties panel | 16 panels, one column, 1 heading | Named sections, §7.3 — done |
-| Property rows | Three stacked lines per number, two competing patterns | One row pattern, §7.4 |
-| Sliders | A full-width accent track on every property | Accent on the handle only, §7.4 |
+| Property rows | Three stacked lines per number, two competing patterns | One row pattern, §7.4 — the two-line form is still to do |
+| Field alignment | Each row sized its own field, so no two lined up | `align_property_rows`, §5.3 — done for the brush panel |
+| Sliders | A full-width accent track on every property | Accent on the handle only, §7.4 — done |
 | `Muted` vs `Disabled` | Used interchangeably in places | §3.3 |
 | Surface grays | Nineteen, with no stated order | The ladder, §3.1 |
 | Shadows | None in the stylesheet, and QSS cannot carry one | §4.2 — on macOS the platform already does this; Linux and Windows need checking |
 | Gradients | None | Two places only, §4.3 |
 
 Already fixed: corner radii (six values → one), the mesh map thumbnails and
-remove buttons, the toolbar's text-character icons, the Properties tab, and the
-Properties sections in §7.3.
+remove buttons, the toolbar's text-character icons, the Properties tab, the
+Properties sections in §7.3, the brush panel's field column, and the accent on
+slider tracks.
+
+One thing the guide asks for that the application overrides: §7.5 says
+Properties opens first, and it does — but only on a profile with no saved
+layout. After that the window restores the tab that was open last, which is
+the better behaviour and is left alone.
 
 ## 11. Before you commit interface code
 
