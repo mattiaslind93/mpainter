@@ -8,7 +8,7 @@ Ready-made Early Access Alpha builds are on [Gumroad](https://mattiaslind.gumroa
 
 mPainter is a GPL-licensed 3D texture painting application by Mattias Lind. It combines a Qt workspace with Blender rendering in one process.
 
-Built with a lot of AI help. Big thanks to Claude for the late-night coding sessions and for never once asking for a raise.
+Built with a lot of AI help. Big thanks to Claude for all the late-night coding sessions.
 
 Paint in 3D and UV views, organize layers and masks, work with texture sets and UDIMs, import textures and Blender materials, and save editable projects as `.blend` files. Material Presets and Mask Generators provide reusable authoring workflows. Imports of user-owned `.spmsk` files are a compatibility feature; unsupported source operations are reported by the importer.
 
