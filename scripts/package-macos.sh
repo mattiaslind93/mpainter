@@ -7,8 +7,11 @@ if [[ ${MPAINTER_MACOS_VIEWPORT_VALIDATED:-0} != 1 ]]; then
 fi
 runtime=$1
 output=$2
+# One version for the whole product: the build reads pyproject.toml for
+# BTS_PRODUCT_VERSION, so the disk image cannot be named something else.
+version=$(sed -n 's/^version = "\(.*\)"/\1/p' "$(dirname "$0")/../pyproject.toml" | head -1)
 mkdir -p "$output"
 cp -R "$runtime/mPainter.app" "$output/mPainter.app"
 macdeployqt "$output/mPainter.app" -always-overwrite
 codesign --force --deep --sign - "$output/mPainter.app"
-hdiutil create -volname mPainter -srcfolder "$output/mPainter.app" -ov -format UDZO "$output/mPainter-0.9.0-alpha-macos-arm64.dmg"
+hdiutil create -volname mPainter -srcfolder "$output/mPainter.app" -ov -format UDZO "$output/mPainter-$version-macos-arm64.dmg"

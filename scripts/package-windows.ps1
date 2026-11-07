@@ -1,7 +1,10 @@
 param([Parameter(Mandatory=$true)][string]$Runtime, [Parameter(Mandatory=$true)][string]$Qt, [string]$Output="dist")
 $ErrorActionPreference = "Stop"
 $Root = Split-Path $PSScriptRoot -Parent
-$Stage = Join-Path $Output "mPainter-0.9.0-alpha-windows-x64"
+# One version for the whole product: the build reads pyproject.toml for
+# BTS_PRODUCT_VERSION, so the archive cannot be named something else.
+$Version = ([regex]::Match((Get-Content (Join-Path $Root 'pyproject.toml') -Raw), '(?m)^version = "([^"]+)"')).Groups[1].Value
+$Stage = Join-Path $Output "mPainter-$Version-windows-x64"
 New-Item -ItemType Directory -Force $Stage | Out-Null
 Copy-Item "$Runtime/mPainter.exe" $Stage
 Copy-Item "$Runtime/5.2" $Stage -Recurse
@@ -36,4 +39,4 @@ if ($env:VCPKG_INSTALLATION_ROOT) {
     Copy-Item $_.FullName $LicenseDir
   }
 }
-Compress-Archive -Path "$Stage/*" -DestinationPath "$Output/mPainter-0.9.0-alpha-windows-x64.zip" -Force
+Compress-Archive -Path "$Stage/*" -DestinationPath "$Output/mPainter-$Version-windows-x64.zip" -Force

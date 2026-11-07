@@ -4,6 +4,9 @@ import argparse, pathlib, shutil, subprocess, os, re, tarfile, json, sys
 p=argparse.ArgumentParser();p.add_argument('--runtime',type=pathlib.Path,required=True);p.add_argument('--qt',type=pathlib.Path,required=True);p.add_argument('--output',type=pathlib.Path,required=True);p.add_argument('--no-archive',action='store_true');a=p.parse_args()
 a.runtime=a.runtime.absolute();a.qt=a.qt.absolute()
 root=pathlib.Path(__file__).absolute().parents[1];out=a.output.resolve();out.mkdir(parents=True,exist_ok=True)
+# One version for the whole product. pyproject.toml is what the build reads for
+# BTS_PRODUCT_VERSION, so the package name cannot drift away from the app's own.
+version=re.search(r'^version = "([^"]+)"',(root/'pyproject.toml').read_text(),re.M).group(1)
 def is_elf(path):
     if not path.is_file():return False
     with path.open('rb') as stream:return stream.read(4)==b'\x7fELF'
@@ -12,7 +15,7 @@ world.mkdir(parents=True,exist_ok=True)
 for name in ('default-studio.hdr','default-studio.txt'):
     shutil.copy2(root/'assets/environments'/name,world/name)
 subprocess.run([sys.executable,str(root/'scripts/check-environment.py'),str(a.runtime)],check=True)
-stage=out/'mPainter-0.9.0-alpha-linux-x86_64'
+stage=out/f'mPainter-{version}-linux-x86_64'
 if stage.exists():raise SystemExit('Output staging directory exists; choose a new output directory.')
 stage.mkdir();(stage/'lib').mkdir()
 shutil.copy2(a.runtime/'mpainter',stage/'mpainter')
@@ -156,7 +159,7 @@ if shutil.which('rpm'):
         for source in result.stdout.splitlines():
             if source.startswith('/usr/share/licenses/') and pathlib.Path(source).is_file():
                 dest=licenses/'system'/pathlib.Path(source).relative_to('/usr/share/licenses');dest.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(source,dest)
-(stage/'BUILD-INFO.txt').write_text('mPainter 0.9.0-alpha\nBlender 5.2.0\nQt 6.8.3\nRequires a compatible Linux glibc and OpenGL 4.3 graphics driver.\nCycles CUDA (sm_86 and forward-compatible PTX) and OptiX kernels are included.\nCUDA and OptiX use the system NVIDIA driver, which is never bundled; CPU fallback is included.\nOptional Intel/AMD GPU denoising backends are not bundled.\nSource preparation and package commands: docs/building.md in the matching source tree.\n')
+(stage/'BUILD-INFO.txt').write_text(f'mPainter {version}\nBlender 5.2.0\nQt 6.8.3\nRequires a compatible Linux glibc and OpenGL 4.3 graphics driver.\nCycles CUDA (sm_86 and forward-compatible PTX) and OptiX kernels are included.\nCUDA and OptiX use the system NVIDIA driver, which is never bundled; CPU fallback is included.\nOptional Intel/AMD GPU denoising backends are not bundled.\nSource preparation and package commands: docs/building.md in the matching source tree.\n')
 dependency_manifest=json.dumps({'libraries':sorted(origins),'external_libraries':sorted(external_libraries),'system_packages':sorted(packages)},indent=2)+'\n'
 (out/'linux-dependencies.json').write_text(dependency_manifest)
 (stage/'DEPENDENCIES.json').write_text(dependency_manifest)
