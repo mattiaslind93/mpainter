@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Configure and build the native host with upstream precompiled libraries."""
-import argparse, os, pathlib, platform, subprocess
+import argparse, os, pathlib, platform, shutil, subprocess
 p=argparse.ArgumentParser()
 p.add_argument('--blender',required=True,type=pathlib.Path)
 p.add_argument('--build',required=True,type=pathlib.Path)
@@ -11,7 +11,34 @@ p.add_argument('--cuda',type=pathlib.Path,help='CUDA toolkit root (compiler only
 p.add_argument('--optix',type=pathlib.Path,help='OptiX SDK root containing include/optix.h')
 p.add_argument('--cuda-architectures',default='sm_86;compute_75',help='Native RTX 30 kernel and forward-compatible PTX')
 a=p.parse_args();root=pathlib.Path(__file__).absolute().parents[1]
-nvidia_release='ON' if platform.system()=='Linux' else 'OFF'
+
+def default_gcc_too_old():
+    """Blender 5.2 refuses any GCC older than 14. Ubuntu 24.04 still installs 13
+    as the default cc, so configure stopped on the version check before a single
+    file was compiled. Only a too-old GCC needs replacing; clang is left alone."""
+    try:
+        if 'clang' in subprocess.run(['cc','--version'],capture_output=True,text=True,check=True).stdout.lower():return False
+        return int(subprocess.run(['cc','-dumpversion'],capture_output=True,text=True,check=True).stdout.split('.')[0])<14
+    except Exception:return False
+
+def compiler_args():
+    """An explicit CC/CXX is the caller's choice and wins. Otherwise pick the
+    newest installed compiler the pinned source accepts, and say so plainly
+    rather than letting CMake fail three minutes in."""
+    if platform.system()!='Linux' or os.environ.get('CC') or os.environ.get('CXX') or not default_gcc_too_old():return []
+    for names in [('gcc-%d','g++-%d',range(20,13,-1)),('clang-%d','clang++-%d',range(20,15,-1))]:
+        for major in names[2]:
+            c,cxx=shutil.which(names[0]%major),shutil.which(names[1]%major)
+            if c and cxx:return ['-DCMAKE_C_COMPILER='+c,'-DCMAKE_CXX_COMPILER='+cxx]
+    raise SystemExit('No compiler new enough for the pinned Blender source. Install gcc-14 and g++-14 (Ubuntu: apt-get install gcc-14 g++-14), clang 16 or newer, or point CC and CXX at one.')
+
+# CUDA kernels need nvcc and OptiX needs its SDK headers; asking for either
+# without the toolkit installed stops configure outright. The switches follow
+# what is actually present so a machine without an NVIDIA toolchain still
+# builds, with GPU rendering left out rather than the whole build refused.
+has_cuda=bool(a.cuda) or bool(shutil.which('nvcc'))
+cuda_kernels='ON' if platform.system()=='Linux' and has_cuda else 'OFF'
+optix_device='ON' if platform.system()=='Linux' and a.optix else 'OFF'
 if platform.system()=='Darwin':
     raise SystemExit('macOS viewport unavailable: this host requires OpenGL 4.3; Blender 5.2 uses Metal on macOS. A Metal/Qt presentation port is required before packaging.')
 args=['cmake','-S',str(a.blender.absolute()),'-B',str(a.build.absolute()),'-G','Ninja',
@@ -19,11 +46,12 @@ args=['cmake','-S',str(a.blender.absolute()),'-B',str(a.build.absolute()),'-G','
       '-DBTS_HOST_SOURCE_DIR='+str(root/'native/host'),
       '-DCMAKE_INSTALL_PREFIX='+str(a.build.absolute()/'bin'),
       '-DWITH_COMPILER_CCACHE=OFF','-DWITH_BUILDINFO=OFF','-DWITH_GTESTS=OFF',
-      '-DWITH_CYCLES_DEVICE_CUDA=ON','-DWITH_CYCLES_CUDA_BINARIES='+nvidia_release,
+      '-DWITH_CYCLES_DEVICE_CUDA=ON','-DWITH_CYCLES_CUDA_BINARIES='+cuda_kernels,
       '-DCYCLES_CUDA_BINARIES_ARCH='+a.cuda_architectures,'-DWITH_CYCLES_HIP_BINARIES=OFF',
-      '-DWITH_CYCLES_ONEAPI_BINARIES=OFF','-DWITH_CYCLES_DEVICE_OPTIX='+nvidia_release,
+      '-DWITH_CYCLES_ONEAPI_BINARIES=OFF','-DWITH_CYCLES_DEVICE_OPTIX='+optix_device,
       '-DWITH_CYCLES_DEVICE_HIP=OFF','-DWITH_CYCLES_DEVICE_ONEAPI=OFF',
       '-DWITH_VULKAN_BACKEND=OFF','-DWITH_BLENDER_THUMBNAILER=OFF']
+args+=compiler_args()
 if a.cuda:args+=['-DCUDA_TOOLKIT_ROOT_DIR='+str(a.cuda.absolute())]
 if a.optix:args+=['-DOPTIX_ROOT_DIR='+str(a.optix.absolute())]
 if a.toolchain:args+=['-DCMAKE_TOOLCHAIN_FILE='+str(a.toolchain.absolute())]

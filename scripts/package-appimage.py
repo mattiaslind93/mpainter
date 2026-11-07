@@ -3,6 +3,14 @@
 import argparse,hashlib,os,pathlib,subprocess,urllib.request
 import shutil, sys, tempfile
 p=argparse.ArgumentParser();p.add_argument('--appdir',required=True,type=pathlib.Path);p.add_argument('--output',required=True,type=pathlib.Path);p.add_argument('--cache',required=True,type=pathlib.Path);a=p.parse_args()
+# package-linux.py names the staged AppDir after the version in pyproject.toml.
+# A caller still asking for last release's name would stop here on a missing
+# directory, so the staged AppDir is the source of truth: take its version into
+# the package name instead of stamping a stale one on the finished AppImage.
+if not a.appdir.is_dir():
+    staged=sorted(a.appdir.parent.glob('mPainter-*-linux-x86_64'))
+    if len(staged)!=1:raise SystemExit('No single staged AppDir beside '+str(a.appdir))
+    a.appdir=staged[0];a.output=a.output.with_name(staged[0].name+'.AppImage')
 subprocess.run([sys.executable,str(pathlib.Path(__file__).absolute().with_name("check-environment.py")),str(a.appdir)],check=True)
 a.cache.mkdir(parents=True,exist_ok=True);a.output.parent.mkdir(parents=True,exist_ok=True)
 # Embedded Python may ignore PYTHONDONTWRITEBYTECODE during a staging launch test.
