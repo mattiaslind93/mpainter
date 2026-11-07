@@ -39,6 +39,10 @@ inline constexpr auto Tool = "#585858";
 inline constexpr auto MenuButton = "#2C2C2C";
 inline constexpr auto Panel = "#3D3D3D";
 inline constexpr auto Header = "#424242";
+// A property section heading sits one step up the surface ladder from the panel
+// it divides, the way a Blender panel header does. The old token was the same
+// value as the panel, so the band could not be seen at all.
+inline constexpr auto SectionHeader = "#4C4C4C";
 inline constexpr auto Input = "#1F1F1F";
 inline constexpr auto Number = "#595959";
 inline constexpr auto ButtonText = "#D9D9D9";
@@ -77,6 +81,12 @@ inline constexpr int SpaceRegion = 16;
 // a row button states its own size and the column it lives in matches.
 inline constexpr int RemoveButtonPx = 20;
 inline constexpr int RemoveColumnPx = 28;
+// A colour swatch states its own size: a small filled rectangle, which is how
+// Krita, Substance Painter and Blender all show a brush colour. A panel-wide
+// button with the hex printed on it reads as a button rather than as a colour,
+// and cost two lines per colour once its caption is counted.
+inline constexpr int SwatchWidthPx = 44;
+inline constexpr int SwatchHeightPx = 20;
 inline QColor alpha(const char *token, int opacity) { QColor result(token); result.setAlpha(opacity); return result; }
 inline QString qss(QString source) {
   source.replace("@Viewport@", QLatin1String(Viewport));
@@ -107,6 +117,7 @@ inline QString qss(QString source) {
   source.replace("@Black@", QLatin1String(Black));
   source.replace("@White@", QLatin1String(White));
   source.replace("@Panel@", QLatin1String(Panel));
+  source.replace("@SectionHeader@", QLatin1String(SectionHeader));
   source.replace("@Header@", QLatin1String(Header));
   source.replace("@Input@", QLatin1String(Input));
   source.replace("@Number@", QLatin1String(Number));

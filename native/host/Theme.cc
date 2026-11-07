@@ -223,11 +223,11 @@ void apply(QApplication &app)
      divides, so the band itself says "this is a heading". ui.md §3.1, §7.1. */
   QLabel#propertySectionTitle, QToolButton#propertySectionTitle {
     color: @Muted@; font-weight: 600; letter-spacing: 0.5px;
-    background: @Header@; border: none; border-radius: @Radius@;
+    background: @SectionHeader@; border: none; border-radius: @Radius@;
     padding: 4px 6px; text-align: left;
   }
-  QToolButton#propertySectionTitle:hover { background: @Hover@; color: @Text@; }
-  QToolButton#propertySectionTitle:pressed { background: @Raised@; }
+  QToolButton#propertySectionTitle:hover { background: @Raised@; color: @Text@; }
+  QToolButton#propertySectionTitle:pressed { background: @Hover@; }
   QLabel { color: @Text@; background: transparent; }
   QLabel:disabled { color: @Muted@; }
   QSplitter::handle { background: @Separator@; }

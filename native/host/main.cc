@@ -8110,6 +8110,34 @@ state["roughness"]=layer.values.roughness;const int cx=set.texture_resolution/2,
       }catch(const std::exception &error){std::fprintf(stderr,"MATERIAL_FILTER_UI_FAILED %s\n",error.what());material_filter_test.stop();app.exit(1);}});
       material_filter_test.start();
     }
+    // A plain launch with nothing to open starts on the bundled Shaderball, so
+    // the app opens on something to paint instead of on an empty viewport. The
+    // New Project dialog does the work unshown, which is what keeps the mesh
+    // lookup, the validation and every default in one place. Demo and test
+    // launches always pass options of their own, and are left alone.
+    QTimer startup_project;
+    if(workspace&&!qEnvironmentVariableIsSet("BTS_HEADLESS_WORKSPACE")){
+      const auto given=parser.optionNames();
+      const bool plain=parser.positionalArguments().isEmpty()&&
+        std::all_of(given.begin(),given.end(),[](const QString &name){return name=="workspace"||name=="no-splash";});
+      if(plain){
+        startup_project.setSingleShot(true);
+        QObject::connect(&startup_project,&QTimer::timeout,window.get(),[&]{
+          if(document||opening_project||project_opener.pending())return; // Something else got there first.
+          try{
+            bts::NewProjectDialog dialog(workspace);
+            auto *ball=dialog.findChild<QPushButton *>("useShaderballMesh");
+            auto *create=dialog.findChild<QPushButton *>("createProject");
+            if(!ball||!ball->isEnabled()||!create)return; // No bundled mesh: leave the viewport empty.
+            ball->click();create->click();
+            if(const auto options=dialog.options())create_project(*options);
+          }catch(const std::exception &error){
+            workspace->append_console("Could not open the starting project: "+QString::fromUtf8(error.what()));
+          }
+        });
+        startup_project.start(400);
+      }
+    }
     const int result=app.exec();
     shutdown_ui();
     return ui_shutdown_failed?1:result;

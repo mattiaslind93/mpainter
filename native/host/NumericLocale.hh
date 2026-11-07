@@ -9,6 +9,7 @@
 #include <QPainter>
 #include <QStyleOptionSpinBox>
 #include <cmath>
+#include <functional>
 namespace bts {
 inline QLocale numeric_locale(){auto locale=QLocale::c();locale.setNumberOptions(QLocale::OmitGroupSeparator|QLocale::RejectGroupSeparator);return locale;}
 // Call before constructing QApplication or any UI; filenames, names and dates
@@ -41,6 +42,10 @@ class NumericSpinBox:public QDoubleSpinBox {
   // Draw the value as a filled track. Only meaningful for a bounded range.
   void set_track(bool on){track_=on;update();}
   bool track()const{return track_;}
+  // A drag across the field is one gesture, the way pressing and releasing a
+  // slider handle was. Undo scoping and the material preview hang off these,
+  // so a field that replaced a slider keeps the slider's grouping.
+  std::function<void()> drag_started,drag_finished;
   void setSuffix(const QString &suffix){QDoubleSpinBox::setSuffix(suffix);if(suffix.trimmed()=="%")setDecimals(2);}
  protected:
   QValidator::State validate(QString &text,int &position)const override{
@@ -67,6 +72,7 @@ class NumericSpinBox:public QDoubleSpinBox {
       auto *mouse=static_cast<QMouseEvent *>(event);
       const int dx=mouse->globalPosition().toPoint().x()-press_.x();
       if(!dragged_&&std::abs(dx)<QApplication::startDragDistance())return true;
+      if(!dragged_&&drag_started)drag_started();
       dragged_=true;
       // Across the width of the field is the whole range, which is how a drag
       // stays predictable; Shift slows it down for the last decimals.
@@ -78,7 +84,7 @@ class NumericSpinBox:public QDoubleSpinBox {
     }
     if(event->type()==QEvent::MouseButtonRelease&&pressed_){
       pressed_=false;
-      if(dragged_)return true;
+      if(dragged_){if(drag_finished)drag_finished();return true;}
       // A click with no drag is a request to type, so hand the field over.
       edit->setReadOnly(false);
       edit->setFocus(Qt::MouseFocusReason);

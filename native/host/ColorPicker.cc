@@ -260,6 +260,13 @@ void ColorPicker::set_working_space_label(const QString &space){
   auto *label=qobject_cast<QLabel *>(form->labelForField(linear_[0]->parentWidget()));label->setText(QString("Linear %1 / HDR").arg(space));
   synchronize();
 }
+void ColorPicker::set_compact(bool on){
+  if(compact_==on)return;
+  compact_=on;
+  swatch_->setSizePolicy(on?QSizePolicy::Fixed:QSizePolicy::Expanding,QSizePolicy::Fixed);
+  if(on){swatch_->setMinimumHeight(0);swatch_->setFixedSize(bts::theme::SwatchWidthPx,bts::theme::SwatchHeightPx);}
+  synchronize();
+}
 void ColorPicker::set_color(const PickerColor &value){if(value==color_)return;color_=value;synchronize();}
 void ColorPicker::begin(){if(gesture_)return;gesture_=true;old_=color_;if(started)started();}
 void ColorPicker::publish(){if(changed)changed(color_);}
@@ -268,7 +275,7 @@ void ColorPicker::edit(PickerColor value){begin();color_=value;synchronize();end
 void ColorPicker::accept_sample(const PickerColor &value){edit(value);}
 void ColorPicker::save_recent(){recent_.erase(std::remove(recent_.begin(),recent_.end(),color_),recent_.end());recent_.insert(recent_.begin(),color_);recent_.resize(8);QStringList entries;for(const auto &value:recent_){QStringList parts;for(float c:value)parts.append(QString::number(c,'g',9));entries.append(parts.join(','));}recent_colors().save(std::move(entries));{performance::Scope timing("color_recent_ui");synchronize();}}
 void ColorPicker::synchronize(){performance::Scope timing("color_picker_sync");
-  updating_=true;const auto requested=property("workingSpaceLabel").toString();const auto space=requested.isEmpty()?QStringLiteral("ACEScg"):requested;const auto display=picker_to_srgb(color_);const auto style=[](const QColor &color){return bts::theme::qss(QString("background:%1;color:%2;border:1px solid @Muted@;").arg(color.name(),color.lightnessF()>.5?bts::theme::Black:bts::theme::White));};swatch_->setText(display.name().toUpper());swatch_->setStyleSheet(style(display));new_swatch_->setStyleSheet(style(display));old_swatch_->setStyleSheet(style(picker_to_srgb(old_)));wheel_->set_color(display);{QSignalBlocker block(hex_);hex_->setText(display.name().toUpper());}
+  updating_=true;const auto requested=property("workingSpaceLabel").toString();const auto space=requested.isEmpty()?QStringLiteral("ACEScg"):requested;const auto display=picker_to_srgb(color_);const auto style=[](const QColor &color){return bts::theme::qss(QString("background:%1;color:%2;border:1px solid @Muted@;").arg(color.name(),color.lightnessF()>.5?bts::theme::Black:bts::theme::White));};swatch_->setText(compact_?QString():display.name().toUpper());swatch_->setToolTip(compact_?display.name().toUpper()+" — click to choose a colour":QString());swatch_->setStyleSheet(style(display));new_swatch_->setStyleSheet(style(display));old_swatch_->setStyleSheet(style(picker_to_srgb(old_)));wheel_->set_color(display);{QSignalBlocker block(hex_);hex_->setText(display.name().toUpper());}
   for(int c=0;c<3;++c){QSignalBlocker a(rgb_[c]),b(hsv_[c]),d(linear_[c]);rgb_[c]->setValue(c==0?display.redF():c==1?display.greenF():display.blueF());hsv_[c]->setValue(c==0?std::max(0.,double(display.hsvHueF()))*360:c==1?display.hsvSaturationF():display.valueF());linear_[c]->setValue(color_[c]);}
   const bool hdr=std::any_of(color_.begin(),color_.begin()+3,[](float v){return v<0||v>1;});hdr_->setText((hdr?QString("HDR retained in scene-linear %1. Wheel/hex show a clipped sRGB preview; advanced linear fields retain the stored values."):QString("Wheel, hex and RGB are sRGB. Stored color is scene-linear %1.")).arg(space));for(int i=0;i<8;++i)if(i<int(recent_.size())){recent_buttons_[i]->setStyleSheet(style(picker_to_srgb(recent_[i])));recent_buttons_[i]->setToolTip(picker_to_srgb(recent_[i]).name());}updating_=false;
 }

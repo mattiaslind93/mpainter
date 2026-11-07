@@ -18,6 +18,10 @@ class PropertySection final : public QWidget {
       :QWidget(parent),key_("properties/folded/"+QString(title).remove(' ').toLower())
   {
     setObjectName("propertySection"+QString(title).remove(' '));
+    // A section is exactly as tall as what is in it. Without this the scroll
+    // area stretches the column to its viewport and the spare pixels are shared
+    // out among the sections, so folding one changed the height of the rest.
+    setSizePolicy(QSizePolicy::Preferred,QSizePolicy::Maximum);
     auto *layout=new QVBoxLayout(this);
     layout->setContentsMargins(0,0,0,0);
     layout->setSpacing(theme::SpaceWide);
@@ -35,6 +39,7 @@ class PropertySection final : public QWidget {
     content_layout_=new QVBoxLayout(content_);
     content_layout_->setContentsMargins(0,0,0,0);
     content_layout_->setSpacing(theme::Space);
+    content_->setSizePolicy(QSizePolicy::Preferred,QSizePolicy::Maximum);
     layout->addWidget(content_);
     // Folding is only a convenience if it is remembered. A section that springs
     // back open on every selection is an extra click, not a simplification.
