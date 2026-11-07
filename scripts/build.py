@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Configure and build the native host with upstream precompiled libraries."""
-import argparse, os, pathlib, platform, shutil, subprocess
+import argparse, os, pathlib, platform, re, shutil, subprocess
 p=argparse.ArgumentParser()
 p.add_argument('--blender',required=True,type=pathlib.Path)
 p.add_argument('--build',required=True,type=pathlib.Path)
@@ -39,6 +39,17 @@ def compiler_args():
 has_cuda=bool(a.cuda) or bool(shutil.which('nvcc'))
 cuda_kernels='ON' if platform.system()=='Linux' and has_cuda else 'OFF'
 optix_device='ON' if platform.system()=='Linux' and a.optix else 'OFF'
+def report_unparsable_ninja(build):
+    """One stray dollar makes ninja refuse the entire graph, and all it reports
+    is a line number, which tells you nothing from a CI log. Print the lines it
+    would reject. ninja reads $$, $:, an escaped space, a line continuation,
+    ${name} and $name; a dollar before anything else is the error."""
+    graph=build/'build.ninja'
+    if not graph.exists():return
+    stray=re.compile(r'\$(?![$:{ \t\r\n]|[A-Za-z0-9_.-])')
+    for number,line in enumerate(graph.read_text(errors='replace').splitlines(),1):
+        if stray.search(line):print('build.ninja:%d: %s'%(number,line[:500]),flush=True)
+
 if platform.system()=='Darwin':
     raise SystemExit('macOS viewport unavailable: this host requires OpenGL 4.3; Blender 5.2 uses Metal on macOS. A Metal/Qt presentation port is required before packaging.')
 args=['cmake','-S',str(a.blender.absolute()),'-B',str(a.build.absolute()),'-G','Ninja',
@@ -60,5 +71,8 @@ else:
     for lang in ['C','CXX']:
         args+=['-DCMAKE_'+lang+'_FLAGS=-ffile-prefix-map='+str(root.parent)+'=.']
 subprocess.run(args,check=True)
-subprocess.run(['cmake','--build',str(a.build.absolute()),'--parallel',str(a.jobs),'--target','bts-host','blender'],check=True)
+try:
+    subprocess.run(['cmake','--build',str(a.build.absolute()),'--parallel',str(a.jobs),'--target','bts-host','blender'],check=True)
+except subprocess.CalledProcessError:
+    report_unparsable_ninja(a.build.absolute());raise
 subprocess.run(['cmake','--install',str(a.build.absolute()),'--config','Release'],check=True)
