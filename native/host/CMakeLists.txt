@@ -87,6 +87,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/FilledPathDemo.cc
   ${BTS_HOST_SOURCE_DIR}/RibbonDemo.cc
   ${BTS_HOST_SOURCE_DIR}/RibbonPanel.cc
+  ${BTS_HOST_SOURCE_DIR}/OverlayScroll.cc
   ${BTS_HOST_SOURCE_DIR}/PanelScrolling.cc
   ${BTS_HOST_SOURCE_DIR}/ScrollDemo.cc
   ${BTS_HOST_SOURCE_DIR}/AlembicDemo.cc

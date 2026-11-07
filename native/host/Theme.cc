@@ -285,6 +285,15 @@ void apply(QApplication &app)
   QScrollBar::handle { background: @ScrollHandle@; min-height: 20px; min-width: 20px; }
   QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }
   QScrollBar::add-page, QScrollBar::sub-page { background: transparent; }
+  /* A bar that floats over the panel instead of taking width from it: no
+     track, a rounded handle, and a little inset so it does not sit against the
+     panel edge. See OverlayScroll.hh. */
+  QScrollBar#overlayScrollBar:vertical { background: transparent; width: 10px; margin: 0; }
+  QScrollBar#overlayScrollBar::handle:vertical {
+    background: @ScrollHandle@; min-height: 24px; border-radius: 3px;
+    margin: 2px 2px 2px 3px;
+  }
+  QScrollBar#overlayScrollBar::handle:vertical:hover { background: @ScrollHover@; }
   QStatusBar { background: @Status@; color: @Text@; border-top: 1px solid @Separator@; }
   QStatusBar::item { border: none; }
   /* QMenu uses the palette and OptionStyle, including unchecked indicators. */

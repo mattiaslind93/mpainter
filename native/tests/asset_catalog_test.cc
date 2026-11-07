@@ -30,6 +30,20 @@ for(const auto &filename:{"material.btsnative.blend","material.btsuniform","Craf
  imported.search_terms={"builtin:standard-material"};
  assert(!bts::asset_in_category(imported,"Material presets"));
 }
+// A material the project copied in on apply stays off every shelf but Project:
+// AssetCategories.hh shelf_shows_asset.
+{bts::StudioAsset applied;applied.filename="material.btsnative.blend";applied.usages={"material"};applied.scope=bts::AssetScope::Project;
+ assert(bts::asset_in_category(applied,"Materials")&&bts::asset_in_category(applied,"All")&&bts::asset_in_category(applied,"Project"));
+ assert(bts::shelf_shows_asset(applied,"Project"));
+ assert(!bts::shelf_shows_asset(applied,"Materials")&&!bts::shelf_shows_asset(applied,"All"));
+ applied.scope=bts::AssetScope::User;
+ assert(bts::shelf_shows_asset(applied,"Materials")&&bts::shelf_shows_asset(applied,"All"));
+ bts::StudioAsset image;image.filename="image.png";image.usages={"texture"};image.scope=bts::AssetScope::Project;
+ assert(bts::shelf_shows_asset(image,"Textures")&&bts::shelf_shows_asset(image,"All"));}
+// Shelf rows with no resource kind behind them are greyed out, not hidden.
+{assert(bts::unsupported_shelf_categories().size()==6);
+ for(const auto &name:bts::unsupported_shelf_categories())assert(bts::shelf_category_names().contains(name)&&!bts::shelf_category_supported(name));
+ for(const auto &name:{"All","Project","Alphas","Grunges","Procedurals","Textures","Brushes","Materials","Material presets","Mask generators","Environments","Flattened layers","Baked"})assert(bts::shelf_category_supported(name));}
 bts::StudioAsset ordinary;ordinary.filename="image.png";ordinary.usages={"texture"};assert(!bts::asset_in_category(ordinary,"Material presets"));
 bts::StudioAsset layered;layered.usages={"smartmaterial"};assert(!bts::asset_in_category(layered,"Material presets")&&!bts::asset_in_category(layered,"Materials"));
 catalog.load_user_library();

@@ -22,6 +22,7 @@
 #include "SmartMaterialPreset.hh"
 #include "MaterialLayeringAuthoring.hh"
 #include "Preferences.hh"
+#include "OverlayScroll.hh"
 #include "PanelScrolling.hh"
 #include "DisplacementPanel.hh"
 #include <QTimer>
@@ -348,7 +349,6 @@ void align_property_rows(const std::vector<QWidget *> &groups,int trailing_width
   }
   for(auto *label:labels)label->setFixedWidth(widest);
 }
-void align_property_rows(QWidget *group,int trailing_width){align_property_rows(std::vector<QWidget *>{group},trailing_width);}
 
 QToolButton *tool(QWidget *parent, Glyph glyph, const QString &name, bool enabled = false)
 {
@@ -449,18 +449,21 @@ class ShelfCategoryDelegate final : public QStyledItemDelegate {
   void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override {
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing, true);
-    const bool selected = option.state & QStyle::State_Selected;
-    const bool hovered = option.state & QStyle::State_MouseOver;
+    // The row paints itself, so a disabled category has to be dimmed here:
+    // nothing else in the view would show it.
+    const bool enabled = option.state & QStyle::State_Enabled;
+    const bool selected = enabled && (option.state & QStyle::State_Selected);
+    const bool hovered = enabled && (option.state & QStyle::State_MouseOver);
     const QRectF cell = QRectF(option.rect).adjusted(1.5, 1.5, -1.5, -1.5);
-    const QColor bg = selected ? QColor(bts::theme::Selection) : (hovered ? QColor(bts::theme::Raised) : QColor(bts::theme::Surface));
+    const QColor bg = selected ? QColor(bts::theme::Selection) : (hovered ? QColor(bts::theme::Raised) : enabled ? QColor(bts::theme::Surface) : QColor(bts::theme::Canvas));
     const QColor border = selected ? QColor(bts::theme::Accent) : (hovered ? QColor(bts::theme::Border) : QColor(bts::theme::Separator));
     painter->setPen(QPen(border, 1.0));
     painter->setBrush(bg);
     painter->drawRoundedRect(cell, bts::theme::RadiusPx, bts::theme::RadiusPx);
 
     const QString text = index.data(Qt::DisplayRole).toString();
-    const QColor fg = selected ? QColor(bts::theme::Heading) : (hovered ? QColor(bts::theme::Heading) : QColor(bts::theme::Text));
-    const QColor ic = selected ? QColor(bts::theme::Heading) : (hovered ? QColor(bts::theme::Heading) : QColor(bts::theme::Muted));
+    const QColor fg = selected ? QColor(bts::theme::Heading) : (hovered ? QColor(bts::theme::Heading) : enabled ? QColor(bts::theme::Text) : QColor(bts::theme::Disabled));
+    const QColor ic = selected ? QColor(bts::theme::Heading) : (hovered ? QColor(bts::theme::Heading) : enabled ? QColor(bts::theme::Muted) : QColor(bts::theme::Disabled));
 
     const qreal ix = cell.left() + 6.0;
     const qreal iy = cell.center().y() - 5.0;
@@ -914,6 +917,14 @@ WorkspaceShell::WorkspaceShell(QWidget *viewport, Callbacks callbacks, QWidget *
   categories->setItemDelegate(new ShelfCategoryDelegate(categories));
   categories->setViewMode(QListView::IconMode);categories->setFlow(QListView::LeftToRight);categories->setWrapping(true);categories->setResizeMode(QListView::Adjust);categories->setMovement(QListView::Static);categories->setSpacing(0);categories->setGridSize(QSize(88,24));categories->setFixedHeight(126);
   categories->addItems(shelf_category_names());
+  // A row that can never hold anything is greyed out rather than left to be
+  // clicked for an empty grid. See unsupported_shelf_categories().
+  for(int row=0;row<categories->count();++row){
+    auto *item=categories->item(row);
+    if(shelf_category_supported(item->text()))continue;
+    item->setFlags(item->flags()&~(Qt::ItemIsEnabled|Qt::ItemIsSelectable));
+    item->setToolTip(item->text()+" — no resources of this kind yet");
+  }
   categories->setCurrentRow(0);
   categories->update_grid();
   shelf_body_layout->addWidget(categories);
@@ -1387,6 +1398,9 @@ WorkspaceShell::WorkspaceShell(QWidget *viewport, Callbacks callbacks, QWidget *
   properties_scroll->setObjectName("propertiesScroll");
   properties_scroll->setWidgetResizable(true);
   properties_scroll->setFrameShape(QFrame::NoFrame);
+  // Folding a section can take the column past the viewport. A bar that claims
+  // its own width would reflow every row in here on the way, so it floats.
+  bts::overlay_scrollbar(properties_scroll);
   auto *material = new QWidget(properties_scroll);
   material->setObjectName("materialProperties");
   auto *material_layout = column(material);material_body_=material;material_layout_=material_layout;
@@ -1903,11 +1917,11 @@ void WorkspaceShell::refresh_alpha_shelf()
     const bool presets=category_name=="Material presets";
     if(auto *note=empty->findChild<QLabel *>("emptyMaterialsNote"))note->setText(presets?"No dynamic material presets yet. Add a Mask Generator to a layer folder, then save the folder to your library.":"Your material library is empty. Poly Haven materials are CC0. Import or drop downloaded textures here.");
     if(auto *download=empty->findChild<QPushButton *>("downloadFreeMaterialsEmpty"))download->setVisible(!presets);
-    bool has_material=false;if(asset_catalog_)for(const auto &asset:asset_catalog_->assets())if(asset_in_category(asset,category_name)){has_material=true;break;}
+    bool has_material=false;if(asset_catalog_)for(const auto &asset:asset_catalog_->assets())if(shelf_shows_asset(asset,category_name)){has_material=true;break;}
     empty->setVisible(material_category&&!has_material);
     alpha_assets_->setVisible(!(material_category&&!has_material));
   }
-  if(asset_catalog_){const auto selected=alpha_assets_->currentItem()?alpha_assets_->currentItem()->data(Qt::UserRole).toString():alpha_assets_->property("lastSelectedAsset").toString();if(!selected.isEmpty())alpha_assets_->setProperty("lastSelectedAsset",selected);alpha_assets_->clear();const auto category=shelf_categories_->currentItem()->text();const AssetQuery query(alpha_search_);std::vector<const StudioAsset *> sorted;for(const auto &asset:asset_catalog_->assets())sorted.push_back(&asset);std::stable_sort(sorted.begin(),sorted.end(),[](auto a,auto b){return QString::compare(a->name,b->name,Qt::CaseInsensitive)<0;});for(const auto *asset:sorted){if(asset->filename=="baked.map"&&asset->search_terms.contains("baked-map"))continue;if(asset_scope_>=0&&int(asset->scope)!=asset_scope_)continue;if(!asset_in_category(*asset,category))continue;if(!query.matches(*asset))continue;const auto thumbnail=asset_thumbnail(*asset);auto *item=new QListWidgetItem(QIcon(QPixmap::fromImage(thumbnail.scaled(84,84,Qt::KeepAspectRatio,Qt::SmoothTransformation))),asset->name,alpha_assets_);const auto id=asset->id.toString();item->setData(Qt::UserRole,id);if(asset->scope!=AssetScope::Builtin)item->setFlags(item->flags()|Qt::ItemIsEditable);const int sequence_count=!asset->texture_files.empty()&&asset->texture_files.front().tile?int(asset->texture_files.size()):image_sequence_count(asset->bytes);item->setData(Qt::UserRole+20,sequence_count);bool compatible=smart_material_target_ready(*asset,asset_project_ready_,asset_smart_ready_)||((asset->smart_mask||is_spmsk_asset(*asset))&&asset_project_ready_)||bool(asset->brush_preset)||(asset->usages.contains("alpha")&&asset_paint_ready_)||(asset->material&&asset_project_ready_&&(!asset->projection_weave||asset_projection_ready_)&&(!asset_projection_ready_||!asset->fill_preset))||(asset->usages.contains("environment"))||(asset->usages.contains("procedural")&&asset_fill_ready_)||(asset->usages.contains("texture")&&asset_project_ready_);if(path_active_&&asset->usages.contains("alpha")&&((asset->alpha&&asset->alpha->kind==AlphaKind::Bitmap)||!asset->bytes.isEmpty()))compatible=false;item->setToolTip(asset->name+"\n"+asset->filename+(asset->path.isEmpty()?QString{}:"\n"+asset->path)+"\n"+asset_scope_name(asset->scope)+(asset->search_terms.contains("preview:color-metallic-roughness-sphere")?QString(" — Generated Color / Metallic / Roughness sphere; normal, bump and displacement not shown"):QString{})+(asset->search_terms.contains("builtin:native-smart-mask")?QString(" — Native GPU mask on a synthetic cavity/ridge sphere. White coverage brightens a neutral gray carrier; project coverage depends on its mesh maps."):QString{})+(sequence_count?QString(" — %1 UDIM images").arg(sequence_count):QString{})+(compatible?QString{}:" — Incompatible with current target"));if(!compatible)item->setFlags(item->flags()&~Qt::ItemIsEnabled);if(id==selected)alpha_assets_->setCurrentItem(item);}if((category=="Baked"||category=="All"||category=="Project")&&(asset_scope_<0||asset_scope_==int(AssetScope::Project))&&callbacks_.baked_maps)for(const auto &baked:callbacks_.baked_maps()){StudioAsset probe;probe.name=baked.name;probe.usages={"texture"};probe.search_terms={"baked-map"};if(!query.matches(probe))continue;auto *item=new QListWidgetItem(QIcon(QPixmap::fromImage(baked.thumbnail)),baked.name);int position=0;while(position<alpha_assets_->count()&&QString::compare(alpha_assets_->item(position)->text(),baked.name,Qt::CaseInsensitive)<=0)++position;alpha_assets_->insertItem(position,item);item->setData(Qt::UserRole,baked.id);item->setToolTip(baked.description.isEmpty()?baked.name+" — baked mesh map":baked.description);if(baked.id==selected)alpha_assets_->setCurrentItem(item);}return;}
+  if(asset_catalog_){const auto selected=alpha_assets_->currentItem()?alpha_assets_->currentItem()->data(Qt::UserRole).toString():alpha_assets_->property("lastSelectedAsset").toString();if(!selected.isEmpty())alpha_assets_->setProperty("lastSelectedAsset",selected);alpha_assets_->clear();const auto category=shelf_categories_->currentItem()->text();const AssetQuery query(alpha_search_);std::vector<const StudioAsset *> sorted;for(const auto &asset:asset_catalog_->assets())sorted.push_back(&asset);std::stable_sort(sorted.begin(),sorted.end(),[](auto a,auto b){return QString::compare(a->name,b->name,Qt::CaseInsensitive)<0;});for(const auto *asset:sorted){if(asset->filename=="baked.map"&&asset->search_terms.contains("baked-map"))continue;if(asset_scope_>=0&&int(asset->scope)!=asset_scope_)continue;if(!shelf_shows_asset(*asset,category))continue;if(!query.matches(*asset))continue;const auto thumbnail=asset_thumbnail(*asset);auto *item=new QListWidgetItem(QIcon(QPixmap::fromImage(thumbnail.scaled(84,84,Qt::KeepAspectRatio,Qt::SmoothTransformation))),asset->name,alpha_assets_);const auto id=asset->id.toString();item->setData(Qt::UserRole,id);if(asset->scope!=AssetScope::Builtin)item->setFlags(item->flags()|Qt::ItemIsEditable);const int sequence_count=!asset->texture_files.empty()&&asset->texture_files.front().tile?int(asset->texture_files.size()):image_sequence_count(asset->bytes);item->setData(Qt::UserRole+20,sequence_count);bool compatible=smart_material_target_ready(*asset,asset_project_ready_,asset_smart_ready_)||((asset->smart_mask||is_spmsk_asset(*asset))&&asset_project_ready_)||bool(asset->brush_preset)||(asset->usages.contains("alpha")&&asset_paint_ready_)||(asset->material&&asset_project_ready_&&(!asset->projection_weave||asset_projection_ready_)&&(!asset_projection_ready_||!asset->fill_preset))||(asset->usages.contains("environment"))||(asset->usages.contains("procedural")&&asset_fill_ready_)||(asset->usages.contains("texture")&&asset_project_ready_);if(path_active_&&asset->usages.contains("alpha")&&((asset->alpha&&asset->alpha->kind==AlphaKind::Bitmap)||!asset->bytes.isEmpty()))compatible=false;item->setToolTip(asset->name+"\n"+asset->filename+(asset->path.isEmpty()?QString{}:"\n"+asset->path)+"\n"+asset_scope_name(asset->scope)+(asset->search_terms.contains("preview:color-metallic-roughness-sphere")?QString(" — Generated Color / Metallic / Roughness sphere; normal, bump and displacement not shown"):QString{})+(asset->search_terms.contains("builtin:native-smart-mask")?QString(" — Native GPU mask on a synthetic cavity/ridge sphere. White coverage brightens a neutral gray carrier; project coverage depends on its mesh maps."):QString{})+(sequence_count?QString(" — %1 UDIM images").arg(sequence_count):QString{})+(compatible?QString{}:" — Incompatible with current target"));if(!compatible)item->setFlags(item->flags()&~Qt::ItemIsEnabled);if(id==selected)alpha_assets_->setCurrentItem(item);}if((category=="Baked"||category=="All"||category=="Project")&&(asset_scope_<0||asset_scope_==int(AssetScope::Project))&&callbacks_.baked_maps)for(const auto &baked:callbacks_.baked_maps()){StudioAsset probe;probe.name=baked.name;probe.usages={"texture"};probe.search_terms={"baked-map"};if(!query.matches(probe))continue;auto *item=new QListWidgetItem(QIcon(QPixmap::fromImage(baked.thumbnail)),baked.name);int position=0;while(position<alpha_assets_->count()&&QString::compare(alpha_assets_->item(position)->text(),baked.name,Qt::CaseInsensitive)<=0)++position;alpha_assets_->insertItem(position,item);item->setData(Qt::UserRole,baked.id);item->setToolTip(baked.description.isEmpty()?baked.name+" — baked mesh map":baked.description);if(baked.id==selected)alpha_assets_->setCurrentItem(item);}return;}
   alpha_assets_->clear();const auto category=shelf_categories_->currentItem()->text();if(category!="All"&&category!="Alphas")return;
   for(int index=0;index<int(alpha_resources_.size());++index) {
     const auto &alpha=alpha_resources_[index];const auto name=QString::fromStdString(alpha.name());if(!name.contains(alpha_search_,Qt::CaseInsensitive))continue;
