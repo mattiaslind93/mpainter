@@ -343,11 +343,19 @@ unfamiliar fields, where vertical space is not scarce.
 
 | Size | Height | Use |
 |---|---|---|
-| Dense | 18 | A control inside a list row, where the row height governs. |
-| Default | 22 | Every field, button, combo box and spin box in a panel. |
+| Dense | 16 | A control squeezed into a row that is already tight: a channel value field, a checkbox indicator. |
+| Default | 20 | Every field, button, combo box and spin box in a panel. |
 | Tool | 28 | Toolbar and tool rail buttons, which are square: 28 × 28. |
 
-Three values. The audit found 14, 18, 19, 20, 22, 24, 28, 30, 31, 32 and 36.
+A list row is not a control and has its own rhythm: **18** for a compact row
+(the shelf's category strip), **22** for an ordinary row, **26** for a row
+carrying a thumbnail.
+
+These are the values the stylesheet already used most, rather than a scale
+imposed on it — 20 appeared in three rules and 28 in one, so the odd 14 and 24
+moved to meet them rather than the other way round. `scripts/host/check-ui-metrics.py`
+enforces this, the type scale, the spacing scale and the radius against the
+stylesheet, the way `check-theme-colors.py` does for color.
 
 ### 6.2 Widths
 
@@ -450,7 +458,47 @@ when everything in it is hidden.
 This is a contained change: the controls, their callbacks and their behaviour
 all stay as they are. Only their parent changes.
 
-### 7.4 Tabs
+### 7.4 The property row
+
+Sectioning the panel does nothing for what is inside the sections, and that is
+where most of the crowding actually comes from. A numeric property is currently
+built as three stacked lines:
+
+```
+Subsurface Weight          ← caption, its own line
+0.0000                     ← value, its own line
+●──────────────────────    ← slider, its own line, full width
+```
+
+Three lines for one number, repeated down the panel. Twelve properties fill a
+screen and a half, and the slider ends up far from the value it drives. The
+brush properties use a second pattern — caption left, field right, then a
+full-width slider underneath — so the two do not even agree with each other.
+
+One pattern, two lines at most:
+
+```
+Subsurface Weight   [ 0.0000 ]      ← label left, field right, one line
+●────────────────────────────       ← slider only where dragging is the point
+```
+
+- Label left, field right, on one line. The field is right-aligned with every
+  other field in the section.
+- A slider is an addition to that line, not a replacement for it, and it only
+  appears where a value is explored by dragging. A value that is typed — an
+  IOR, a count, a size in centimetres — does not get one.
+- The value never gets a line of its own. A number floating above a slider is
+  not a label; it is the field, misplaced.
+- A property that is only a label and a static value ("Size Space: Object",
+  "Stamp blending: Normal") is still a row: label left, value right, same
+  columns as everything else.
+
+Sliders also carry most of the accent on screen right now — a full-width
+filled track for every property, several at once. The filled portion of a
+slider that merely shows a value is not "the active thing" in the sense of
+§3.4. It takes `Number`, and accent stays on the handle and on focus.
+
+### 7.5 Tabs
 
 Layers, Texture Sets and Properties are peers in one tab bar. Properties opens
 first, because it is what you look at while working.
@@ -500,7 +548,9 @@ Found while auditing the present build. Each is small on its own.
 | Type sizes | 10, 11, 12, 14, 17, 34 px, three without a role | Six roles, §2.2 |
 | Control heights | Eleven different values | Three, §6.1 |
 | Spacing | Nine different gap values | Six, §5.1 |
-| Properties panel | 16 panels, one column, 1 heading | Named sections, §7.3 |
+| Properties panel | 16 panels, one column, 1 heading | Named sections, §7.3 — done |
+| Property rows | Three stacked lines per number, two competing patterns | One row pattern, §7.4 |
+| Sliders | A full-width accent track on every property | Accent on the handle only, §7.4 |
 | `Muted` vs `Disabled` | Used interchangeably in places | §3.3 |
 | Surface grays | Nineteen, with no stated order | The ladder, §3.1 |
 | Shadows | None in the stylesheet, and QSS cannot carry one | §4.2 — on macOS the platform already does this; Linux and Windows need checking |
