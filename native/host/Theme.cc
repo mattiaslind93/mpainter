@@ -181,7 +181,7 @@ void apply(QApplication &app)
     margin-top: 12px; padding-top: 8px; }
   QGroupBox::title { color: @Heading@; subcontrol-origin: margin; left: 8px; padding: 0 4px; }
   QPushButton { background: @Raised@; color: @ButtonText@; border: 1px solid @Border@;
-    border-radius: @Radius@; padding: 4px 10px; min-height: 20px; }
+    border-radius: @Radius@; padding: 4px 8px; min-height: 20px; }
   QPushButton:hover { background: @Hover@; }
   QPushButton:pressed, QPushButton:checked { background: @Selection@; color: @Heading@; }
   QPushButton:default, QPushButton:focus { border-color: @Accent@; }
@@ -230,7 +230,7 @@ void apply(QApplication &app)
   QWidget#assetShelf, QWidget#textureSetPanel { background: @Canvas@; }
   QListWidget#shelfCategories { background: @Canvas@; border-bottom: 1px solid @Separator@; padding: 2px; }
   QListWidget#shelfCategories::item { background: transparent; border: none; padding: 0; }
-  QListWidget#shelfAssets { background: @Canvas@; padding: 1px; }
+  QListWidget#shelfAssets { background: @Canvas@; padding: 2px; }
   QListWidget#shelfAssets::item { padding: 0; border: 0; }
   QToolButton:disabled { color: @Muted@; background: transparent; border-color: transparent; }
   QToolButton:checked:disabled, QPushButton:checked:disabled,
@@ -292,10 +292,10 @@ void apply(QApplication &app)
     background: @Hover@; border: 1px solid @Hover@; padding: 4px 8px; text-align: left;
   }
   QPushButton#colorSwatch { min-height: 28px; border: 1px solid @Hover@; }
-  QToolButton#fillSettingsTab, QToolButton#fillMaterialTab { min-width: 28px; min-height: 24px; }
+  QToolButton#fillSettingsTab, QToolButton#fillMaterialTab { min-width: 28px; min-height: 20px; }
   QDoubleSpinBox#metallicControl, QDoubleSpinBox#roughnessControl, QDoubleSpinBox#materialBump,
   QDoubleSpinBox#materialDisplacement, QDoubleSpinBox#materialAmbientOcclusion, QDoubleSpinBox[userChannelValue="true"] {
-    background: transparent; border: none; padding: 0; min-height: 14px;
+    background: transparent; border: none; padding: 0; min-height: 16px;
   }
   QLineEdit, QTextEdit, QPlainTextEdit { background: @Input@; }
   QAbstractSpinBox, QDoubleSpinBox { background: @Number@; }
