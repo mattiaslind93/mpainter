@@ -219,7 +219,11 @@ void apply(QApplication &app)
   QWidget#dockHeader { background: @Surface@; border-bottom: 1px solid @Separator@; }
   QLabel#dockTitle { color: @Heading@; font-size: 11px; font-weight: 600; }
   QLabel#sectionTitle { color: @Heading@; font-weight: 600; }
-  QLabel#propertySectionTitle { color: @Muted@; font-weight: 600; letter-spacing: 0.5px; }
+  QLabel#propertySectionTitle, QToolButton#propertySectionTitle {
+    color: @Muted@; font-weight: 600; letter-spacing: 0.5px;
+    background: transparent; border: none; padding: 0; text-align: left;
+  }
+  QToolButton#propertySectionTitle:hover { color: @Text@; }
   QLabel { color: @Text@; background: transparent; }
   QLabel:disabled { color: @Muted@; }
   QSplitter::handle { background: @Separator@; }

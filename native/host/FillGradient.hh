@@ -18,6 +18,8 @@ class FillGradient final : public QWidget {
     QString printed = QLocale::c().toString(value_->value(), 'f', value_->decimals());
     return printed;
   }
+  // Where the ramp starts inside the widget. Small, so the handle is not clipped.
+  static constexpr int bar_top = 2;
   void place(qreal x) {
     const int radius = 7;
     const double span = std::max(1, width() - 2 * radius);
@@ -28,13 +30,15 @@ class FillGradient final : public QWidget {
   FillGradient(QSlider *slider, QDoubleSpinBox *value, QWidget *parent) : QWidget(parent), slider_(slider), value_(value) {
     new SliderHandleGeometry(this, [this] {
       if (!slider_->isEnabled()) return QList<QRectF>{};
-      QFont font; font.setPixelSize(11); const QFontMetrics metrics(font);
       const double t = double(slider_->value()-slider_->minimum()) / std::max(1,slider_->maximum()-slider_->minimum());
-      const QPointF center(7+t*std::max(1,width()-14), metrics.height()+10);
+      const QPointF center(7+t*std::max(1,width()-14), bar_top+7);
       return QList<QRectF>{QRectF(center-QPointF(7.75,7.75),QSizeF(15.5,15.5))};
     });
     setProperty("fillOnly", true);
-    setMinimumHeight(36);
+    // The value used to be printed above the ramp, which cost a line of height
+    // and repeated the number already in the field beside the caption.
+    // docs/design/ui.md §7.4. It stays in the accessible name.
+    setMinimumHeight(bar_top + 16);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     setCursor(Qt::PointingHandCursor);
     hide();
@@ -47,16 +51,10 @@ class FillGradient final : public QWidget {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
     if (!slider_->isEnabled()) painter.setOpacity(.45);
-    const QString printed = text();
-    setAccessibleName(printed);
-    QFont font = painter.font();
-    font.setPixelSize(11);
-    painter.setFont(font);
-    const QFontMetrics metrics(font);
+    setAccessibleName(text());
     const int radius = 7;
     const int bar_h = 8;
-    const int bar_y = metrics.height() + 4;
-    const QRect bar(radius, bar_y + radius - bar_h / 2, std::max(1, width() - 2 * radius), bar_h);
+    const QRect bar(radius, bar_top + radius - bar_h / 2, std::max(1, width() - 2 * radius), bar_h);
     QLinearGradient gradient(bar.topLeft(), bar.topRight());
     gradient.setColorAt(0, Qt::black);
     gradient.setColorAt(1, Qt::white);
@@ -66,9 +64,6 @@ class FillGradient final : public QWidget {
     const double span = std::max(1, slider_->maximum() - slider_->minimum());
     const double t = std::clamp((slider_->value() - slider_->minimum()) / span, 0.0, 1.0);
     const QPointF center(radius + t * std::max(1, width() - 2 * radius), bar.center().y());
-    painter.setPen(QColor(bts::theme::Heading));
-    const int text_w = metrics.horizontalAdvance(printed);
-    painter.drawText(QPointF(std::clamp(center.x() - text_w / 2.0, 0.0, double(std::max(0, width() - text_w))), metrics.ascent()), printed);
     painter.setPen(QPen(QColor(bts::theme::Surface), 1.5));
     painter.setBrush(QColor(bts::theme::Heading));
     painter.drawEllipse(center, radius, radius);

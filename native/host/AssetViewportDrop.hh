@@ -6,6 +6,7 @@
 #include <QDragLeaveEvent>
 #include <QDropEvent>
 #include <QMimeData>
+#include <QTimer>
 #include <QPainter>
 #include <QPainterPath>
 #include <QVector3D>
@@ -93,7 +94,15 @@ class AssetViewportDrop final : public QObject {
     const auto previous=hovered_;hovered_=pick?pick(drop->position()):std::nullopt;
     if(!hovered_){clear();drop->ignore();return true;}
     drop->setDropAction(Qt::CopyAction);drop->accept();
-    if(event->type()==QEvent::Drop){const auto hit=*hovered_;clear();if(apply)apply(id,hit);return true;}
+    if(event->type()==QEvent::Drop){
+      const auto hit=*hovered_;clear();
+      // Applying the asset is slow and spins its own event loops. Doing that
+      // inside the drop handler keeps the platform's drag session alive across
+      // all of it, and on macOS the session's autorelease pool is then popped
+      // over objects the work has already released. Let the drop return first.
+      if(apply)QTimer::singleShot(0,this,[this,id,hit]{if(apply)apply(id,hit);});
+      return true;
+    }
     if(previous==hovered_&&highlight_->isVisible())return true;
     highlight_->setGeometry(view_->rect());highlight_->silhouette=silhouette?silhouette(*hovered_):QPainterPath{};highlight_->clip=clip?clip():QRectF{};
     highlight_->label=QString::fromStdString(hovered_->name);highlight_->show();highlight_->raise();highlight_->update();return true;
