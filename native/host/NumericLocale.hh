@@ -31,7 +31,12 @@ class NumericSpinBox:public QDoubleSpinBox {
       edit->setStyleSheet("background: transparent;");
       connect(this,&QAbstractSpinBox::editingFinished,this,[edit]{edit->setReadOnly(true);edit->deselect();});
     }
-    setCursor(Qt::SizeHorCursor);
+    // No per-widget cursor here. macOS registers a cursor rect per widget, and
+    // with hundreds of these built and torn down while a project is created,
+    // that over-releases inside Cocoa's autorelease pool and takes the process
+    // with it. Bisected against the released build, which does not crash on the
+    // same New Project flow. The filled track is what says the field is
+    // draggable; Blender does not change the cursor over a number field either.
   }
   // Draw the value as a filled track. Only meaningful for a bounded range.
   void set_track(bool on){track_=on;update();}
