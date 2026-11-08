@@ -39,6 +39,24 @@ def compiler_args():
 has_cuda=bool(a.cuda) or bool(shutil.which('nvcc'))
 cuda_kernels='ON' if platform.system()=='Linux' and has_cuda else 'OFF'
 optix_device='ON' if platform.system()=='Linux' and a.optix else 'OFF'
+def install_only_targets(build):
+    """Blender's install rules ship a couple of modules that nothing links
+    against, because the glTF add-on loads them at runtime. A build limited to
+    bts-host and blender never produces them, and the install step then stops
+    on the first one missing. Read them out of the generated install scripts
+    rather than naming them here, so a module added upstream is picked up too,
+    and keep only names this configuration really has as targets: which of
+    them exist depends on the platform's precompiled libraries."""
+    graph=build/'build.ninja'
+    if not graph.exists():return []
+    aliases=set(re.findall(r'(?m)^build ([^:$ ]+): phony',graph.read_text(errors='replace')))
+    found=[]
+    for script in sorted(build.rglob('cmake_install.cmake')):
+        for stem in re.findall(r'([A-Za-z0-9_.\-]+)\.(?:so|dylib|dll)',script.read_text(errors='replace')):
+            for name in (stem,stem[3:] if stem.startswith('lib') else stem):
+                if name in aliases and name not in found:found.append(name)
+    return found
+
 def report_unparsable_ninja(build):
     """One stray dollar makes ninja refuse the entire graph, and all it reports
     is a line number, which tells you nothing from a CI log. Print the lines it
@@ -71,8 +89,10 @@ else:
     for lang in ['C','CXX']:
         args+=['-DCMAKE_'+lang+'_FLAGS=-ffile-prefix-map='+str(root.parent)+'=.']
 subprocess.run(args,check=True)
+targets=['bts-host','blender']+install_only_targets(a.build.absolute())
+print('Building: '+' '.join(targets),flush=True)
 try:
-    subprocess.run(['cmake','--build',str(a.build.absolute()),'--parallel',str(a.jobs),'--target','bts-host','blender'],check=True)
+    subprocess.run(['cmake','--build',str(a.build.absolute()),'--parallel',str(a.jobs),'--target',*targets],check=True)
 except subprocess.CalledProcessError:
     report_unparsable_ninja(a.build.absolute());raise
 subprocess.run(['cmake','--install',str(a.build.absolute()),'--config','Release'],check=True)
