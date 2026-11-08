@@ -184,13 +184,13 @@ class CyclesUdimArtist final:public QObject {
   set.precision[0]=ChannelPrecision::RGB32F;set.precision[2]=ChannelPrecision::L32F;
   // The real insertion API requires an existing selection. Keep the newly
   // inserted fill only after that API has selected it, removing the opaque base.
-  TextureDocument::add_fill(set);auto fill=std::move(TextureDocument::layer(set,set.selected_layer));set.layers.clear();fill.parent={};fill.depth=0;set.layers.push_back(std::move(fill));
+  TextureDocument::add_fill(set);auto fill=std::move(TextureDocument::layer(set,set.selected_layer));set.layers.clear();fill.parent=QUuid();fill.depth=0;set.layers.push_back(std::move(fill));
   auto &layer=TextureDocument::layer(set,set.selected_layer);layer.name="BA native WorldHeight masked fill";layer.channels={true,false,true,false,false};layer.ao_enabled=false;layer.values.base_color=expected;layer.values.roughness=roughness;
   TextureDocument::add_mask(set,0);MaskEffect generator;generator.kind=MaskEffectKind::Generator;generator.generator=1;generator.axis=2;generator.curve=0;generator.contrast=1;generator.bias=0;generator.opacity=1;layer.mask->effects={generator};
   MeshMap position;position.name="BA independently specified Position input";
   for(int tile:{1001,1002}){std::vector<float> rgba(32*32*4);for(int y=0;y<32;++y)for(int x=0;x<32;++x){const auto at=(y*32+x)*4;rgba[at+2]=tile==1001?.125f+.75f*float(x)/31.f:.1875f+.625f*float(y)/31.f;rgba[at+3]=1;}
    auto pixels=std::make_shared<MeshMapPixels>(32,std::move(rgba));position.tiles[tile]=MeshMapPlane{32,pixels->hash,std::move(pixels),32};}
-  set.mesh_maps[5]=std::move(position);set.selected_mask=false;set.selected_effect={};prepared=true;
+  set.mesh_maps[5]=std::move(position);set.selected_mask=false;set.selected_effect=QUuid();prepared=true;
  });
   require(prepared,"BA fixture callback was rejected before completion");
   const auto committed=state(true);QFile file(output+"/fixture-committed.json");require(file.open(QIODevice::WriteOnly),"Cannot save committed fixture evidence");file.write(QJsonDocument(committed).toJson());file.close();

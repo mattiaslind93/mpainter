@@ -112,7 +112,7 @@ QJsonObject verify(Harness &h,const QUuid &id,bool linear,bool repeat,bool parti
 }
 void select(Harness &h,const QUuid &id){
  for(auto &layer:h.set().layers)if(layer.fill.native_material)layer.visible=layer.id==id;
- h.set().selected_layer=id;h.set().selected_mask=false;h.set().selected_effect={};h.publish();
+ h.set().selected_layer=id;h.set().selected_mask=false;h.set().selected_effect=QUuid();h.publish();
 }
 QJsonObject cold(Harness &h){
  QFile oracle(h.directory+"/image-restart-oracle.json");require(oracle.open(QIODevice::ReadOnly),"Image Height restart oracle is missing");const auto expected=QJsonDocument::fromJson(oracle.readAll()).object();

@@ -17,7 +17,7 @@ if (parser.isSet("gui-fix-demo") && workspace && qEnvironmentVariableIsSet("BTS_
       fill.parent=folder.id;fill.depth=1;fill.channels={true,false,true,false,false};
       fill.values.base_color={.025f,.34f,.28f,1};fill.values.roughness=.45f;
       if(dynamic){fill.mask.emplace();bts::MaskEffect effect;effect.kind=bts::MaskEffectKind::Generator;effect.generator=1;effect.optional_inputs=true;effect.surface_fallback=true;fill.mask->effects.push_back(effect);}
-      set.layers={fill,folder};set.selected_layer=folder.id;set.selected_effect={};set.selected_mask=false;
+      set.layers={fill,folder};set.selected_layer=folder.id;set.selected_effect=QUuid();set.selected_mask=false;
       bts::StudioAsset asset;asset.name=QString::fromStdString(folder.name);
       asset.filename=asset.id.toString(QUuid::WithoutBraces)+".btsmaterial";
       asset.usages={"smartmaterial"};asset.scope=bts::AssetScope::User;

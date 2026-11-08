@@ -1,12 +1,14 @@
 # Experimental Windows x64 build from Linux
 
-This is a local clang-cl/lld cross-build experiment, not a verified Windows release recipe.
-It targets mPainter 0.9.0-alpha using the Microsoft C++ ABI, the pinned Blender 5.2
+This is a local clang-cl/lld cross-build, not yet a verified Windows release recipe;
+[the lessons below](#lessons-from-the-verified-092-build) record what has been verified and the known gaps.
+It targets the mPainter version in `pyproject.toml` using the Microsoft C++ ABI, the pinned Blender 5.2
 Windows libraries, and Qt 6.8.3 `win64_msvc2022_64`. See `~/mpainter-work/REPORT-win.md`
 and `~/mpainter-work/REPORT-win2.md` for the actual outcomes and logs. No script pushes, publishes, or uploads files.
 
 The first attempt stopped at ambiguous UUID assignments. The follow-up source port
-uses explicit UUID resets, removes obsolete shared-pointer APIs, and addresses
+uses explicit UUID resets (`id = QUuid()`, never `id = {}`; `build.sh` runs
+`scripts/host/check-windows-uuid-resets.py` on the snapshot before compiling), removes obsolete shared-pointer APIs, and addresses
 Windows file replacement, compiler checks and dependency discovery. The follow-up linked and installed the application, passed Wine CPU smoke and
 component checks, and captured its main window under Xvfb/llvmpipe. This still
 does not establish a verified real-Windows release.
@@ -128,13 +130,18 @@ After a completed build and install:
 
 ```sh
 python3 scripts/cross-windows/package.py
-bash scripts/cross-windows/smoke.sh "$MP_WIN_WORK/dist/mPainter-0.9.0-alpha-windows-x64"
-bash scripts/cross-windows/capture.sh "$MP_WIN_WORK/dist/mPainter-0.9.0-alpha-windows-x64"
+version=$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml | head -1)
+bash scripts/cross-windows/smoke.sh "$MP_WIN_WORK/dist/mPainter-$version-windows-x64"
+bash scripts/cross-windows/capture.sh "$MP_WIN_WORK/dist/mPainter-$version-windows-x64"
 ```
 
 `package.py` stages runtime resources, Qt plugins, release CRT and dependency
 licenses, checks required static DLL closure (with explicit optional GPU imports), and writes the ZIP plus its
-`.zip.sha256` file locally. It refuses to overwrite existing outputs. `smoke.sh`
+`.zip.sha256` file locally. It refuses to overwrite existing outputs. The package is
+named after the `pyproject.toml` version of the built snapshot; packaging stops if
+this checkout is at another version, if `mPainter.exe` carries a different VERSIONINFO
+(`pe_version.py` reads it), or if a Mesa software-rendering DLL such as
+`opengl32.dll` or `libgallium_wgl.dll` was staged. Keep those in VM test folders only. `smoke.sh`
 checks static imports, `--version` and `--cpu-workspace-shutdown-test`; there is
 no application `--self-test` option. `capture.sh` attempts the main window using
 Wine's Windows Qt plugin inside private Xvfb and software OpenGL, saving
@@ -146,6 +153,72 @@ The existing `scripts/package-windows.ps1` remains the native Windows packaging
 recipe. Real Windows/NTFS durability, GPU drivers, tablet input and interactive
 painting must be validated separately. Wine checks cover only the paths actually
 exercised; see the dated local report for evidence and remaining blockers.
+
+## Lessons from the verified 0.9.2 build
+
+On 8 November 2026, commit `bf17b14` completed the full cross-build in `bts-build`.
+`mPainter.exe` carried FileVersion and ProductVersion 0.9.2, and `source-head.txt`
+matched the commit. `package.py` produced a ZIP with SHA-256
+`44668e92ea03c7ffd7f726b6d8169be0fecfd702a0cff0eb0a8f0d5ce2c1e8f0`. In a Windows 11
+QEMU/KVM VM, with Mesa llvmpipe copied into a separate test folder, the package
+started, showed 0.9.2 in About, painted, hid and added layers, saved and reopened a
+project, exported textures and shut down cleanly. No real GPU was tested. The ZIP
+contained no Mesa DLL, and `mPainter.exe` did not import `tbbmalloc_proxy.dll`
+(the DLL file itself is still shipped).
+
+**QUuid resets.** Windows Qt declares `QUuid(const GUID &)` and
+`QUuid &operator=(const GUID &)` under `Q_OS_WIN` in `quuid.h`. `GUID` is an
+aggregate, so `id = {}` matches both assignment operators and fails under
+clang-cl/MSVC, while Linux and macOS accept it. This stopped the build at
+`native/host/Res8kWitness.inc` (Ninja step 207/252). Write `id = QUuid()`.
+Declarations such as `QUuid id{}` or `QUuid id = {}` do not assign and stay safe.
+`scripts/host/check-windows-uuid-resets.py` runs in `build.sh` before configuring,
+in `verify-cpu.py` and in the Windows CI job; `reproduce-uuid.sh` demonstrates the
+ambiguity against the real Windows Qt headers. When the checker misses a pattern,
+add a fixture to `test-windows-uuid-resets.py` and extend the checker; never bypass it.
+
+**Version.** `pyproject.toml` is the only version source. CMake generates
+`mpainter-version.h` for `packaging/mpainter.rc`, and `package.py` derives
+`mPainter-<version>-windows-x64`. It refuses a checkout/snapshot version mismatch
+and an `mPainter.exe` whose VERSIONINFO differs (read by `pe_version.py`). Before
+handing off a package, confirm that `source-head.txt` is the intended commit and
+check the PE version, the ZIP name, its `.zip.sha256` file and the About dialog.
+Do not hardcode a version in scripts or examples.
+
+**Dependencies.** A complete DLL closure does not prove that the process starts:
+importing `tbbmalloc_proxy.dll` from `mPainter.exe` crashed before `main()`
+(fixed in `de6fa19`). `prepare-cross.py` keeps the proxy out of the host link and
+`check-pe.py` rejects the import. `package.py` refuses Mesa software-rendering
+DLLs. Copy `opengl32.dll`, `libgallium_wgl.dll` and similar files only into a
+separate VM test copy, never into the package stage or `dist` folder.
+
+**Incremental rebuilds.** `prepare-source.sh` is first-time preparation. Afterwards
+`prepare-cross.py` has patched the Blender copy and `fix-library-case.py` has added
+case aliases to the library checkout, so rerunning it refuses or mixes states. To
+build a new commit in a prepared workspace, run inside the container:
+
+```sh
+source scripts/cross-windows/env.sh
+python3 scripts/cross-windows/snapshot-source.py --ref <commit>
+python3 scripts/cross-windows/verify-source.py
+MP_WIN_JOBS=2 bash scripts/cross-windows/build.sh
+python3 scripts/cross-windows/package.py
+```
+
+Use a fresh workspace when a pristine preparation is needed.
+`scripts/host/test-windows-release-gates.py` (run by `verify-cpu.py`) fails if the
+UUID check, the `tbbmalloc_proxy.dll` rejection or the Mesa DLL refusal is removed,
+or if a script here hardcodes a package version.
+
+**Evidence levels.** Wine/Xvfb checks (`component-tests.sh`, `smoke.sh`,
+`capture.sh`), a real Windows VM with test-only software OpenGL, and Windows on
+real GPU hardware are separate results; none implies the next. Report each level
+separately, together with the known gaps.
+
+Known gaps at `bf17b14`: the Qt TLS plugin `tls/qschannelbackend.dll` is not
+packaged, so HTTPS material downloads fail in the app. The fill-transform assertion
+seen under Wine, the branding hang and the duplicated Help menu remain open. Real
+GPU and tablet behavior were not tested, so this is not a verified release.
 
 ## Microsoft SDK and runtime terms
 
