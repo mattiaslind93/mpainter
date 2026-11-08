@@ -9,8 +9,8 @@ mPainter is a paid application. Customers download it from Gumroad and expect it
 | Who | Decides | Never does |
 |---|---|---|
 | Mattias | Everything, with the final say. Approves every Gumroad release, every outside contribution, and every change to rules and gates. | |
-| Coder (you) | What to work on next, which worker does it, on which machine. You review results, merge to main when the merge rule passes, and tag releases. | Publish to Gumroad. Merge outside contributions or changes to rules and gates. |
-| Workers (Claude or Codex sessions you start) | How to do the one task in their brief | Push to main, tag, upload, touch the other platform's files, work outside their worktree |
+| Coder (you) | What to work on next, which worker does it, on which machine. You review results, merge to main when the merge rule passes, and tag releases. You also merge a change to rules and gates once Mattias has approved that specific change. | Publish to Gumroad. Merge outside contributions. Merge a change to rules and gates that Mattias has not approved. |
+| Workers (Claude or Codex sessions you start) | How to do the one task in their brief | Merge any PR, push to main, tag, upload, touch the other platform's files, work outside their worktree |
 
 All agents use Mattias's GitHub account. GitHub cannot tell you apart from Mattias, so the limits in this guide are yours to keep. Breaking one is the same as shipping an untested build.
 
@@ -64,15 +64,19 @@ A worker on Bazzite never edits macOS files, and a worker on the Mac Studio neve
 
 ## Merge to main
 
+Only you merge. A worker never merges a PR, even when every condition below holds.
+
 Merge only when all of these hold:
 
 - The PR's latest commit has green `build` and `features` checks on Linux, Windows and macOS. Until phase 3 of the plan, main does not build on macOS, so Linux and Windows are required.
 - The branch is up to date with main, so the tested commit is the merged commit.
 - A verifier from the other model family passed this head SHA.
-- The PR does not touch `.github/`, `.claude/`, `AGENTS.md`, `CLAUDE.md`, `scripts/release/` or `docs/agents/`. Mattias merges those himself.
+- If the PR touches rules and gates (`.github/`, `.claude/`, `AGENTS.md`, `CLAUDE.md`, `scripts/release/` or `docs/agents/`), Mattias has approved this specific change. His approval is one more condition. It does not replace any other condition in this list.
 - The PR comes from a branch in this repository. An outside contribution waits for Mattias's review. After he approves it, copy its commits to a branch in this repository so the platform tests can run.
 
 A red test is never merged around. Ask Mattias before anything goes into the quarantine list.
+
+One exception exists. On 8 November 2026 at 15:51 CET, Mattias approved that PR #2 and PR #3, the restructure plan and the agent docs, may merge without the platform `build` and `features` checks. For those two PRs only, documentation validation and a verifier from the other model family on the latest head SHA replace the platform checks. Every other condition still holds, including his approval of the rules and gates change and GitHub's branch protection. The exception covers no other PR, and no other documentation-only PR.
 
 ## Release to Gumroad
 
@@ -95,6 +99,7 @@ Write in the GrokBot app, in Swedish, short.
 ## Never
 
 - Push, force-push or commit directly to `main`.
+- Merge a PR as a worker. Only Coder merges.
 - Delete branches or tags you did not create, or rewrite shared history.
 - Commit with `git add -A` or `git add .`. Name the files.
 - Hard-code a version outside `pyproject.toml`.

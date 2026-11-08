@@ -48,18 +48,22 @@ Alla agenter använder Mattias GitHub-konto (beslut 8 nov). GitHub kan därför 
 | Roll | Får | Får inte | Vad som håller det |
 |---|---|---|---|
 | Mattias | Har sista ordet. Godkänner varje Gumroad-release, externa bidrag och ändringar i regler och grindar. | | Enda godkännare i environment `release` |
-| Coder (GrokBot) | Skriver uppdrag, startar workers på Bazzite och Mac Studion, mergar till main när alla kontroller är gröna, taggar en release | Släppa till Gumroad. Merga externa bidrag eller ändringar i regler och grindar. | `author-gate` för externa PR:er. Resten hålls av Coders instruktioner. |
-| Worker (Claude eller Codex) | En plattform, en worktree, en branch. Pushar sin branch och öppnar PR. | Pusha main, tagga, ladda upp, ändra i den andra plattformens mappar | Egen användare på maskinen, deny-hookar för Claude, briefen för Codex |
+| Coder (GrokBot) | Skriver uppdrag, startar workers på Bazzite och Mac Studion, mergar till main när alla kontroller är gröna, mergar en ändring i regler och grindar när Mattias har godkänt just den ändringen, taggar en release | Släppa till Gumroad. Merga externa bidrag. Merga en ändring i regler och grindar som Mattias inte har godkänt. | `author-gate` för externa PR:er. Resten hålls av Coders instruktioner. |
+| Worker (Claude eller Codex) | En plattform, en worktree, en branch. Pushar sin branch och öppnar PR. | Merga PR:er, pusha main, tagga, ladda upp, ändra i den andra plattformens mappar | Egen användare på maskinen, deny-hookar för Claude, briefen för Codex |
 | Extern bidragsgivare | Öppna PR från en fork | Köra kod på Bazzite eller Mac Studion. Bli mergad utan Mattias godkännande. | `author-gate`. Forkar når aldrig self-hosted runners. |
 
 ### Merge till main
 
+Bara Coder mergar. En worker mergar aldrig en PR.
+
 - PR:ens senaste commit har gröna kontroller: `checks`, plus `build` och `features` för Linux, Windows och macOS. Fram till fas 3 bygger main inte på Mac, så då krävs Linux och Windows.
 - Branchen är uppdaterad mot main, så att det som testades är exakt det som mergas.
 - `author-gate` är grön. Den godkänner en PR från Mattias konto. En PR från någon annan kräver Mattias review på senaste commiten. Grinden körs som `pull_request_target` och läser ingen kod från PR:en.
-- PR:er som rör regler och grindar (`.github/`, `.claude/`, `AGENTS.md`, `CLAUDE.md`, `scripts/release/`, `docs/agents/`) mergar Mattias själv.
+- En PR som rör regler och grindar (`.github/`, `.claude/`, `AGENTS.md`, `CLAUDE.md`, `scripts/release/`, `docs/agents/`) kräver att Mattias har godkänt just den ändringen. Därefter mergar Coder den när alla andra villkor här är uppfyllda. Godkännandet ersätter inget av dem.
 - Ingen force-push och ingen radering av main.
 - Ett externt bidrag som Mattias har godkänt läggs av Coder på en branch i repot, så att plattformstesterna kan köras.
+
+Ett undantag finns. Den 8 november 2026 kl. 15:51 CET godkände Mattias att PR #2 och PR #3 (planen och agentdokumenten) mergas utan plattformskontrollerna `build` och `features`. För just de två PR:erna ersätts plattformskontrollerna av dokumentationsvalidering och en verifierare från den andra modellfamiljen på senaste head-SHA. Alla andra villkor gäller, också hans godkännande av ändringen i regler och grindar och GitHubs skydd av main. Undantaget gäller ingen annan PR, inte heller andra PR:er med bara dokumentation.
 
 ### Konton och maskiner
 
@@ -142,7 +146,7 @@ Står först i rotens `AGENTS.md`.
 5. Ingen fix lämnas lokalt. Pusha till en branch och öppna en PR samma dag.
 6. Produktionskod inkluderar aldrig harness-kod.
 7. Bara `native/host/blender/` inkluderar Blender-headers.
-8. Inget når main utan gröna kontroller på alla plattformar.
+8. Inget når main utan gröna kontroller på alla plattformar. Enda undantaget är PR #2 och PR #3, se Merge till main.
 9. Inget når Gumroad utan Mattias godkännande.
 
 ## Kod och git
@@ -259,6 +263,8 @@ Beslutat 8 november av Mattias:
 - Windows testas bara i VM:en.
 - Ett repo med tre lager.
 - Ett GitHub-konto för allt.
+- Coder mergar en ändring i regler och grindar efter att Mattias har godkänt just den ändringen, när alla andra villkor för merge är uppfyllda. Workers mergar aldrig.
+- PR #2 och PR #3 får mergas efter dokumentationsvalidering och en verifierare från den andra modellfamiljen, utan plattformsbyggen (kl. 15:51 CET). Det gäller bara de två PR:erna.
 
 Öppna, med rekommendation:
 
