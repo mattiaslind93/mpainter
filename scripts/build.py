@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Configure and build the native host with upstream precompiled libraries."""
-import argparse, os, pathlib, platform, re, shutil, subprocess
+import argparse, collections, os, pathlib, platform, re, shutil, subprocess
 p=argparse.ArgumentParser()
 p.add_argument('--blender',required=True,type=pathlib.Path)
 p.add_argument('--build',required=True,type=pathlib.Path)
@@ -40,22 +40,48 @@ has_cuda=bool(a.cuda) or bool(shutil.which('nvcc'))
 cuda_kernels='ON' if platform.system()=='Linux' and has_cuda else 'OFF'
 optix_device='ON' if platform.system()=='Linux' and a.optix else 'OFF'
 def install_only_targets(build):
-    """Blender's install rules ship a couple of modules that nothing links
-    against, because the glTF add-on loads them at runtime. A build limited to
-    bts-host and blender never produces them, and the install step then stops
-    on the first one missing. Read them out of the generated install scripts
-    rather than naming them here, so a module added upstream is picked up too,
-    and keep only names this configuration really has as targets: which of
-    them exist depends on the platform's precompiled libraries."""
+    """Blender installs files that nothing in our chosen targets produces: the
+    glTF add-on's Draco and meshopt bridges, Cycles' compiled OSL shaders, and
+    whatever upstream adds next. A build limited to bts-host and blender leaves
+    them out and the install step then stops on the first one missing, after
+    hours of compiling. Rather than name them here, ask the build graph: CMake
+    gives every target a phony alias listing what it produces, so each file the
+    install scripts copy out of the build tree can be traced back to the target
+    that makes it. Targets absent from this configuration simply never come up.
+    """
     graph=build/'build.ninja'
     if not graph.exists():return []
-    aliases=set(re.findall(r'(?m)^build ([^:$ ]+): phony',graph.read_text(errors='replace')))
-    found=[]
+    text=graph.read_text(errors='replace').replace('$\n',' ')
+    aliases=[(name.strip(),produced.split()) for name,produced in
+             re.findall(r'(?m)^build ([^:$\n]+): phony ([^\n]*)',text)]
+    owners=collections.defaultdict(list);plain={}
+    for name,produced in aliases:
+        for item in produced:owners[item].append(name)
+        # A target's own alias is its bare name; the one CMake writes per
+        # directory points at it, so one hop reaches the name to build.
+        if '/' not in name:
+            for item in produced:plain.setdefault(item,name)
+    def target_name(alias):
+        alias=plain.get(alias,alias)
+        # CMake's ordering and bookkeeping helpers are not targets to build.
+        if '/' in alias or alias.startswith('cmake_object_order_depends_target_'):return None
+        return alias
+    wanted=[]
+    def want(name):
+        if name and name not in wanted:wanted.append(name)
+    prefix=re.escape(str(build))
     for script in sorted(build.rglob('cmake_install.cmake')):
-        for stem in re.findall(r'([A-Za-z0-9_.\-]+)\.(?:so|dylib|dll)',script.read_text(errors='replace')):
-            for name in (stem,stem[3:] if stem.startswith('lib') else stem):
-                if name in aliases and name not in found:found.append(name)
-    return found
+        body=script.read_text(errors='replace')
+        for path in re.findall('"('+prefix+r'/[^"]+)"',body):
+            for alias in owners.get(str(pathlib.Path(path).relative_to(build)),[]):
+                name=target_name(alias)
+                if name:want(name);break
+        # Shared modules are also matched by name, so a library installed
+        # through a path this does not recognise is still not missed.
+        for stem in re.findall(r'([A-Za-z0-9_.\-]+)\.(?:so|dylib|dll)',body):
+            for candidate in (stem,stem[3:] if stem.startswith('lib') else stem):
+                if any(candidate==name for name,_ in aliases):want(candidate)
+    return wanted
 
 def report_unparsable_ninja(build):
     """One stray dollar makes ninja refuse the entire graph, and all it reports
