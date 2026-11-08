@@ -126,7 +126,7 @@ Andra nya filer och mappar:
 
 - `.clang-format` med Blenders format (radlängd 99), och `.git-blame-ignore-revs`
 - `.claude/settings.json` med deny-hookar för Claude-workers och hooken för meddelanden
-- `docs/agents/` med `coder.md`, `roles.md`, `brief.md` och `report.md`
+- `docs/agents/` med `coder.md` (Coders arbetssätt och rollerna), `brief.md` och `report.md`
 - `docs/contributing.md`, `docs/architecture/`, `docs/building/`, `docs/platforms/`, `docs/features/`, `docs/history/`, `docs/decisions/`
 - `scripts/mp.py`, `scripts/verify/features.toml`, `scripts/verify/quarantine.toml`
 - `.github/pull_request_template.md` och arbetsflödena `checks.yml`, `author-gate.yml`, `build.yml`, `features.yml`, `release.yml`
