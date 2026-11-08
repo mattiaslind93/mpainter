@@ -23,7 +23,7 @@ int main(int argc,char **argv){
   NativeMaterialDescription native;native.material="Filter witness";native.surface_type="ShaderNodeGroup";
   auto asset=native_material_asset("Filter witness",QByteArray("test source"),native);
   asset.search_terms.append("native-channel:0");
-  auto witness=doc;auto &target=witness.set(1);target.layers.resize(1);target.selected_layer=target.layers.front().id;target.selected_mask=false;target.selected_effect={};
+  auto witness=doc;auto &target=witness.set(1);target.layers.resize(1);target.selected_layer=target.layers.front().id;target.selected_mask=false;target.selected_effect=QUuid();
   const auto id=apply_native_material_asset(target,asset);
   auto &fill_layer=TextureDocument::layer(target,id);fill_layer.values.base_color={.2f,.4f,.8f,1};
   TextureDocument::add_filter_effect(target,0);auto &effect=fill_layer.effects.back();

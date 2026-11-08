@@ -16,7 +16,7 @@ int main(){
  const auto rejects=[](const QJsonObject &data){bool rejected=false;try{read_material_layering(data);}catch(const std::invalid_argument &){rejected=true;}assert(rejected);};
  auto bad=json;auto stacks=bad["opacity_stacks"].toArray();auto s=stacks[1].toObject();s["channel"]=0;stacks[1]=s;bad["opacity_stacks"]=stacks;rejects(bad);
  bad=json;bad["active_mask"]=3;rejects(bad);bad=json;bad["enabled"]=false;rejects(bad);bad=json;bad["version"]=2;rejects(bad);
- auto invalid=v;invalid.mask_roots[0]={};bool rejected=false;try{invalid.validate();}catch(const std::invalid_argument &){rejected=true;}assert(rejected);
+ auto invalid=v;invalid.mask_roots[0]=QUuid();bool rejected=false;try{invalid.validate();}catch(const std::invalid_argument &){rejected=true;}assert(rejected);
  invalid=v;auto raw=std::make_shared<FillTexture>(*texture);raw->raw=true;invalid.materials[0].textures[0]=raw;rejected=false;try{invalid.validate();}catch(const std::invalid_argument &){rejected=true;}assert(rejected);
  invalid=v;invalid.materials[0].values.base_color[3]=2;rejected=false;try{invalid.validate();}catch(const std::invalid_argument &){rejected=true;}assert(rejected);
  std::cout<<"Shader-time material weights, independent generic UV transforms, shader-defined stacks and strict resource-reference codec PASS\n";

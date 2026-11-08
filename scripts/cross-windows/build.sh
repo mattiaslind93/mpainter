@@ -3,6 +3,7 @@ set -euo pipefail
 source "$(dirname "$0")/env.sh"
 exec 9>"$MP_WIN_WORK/build/windows/build.lock"
 flock -n 9 || { echo 'Another Windows build is running.' >&2; exit 1; }
+python3 "$MP_WIN_SCRIPTS/../host/check-windows-uuid-resets.py" "$MP_WIN_WORK/build/windows/mpainter-source/native"
 bash "$MP_WIN_SCRIPTS/build-deps.sh"
 python3 "$MP_WIN_SCRIPTS/prepare-cross.py"
 python3 "$MP_WIN_SCRIPTS/fix-library-case.py"
