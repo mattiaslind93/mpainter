@@ -39,60 +39,29 @@ def compiler_args():
 has_cuda=bool(a.cuda) or bool(shutil.which('nvcc'))
 cuda_kernels='ON' if platform.system()=='Linux' and has_cuda else 'OFF'
 optix_device='ON' if platform.system()=='Linux' and a.optix else 'OFF'
+# Blender installs three things that nothing in our targets links against: the
+# glTF add-on loads the Draco and meshopt bridges at runtime, and Cycles reads
+# its compiled OSL shaders from disk. A build limited to bts-host and blender
+# leaves them out, and the install step then stops on the first one missing
+# after hours of compiling.
+BTS_INSTALL_ONLY_TARGETS=('bf_intern_draco_bridge','bf_intern_meshopt_bridge','cycles_osl_shaders')
+
 def install_only_targets(build):
-    """Blender installs files that nothing in our chosen targets produces: the
-    glTF add-on's Draco and meshopt bridges, Cycles' compiled OSL shaders, and
-    whatever upstream adds next. A build limited to bts-host and blender leaves
-    them out and the install step then stops on the first one missing, after
-    hours of compiling. Rather than name them here, ask the build graph: CMake
-    gives every target a phony alias listing what it produces, so each file the
-    install scripts copy out of the build tree can be traced back to the target
-    that makes it. Targets absent from this configuration simply never come up.
-    """
+    """Ask the build graph which of those targets this configuration has, so a
+    platform that does not build one is never asked for it.
+
+    Finding them automatically, by tracing the files the install scripts copy
+    back through the graph, was tried and withdrawn: a file is listed under
+    aggregate targets as well as the one that produces it, and picking the
+    wrong owner pulled in bts-cpu-check, which runs the whole CPU suite. That
+    cost a build and told us nothing. A named list is dull but it cannot
+    reach past the files install needs; if upstream adds a fourth module, the
+    install step will say so by name."""
     graph=build/'build.ninja'
     if not graph.exists():return []
-    def key(path):
-        # The install scripts spell paths with forward slashes while ninja on
-        # Windows spells the same file with backslashes, and the drive letter's
-        # case is not fixed either. Compare one spelling so both sides meet.
-        return str(path).replace('\\','/').casefold()
-    text=graph.read_text(errors='replace').replace('$\n',' ')
-    aliases=[(name.strip(),produced.split()) for name,produced in
-             re.findall(r'(?m)^build ([^:$\n]+): phony ([^\n]*)',text)]
-    names={name for name,_ in aliases}
-    owners=collections.defaultdict(list);plain={}
-    for name,produced in aliases:
-        for item in produced:owners[key(item)].append(name)
-        # A target's own alias is its bare name; the one CMake writes per
-        # directory points at it, so one hop reaches the name to build.
-        if '/' not in name and '\\' not in name:
-            for item in produced:plain.setdefault(key(item),name)
-    def target_name(alias):
-        alias=plain.get(key(alias),alias)
-        # CMake's ordering and bookkeeping helpers are not targets to build.
-        if '/' in alias or '\\' in alias:return None
-        return None if alias.startswith('cmake_object_order_depends_target_') else alias
-    root=key(build).rstrip('/')
-    wanted=[]
-    def want(name):
-        if name and name not in wanted:wanted.append(name)
-    for script in sorted(build.rglob('cmake_install.cmake')):
-        body=script.read_text(errors='replace')
-        # Line by line: pairing quotes across the whole file lets one odd quote
-        # anywhere shift every pair after it, which silently hid these paths.
-        for line in body.splitlines():
-            for quoted in re.findall(r'"([^"]*)"',line):
-                inside=key(quoted)
-                if not inside.startswith(root+'/'):continue
-                for alias in owners.get(inside[len(root)+1:],[]):
-                    name=target_name(alias)
-                    if name:want(name);break
-        # Shared modules are also matched by name, so a library installed
-        # through a path this does not recognise is still not missed.
-        for stem in re.findall(r'([A-Za-z0-9_.\-]+)\.(?:so|dylib|dll)',body):
-            for candidate in (stem,stem[3:] if stem.startswith('lib') else stem):
-                if candidate in names:want(candidate)
-    return wanted
+    # CMake gives every target a phony alias under its bare name.
+    present=set(re.findall(r'(?m)^build ([^:$\n]+): phony',graph.read_text(errors='replace')))
+    return [name for name in BTS_INSTALL_ONLY_TARGETS if name in present]
 
 def report_unparsable_ninja(build):
     """One stray dollar makes ninja refuse the entire graph, and all it reports
