@@ -6,7 +6,7 @@
 #include <string>
 namespace blender {struct Main;struct Material;struct bNodeTree;struct Image;}
 namespace bts {
-struct NativeMaterialImageResource;
+class NativeMaterialImageResource;
 class NativeMaterialImageTileSet;
 struct NativeMaterialChannelGraph {
  int channel=0;
