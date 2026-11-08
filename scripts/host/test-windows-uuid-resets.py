@@ -29,6 +29,9 @@ cases = {
     'local': ('void f(){QUuid id=QUuid::createUuid();id={};}', 'id'),
     'auto-local': ('void f(bts::Set &set){auto &id=set.selected_layer;id={};}', 'id'),
     'call-chain': ('struct H{bts::Set &set();};void f(H h){h.set().selected_effect={};}', 'h.set().selected_effect'),
+    'function-result': ('bts::Layer &layer(bts::Set &,QUuid);void f(bts::Set &set,QUuid id){layer(set,id).parent={};}', 'layer(set,id).parent'),
+    'static-result': ('struct D{static bts::Layer &layer(bts::Set &,QUuid);};void f(bts::Set &set,QUuid id){D::layer(set,id).parent={};}', 'D::layer(set,id).parent'),
+    'this-member': ('struct W{QUuid shown_;void reset(){this->shown_={};}};', 'this->shown_'),
     'alias': ('using LayerId=QUuid;void f(){LayerId id;id={};}', 'id'),
 }
 clean = '''

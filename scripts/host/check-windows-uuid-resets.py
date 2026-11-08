@@ -416,10 +416,10 @@ class Checker:
         if not parsed or depth > 4:
             return {UNKNOWN}
         base, chain = parsed
-        if chain and chain[0] == ('()',):
-            return {UNKNOWN}
         declaration = local_declaration(self.sources[path], base, offset)
-        if declaration is None:
+        if chain and chain[0] == ('()',):
+            current = {UNKNOWN}
+        elif declaration is None:
             # Not declared earlier in this file: a field of the enclosing class.
             current = self.field_types(path, UNKNOWN, base)
         elif declaration[0] == 'auto':
