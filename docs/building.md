@@ -1,4 +1,6 @@
-# Building mPainter 0.9.0-alpha
+# Building mPainter
+
+The product version comes from `pyproject.toml`; package names below use it as `$version`.
 
 The native host is compiled inside Blender's CMake graph. The stable internal target is `bts-host`; its installed executable is `mpainter` on Linux and `mPainter.exe` on Windows. Blender's standalone executable is built only to complete its runtime resource installation and is excluded from the mPainter package.
 
@@ -25,8 +27,9 @@ From this repository, with `QT_ROOT_DIR` pointing to the installed Qt SDK:
 ```sh
 python3 scripts/build.py --blender ../build/blender --build ../build/native --qt "$QT_ROOT_DIR" --cuda "$CUDA_TOOLKIT_ROOT_DIR" --optix "$OPTIX_ROOT_DIR" --jobs 4
 python3 scripts/package-linux.py --runtime ../build/native/bin --qt "$QT_ROOT_DIR" --output ../dist
-python3 scripts/package-appimage.py --appdir ../dist/mPainter-0.9.0-alpha-linux-x86_64 --output ../dist/mPainter-0.9.0-alpha-linux-x86_64.AppImage --cache ../cache/appimage
-../dist/mPainter-0.9.0-alpha-linux-x86_64.AppImage
+version=$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml | head -1)
+python3 scripts/package-appimage.py --appdir ../dist/mPainter-$version-linux-x86_64 --output ../dist/mPainter-$version-linux-x86_64.AppImage --cache ../cache/appimage
+../dist/mPainter-$version-linux-x86_64.AppImage
 ```
 
 The AppImage wrapper uses checksum-pinned appimagetool 1.9.1 and type2 runtime 20251108. It can extract and run when FUSE is unavailable (`--appimage-extract-and-run`); extraction must have writable temporary storage. It does not lower the required glibc version.
@@ -55,7 +58,7 @@ Copy-Item "$env:VCPKG_INSTALLATION_ROOT/installed/x64-windows/bin/*.dll" ../buil
 ./scripts/package-windows.ps1 -Runtime ../build/native/bin -Qt $env:QT_ROOT_DIR -Output ../dist
 ```
 
-The package includes the branded Windows executable/icon, Qt deployment and runtime DLLs. The local clang-cl cross-build has linked and installed successfully, passed Wine CPU startup/workspace checks, and captured the main window with llvmpipe in Xvfb. Required DLL imports resolve; optional OIDN CUDA/HIP modules still require external driver/runtime DLLs. Native Windows/MSVC, hardware graphics and tablet behavior remain unverified. CI is a build recipe, not independent evidence of a successful Windows release.
+The package includes the branded Windows executable/icon, Qt deployment and runtime DLLs. The local clang-cl cross-build has linked and installed successfully, passed Wine CPU startup/workspace checks, and captured the main window with llvmpipe in Xvfb. Required DLL imports resolve; optional OIDN CUDA/HIP modules still require external driver/runtime DLLs. A cross-built 0.9.2 package from commit `bf17b14` also started and passed a basic paint, layer, save/reopen and export workflow in a Windows 11 VM with test-only software OpenGL; known gaps and the lessons from that build are in the [cross-build README](../scripts/cross-windows/README.md#lessons-from-the-verified-092-build). Native Windows/MSVC, hardware graphics and tablet behavior remain unverified. CI is a build recipe, not independent evidence of a successful Windows release.
 
 An experimental Linux-hosted Windows build is documented in
 [`scripts/cross-windows/README.md`](../scripts/cross-windows/README.md). It uses
@@ -86,8 +89,19 @@ For a future unsigned reviewed build, Gatekeeper may require Finder > right-clic
 
 Each successful build uploads its platform archive. A tagged run creates a draft release via `softprops/action-gh-release` only if the full matrix passes. The known Mac blocker currently prevents that release step. Manual dispatch builds artifacts without publishing. No workflows were run remotely during phase one, and no repository, remote, tag or release was created.
 
-Before publishing, run the workflow, resolve platform failures, test the actual downloaded artifacts, retain dependency license texts and provide corresponding source. Version 0.9.0-alpha is fixed in the package filenames and metadata; update all version metadata together for a later release.
+Before publishing, run the workflow, resolve platform failures, test the actual downloaded artifacts, retain dependency license texts and provide corresponding source. Linux and Windows package names derive from `pyproject.toml`; `packaging/se.mattiaslind.mpainter.metainfo.xml` and `packaging/Info.plist` still say 0.9.0-alpha and must be updated with it before a release. Every release must also follow the [cross-platform release rule](#cross-platform-release-rule).
 
 Runtime packaging normalizes compiled OSL source-path metadata and gives legacy wide-gamut color spaces neutral display names. Standard interoperability aliases remain intact so embedded image metadata keeps its color meaning. These aliases and third-party codec/license references are included in the audit, rather than silently altering dependency APIs.
 
 For the focused release regressions, build `bts-cpu-check` in the configured native build. This runs branding, shared dark-theme rendering/contrast and empty-library persistence tests. Renamed executable/session detection and generated sphere geometry were also checked in the phase-one local validation. The build also runs the retained GPU/CPU-path source regression check. These checks do not replace end-to-end painting, tablet and platform validation. The full inherited diagnostic suite has not been migrated or validated for an empty bundled library; some old asset-dependent proofs require updated fixtures before they can be used as release gates.
+
+## Cross-platform release rule
+
+This rule is mandatory for every release. It describes the required workflow; it does not claim that the current Linux, Windows or macOS packages meet it.
+
+1. Build Linux, Windows and macOS from the same intended latest commit. Every package carries the `pyproject.toml` version, the same features and the same common assets. No platform may ship a stale build or be skipped.
+2. Function-test each platform's actual package on that platform: startup, the About version, painting, layers, save and reopen, export and clean shutdown. Wine, a VM with software rendering and real GPU hardware are separate evidence levels; report which one was used.
+3. Sign and notarize the macOS app, and get Mattias's approval after he tests it on his Mac.
+4. After uploading, download the files Gumroad actually delivers and check their names, versions, checksums and source commit against the tested packages.
+
+Report known gaps with the release instead of calling it verified.
