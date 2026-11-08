@@ -22,7 +22,7 @@ if not a.export_only:
  for test,mode,folder in (('bts-file-dialog-persistence','--read','file-browser'),('bts-file-dialog-state-write','--state-write','file-browser-state'),('bts-file-dialog-state-read','--state-read','file-browser-state'),('bts-file-dialog-plain-qt','--plain-qt','file-browser-plain')):
   commands.append((test,[file_dialog,mode,str((a.output/folder).resolve())]))
 if not a.export_only:
- for script in ('verify-gpu-only-paths.py','verify-save-scheduling.py','verify-endurance-guard.py','test-session-guard.py','test-cpu-test-plan.py','verify-smart-mask-paths.py','verify-smart-material-paths.py','check-windows-uuid-resets.py','test-windows-uuid-resets.py'):
+ for script in ('verify-gpu-only-paths.py','verify-save-scheduling.py','verify-endurance-guard.py','test-session-guard.py','test-cpu-test-plan.py','verify-smart-mask-paths.py','verify-smart-material-paths.py','check-windows-uuid-resets.py','test-windows-uuid-resets.py','test-windows-release-gates.py'):
   commands.append((script,[sys.executable,str(Path(__file__).with_name(script))]))
  commands.append(('bts-cycles-live-manifest',[sys.executable,str(Path(__file__).resolve().parents[2]/'native/tests/cycles_live_manifest_test.py')]))
  commands.append(('bts-cycles-integrated-snapshot',[sys.executable,str(Path(__file__).resolve().parents[2]/'native/tests/cycles_integrated_snapshot_test.py')]))
