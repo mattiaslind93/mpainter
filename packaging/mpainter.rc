@@ -1,8 +1,10 @@
 #include <windows.h>
+// Generated from pyproject.toml by native/host/CMakeLists.txt.
+#include "mpainter-version.h"
 IDI_ICON1 ICON "../assets/branding/mpainter.ico"
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,9,0,0
- PRODUCTVERSION 0,9,0,0
+ FILEVERSION BTS_RC_VERSION
+ PRODUCTVERSION BTS_RC_VERSION
  FILETYPE VFT_APP
 BEGIN
  BLOCK "StringFileInfo"
@@ -11,11 +13,11 @@ BEGIN
   BEGIN
    VALUE "CompanyName", "Mattias Lind\0"
    VALUE "FileDescription", "mPainter\0"
-   VALUE "FileVersion", "0.9.0-alpha\0"
+   VALUE "FileVersion", BTS_RC_VERSION_STRING
    VALUE "InternalName", "mPainter\0"
    VALUE "OriginalFilename", "mPainter.exe\0"
    VALUE "ProductName", "mPainter\0"
-   VALUE "ProductVersion", "0.9.0-alpha\0"
+   VALUE "ProductVersion", BTS_RC_VERSION_STRING
    VALUE "LegalCopyright", "Copyright Mattias Lind\0"
   END
  END

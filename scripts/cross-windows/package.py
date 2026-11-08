@@ -8,18 +8,39 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
 import zipfile
 
+from pe_version import read_version
+
 work = Path(os.environ['MP_WIN_WORK'])
 qt = Path(os.environ['MP_WIN_QT'])
 repo = Path(__file__).absolute().parents[2]
+source = work / 'build/windows/mpainter-source'
 runtime = work / 'build/windows/native/bin'
 libroot = work / 'build/windows/lib-windows_x64'
 dist = work / 'dist'
-name = 'mPainter-0.9.0-alpha-windows-x64'
+
+
+def product_version(root):
+    # native/host/CMakeLists.txt compiles this line into the executable.
+    path = root / 'pyproject.toml'
+    match = re.search(r'^version = "([^"]+)"', path.read_text(), re.M) if path.is_file() else None
+    if not match:
+        raise SystemExit(f'No version in {path}')
+    return match.group(1)
+
+
+# The executable is built from the snapshot; resources are copied from this
+# checkout. Both must be the same release.
+version = product_version(source)
+if product_version(repo) != version:
+    raise SystemExit(f'The built snapshot is {version} but this checkout is {product_version(repo)}; '
+                     'run snapshot-source.py and build.sh first')
+name = f'mPainter-{version}-windows-x64'
 stage = dist / name
 archive = dist / (name + '.zip')
 checksum = archive.with_suffix('.zip.sha256')
@@ -27,6 +48,12 @@ logs = work / 'logs/windows2'
 logs.mkdir(parents=True, exist_ok=True)
 if not (runtime / 'mPainter.exe').is_file() or not (runtime / '5.2').is_dir():
     raise SystemExit('Build and install mPainter and the Blender runtime first')
+embedded = read_version(runtime / 'mPainter.exe')
+numbers = [int(part) for part in re.match(r'(\d+)\.(\d+)\.(\d+)', version).groups()] + [0]
+if (embedded['file_version'] != numbers or embedded['product_version'] != numbers
+        or embedded['strings'].get('FileVersion') != version
+        or embedded['strings'].get('ProductVersion') != version):
+    raise SystemExit(f'mPainter.exe VERSIONINFO is not {version}: {json.dumps(embedded)}; rebuild it')
 if any(path.exists() for path in (stage, archive, checksum)):
     raise SystemExit('Output already exists; preserve/move it before packaging again')
 stage.mkdir(parents=True)
@@ -176,6 +203,10 @@ while True:
         added.append({'dll': name, 'source': str(candidates[0])})
 (logs / 'package-added-dlls.json').write_text(json.dumps(added, indent=2) + '\n')
 
+# VM tests place Mesa's software OpenGL beside the executable; a release must
+# use the system opengl32.dll and the user's GPU driver.
+software_gl = {'opengl32.dll', 'opengl32sw.dll', 'libgallium_wgl.dll', 'libglapi.dll',
+               'osmesa.dll', 'vulkan_lvp.dll'}
 windows_paths = {}
 for path in stage.rglob('*'):
     relative = path.relative_to(stage).as_posix()
@@ -184,6 +215,8 @@ for path in stage.rglob('*'):
         raise SystemExit(f'Windows case collision: {windows_paths[key]} / {relative}')
     if path.is_symlink():
         raise SystemExit(f'Unexpected packaged symlink: {relative}')
+    if path.name.casefold() in software_gl:
+        raise SystemExit(f'Mesa software-rendering DLL staged: {relative}; remove it from the runtime')
     windows_paths[key] = relative
 
 with zipfile.ZipFile(archive, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=6) as output:
@@ -193,5 +226,6 @@ with zipfile.ZipFile(archive, 'w', compression=zipfile.ZIP_DEFLATED, compresslev
 with archive.open('rb') as stream:
     digest = hashlib.file_digest(stream, 'sha256').hexdigest()
 checksum.write_text(f'{digest}  {archive.name}\n')
-print(json.dumps({'artifact': str(archive), 'bytes': archive.stat().st_size,
-                  'sha256': digest}, indent=2))
+print(json.dumps({'artifact': str(archive), 'stage': str(stage), 'version': version,
+                  'source_commit': (work / 'build/windows/source-head.txt').read_text().strip(),
+                  'bytes': archive.stat().st_size, 'sha256': digest}, indent=2))

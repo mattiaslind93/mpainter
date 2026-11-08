@@ -1703,8 +1703,17 @@ if(APPLE)
   set_source_files_properties("${BTS_HOST_SOURCE_DIR}/../../assets/branding/mpainter.icns" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 elseif(WIN32)
   set_target_properties(bts-host PROPERTIES OUTPUT_NAME mPainter WIN32_EXECUTABLE TRUE)
-  target_include_directories(bts-host PRIVATE "${BTS_HOST_SOURCE_DIR}/../../packaging")
+  # VERSIONINFO needs four numbers; a pre-release suffix stays in the strings.
+  string(REGEX MATCH "^([0-9]+)\\.([0-9]+)\\.([0-9]+)" BTS_PRODUCT_VERSION_NUMBERS "${BTS_PRODUCT_VERSION}")
+  if(NOT BTS_PRODUCT_VERSION_NUMBERS)
+    message(FATAL_ERROR "pyproject.toml version '${BTS_PRODUCT_VERSION}' is not major.minor.patch")
+  endif()
+  set(BTS_RC_VERSION_HEADER "${CMAKE_CURRENT_BINARY_DIR}/packaging/mpainter-version.h")
+  file(CONFIGURE OUTPUT "${BTS_RC_VERSION_HEADER}" CONTENT
+    "#define BTS_RC_VERSION ${CMAKE_MATCH_1},${CMAKE_MATCH_2},${CMAKE_MATCH_3},0\n#define BTS_RC_VERSION_STRING \"${BTS_PRODUCT_VERSION}\\0\"\n")
+  target_include_directories(bts-host PRIVATE "${BTS_HOST_SOURCE_DIR}/../../packaging" "${CMAKE_CURRENT_BINARY_DIR}/packaging")
   target_sources(bts-host PRIVATE "${BTS_HOST_SOURCE_DIR}/../../packaging/mpainter.rc")
+  set_source_files_properties("${BTS_HOST_SOURCE_DIR}/../../packaging/mpainter.rc" PROPERTIES OBJECT_DEPENDS "${BTS_RC_VERSION_HEADER}")
 endif()
 
 install(FILES

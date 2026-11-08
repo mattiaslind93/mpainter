@@ -1,12 +1,13 @@
 # Experimental Windows x64 build from Linux
 
 This is a local clang-cl/lld cross-build experiment, not a verified Windows release recipe.
-It targets mPainter 0.9.0-alpha using the Microsoft C++ ABI, the pinned Blender 5.2
+It targets the mPainter version in `pyproject.toml` using the Microsoft C++ ABI, the pinned Blender 5.2
 Windows libraries, and Qt 6.8.3 `win64_msvc2022_64`. See `~/mpainter-work/REPORT-win.md`
 and `~/mpainter-work/REPORT-win2.md` for the actual outcomes and logs. No script pushes, publishes, or uploads files.
 
 The first attempt stopped at ambiguous UUID assignments. The follow-up source port
-uses explicit UUID resets, removes obsolete shared-pointer APIs, and addresses
+uses explicit UUID resets (`id = QUuid()`, never `id = {}`; `build.sh` runs
+`scripts/host/check-windows-uuid-resets.py` on the snapshot before compiling), removes obsolete shared-pointer APIs, and addresses
 Windows file replacement, compiler checks and dependency discovery. The follow-up linked and installed the application, passed Wine CPU smoke and
 component checks, and captured its main window under Xvfb/llvmpipe. This still
 does not establish a verified real-Windows release.
@@ -128,13 +129,18 @@ After a completed build and install:
 
 ```sh
 python3 scripts/cross-windows/package.py
-bash scripts/cross-windows/smoke.sh "$MP_WIN_WORK/dist/mPainter-0.9.0-alpha-windows-x64"
-bash scripts/cross-windows/capture.sh "$MP_WIN_WORK/dist/mPainter-0.9.0-alpha-windows-x64"
+version=$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml | head -1)
+bash scripts/cross-windows/smoke.sh "$MP_WIN_WORK/dist/mPainter-$version-windows-x64"
+bash scripts/cross-windows/capture.sh "$MP_WIN_WORK/dist/mPainter-$version-windows-x64"
 ```
 
 `package.py` stages runtime resources, Qt plugins, release CRT and dependency
 licenses, checks required static DLL closure (with explicit optional GPU imports), and writes the ZIP plus its
-`.zip.sha256` file locally. It refuses to overwrite existing outputs. `smoke.sh`
+`.zip.sha256` file locally. It refuses to overwrite existing outputs. The package is
+named after the `pyproject.toml` version of the built snapshot; packaging stops if
+this checkout is at another version, if `mPainter.exe` carries a different VERSIONINFO
+(`pe_version.py` reads it), or if a Mesa software-rendering DLL such as
+`opengl32.dll` or `libgallium_wgl.dll` was staged. Keep those in VM test folders only. `smoke.sh`
 checks static imports, `--version` and `--cpu-workspace-shutdown-test`; there is
 no application `--self-test` option. `capture.sh` attempts the main window using
 Wine's Windows Qt plugin inside private Xvfb and software OpenGL, saving
