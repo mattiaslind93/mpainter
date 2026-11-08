@@ -56,7 +56,12 @@ if(NOT HDF5_FOUND OR HDF5_VERSION VERSION_LESS 1.12)
   set(CMAKE_CXX_FLAGS "${BTS_CXX_FLAGS_WAS}")
   set(BUILD_TESTING ${BTS_BUILD_TESTING_WAS})
   set(HDF5_LIBRARIES hdf5-static)
-  set(HDF5_INCLUDE_DIRS ${bts_hdf5_SOURCE_DIR}/src ${bts_hdf5_BINARY_DIR}/src)
+  # hdf5.h includes H5FDsubfiling.h unconditionally, and that header sits in a
+  # subdirectory of src rather than beside it; HDF5's own build adds the
+  # subdirectory to its include path, so anything of ours that includes hdf5.h
+  # needs it too.
+  set(HDF5_INCLUDE_DIRS ${bts_hdf5_SOURCE_DIR}/src
+    ${bts_hdf5_SOURCE_DIR}/src/H5FDsubfiling ${bts_hdf5_BINARY_DIR}/src)
 endif()
 find_package(Threads REQUIRED)
 # Direct HDF5 consumers need its include paths and DLL import definitions as
