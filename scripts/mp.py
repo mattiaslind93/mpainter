@@ -164,16 +164,61 @@ def verify_module(root, name):
     return module
 
 
+RATCHETS = "scripts/verify/blender-ratchets.json"
+
+
+def ratchet(root, key):
+    """The recorded ceiling for key, or None when no baseline is committed."""
+    import json
+    path = root / RATCHETS
+    if not path.is_file():
+        return None
+    value = json.loads(path.read_text(encoding="utf-8")).get(key)
+    return value if isinstance(value, int) else None
+
+
 def check_blender_boundary(root, files):
     surface = blender_surface(root)
     if surface is None:
         return ("UNAVAILABLE", "scripts/verify/blender_surface.py is missing", [])
     _, _, includers = surface.classify(root)
     outside = sorted(f for f in includers if not f.startswith(surface.BOUNDARY))
-    # Phase 5 of the plan moves these behind native/host/blender/. Until then this only reports.
-    return ("WARN" if outside else "PASS",
-            f"{len(outside)} files outside {surface.BOUNDARY} include Blender headers (enforced from phase 5)",
-            outside)
+    ceiling = ratchet(root, "files_including_blender_outside_boundary")
+    summary = f"{len(outside)} files outside {surface.BOUNDARY} include Blender headers"
+    if ceiling is None:
+        return ("UNAVAILABLE", summary + f"; no ceiling in {RATCHETS}", outside)
+    # The plan moves them all behind native/host/blender/. Until then the count may only go down.
+    if len(outside) > ceiling:
+        return ("FAIL", summary + f", more than the recorded {ceiling}; include Blender only in "
+                f"{surface.BOUNDARY}", outside)
+    return ("WARN" if outside else "PASS", summary + f" (ceiling {ceiling}; lower it when it drops)", outside)
+
+
+def blender_patch_files(root, files):
+    """Blender files the numbered patches change, and files they add, from the diff headers."""
+    changed, added = set(), set()
+    for rel in sorted(f for f in files if f.startswith("third_party/blender/patches/") and f.endswith(".patch")):
+        current = None
+        for line in (text(root, rel) or "").splitlines():
+            match = re.match(r"diff --git a/(\S+) b/(\S+)", line)
+            if match:
+                current = match.group(2)
+                changed.add(current)
+            elif current and line.startswith("new file mode"):
+                changed.discard(current)
+                added.add(current)
+    return sorted(changed - added), sorted(added)
+
+
+def check_blender_patch_count(root, files):
+    changed, added = blender_patch_files(root, files)
+    ceiling = ratchet(root, "changed_blender_files")
+    summary = f"the patches change {len(changed)} Blender files and add {len(added)}"
+    if ceiling is None:
+        return ("UNAVAILABLE", summary + f"; no ceiling in {RATCHETS}", [])
+    if len(changed) > ceiling:
+        return ("FAIL", summary + f", more than the recorded {ceiling}", changed)
+    return ("PASS", summary + f" (ceiling {ceiling}; lower it when it drops)", [])
 
 
 def check_blender_surface_doc(root, files):
@@ -262,12 +307,13 @@ CHECKS = {
     "blender-boundary": check_blender_boundary,
     "blender-surface": check_blender_surface_doc,
     "bts-variables": check_bts_variables_doc,
+    "blender-patch-count": check_blender_patch_count,
     "agent-docs": check_agent_docs,
     "unpushed": check_unpushed,
 }
 NOT_YET = {
-    "clang-format": "needs the format-only commit first; the format proof lives in the night run, not here",
-    "blender-patch-count": "counting changed Blender files needs the split patches (phase 6)",
+    "clang-format": "not a gate yet: 442 owned files stay unformatted until the verifiers that pin their "
+                    "text or hash change with them",
 }
 
 

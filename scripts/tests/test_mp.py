@@ -32,6 +32,8 @@ class Repo:
         self.write("pyproject.toml", PYPROJECT)
         self.write("scripts/verify/blender_surface.py", (HERE.parent / "verify/blender_surface.py").read_text())
         self.write("scripts/verify/bts_variables.py", (HERE.parent / "verify/bts_variables.py").read_text())
+        self.write("scripts/verify/blender-ratchets.json",
+                   '{"files_including_blender_outside_boundary": 99, "changed_blender_files": 99}\n')
         for rel, content in (files or {}).items():
             self.write(rel, content)
         self.git("add", "-A")
@@ -163,6 +165,34 @@ class Checks(unittest.TestCase):
         repo.write("native/host/B.cc", 'auto c = getenv("BTS_GAMMA");\n')
         repo.git("add", "-A")
         self.assertEqual(statuses(repo)["bts-variables"][0], "FAIL")
+
+    PATCH = ("diff --git a/source/a.cc b/source/a.cc\n--- a/source/a.cc\n+++ b/source/a.cc\n@@ -1 +1 @@\n-x\n+y\n"
+             "diff --git a/source/new.hh b/source/new.hh\nnew file mode 100644\n--- /dev/null\n+++ b/source/new.hh\n")
+
+    def test_blender_ratchets(self):
+        repo = Repo(self, {"third_party/blender/patches/0001-x.patch": self.PATCH,
+                           "third_party/blender/patches/0002-y.patch": self.PATCH.replace("a.cc", "b.cc"),
+                           "native/host/A.cc": '#include "BKE_main.hh"\n',
+                           "native/host/blender/B.cc": '#include "BKE_main.hh"\n'})
+        (repo.root / "scripts/verify/blender-ratchets.json").unlink()
+        repo.git("add", "-A")
+        result = statuses(repo)
+        self.assertEqual(result["blender-patch-count"][0], "UNAVAILABLE")
+        self.assertEqual(result["blender-boundary"][0], "UNAVAILABLE")
+        self.assertEqual(mp.blender_patch_files(repo.root, mp.git_files(repo.root)),
+                         (["source/a.cc", "source/b.cc"], ["source/new.hh"]))
+        repo.write("scripts/verify/blender-ratchets.json",
+                   '{"files_including_blender_outside_boundary": 1, "changed_blender_files": 2}\n')
+        repo.git("add", "-A")
+        result = statuses(repo)
+        self.assertEqual(result["blender-patch-count"][0], "PASS")
+        self.assertEqual(result["blender-boundary"], ("WARN", ["native/host/A.cc"]))
+        repo.write("native/host/C.cc", '#include "WM_api.hh"\n')
+        repo.write("third_party/blender/patches/0003-z.patch", self.PATCH.replace("a.cc", "c.cc"))
+        repo.git("add", "-A")
+        result = statuses(repo)
+        self.assertEqual(result["blender-boundary"][0], "FAIL")
+        self.assertEqual(result["blender-patch-count"][0], "FAIL")
 
     def test_blender_gates_are_unavailable_without_the_generator(self):
         repo = Repo(self)
