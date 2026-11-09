@@ -350,6 +350,22 @@ class Spdx(unittest.TestCase):
         repo.git("add", "-A")
         self.assertEqual(statuses(repo)["spdx"][0], "PASS")
 
+    def test_spdx_covers_powershell_php_and_configure_templates(self):
+        repo = Repo(self, {
+            "scripts/package-windows.ps1": "param([string]$Out)\n",
+            "scripts/site/report.php": "<?php\necho 1;\n",
+            "native/host/Data.hh.in": "#pragma once\n",
+            "native/host/Notes.txt.in": "plain\n"})
+        code, out, _ = repo.mp("spdx", "--write")
+        self.assertEqual(code, 0, out)
+        self.assertEqual((repo.root / "scripts/package-windows.ps1").read_text(),
+                         "# SPDX-License-Identifier: GPL-3.0-or-later\nparam([string]$Out)\n")
+        self.assertEqual((repo.root / "scripts/site/report.php").read_text(),
+                         "<?php\n// SPDX-License-Identifier: GPL-3.0-or-later\necho 1;\n")
+        self.assertEqual((repo.root / "native/host/Data.hh.in").read_text(),
+                         "// SPDX-License-Identifier: GPL-3.0-or-later\n#pragma once\n")
+        self.assertEqual((repo.root / "native/host/Notes.txt.in").read_text(), "plain\n")
+
 
 class Doctor(unittest.TestCase):
     def fake(self, outputs):

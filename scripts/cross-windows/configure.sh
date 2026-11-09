@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 set -euo pipefail
 source "$(dirname "$0")/env.sh"
 cmake -S "$MP_WIN_WORK/build/windows/blender" -B "$MP_WIN_WORK/build/windows/native" -G Ninja \

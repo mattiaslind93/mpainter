@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Add aliases for Windows library paths on a case-sensitive Linux filesystem."""
 import os
 import re

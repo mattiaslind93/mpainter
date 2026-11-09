@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 # clang-cl uses Microsoft's C++ ABI; MinGW cannot consume these C++ dependencies.
 set(CMAKE_SYSTEM_NAME Windows)
 set(CMAKE_SYSTEM_PROCESSOR AMD64)

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Stage the cross-built Windows runtime locally; check imports before archiving.
 
 Run after build.sh inside the container with env.sh sourced. No network access,

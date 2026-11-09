@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 namespace bts::openpbr_reference {
 inline constexpr char xml[]=R"BTS_OPENPBR(@BTS_OPENPBR_XML@)BTS_OPENPBR";

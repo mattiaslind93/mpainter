@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Adapt only the isolated Blender build graph for a Linux host; retain app code."""
 import os
 from pathlib import Path

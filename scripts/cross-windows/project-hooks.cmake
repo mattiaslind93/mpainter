@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Apply build-graph workarounds after Blender/mPainter have declared targets.
 # This does not modify the snapshotted application source.
 function(mpainter_cross_fix_targets)

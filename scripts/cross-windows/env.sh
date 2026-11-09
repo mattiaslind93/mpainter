@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Source only inside the build distrobox, through the simple bind mount.
 set -euo pipefail
 : "${MP_WIN_WORK:=/mnt/mpainter-phase1}"

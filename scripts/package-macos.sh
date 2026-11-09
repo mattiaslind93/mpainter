@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 set -euo pipefail
 # Reserved for a host with validated Metal presentation; do not ship an OpenGL-only app.
 if [[ ${MPAINTER_MACOS_VIEWPORT_VALIDATED:-0} != 1 ]]; then

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 set -euo pipefail
 source "$(dirname "$0")/env.sh"
 build="$MP_WIN_WORK/build/windows/uuid-repro"

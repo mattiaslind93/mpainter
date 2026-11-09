@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Refresh the isolated application from a commit, preserving unchanged mtimes.
 
 Refuse edits to previously snapshotted files; Blender and library adaptations

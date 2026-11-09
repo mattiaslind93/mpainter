@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Inspect PE imports without running code; unresolved non-OS imports fail.
 
 This is a static check, not proof that delay loads/plugins or a Windows launch work.

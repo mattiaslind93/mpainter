@@ -379,16 +379,17 @@ def move_files(root, dest, sources, refs=False, allow_referenced=False):
 SPDX_LICENSE = "GPL-3.0-or-later"
 SPDX_PATTERN = re.compile(r"SPDX-License-Identifier:")
 SPDX_FOLDERS = ("native/", "scripts/")
-# Windows, macOS and packaging files change only in their own reviewed work.
-SPDX_SKIP = ("scripts/cross-windows/", "scripts/package-", "scripts/package_")
 SPDX_COMMENTS = {".cc": "//", ".hh": "//", ".h": "//", ".c": "//", ".cpp": "//", ".hpp": "//", ".inl": "//",
-                 ".inc": "//", ".mm": "//", ".py": "#", ".sh": "#", ".cmake": "#"}
+                 ".inc": "//", ".mm": "//", ".py": "#", ".sh": "#", ".cmake": "#", ".ps1": "#", ".php": "//"}
 
 
 def spdx_comment(rel):
     if rel.endswith("/CMakeLists.txt") or rel == "CMakeLists.txt":
         return "#"
-    return SPDX_COMMENTS.get(os.path.splitext(rel)[1])
+    stem, suffix = os.path.splitext(rel)
+    if suffix == ".in":  # configure_file() templates take the comment style of what they generate
+        stem, suffix = os.path.splitext(stem)
+    return SPDX_COMMENTS.get(suffix)
 
 
 def pinned_hashes(root, files):
@@ -414,7 +415,7 @@ def spdx_plan(root):
     pins, pinned_paths = pinned_hashes(root, files)
     missing, pinned, present = [], [], []
     for rel in files:
-        if not rel.startswith(SPDX_FOLDERS) or rel.startswith(SPDX_SKIP) or spdx_comment(rel) is None:
+        if not rel.startswith(SPDX_FOLDERS) or spdx_comment(rel) is None:
             continue
         data = (root / rel).read_bytes()
         head = "\n".join(data.decode("utf-8", "replace").split("\n")[:3])
@@ -430,7 +431,8 @@ def spdx_plan(root):
 def add_spdx(path, comment):
     data = path.read_text(encoding="utf-8", errors="surrogateescape")
     line = f"{comment} SPDX-License-Identifier: {SPDX_LICENSE}\n"
-    if data.startswith("#!"):
+    # The line goes after an interpreter line: a shebang, or PHP's opening tag.
+    if data.startswith("#!") or data.startswith("<?php\n"):
         first, _, rest = data.partition("\n")
         path.write_text(first + "\n" + line + rest, encoding="utf-8", errors="surrogateescape")
     else:

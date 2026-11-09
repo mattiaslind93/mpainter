@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Check downloaded release library payloads against Git LFS SHA-256 OIDs."""
 import hashlib
 import json

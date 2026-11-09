@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Stage a portable Linux tarball with Qt and recursively discovered ELF dependencies."""
 import argparse, pathlib, shutil, subprocess, os, re, tarfile, json, sys
 p=argparse.ArgumentParser();p.add_argument('--runtime',type=pathlib.Path,required=True);p.add_argument('--qt',type=pathlib.Path,required=True);p.add_argument('--output',type=pathlib.Path,required=True);p.add_argument('--no-archive',action='store_true');a=p.parse_args()

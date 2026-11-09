@@ -1,4 +1,5 @@
 <?php
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Receives a report from the application's Help ▸ Report Bug box and mails it on.
 //
 // The destination address is deliberately not in this file, so that publishing

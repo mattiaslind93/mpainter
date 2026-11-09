@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 set -euo pipefail
 source "$(dirname "$0")/env.sh"
 repo="$(cd "$MP_WIN_SCRIPTS/../.." && pwd)"

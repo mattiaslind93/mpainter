@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 param([Parameter(Mandatory=$true)][string]$Runtime, [Parameter(Mandatory=$true)][string]$Qt, [string]$Output="dist")
 $ErrorActionPreference = "Stop"
 $Root = Split-Path $PSScriptRoot -Parent

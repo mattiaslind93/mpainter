@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Pin the observed VS package manifest; xwin itself skips this checksum."""
 import hashlib
 import json

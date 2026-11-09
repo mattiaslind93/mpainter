@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Run one Windows generator under the build's private Xvfb display."""
 import os
 from pathlib import Path

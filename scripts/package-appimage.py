@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Wrap the staged Linux package with pinned, checksum-verified AppImage tools."""
 import argparse,hashlib,os,pathlib,subprocess,urllib.request
 import shutil, sys, tempfile

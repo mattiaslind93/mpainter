@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Acquire unmodified x64 release CRT DLLs for local testing; see README terms."""
 import hashlib
 import os
