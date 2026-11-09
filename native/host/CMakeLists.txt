@@ -193,9 +193,9 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/SurfaceBrush.cc
   ${BTS_HOST_SOURCE_DIR}/AmbientOcclusion.cc
   ${BTS_HOST_SOURCE_DIR}/NormalMix.cc
-  ${BTS_HOST_SOURCE_DIR}/MaterialLayerShader.cc
-  ${BTS_HOST_SOURCE_DIR}/MaterialLayeringSources.cc
-  ${BTS_HOST_SOURCE_DIR}/MaterialLayeringSourceSnapshots.cc
+  ${BTS_HOST_SOURCE_DIR}/materials/layering/MaterialLayerShader.cc
+  ${BTS_HOST_SOURCE_DIR}/materials/layering/MaterialLayeringSources.cc
+  ${BTS_HOST_SOURCE_DIR}/materials/layering/MaterialLayeringSourceSnapshots.cc
   ${BTS_HOST_SOURCE_DIR}/materials/openpbr/OpenPbrShader.cc
   ${BTS_HOST_SOURCE_DIR}/MaterialInspection.cc
   ${BTS_HOST_SOURCE_DIR}/NativeWorldNormalShader.cc
@@ -248,7 +248,7 @@ set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/EeveeCompletionSnapshot.cc APPEND PRO
     "${CMAKE_SOURCE_DIR}/source/blender/draw/engines/eevee"
     "${CMAKE_SOURCE_DIR}/source/blender/draw/intern"
     "${CMAKE_SOURCE_DIR}/source/blender/blentranslation")
-set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/MaterialLayeringSourceSnapshots.cc APPEND PROPERTY
+set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/materials/layering/MaterialLayeringSourceSnapshots.cc APPEND PROPERTY
   INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/source/blender/imbuf/opencolorio")
 target_compile_definitions(bts-host PRIVATE WITH_BTS_HOST QT_NO_KEYWORDS)
 add_custom_command(TARGET bts-host POST_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:bts-host>/branding COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BTS_HOST_SOURCE_DIR}/../../assets/branding/splash-featured.png ${BTS_HOST_SOURCE_DIR}/../../assets/branding/splash-featured.focus $<TARGET_FILE_DIR:bts-host>/branding)
@@ -786,7 +786,7 @@ cmake_language(DEFER CALL bts_register_cpu_tests)
 # Test and demo code lives in native/harness, and host code is moving into domain
 # folders under native/host. Files include each other by bare name across all of
 # them, so every compiled bts target searches every one of these folders.
-set(BTS_HOST_DOMAINS python materials/openpbr baking gpu painting layers fill ui/panels ui/dialogs assets viewport)
+set(BTS_HOST_DOMAINS python materials/openpbr baking gpu painting layers fill ui/panels ui/dialogs assets viewport materials/layering)
 set(BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR} ${BTS_HOST_SOURCE_DIR}/../harness)
 foreach(_bts_domain IN LISTS BTS_HOST_DOMAINS)
   list(APPEND BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR}/${_bts_domain})
@@ -941,7 +941,7 @@ target_include_directories(bts-material-layering-tests PRIVATE ${BTS_HOST_SOURCE
 target_compile_features(bts-material-layering-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-material-layering-tests PRIVATE Qt6::Core)
 
-add_executable(bts-material-layering-document-tests ${BTS_HOST_SOURCE_DIR}/../tests/material_layering_document_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc ${BTS_HOST_SOURCE_DIR}/MaterialLayerParameterIO.cc)
+add_executable(bts-material-layering-document-tests ${BTS_HOST_SOURCE_DIR}/../tests/material_layering_document_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc ${BTS_HOST_SOURCE_DIR}/materials/layering/MaterialLayerParameterIO.cc)
 target_link_libraries(bts-material-layering-document-tests PRIVATE bts-export-config)
 
 add_executable(bts-symmetry-intersection-tests ${BTS_HOST_SOURCE_DIR}/../tests/symmetry_intersection_test.cc ${BTS_HOST_SOURCE_DIR}/viewport/OrbitCamera.cc)
@@ -1432,9 +1432,9 @@ target_link_libraries(bts-material-layering-authoring-tests PRIVATE bts-export-c
 add_dependencies(bts-cpu-tests bts-material-layering-authoring-tests)
 # Real picker conversion and retirement run in the existing host CPU dispatcher.
 # Declaration-default admission needs the node declaration translation header.
-set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/MaterialLayerParameterSurface.cc APPEND PROPERTY
+set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/materials/layering/MaterialLayerParameterSurface.cc APPEND PROPERTY
   INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/source/blender/blentranslation")
-target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/MaterialLayerParameterImportJob.cc ${BTS_HOST_SOURCE_DIR}/MaterialLayerParameterReadback.cc ${BTS_HOST_SOURCE_DIR}/MaterialLayerParameterSurface.cc ${BTS_HOST_SOURCE_DIR}/MaterialLayerParameterIO.cc ${BTS_HOST_SOURCE_DIR}/ui/panels/MaterialLayeringPanel.cc ${BTS_HOST_SOURCE_DIR}/MaterialLayeringUi.cc ${BTS_HOST_SOURCE_DIR}/../tests/material_layering_panel_test.cc ${BTS_HOST_SOURCE_DIR}/../tests/shader_controller_target_test.cc ${BTS_HOST_SOURCE_DIR}/../tests/material_layering_source_pixels_test.cc)
+target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/materials/layering/MaterialLayerParameterImportJob.cc ${BTS_HOST_SOURCE_DIR}/materials/layering/MaterialLayerParameterReadback.cc ${BTS_HOST_SOURCE_DIR}/materials/layering/MaterialLayerParameterSurface.cc ${BTS_HOST_SOURCE_DIR}/materials/layering/MaterialLayerParameterIO.cc ${BTS_HOST_SOURCE_DIR}/ui/panels/MaterialLayeringPanel.cc ${BTS_HOST_SOURCE_DIR}/materials/layering/MaterialLayeringUi.cc ${BTS_HOST_SOURCE_DIR}/../tests/material_layering_panel_test.cc ${BTS_HOST_SOURCE_DIR}/../tests/shader_controller_target_test.cc ${BTS_HOST_SOURCE_DIR}/../tests/material_layering_source_pixels_test.cc)
 
 # Keep the opaque loader probe on the real Cycles ABI and flags.
 if(TARGET bf_intern_cycles)
