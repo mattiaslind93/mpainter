@@ -106,7 +106,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/../harness/LightingDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/BakeFixDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/LayerEditDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/GuiFixDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/GuiFixDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../tests/material_layering_ui_artist_test.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/TabletPressureDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/TabletPerformanceDemo.cc

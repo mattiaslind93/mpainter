@@ -14,7 +14,9 @@ BE_SOURCES = {
     "native/tests/CyclesLiveCompletionProbe.hh": "c232d283e5923e2d5d25aea3bff5ec0dd65731943c390729569505ab466a2615",
     "native/tests/CyclesLiveCompletionProbe.cc": "272915d1df23974da2b1841d9b0d0679888c048b3525609d60f28761b79b81d4",
     "native/tests/CyclesLiveUdimArtist.hh": "8ee2d24f287eb296591dbff751d5f76a797de796784691bb67e81ef8c748989e",
-    "native/tests/cycles_live_udim_artist_main.cc": "0a1f9ececc449f07da5a70bc5c4bd7dd489031ad7614ddac0d44f4da23438296",
+    # Re-pinned 2026-11-09 with the owner's approval: the only change since the reviewed
+    # 0a1f9ece... is the include of GuiFixDemo.hh, now in native/harness.
+    "native/tests/cycles_live_udim_artist_main.cc": "b887a76512721549537c820aad943eafbc6365d3fac4ec1a1d6f048b1d29ef2a",
     "native/tests/cycles_live_udim_artist_test.cc": "5506caf08b3e9313506875849942c0c3a30541b1a064500beb238638cce0b818",
 }
 BURST_SOURCES = {

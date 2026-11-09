@@ -27,6 +27,13 @@ ACTOR_SHA = {**ACTOR_SHA,
     'native/tests/cycles_live_burst_test.cc': '9f9daf257cf4d250a43d5434b1784a25c33dac42a1a4a1845de850bd3040ac4b',
     'scripts/host/cycles_burst_snapshot.py': '1e8160331d4700d7b85e083e4d1a96a6e2393cc8ac3197c0998a6b88e1ab2de8',
 }
+# Re-pinned 2026-11-09 with the owner's approval, when GuiFixDemo.cc/.hh moved to
+# native/harness: the burst main's only change is that include (was 27ffe28f...), and
+# cycles_burst_snapshot.py only re-pins cycles_live_udim_artist_main.cc (was 1e816033...).
+ACTOR_SHA = {**ACTOR_SHA,
+    'native/tests/cycles_live_burst_main.cc': 'acb9b7d30cc2cf14a514cceb030817bec4026e6aabdf7587799f1a74bac5f852',
+    'scripts/host/cycles_burst_snapshot.py': 'd7fdf27b7018a7fa8af7687a953eacd0a58dd61297841aca1cd008454b751e14',
+}
 
 # Historical evidence is SHA-pinned as historical, never a production parent
 # for the new integration and never passed a forged new snapshot identity.

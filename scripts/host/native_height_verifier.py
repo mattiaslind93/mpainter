@@ -19,8 +19,9 @@ import cycles_integrated_snapshot as integration
 from cycles_live_manifest import sha256
 
 PROFILE = "native-height-policy-integrated-v1"
-ACTORS = {"owner": ("native_height_policy_native_test.cc", "main.cc"),
-          "artist": ("native_height_policy_artist_test.cc", "GuiFixDemo.cc")}
+# Each actor: its test under native/tests, and the production source it replaces.
+ACTORS = {"owner": ("native_height_policy_native_test.cc", "native/host/main.cc"),
+          "artist": ("native_height_policy_artist_test.cc", "native/harness/GuiFixDemo.cc")}
 RUNNERS = tuple("scripts/host/" + name for name in (
     "native_height_verifier.py", "verify-native-height-policy.py",
     "cycles_integrated_snapshot.py", "cycles_live_manifest.py", "run-host.sh",
@@ -54,7 +55,7 @@ def relocate_include(value, mappings):
 def actor_link(commands, admitted, snapshot, out, actor, obj):
     args = integration.link_arguments(commands)
     original = ACTORS[actor][1]
-    matches = [value for value in args if value.endswith("/native/host/" + original + ".o")]
+    matches = [value for value in args if value.endswith("/" + original + ".o")]
     require(len(matches) == 1, "Expected exactly one production replacement: " + original)
     replacement = matches[0]
     result = []
@@ -87,7 +88,7 @@ def build(snapshot, repo, out, env):
     original_commands = {}
     for actor, (_, original) in ACTORS.items():
         selected = [shlex.split(command) for command in commands if " -c " in command and
-                    shlex.split(command)[shlex.split(command).index("-c") + 1].endswith("/native/host/" + original)]
+                    shlex.split(command)[shlex.split(command).index("-c") + 1].endswith("/" + original)]
         require(len(selected) == 1, "Missing exact production compile template: " + original)
         original_commands[actor] = selected[0]
     for folder in ("objects", "bin"):
@@ -104,7 +105,7 @@ def build(snapshot, repo, out, env):
         native_root = args[args.index("-c") + 1].split("/native/", 1)[0] + "/native"
         args = [relocate_include(v, [(native_root, str(sources / "native"))]) for v in args]
         args[args.index("-c") + 1] = str(sources / "native/tests" / name)
-        args += ["-I" + str(sources / "native/host"), "-g0"]
+        args += ["-I" + str(sources / "native/host"), "-I" + str(sources / "native/harness"), "-g0"]
         discovery[name] = args
     supplement = integration.freeze_test_headers(snapshot, out, admitted, discovery, call,
                                                   sources, admitted["native_source_sha256"])

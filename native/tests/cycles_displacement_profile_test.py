@@ -22,23 +22,23 @@ class DisplacementAdmissionTests(unittest.TestCase):
         # Only this tiny synthetic fixture is extended. No real receipts/objects
         # are relabelled; the real builder must validate every full-parent byte.
         original = (required_sources("displacement") - integrated.DISPLACEMENT_TEST_SOURCES) | {
-            "native/host/GuiFixDemo.cc"}
+            "native/harness/GuiFixDemo.cc"}
         for relative in original - set(manifest["native_source_sha256"]):
             for folder in (repo, snapshot / "integration-source"):
                 path = folder / relative
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("synthetic original " + relative)
             manifest["native_source_sha256"][relative] = sha256(repo / relative)
-        obj = "native/host/GuiFixDemo.cc.o"
+        obj = "native/harness/GuiFixDemo.cc.o"
         for folder in (build, snapshot):
             path = folder / obj; path.parent.mkdir(parents=True, exist_ok=True); path.write_text("production actor")
         commands_path = snapshot / "host-commands.json"
         commands = json.loads(commands_path.read_text())
-        commands.insert(-1, f"c++ -DGUI_EXACT_FLAGS=1 -DNDEBUG -I{repo}/native/host -I{fork}/include -I{build} -o {obj} -c {repo}/native/host/GuiFixDemo.cc")
+        commands.insert(-1, f"c++ -DGUI_EXACT_FLAGS=1 -DNDEBUG -I{repo}/native/host -I{fork}/include -I{build} -o {obj} -c {repo}/native/harness/GuiFixDemo.cc")
         commands[-1] = commands[-1].replace("&& :", obj + " && :")
         commands_path.write_text(json.dumps(commands))
         deps = snapshot / "native-deps.txt"
-        deps.write_text(deps.read_text() + f"{obj}: #deps 1, deps mtime 1 (VALID)\n    {repo}/native/host/GuiFixDemo.cc\n")
+        deps.write_text(deps.read_text() + f"{obj}: #deps 1, deps mtime 1 (VALID)\n    {repo}/native/harness/GuiFixDemo.cc\n")
         manifest["commands_sha256"] = sha256(commands_path)
         manifest["dependencies_sha256"] = sha256(deps)
         manifest["native_compile_units"] += 1
@@ -133,7 +133,7 @@ class DisplacementAdmissionTests(unittest.TestCase):
             self.assertIn("-DGUI_EXACT_FLAGS=1", units["cycles_live_displacement_artist_test.cc"]["command"])
             self.assertEqual(len(record["links"]), 1)
             link = record["links"][0]["command"]
-            self.assertNotIn(str(snapshot / "native/host/GuiFixDemo.cc.o"), link)
+            self.assertNotIn(str(snapshot / "native/harness/GuiFixDemo.cc.o"), link)
             self.assertIn(str(snapshot / "objects/NativeCyclesImages.cc.o"), link)
             self.assertEqual((snapshot / "lib/libproduction.a").read_bytes(), original_archive)
             path, binary = output / "run-manifest.json", output / "bin/cycles-live-artist"

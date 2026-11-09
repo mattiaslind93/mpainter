@@ -709,7 +709,7 @@ def build_drivers(snapshot, repo, out, udim, env, controlled=False, parent_manif
         names.append("CyclesLiveCompletionProbe.cc" if controlled else "cycles_image_cache_test.cc")
     templates_by_name = {name: template for name in names}
     if displacement:
-        actor_templates = [args for args in templates if args[args.index("-c") + 1].endswith("/native/host/GuiFixDemo.cc")]
+        actor_templates = [args for args in templates if args[args.index("-c") + 1].endswith("/native/harness/GuiFixDemo.cc")]
         if len(actor_templates) != 1:
             raise ValueError("Missing exact frozen GuiFixDemo compile template")
         templates_by_name["cycles_live_displacement_artist_test.cc"] = actor_templates[0]
