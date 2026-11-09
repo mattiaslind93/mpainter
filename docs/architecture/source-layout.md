@@ -5,7 +5,7 @@ How `native/` is organised while the restructure plan's phases 4 and 5 are under
 | Folder | What lives there |
 |---|---|
 | `native/host/` | The application, compiled into `bts-host`. Files not yet assigned to a domain stay at the top level. |
-| `native/host/<domain>/` | Domain folders so far: `python/`, `materials/openpbr/`, `baking/`, `gpu/`, `painting/`, `layers/`, `fill/`. The rest of the plan's domains follow. |
+| `native/host/<domain>/` | Domain folders so far: `python/`, `materials/openpbr/`, `materials/layering/`, `materials/native/`, `baking/`, `gpu/`, `painting/`, `layers/`, `fill/`, `ui/panels/`, `ui/dialogs/`, `assets/`, `viewport/`. The rest of the plan's domains follow. |
 | `native/host/openpbr/` | Vendored OpenPBR resources (Apache-2.0), not our code. |
 | `native/harness/` | Test, demo and proof code (`*Demo`, `*Test`, `*Proof`, `*Fixture`, `*Witness`, ...). Still compiled into `bts-host`, because `main()` calls it. |
 | `native/tests/` | Test programs and their fixtures. |
@@ -26,6 +26,10 @@ the `${BTS_HOST_SOURCE_DIR}/<file>` references in `native/host/CMakeLists.txt`. 
 it also rewrites exact `native/host/<file>` paths in scripts and `"../host/<file>"` includes in
 tests. Add a new domain folder to `BTS_HOST_DOMAINS` in the same change, then rebuild and run
 the CPU check.
+
+`mp move` refuses a file that a script, test or JSON file names, either by file name or by a
+quoted bare stem such as `'NativeMaterialImageVariant'`, because some verifiers build paths as
+`'native/host/' + stem + '.cc'`. Pass `--allow-referenced` only after checking each hit.
 
 Before moving a file, check that nothing pins it. Some verifiers in `scripts/host/` and
 `native/tests/` recompile a source by name, hash it, or read its text. Moving such a file

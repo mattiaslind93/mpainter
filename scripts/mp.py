@@ -287,7 +287,28 @@ REF_FILES = re.compile(r"(scripts|native)/.*\.(py|json|sh)\Z|native/tests/.*\.(c
 NAME_END = r"(?![A-Za-z0-9_.])"
 
 
-def move_files(root, dest, sources, refs=False):
+def name_references(root, names):
+    """Where scripts, JSON, shell files or tests name these files: by file name, or by a quoted
+    bare stem (verifiers build paths as 'native/host/' + stem + '.cc'). [(file:line, name)]"""
+    stems = {n.split(".")[0]: n for n in names}
+    full = re.compile(r"(?<![A-Za-z0-9_])(" + "|".join(re.escape(n) for n in names) + r")(?![A-Za-z0-9_.])")
+    quoted = re.compile(r"""['"]([A-Za-z0-9_]+)['"]""")
+    hits = []
+    for rel in git_files(root):
+        if not REF_FILES.match(rel) or rel == HOST_CMAKE:
+            continue
+        content = text(root, rel) or ""
+        for number, line in enumerate(content.splitlines(), 1):
+            for match in full.finditer(line):
+                hits.append((f"{rel}:{number}", match.group(1)))
+            if rel.endswith(".py"):
+                for stem in quoted.findall(line):
+                    if stem in stems:
+                        hits.append((f"{rel}:{number}", stems[stem]))
+    return hits
+
+
+def move_files(root, dest, sources, refs=False, allow_referenced=False):
     """git mv top-level native/host files into dest and repoint what names them.
 
     Rewrites `${BTS_HOST_SOURCE_DIR}/<name>` in native/host/CMakeLists.txt. With refs,
@@ -309,6 +330,12 @@ def move_files(root, dest, sources, refs=False):
         names.append(name)
     if len(set(names)) != len(names):
         raise UsageError("a file is listed twice")
+    if not allow_referenced:
+        hits = name_references(root, names)
+        if hits:
+            shown = "\n  ".join(f"{where}: {name}" for where, name in hits[:30])
+            raise UsageError(f"{len(hits)} reference(s) name these files; leave them out, or check each one "
+                             f"and pass --allow-referenced (with --refs for exact paths):\n  {shown}")
     prefix = os.path.relpath(dest, HOST).replace(os.sep, "/")
     cmake = (root / HOST_CMAKE).read_text(encoding="utf-8")
     total = 0
@@ -483,6 +510,8 @@ def main(argv=None, root=ROOT, out=sys.stdout):
     move.add_argument("dest")
     move.add_argument("--list", required=True, help="file with one native/host/<file> path per line")
     move.add_argument("--refs", action="store_true", help="also rewrite exact paths in scripts and tests")
+    move.add_argument("--allow-referenced", action="store_true",
+                      help="move files that scripts or tests name (checked by hand)")
     brief = sub.add_parser("brief")
     for name in ("output", "goal", "platform", "base", "worktree", "proof", "report"):
         brief.add_argument(f"--{name}", required=name == "output", default="")
@@ -526,7 +555,7 @@ def main(argv=None, root=ROOT, out=sys.stdout):
         if args.command == "move":
             listing = Path(args.list)
             sources = [line.strip() for line in listing.read_text(encoding="utf-8").splitlines() if line.strip()]
-            result = move_files(root, args.dest, sources, args.refs)
+            result = move_files(root, args.dest, sources, args.refs, args.allow_referenced)
             print(f"moved {len(sources)} files to {args.dest}; {result['cmake']} CMake references", file=out)
             for rel, count in result["refs"].items():
                 print(f"  rewrote {count} reference(s) in {rel}", file=out)

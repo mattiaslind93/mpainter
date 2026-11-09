@@ -253,10 +253,24 @@ class Move(unittest.TestCase):
                            "scripts/host/verify-brush.py": "a = 'native/host/Brush.cc'; b = 'native/host/Brush.ccx'\n",
                            "native/tests/brush_test.cc": '#include "../host/Brush.hh"\n#include "../host/Other.hh"\n'})
 
-    def move(self, repo, *names, refs=False):
+    def move(self, repo, *names, refs=False, allow=True):
         listing = repo.root.parent / "list.txt"
         listing.write_text("".join(f"native/host/{n}\n" for n in names))
-        return repo.mp("move", "native/host/painting", "--list", str(listing), *(["--refs"] if refs else []))
+        return repo.mp("move", "native/host/painting", "--list", str(listing), *(["--refs"] if refs else []),
+                       *(["--allow-referenced"] if allow else []))
+
+    def test_referenced_files_are_refused_by_default(self):
+        repo = self.repo()
+        repo.write("scripts/host/verify-stem.py", "src = ['native/host/' + s + '.cc' for s in ['BrushJitter']]\n")
+        repo.git("add", "-A")
+        code, _, err = self.move(repo, "BrushJitter.cc", allow=False)
+        self.assertEqual(code, 2)
+        self.assertIn("scripts/host/verify-stem.py:1: BrushJitter.cc", err)
+        code, _, err = self.move(repo, "Brush.cc", allow=False)
+        self.assertEqual(code, 2)
+        self.assertIn("native/host/Brush.cc", (repo.root / "scripts/host/verify-brush.py").read_text())
+        self.assertTrue((repo.root / "native/host/Brush.cc").is_file())
+        self.assertEqual(self.move(repo, "Other.cc", allow=False)[0], 0)
 
     def test_move_rewrites_cmake_exactly(self):
         repo = self.repo()
