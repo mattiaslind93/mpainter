@@ -56,7 +56,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/materials/openpbr/OpenPbrPanel.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/ShaderDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/InspectionDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/ResourceMonitor.cc
+  ${BTS_HOST_SOURCE_DIR}/diagnostics/ResourceMonitor.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/ResourceMonitorDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/AutoBakeDemo.cc
   ${BTS_HOST_SOURCE_DIR}/baking/AutoBakeEngine.cc
@@ -786,7 +786,7 @@ cmake_language(DEFER CALL bts_register_cpu_tests)
 # Test and demo code lives in native/harness, and host code is moving into domain
 # folders under native/host. Files include each other by bare name across all of
 # them, so every compiled bts target searches every one of these folders.
-set(BTS_HOST_DOMAINS python materials/openpbr baking gpu painting layers fill ui/panels ui/dialogs assets viewport materials/layering materials/native persistence io)
+set(BTS_HOST_DOMAINS python materials/openpbr baking gpu painting layers fill ui/panels ui/dialogs assets viewport materials/layering materials/native persistence io diagnostics)
 set(BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR} ${BTS_HOST_SOURCE_DIR}/../harness)
 foreach(_bts_domain IN LISTS BTS_HOST_DOMAINS)
   list(APPEND BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR}/${_bts_domain})
