@@ -16,7 +16,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/Branding.cc
   ${BTS_HOST_SOURCE_DIR}/Theme.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/BakeSourceCpuDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/ViewportHeadlessDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/ViewportHeadlessDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/TextureImportCpuDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/TextureImportDemo.cc
   ${BTS_HOST_SOURCE_DIR}/TextureLoadController.cc
@@ -126,7 +126,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialPreviewImages.cc
   ${BTS_HOST_SOURCE_DIR}/BlendMaterial.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialPanel.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialPanelTest.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialPanelTest.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialInspectionDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialGpuProgramTest.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialStackTest.cc
@@ -154,7 +154,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialImageResource.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialImageArchive.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialSourceLoader.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialHostQueueDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialHostQueueDemo.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialSharedGpuImages.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialGraph.cc
   ${BTS_HOST_SOURCE_DIR}/BlendMaterialDialog.cc
@@ -235,7 +235,7 @@ set_property(SOURCE
   ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialInspectionDemo.cc APPEND PROPERTY
   INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/source/blender/draw/intern")
 # The explicit generated-source diagnostic uses the real EEVEE amendment.
-set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/ViewportHeadlessDemo.cc APPEND PROPERTY
+set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/../harness/ViewportHeadlessDemo.cc APPEND PROPERTY
   INCLUDE_DIRECTORIES
     "${CMAKE_SOURCE_DIR}/source/blender/draw/engines/eevee"
     "${CMAKE_SOURCE_DIR}/source/blender/draw/intern")
@@ -1440,7 +1440,7 @@ if(TARGET bf_intern_cycles)
     APPEND PROPERTY COMPILE_DEFINITIONS BTS_MATERIAL_LAYER_SOURCE_LOADER_TEST)
   target_sources(bts-host PRIVATE
     "${BTS_HOST_SOURCE_DIR}/../tests/material_layering_sources_gpu_test.cc")
-  set_property(SOURCE "${BTS_HOST_SOURCE_DIR}/ViewportHeadlessDemo.cc"
+  set_property(SOURCE "${BTS_HOST_SOURCE_DIR}/../harness/ViewportHeadlessDemo.cc"
     APPEND PROPERTY COMPILE_DEFINITIONS BTS_MATERIAL_LAYER_SOURCE_GPU_TEST)
 endif()
 

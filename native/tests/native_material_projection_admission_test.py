@@ -145,7 +145,7 @@ class Admission(unittest.TestCase):
                 admission.validate_cold_frame_progression(invalid)
 
     def test_cold_helper_keeps_data_before_draw_and_advances_pending_frames(self):
-        source = (root / 'native/host/NativeMaterialProjectionColdProof.hh').read_text()
+        source = (root / 'native/harness/NativeMaterialProjectionColdProof.hh').read_text()
         self.assertLess(source.index('data_file.close();'), source.index('host.draw('))
         pending = source[source.index('while(source_loader.pending()||host.texture_updates_pending())'):source.index('int components=0;')]
         self.assertIn('host.draw(', pending)

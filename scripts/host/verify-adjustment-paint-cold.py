@@ -31,8 +31,8 @@ expected = json.loads(witness.read_text())
 project = Path(expected['document_path']).resolve()
 assert project.is_relative_to(warm) and sha(project) == expected['packed_file_sha256']
 assert expected['tiles'] == [1001, 1002] and len(expected['gpu']) == 4
-owned = ['native/host/AdjustmentPaintColdProof.hh', 'native/host/ViewportHeadlessDemo.cc',
-         'native/host/GpuAdjustmentPaintTest.hh', 'native/host/GpuLayerPreview.cc',
+owned = ['native/harness/AdjustmentPaintColdProof.hh', 'native/harness/ViewportHeadlessDemo.cc',
+         'native/harness/GpuAdjustmentPaintTest.hh', 'native/host/GpuLayerPreview.cc',
          'native/host/GpuAdjustmentPages.hh', 'scripts/host/verify-adjustment-paint-cold.py']
 source_hashes = {name: sha(root / name) for name in owned}
 output.mkdir(parents=True)

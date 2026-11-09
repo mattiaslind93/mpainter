@@ -42,13 +42,13 @@ def call(args, label):
         subprocess.run(["nice", "-n", "19", *args], cwd=snapshot, env=env, stdout=log, stderr=subprocess.STDOUT, check=True)
 
 
-sources = {"ColorPicker.cc": repo / "native/host/ColorPicker.cc", "NativeMaterialPanelTest.cc": repo / "native/host/NativeMaterialPanelTest.cc", "main.cc": repo / "native/tests/color_picker_enter_test.cc"}
+sources = {"ColorPicker.cc": repo / "native/host/ColorPicker.cc", "NativeMaterialPanelTest.cc": repo / "native/harness/NativeMaterialPanelTest.cc", "main.cc": repo / "native/tests/color_picker_enter_test.cc"}
 if a.baseline:
     baseline = json.loads((snapshot / "snapshot.json").read_text())["source_head"]
     original = subprocess.check_output(["git", "show", baseline + ":native/host/ColorPicker.cc"], cwd=repo)
     sources["ColorPicker.cc"] = out / "ColorPicker-baseline.cc"
     sources["ColorPicker.cc"].write_bytes(original)
-source_hashes = {str(v): digest(v) for v in (*sources.values(), repo / "native/host/ColorPicker.hh", repo / "native/host/ColorPickerTest.hh")}
+source_hashes = {str(v): digest(v) for v in (*sources.values(), repo / "native/host/ColorPicker.hh", repo / "native/harness/ColorPickerTest.hh")}
 replacements = {}
 for name, source in sources.items():
     args = compilation(name)

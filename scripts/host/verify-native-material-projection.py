@@ -75,11 +75,11 @@ assert sha(binary) == a.expect_binary, 'Frozen coherent binary changed'
 manifest_path = a.source_manifest.resolve()
 manifest = json.loads(manifest_path.read_text())['files']
 required = {'native/host/main.cc', 'native/host/GuiFixDemo.cc',
-            'native/host/NativeMaterialProjectionDemo.hh',
-            'native/host/NativeMaterialProjectionProofActions.inc',
-            'native/host/NativeMaterialProjectionWitness.hh',
+            'native/harness/NativeMaterialProjectionDemo.hh',
+            'native/harness/NativeMaterialProjectionProofActions.inc',
+            'native/harness/NativeMaterialProjectionWitness.hh',
             'native/host/NativeMaterialProjectionState.inc',
-            'native/host/NativeMaterialProjectionColdProof.hh',
+            'native/harness/NativeMaterialProjectionColdProof.hh',
             'native/tests/native_material_projection_fixture.py',
             'scripts/host/verify-native-material-projection.py',
             'scripts/host/private_gpu_gui.py',

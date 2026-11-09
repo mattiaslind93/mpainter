@@ -32,7 +32,7 @@ def sha(path):
 
 
 assert sha(binary) == args.expected_binary_sha256
-owned = ["native/host/GpuAdjustmentPaintDemo.hh", "native/host/NativeAdjustmentState.inc", "native/host/MaterialInspection.cc", "native/host/NativeCyclesImages.cc", "scripts/host/verify-adjustment-paint-ui.py"]
+owned = ["native/harness/GpuAdjustmentPaintDemo.hh", "native/host/NativeAdjustmentState.inc", "native/host/MaterialInspection.cc", "native/host/NativeCyclesImages.cc", "scripts/host/verify-adjustment-paint-ui.py"]
 source_hashes = {name: sha(source / name) for name in owned}
 if not args.existing:
     assert not output.exists(), "Keep every previous run intact"

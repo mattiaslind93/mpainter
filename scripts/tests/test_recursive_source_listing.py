@@ -76,6 +76,18 @@ class RecursiveSourceListing(unittest.TestCase):
                 "c = list((root/'assets/grunges').glob('*'))\nd = list(Path('out').iterdir())\n")
         self.assertEqual(flat_listings(fine), [])
 
+    def test_every_tracked_python_file_parses(self):
+        # Scripted path rewrites must not leave a verifier that cannot even be read.
+        broken = []
+        for rel in tracked_python():
+            path = ROOT / rel
+            if path.is_file() and not path.is_symlink():
+                try:
+                    ast.parse(path.read_text(encoding="utf-8"), filename=rel)
+                except SyntaxError as error:
+                    broken.append(f"{rel}:{error.lineno}: {error.msg}")
+        self.assertEqual(broken, [])
+
     def test_no_tracked_script_lists_owned_sources_flat(self):
         problems = []
         for rel in tracked_python():

@@ -40,9 +40,9 @@ def native_source_bridge(prior, current_sha, current_hashes, native_manifest=Non
     old = json.loads(native_manifest.read_text())['files']
     old_hashes = {name: value if isinstance(value, str) else value['sha256'] for name, value in old.items()}
     assert old_hashes.keys() == current_hashes.keys(), 'Native/UI source manifest keys differ'
-    allowed = {'native/host/NativeVectorMappingDemo.hh',
+    allowed = {'native/harness/NativeVectorMappingDemo.hh',
                'scripts/host/verify-native-vector-mapping-ui.py',
-               'native/host/NativeHeightImageUiDemo.hh',
+               'native/harness/NativeHeightImageUiDemo.hh',
                'scripts/host/verify-native-height-image-ui.py'}
     changed = sorted(name for name in old_hashes if old_hashes[name] != current_hashes[name])
     assert set(changed) <= allowed, 'Native/UI difference is outside the exact reviewed test paths: ' + str(changed)
@@ -56,7 +56,7 @@ assert sha(binary) == a.expected_binary_sha256
 manifest_sha = sha(a.source_manifest)
 frozen = json.loads(a.source_manifest.read_text())['files']
 hashes = {name: value if isinstance(value, str) else value['sha256'] for name, value in frozen.items()}
-required = {'native/host/NativeHeightImageUiDemo.hh', 'native/host/NativeHeightImageUiState.inc',
+required = {'native/harness/NativeHeightImageUiDemo.hh', 'native/host/NativeHeightImageUiState.inc',
             'native/host/main.cc', 'native/host/GuiFixDemo.cc',
             'native/tests/native_height_image_native_test.cc', 'native/tests/NativeHeightImageFixture.hh',
             'native/tests/NativeHeightImageReference.hh', 'scripts/host/verify-native-height-image-ui.py'}
