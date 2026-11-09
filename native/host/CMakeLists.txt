@@ -59,13 +59,13 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/ResourceMonitor.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/ResourceMonitorDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/AutoBakeDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/AutoBakeEngine.cc
+  ${BTS_HOST_SOURCE_DIR}/baking/AutoBakeEngine.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/SkewDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/SkewController.cc
-  ${BTS_HOST_SOURCE_DIR}/SkewPanel.cc
-  ${BTS_HOST_SOURCE_DIR}/SkewGeometry.cc
-  ${BTS_HOST_SOURCE_DIR}/SkewBakeEngine.cc
-  ${BTS_HOST_SOURCE_DIR}/SkewIO.cc
+  ${BTS_HOST_SOURCE_DIR}/baking/SkewController.cc
+  ${BTS_HOST_SOURCE_DIR}/baking/SkewPanel.cc
+  ${BTS_HOST_SOURCE_DIR}/baking/SkewGeometry.cc
+  ${BTS_HOST_SOURCE_DIR}/baking/SkewBakeEngine.cc
+  ${BTS_HOST_SOURCE_DIR}/baking/SkewIO.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/ResidencyDemo.cc
   ${BTS_HOST_SOURCE_DIR}/ViewportResidency.cc
   ${BTS_HOST_SOURCE_DIR}/GpuLayerPreview.cc
@@ -169,11 +169,11 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/TextureExportDialog.cc
   ${BTS_HOST_SOURCE_DIR}/SmartMaterial.cc
   ${BTS_HOST_SOURCE_DIR}/MeshMapsPanel.cc
-  ${BTS_HOST_SOURCE_DIR}/MeshBakeDialog.cc
+  ${BTS_HOST_SOURCE_DIR}/baking/MeshBakeDialog.cc
   ${BTS_HOST_SOURCE_DIR}/MeshMapImport.cc
   ${BTS_HOST_SOURCE_DIR}/MeshMapAssign.cc
   ${BTS_HOST_SOURCE_DIR}/MeshMapIO.cc
-  ${BTS_HOST_SOURCE_DIR}/MeshBakeFilter.cc
+  ${BTS_HOST_SOURCE_DIR}/baking/MeshBakeFilter.cc
   ${BTS_HOST_SOURCE_DIR}/MeshBaker.cc
   ${BTS_HOST_SOURCE_DIR}/AssetThumbnail.cc
   ${BTS_HOST_SOURCE_DIR}/AssetCatalog.cc
@@ -424,7 +424,7 @@ target_include_directories(bts-export-packing-tests PRIVATE ${BTS_HOST_SOURCE_DI
 target_compile_features(bts-export-packing-tests PRIVATE cxx_std_20)
 
 # Shared metadata parser is also linked by the pure TextureDocument test targets.
-add_library(bts-export-config STATIC ${BTS_HOST_SOURCE_DIR}/SkewArchive.cc ${BTS_HOST_SOURCE_DIR}/Displacement.cc ${BTS_HOST_SOURCE_DIR}/CustomChannel.cc ${BTS_HOST_SOURCE_DIR}/PhysicalScale.cc ${BTS_HOST_SOURCE_DIR}/ExportConfiguration.cc ${BTS_HOST_SOURCE_DIR}/StrokeArchive.cc ${BTS_HOST_SOURCE_DIR}/StrokeTransfer.cc ${BTS_HOST_SOURCE_DIR}/StrokeHistory.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc)
+add_library(bts-export-config STATIC ${BTS_HOST_SOURCE_DIR}/baking/SkewArchive.cc ${BTS_HOST_SOURCE_DIR}/Displacement.cc ${BTS_HOST_SOURCE_DIR}/CustomChannel.cc ${BTS_HOST_SOURCE_DIR}/PhysicalScale.cc ${BTS_HOST_SOURCE_DIR}/ExportConfiguration.cc ${BTS_HOST_SOURCE_DIR}/StrokeArchive.cc ${BTS_HOST_SOURCE_DIR}/StrokeTransfer.cc ${BTS_HOST_SOURCE_DIR}/StrokeHistory.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc)
 target_include_directories(bts-export-config PUBLIC ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-export-config PUBLIC cxx_std_20)
 target_link_libraries(bts-export-config PUBLIC Qt6::Core)
@@ -786,7 +786,7 @@ cmake_language(DEFER CALL bts_register_cpu_tests)
 # Test and demo code lives in native/harness, and host code is moving into domain
 # folders under native/host. Files include each other by bare name across all of
 # them, so every compiled bts target searches every one of these folders.
-set(BTS_HOST_DOMAINS python materials/openpbr)
+set(BTS_HOST_DOMAINS python materials/openpbr baking)
 set(BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR} ${BTS_HOST_SOURCE_DIR}/../harness)
 foreach(_bts_domain IN LISTS BTS_HOST_DOMAINS)
   list(APPEND BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR}/${_bts_domain})
@@ -1149,7 +1149,7 @@ target_compile_options(bts-levels-ui-tests PRIVATE -UNDEBUG)
 target_link_libraries(bts-levels-ui-tests PRIVATE bts-export-config Qt6::Widgets)
 add_dependencies(bts-cpu-tests bts-levels-ui-tests)
 
-add_executable(bts-baking-ui-tests ${BTS_HOST_SOURCE_DIR}/../tests/baking_ui_test.cc ${BTS_HOST_SOURCE_DIR}/SkewPanel.cc ${BTS_FILE_BROWSER_WIDGET_SOURCES})
+add_executable(bts-baking-ui-tests ${BTS_HOST_SOURCE_DIR}/../tests/baking_ui_test.cc ${BTS_HOST_SOURCE_DIR}/baking/SkewPanel.cc ${BTS_FILE_BROWSER_WIDGET_SOURCES})
 target_include_directories(bts-baking-ui-tests PRIVATE ${BTS_HOST_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/source/blender/imbuf)
 target_compile_features(bts-baking-ui-tests PRIVATE cxx_std_20)
 target_compile_options(bts-baking-ui-tests PRIVATE -UNDEBUG)
