@@ -10,13 +10,37 @@
 #include <QPlainTextEdit>
 #include <QTimer>
 namespace bts {
-QJsonObject verify_python_extensions(const QString &directory){
- QDir().mkpath(directory);QMainWindow window;auto *menu=window.menuBar()->addMenu("Window");menu->addMenu("Views");
- PythonConsole console(&window,PythonHooks{[](const QString &operation,const QJsonObject &)->QJsonValue{if(operation=="project.status")return QJsonObject{{"is_open",false},{"is_busy",false}};throw std::invalid_argument("This CPU fixture only supplies readiness");},[]{return false;},directory+"/plugins"});
- const auto run=[&](const QString &source){if(!console.execute(source)){auto *output=window.findChild<QPlainTextEdit *>("pythonOutput");throw std::runtime_error("Python extension CPU assertion: "+output->toPlainText().toStdString());}};
- const auto spin=[]{QEventLoop loop;QTimer::singleShot(45,&loop,&QEventLoop::quit);loop.exec();};
- const auto quoted=QJsonDocument(QJsonArray{directory}).toJson(QJsonDocument::Compact);run("root = __import__('pathlib').Path("+QString::fromUtf8(quoted.mid(1,quoted.size()-2))+")");
- run(R"PY(import bts, weakref, gc
+QJsonObject verify_python_extensions(const QString &directory)
+{
+  QDir().mkpath(directory);
+  QMainWindow window;
+  auto *menu = window.menuBar()->addMenu("Window");
+  menu->addMenu("Views");
+  PythonConsole console(
+      &window,
+      PythonHooks{[](const QString &operation, const QJsonObject &) -> QJsonValue {
+                    if (operation == "project.status")
+                      return QJsonObject{{"is_open", false}, {"is_busy", false}};
+                    throw std::invalid_argument("This CPU fixture only supplies readiness");
+                  },
+                  [] { return false; },
+                  directory + "/plugins"});
+  const auto run = [&](const QString &source) {
+    if (!console.execute(source)) {
+      auto *output = window.findChild<QPlainTextEdit *>("pythonOutput");
+      throw std::runtime_error("Python extension CPU assertion: " +
+                               output->toPlainText().toStdString());
+    }
+  };
+  const auto spin = [] {
+    QEventLoop loop;
+    QTimer::singleShot(45, &loop, &QEventLoop::quit);
+    loop.exec();
+  };
+  const auto quoted = QJsonDocument(QJsonArray{directory}).toJson(QJsonDocument::Compact);
+  run("root = __import__('pathlib').Path(" + QString::fromUtf8(quoted.mid(1, quoted.size() - 2)) +
+      ")");
+  run(R"PY(import bts, weakref, gc
 received = []
 def started(event): received.append(type(event).__name__)
 bts.event.DISPATCHER.connect(bts.event.GraphicalUserInterfaceStarted, started)
@@ -28,8 +52,11 @@ del weak; gc.collect(); assert weak_reference() is None
 strong = Receiver(); strong_reference = weakref.ref(strong)
 bts.event.DISPATCHER.connect_strong(bts.event.BusyStatusChanged, strong.notify)
 del strong; gc.collect(); assert strong_reference() is not None
-)PY");spin();console.notify("BusyStatusChanged",{{"busy",true}});spin();
- run(R"PY(assert received.count('GraphicalUserInterfaceStarted') == 1
+)PY");
+  spin();
+  console.notify("BusyStatusChanged", {{"busy", true}});
+  spin();
+  run(R"PY(assert received.count('GraphicalUserInterfaceStarted') == 1
 assert received.count(('receiver', True)) == 1
 bts.event.DISPATCHER.disconnect(bts.event.BusyStatusChanged, strong_reference().notify)
 gc.collect(); assert strong_reference() is None
@@ -38,8 +65,9 @@ dock = bts.ui.add_dock_widget(bts.ui.Panel(bts.ui.Label('initial', object_name='
 label = dock.find_child('cpuProbeLabel'); assert label.text() == 'initial'
 label.set_text('updated'); assert label.text() == 'updated'
 button = dock.find_child('cpuProbeButton'); button.trigger()
-)PY");spin();
- run(R"PY(assert clicks == [1]
+)PY");
+  spin();
+  run(R"PY(assert clicks == [1]
 layout = bts.ui.get_layout(); bts.ui.set_layout(layout)
 bts.ui.delete_ui_element(dock)
 assert not dock.is_valid() and not label.is_valid() and not button.is_valid()
@@ -59,11 +87,22 @@ plugin.write_text("import bts\n" +
  "def close_plugin():\n    raise RuntimeError('intentional close failure')\n")
 bts._reload_plugins(str(root / 'plugins'))
 )PY");
- if(window.findChildren<QDockWidget *>("cpuPluginDock").size()!=1)throw std::runtime_error("Plugin dock not mounted");
- run("bts._reload_plugins(str(root / 'plugins'))");
- if(window.findChildren<QDockWidget *>("cpuPluginDock").size()!=1)throw std::runtime_error("Reload duplicated plugin UI");
- run("bts._shutdown(); gc.collect(); assert all(owner != '_bts_plugin_cpu_plugin' for _, _, owner in bts.event.DISPATCHER._connections.values())");
- if(!window.findChildren<QDockWidget *>("cpuPluginDock").isEmpty())throw std::runtime_error("Failed-close plugin UI was not cleaned");
- return {{"weak_collected",true},{"strong_retained_until_disconnect",true},{"gui_started_once",true},{"native_qt_widgets",true},{"deleted_handles_rejected",true},{"builtin_deletion_rejected",true},{"reload_unique",true},{"failed_close_cleanup",true},{"gpu_required",false}};
+  if (window.findChildren<QDockWidget *>("cpuPluginDock").size() != 1)
+    throw std::runtime_error("Plugin dock not mounted");
+  run("bts._reload_plugins(str(root / 'plugins'))");
+  if (window.findChildren<QDockWidget *>("cpuPluginDock").size() != 1)
+    throw std::runtime_error("Reload duplicated plugin UI");
+  run("bts._shutdown(); gc.collect(); assert all(owner != '_bts_plugin_cpu_plugin' for _, _, owner in bts.event.DISPATCHER._connections.values())");
+  if (!window.findChildren<QDockWidget *>("cpuPluginDock").isEmpty())
+    throw std::runtime_error("Failed-close plugin UI was not cleaned");
+  return {{"weak_collected", true},
+          {"strong_retained_until_disconnect", true},
+          {"gui_started_once", true},
+          {"native_qt_widgets", true},
+          {"deleted_handles_rejected", true},
+          {"builtin_deletion_rejected", true},
+          {"reload_unique", true},
+          {"failed_close_cleanup", true},
+          {"gpu_required", false}};
 }
-}
+}  // namespace bts

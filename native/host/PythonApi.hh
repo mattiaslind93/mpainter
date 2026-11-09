@@ -1,6 +1,6 @@
 #pragma once
 namespace bts {
-inline constexpr const char *python_api_source=R"BTS_PY(
+inline constexpr const char *python_api_source = R"BTS_PY(
 __name__ = "_bts_runtime"
 import sys as _sys, types as _types, json as _json, traceback as _traceback
 import _bts_host as _native

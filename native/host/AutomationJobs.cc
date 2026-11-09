@@ -18,38 +18,440 @@
 #include <QTimer>
 #include <chrono>
 #include <future>
-namespace bts {namespace {
-struct Outcome {QJsonObject info;QUuid project;std::vector<MeshBakeResult> maps;};
-struct Control {std::atomic_bool cancel=false;std::atomic_int completed=0,total=1;};
-int integer(const QJsonValue &value,int minimum,int maximum){const double number=value.toDouble(-1);if(maximum==max_texture_resolution)require_texture_resolution_limit(number,"Bake");if(!value.isDouble()||!std::isfinite(number)||number<minimum||number>maximum||std::floor(number)!=number)throw std::invalid_argument("Invalid bake numeric setting");return int(number);}
-}
-struct AutomationJobs::Impl {
- QMainWindow *window;AutomationJobHooks hooks;QTimer poll;std::future<Outcome> work;std::shared_ptr<Control> control;QString active;QMap<QString,QJsonObject> states;QPointer<QProgressDialog> progress;
- Impl(QMainWindow *parent,AutomationJobHooks callbacks):window(parent),hooks(std::move(callbacks)){}
- void finish(){if(!work.valid()||work.wait_for(std::chrono::seconds(0))!=std::future_status::ready)return;auto &state=states[active];try{auto outcome=work.get();if(control->cancel){outcome.info["status"]="cancelled";outcome.info["message"]="Cancelled; completed export files retained";}else if(outcome.info["status"]=="success"&&!outcome.maps.empty())hooks.apply_maps(outcome.project,outcome.maps);if(state["kind"]=="export"){QJsonObject grouped;const auto expected=state["by_texture_set"].toObject();const auto actual=outcome.info["files"].toArray();for(auto it=expected.begin();it!=expected.end();++it){QJsonArray written;for(const auto &path:it.value().toArray())if(actual.contains(path))written.append(path);grouped[it.key()]=written;}outcome.info["by_texture_set"]=grouped;}state["result"]=outcome.info;state["status"]=outcome.info["status"];}catch(const std::exception &error){state["status"]="error";state["result"]=QJsonObject{{"status","error"},{"message",QString::fromUtf8(error.what())},{"files",QJsonArray{}}};}state["done"]=true;state["progress"]=1.;if(hooks.event){auto data=state["result"].toObject();data["id"]=active;hooks.event(state["kind"]=="export"?"ExportTexturesEnded":"BakingProcessEnded",data);}if(progress){progress->close();progress->deleteLater();progress=nullptr;}poll.stop();}
- void launch(const QString &kind,std::function<Outcome(const std::shared_ptr<Control> &)> function,const QJsonObject &details={}){if(work.valid())throw std::runtime_error("An automation job is already running");active=QUuid::createUuid().toString(QUuid::WithoutBraces);control=std::make_shared<Control>();states[active]=details;states[active]["id"]=active;states[active]["kind"]=kind;states[active]["status"]="running";states[active]["done"]=false;states[active]["progress"]=0.;if(hooks.event){hooks.event(kind=="export"?"ExportTexturesAboutToStart":"BakingProcessAboutToStart",states[active]);if(kind=="bake")hooks.event("BakingProcessProgress",{{"id",active},{"progress",0.}});}work=std::async(std::launch::async,[function=std::move(function),state=control]{return function(state);});progress=new QProgressDialog(kind=="export"?"Exporting textures…":"Baking mesh maps…","Cancel",0,100,window);progress->setObjectName("automationJobProgress");progress->setWindowModality(Qt::WindowModal);progress->setAutoClose(false);QObject::connect(progress,&QProgressDialog::canceled,&poll,[state=control]{state->cancel=true;});progress->show();poll.start(16);}
+namespace bts {
+namespace {
+struct Outcome {
+  QJsonObject info;
+  QUuid project;
+  std::vector<MeshBakeResult> maps;
 };
-AutomationJobs::AutomationJobs(QMainWindow *window,AutomationJobHooks hooks):QObject(window),impl_(std::make_unique<Impl>(window,std::move(hooks))){connect(&impl_->poll,&QTimer::timeout,this,[this]{auto &s=*impl_;if(s.work.valid()){const double fraction=double(s.control->completed.load())/std::max(1,s.control->total.load());if(s.states[s.active]["kind"]=="bake"&&s.states[s.active]["progress"].toDouble()!=fraction&&s.hooks.event)s.hooks.event("BakingProcessProgress",{{"id",s.active},{"progress",fraction}});s.states[s.active]["progress"]=fraction;if(s.progress)s.progress->setValue(int(fraction*100));s.finish();}});}
-AutomationJobs::~AutomationJobs(){auto &s=*impl_;s.poll.stop();if(s.control)s.control->cancel=true;if(s.work.valid())s.work.wait();if(s.progress)delete s.progress;}
-bool AutomationJobs::pending()const{return impl_->work.valid();}
-QJsonValue AutomationJobs::call(const QString &operation,const QJsonObject &parameters){auto &s=*impl_;
- if(operation.startsWith("jobs.")){const auto id=parameters["id"].toString();if(!s.states.contains(id))throw std::invalid_argument("Unknown automation job");s.finish();if(operation=="jobs.cancel"){if(!s.states[id]["done"].toBool()&&id==s.active)s.control->cancel=true;return s.states[id];}if(operation=="jobs.status")return s.states[id];if(operation=="jobs.result"){if(!s.states[id]["done"].toBool())throw std::runtime_error("Job has not finished");return s.states[id]["result"];}throw std::invalid_argument("Unknown job operation");}
- const auto *document=s.hooks.document();if(!document)throw std::runtime_error("No project open");if(!parameters["config"].isObject())throw std::invalid_argument("config must be an object");const auto config=parameters["config"].toObject();
- if(operation.startsWith("export.")){
-  auto plan=automation_export_plan(*document,config);const auto manifest=automation_export_files(plan);if(operation=="export.list")return manifest;
-  if(operation!="export.start"&&operation!="export.run")throw std::invalid_argument("Unknown export operation");if(s.work.valid())throw std::runtime_error("An automation job is running");if(!QDir(QString::fromStdString(plan.request.directory)).exists())throw std::invalid_argument("Choose an existing export directory");auto inputs=s.hooks.export_source(plan.selected);for(auto &tile:inputs){const auto match=std::find_if(plan.request.tiles.begin(),plan.request.tiles.end(),[&](const auto &item){return item.set.id==tile.set.id&&item.number==tile.number;});if(match==plan.request.tiles.end())throw std::runtime_error("Export source changed during preparation");tile.output_resolution=match->output_resolution;}plan.request.tiles=std::move(inputs);auto mesh=plan.usd?s.hooks.mesh_source(plan.mesh_displacement):std::shared_ptr<NativeMeshExport>();FileDialog::remember_folder(QString::fromStdString(plan.request.directory));
-  s.launch("export",[plan=std::move(plan),mesh=std::move(mesh)](const std::shared_ptr<Control> &control){Outcome result;QJsonArray files;control->total=int(export_file_list(plan.request).size())+(plan.usd?2:0);try{write_texture_export(plan.request,control->cancel,[&](int completed,const std::string &name){files.append(QDir(QString::fromStdString(plan.request.directory)).filePath(QString::fromStdString(name)));control->completed=completed;});if(plan.usd&&!control->cancel){mesh->attach_usd_textures(usd_texture_exports(plan.request));const QDir directory(QString::fromStdString(plan.request.directory));const auto stem=export_token_component(QFileInfo(QString::fromStdString(plan.request.mesh)).completeBaseName());const auto layer=directory.filePath(stem+".usdc"),package=directory.filePath(stem+".usdz");mesh->write(layer.toStdString(),false);files.append(layer);++control->completed;if(!control->cancel){package_native_usd(layer.toStdString(),package.toStdString());files.append(package);++control->completed;}}result.info={{"status",control->cancel?"cancelled":"success"},{"message",control->cancel?"Export cancelled":"Export completed"},{"files",files}};}catch(const std::exception &error){result.info={{"status","error"},{"message",QString::fromUtf8(error.what())},{"files",files}};}return result;},manifest);
-  if(operation=="export.run"){QEventLoop loop;QTimer wait;wait.setInterval(16);connect(&wait,&QTimer::timeout,&loop,[&]{if(!s.work.valid())loop.quit();});wait.start();loop.exec();return s.states[s.active]["result"];}return s.states[s.active];
- }
- if(operation=="baking.start"){
-  if(s.work.valid())throw std::runtime_error("An automation job is running");for(auto it=config.begin();it!=config.end();++it)if(!QStringList{"resolution","maps","rays","dilation","texture_sets","tiles","map_options"}.contains(it.key()))throw std::invalid_argument("Unknown bake setting");AutoBakeOptions options;options.maps.use_project_mesh=true;options.maps.resolution=config.contains("resolution")?integer(config["resolution"],128,max_texture_resolution):512;const int resolution=options.maps.resolution;if(resolution&(resolution-1))throw std::invalid_argument("Bake resolution must be a power of two");options.maps.rays=config.contains("rays")?integer(config["rays"],1,512):64;options.maps.dilation=config.contains("dilation")?integer(config["dilation"],0,256):32;options.maps.enabled.fill(false);const QJsonArray maps=config.contains("maps")?config["maps"].toArray():QJsonArray{3,4};if(maps.isEmpty())throw std::invalid_argument("Select at least one mesh map");for(const auto &map:maps)options.maps.enabled[integer(map,0,6)]=true;
-  std::array<AutoBakeOptions,7> per_map;for(auto &entry:per_map)entry=options;const bool separate=config.contains("map_options");if(separate){if(!config["map_options"].isObject())throw std::invalid_argument("map_options must be a baker-indexed object");const auto entries=config["map_options"].toObject();for(auto it=entries.begin();it!=entries.end();++it){bool valid=false;const int role=it.key().toInt(&valid);if(!valid||role<0||role>6||QString::number(role)!=it.key()||!it.value().isObject())throw std::invalid_argument("Invalid baker options");const auto fields=it.value().toObject();auto &entry=per_map[role];for(auto field=fields.begin();field!=fields.end();++field){if(field.key()=="resolution"){entry.maps.resolution=integer(field.value(),128,max_texture_resolution);if(entry.maps.resolution&(entry.maps.resolution-1))throw std::invalid_argument("Baker resolution must be a power of two");}else if(field.key()=="rays")entry.maps.rays=integer(field.value(),1,512);else if(field.key()=="dilation")entry.maps.dilation=integer(field.value(),0,256);else throw std::invalid_argument("Unknown per-baker option");}}}
-  std::set<QUuid> selected;if(config.contains("texture_sets")){if(!config["texture_sets"].isArray()||config["texture_sets"].toArray().isEmpty())throw std::invalid_argument("Select at least one Texture Set UUID");for(const auto &entry:config["texture_sets"].toArray()){if(!entry.isString()||QUuid(entry.toString()).isNull()||!selected.insert(QUuid(entry.toString())).second)throw std::invalid_argument("Invalid Texture Set UUID");}}
-  std::set<int> tiles;if(config.contains("tiles")){if(!config["tiles"].isArray()||config["tiles"].toArray().isEmpty())throw std::invalid_argument("Select at least one UV tile");for(const auto &entry:config["tiles"].toArray())if(!tiles.insert(integer(entry,1001,2000)).second)throw std::invalid_argument("Duplicate UV tile");}
-  std::vector<TextureSet> sets;std::uint64_t tile_count=0;for(const auto &set:document->texture_sets())if(!set.disabled&&(selected.empty()||selected.contains(set.id))){auto copy=set;if(!tiles.empty()){copy.tiles.clear();std::set_intersection(set.tiles.begin(),set.tiles.end(),tiles.begin(),tiles.end(),std::inserter(copy.tiles,copy.tiles.end()));}if(!copy.tiles.empty()){tile_count=resource_sum(tile_count,copy.tiles.size());sets.push_back(std::move(copy));}}
-  for(const auto &id:selected)if(std::none_of(sets.begin(),sets.end(),[&](const auto &set){return set.id==id;}))throw std::invalid_argument("Unknown or inactive Texture Set/tile");if(sets.empty())throw std::invalid_argument("Select an active Texture Set/tile");std::uint64_t scratch_bytes=0,atlas_bytes=0;for(int role=0;role<7;++role)if(options.maps.enabled[role]){const auto pixels=resource_product(per_map[role].maps.resolution,per_map[role].maps.resolution);scratch_bytes=std::max(scratch_bytes,resource_product(pixels,64));atlas_bytes=std::max(atlas_bytes,resource_product(resource_product(tile_count,pixels),sizeof(FillSurfacePoint)+32));}const auto id=document->id();auto scene=std::make_shared<const SceneSnapshot>(s.hooks.scene());
-  s.launch("bake",[id,sets=std::move(sets),scene=std::move(scene),options,per_map,separate](const std::shared_ptr<Control> &control){Outcome result;result.project=id;control->total=int(sets.size());try{AutoBakeEngine engine(scene,scene);QJsonArray maps;for(const auto &set:sets){if(control->cancel)break;MeshMaps baked;if(!separate)baked=engine.bake(set.material_session_uid,set.name,set.base_values,set.tiles,set.skew,options,control->cancel);else for(int role=0;role<7;++role)if(options.maps.enabled[role]){if(control->cancel)break;auto settings=per_map[role];settings.maps.enabled.fill(false);settings.maps.enabled[role]=true;auto maps=engine.bake(set.material_session_uid,set.name,set.base_values,set.tiles,set.skew,settings,control->cancel);baked[role]=std::move(maps[role]);}if(control->cancel)break;for(int role=0;role<7;++role)if(baked[role])for(const auto &[tile,plane]:baked[role]->tiles)maps.append(QJsonObject{{"texture_set",set.id.toString(QUuid::WithoutBraces)},{"role",role},{"tile",tile},{"hash",QString::fromStdString(plane.hash)},{"width",plane.resolution},{"height",plane.rows()}});result.maps.push_back({set.material_session_uid,std::move(baked)});++control->completed;}result.info={{"status",control->cancel?"cancelled":"success"},{"message",control->cancel?"Bake cancelled":"Baking completed"},{"maps",maps}};}catch(const std::exception &error){result.info={{"status","error"},{"message",QString::fromUtf8(error.what())},{"maps",QJsonArray{}}};result.maps.clear();}return result;});return s.states[s.active];
- }
- throw std::invalid_argument("Unknown automation job operation");
+struct Control {
+  std::atomic_bool cancel = false;
+  std::atomic_int completed = 0, total = 1;
+};
+int integer(const QJsonValue &value, int minimum, int maximum)
+{
+  const double number = value.toDouble(-1);
+  if (maximum == max_texture_resolution)
+    require_texture_resolution_limit(number, "Bake");
+  if (!value.isDouble() || !std::isfinite(number) || number < minimum || number > maximum ||
+      std::floor(number) != number)
+    throw std::invalid_argument("Invalid bake numeric setting");
+  return int(number);
 }
+}  // namespace
+struct AutomationJobs::Impl {
+  QMainWindow *window;
+  AutomationJobHooks hooks;
+  QTimer poll;
+  std::future<Outcome> work;
+  std::shared_ptr<Control> control;
+  QString active;
+  QMap<QString, QJsonObject> states;
+  QPointer<QProgressDialog> progress;
+  Impl(QMainWindow *parent, AutomationJobHooks callbacks)
+      : window(parent), hooks(std::move(callbacks))
+  {
+  }
+  void finish()
+  {
+    if (!work.valid() || work.wait_for(std::chrono::seconds(0)) != std::future_status::ready)
+      return;
+    auto &state = states[active];
+    try {
+      auto outcome = work.get();
+      if (control->cancel) {
+        outcome.info["status"] = "cancelled";
+        outcome.info["message"] = "Cancelled; completed export files retained";
+      }
+      else if (outcome.info["status"] == "success" && !outcome.maps.empty())
+        hooks.apply_maps(outcome.project, outcome.maps);
+      if (state["kind"] == "export") {
+        QJsonObject grouped;
+        const auto expected = state["by_texture_set"].toObject();
+        const auto actual = outcome.info["files"].toArray();
+        for (auto it = expected.begin(); it != expected.end(); ++it) {
+          QJsonArray written;
+          for (const auto &path : it.value().toArray())
+            if (actual.contains(path))
+              written.append(path);
+          grouped[it.key()] = written;
+        }
+        outcome.info["by_texture_set"] = grouped;
+      }
+      state["result"] = outcome.info;
+      state["status"] = outcome.info["status"];
+    }
+    catch (const std::exception &error) {
+      state["status"] = "error";
+      state["result"] = QJsonObject{{"status", "error"},
+                                    {"message", QString::fromUtf8(error.what())},
+                                    {"files", QJsonArray{}}};
+    }
+    state["done"] = true;
+    state["progress"] = 1.;
+    if (hooks.event) {
+      auto data = state["result"].toObject();
+      data["id"] = active;
+      hooks.event(state["kind"] == "export" ? "ExportTexturesEnded" : "BakingProcessEnded", data);
+    }
+    if (progress) {
+      progress->close();
+      progress->deleteLater();
+      progress = nullptr;
+    }
+    poll.stop();
+  }
+  void launch(const QString &kind,
+              std::function<Outcome(const std::shared_ptr<Control> &)> function,
+              const QJsonObject &details = {})
+  {
+    if (work.valid())
+      throw std::runtime_error("An automation job is already running");
+    active = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    control = std::make_shared<Control>();
+    states[active] = details;
+    states[active]["id"] = active;
+    states[active]["kind"] = kind;
+    states[active]["status"] = "running";
+    states[active]["done"] = false;
+    states[active]["progress"] = 0.;
+    if (hooks.event) {
+      hooks.event(kind == "export" ? "ExportTexturesAboutToStart" : "BakingProcessAboutToStart",
+                  states[active]);
+      if (kind == "bake")
+        hooks.event("BakingProcessProgress", {{"id", active}, {"progress", 0.}});
+    }
+    work = std::async(std::launch::async, [function = std::move(function), state = control] {
+      return function(state);
+    });
+    progress = new QProgressDialog(
+        kind == "export" ? "Exporting textures…" : "Baking mesh maps…", "Cancel", 0, 100, window);
+    progress->setObjectName("automationJobProgress");
+    progress->setWindowModality(Qt::WindowModal);
+    progress->setAutoClose(false);
+    QObject::connect(
+        progress, &QProgressDialog::canceled, &poll, [state = control] { state->cancel = true; });
+    progress->show();
+    poll.start(16);
+  }
+};
+AutomationJobs::AutomationJobs(QMainWindow *window, AutomationJobHooks hooks)
+    : QObject(window), impl_(std::make_unique<Impl>(window, std::move(hooks)))
+{
+  connect(&impl_->poll, &QTimer::timeout, this, [this] {
+    auto &s = *impl_;
+    if (s.work.valid()) {
+      const double fraction = double(s.control->completed.load()) /
+                              std::max(1, s.control->total.load());
+      if (s.states[s.active]["kind"] == "bake" &&
+          s.states[s.active]["progress"].toDouble() != fraction && s.hooks.event)
+        s.hooks.event("BakingProcessProgress", {{"id", s.active}, {"progress", fraction}});
+      s.states[s.active]["progress"] = fraction;
+      if (s.progress)
+        s.progress->setValue(int(fraction * 100));
+      s.finish();
+    }
+  });
 }
+AutomationJobs::~AutomationJobs()
+{
+  auto &s = *impl_;
+  s.poll.stop();
+  if (s.control)
+    s.control->cancel = true;
+  if (s.work.valid())
+    s.work.wait();
+  if (s.progress)
+    delete s.progress;
+}
+bool AutomationJobs::pending() const
+{
+  return impl_->work.valid();
+}
+QJsonValue AutomationJobs::call(const QString &operation, const QJsonObject &parameters)
+{
+  auto &s = *impl_;
+  if (operation.startsWith("jobs.")) {
+    const auto id = parameters["id"].toString();
+    if (!s.states.contains(id))
+      throw std::invalid_argument("Unknown automation job");
+    s.finish();
+    if (operation == "jobs.cancel") {
+      if (!s.states[id]["done"].toBool() && id == s.active)
+        s.control->cancel = true;
+      return s.states[id];
+    }
+    if (operation == "jobs.status")
+      return s.states[id];
+    if (operation == "jobs.result") {
+      if (!s.states[id]["done"].toBool())
+        throw std::runtime_error("Job has not finished");
+      return s.states[id]["result"];
+    }
+    throw std::invalid_argument("Unknown job operation");
+  }
+  const auto *document = s.hooks.document();
+  if (!document)
+    throw std::runtime_error("No project open");
+  if (!parameters["config"].isObject())
+    throw std::invalid_argument("config must be an object");
+  const auto config = parameters["config"].toObject();
+  if (operation.startsWith("export.")) {
+    auto plan = automation_export_plan(*document, config);
+    const auto manifest = automation_export_files(plan);
+    if (operation == "export.list")
+      return manifest;
+    if (operation != "export.start" && operation != "export.run")
+      throw std::invalid_argument("Unknown export operation");
+    if (s.work.valid())
+      throw std::runtime_error("An automation job is running");
+    if (!QDir(QString::fromStdString(plan.request.directory)).exists())
+      throw std::invalid_argument("Choose an existing export directory");
+    auto inputs = s.hooks.export_source(plan.selected);
+    for (auto &tile : inputs) {
+      const auto match = std::find_if(
+          plan.request.tiles.begin(), plan.request.tiles.end(), [&](const auto &item) {
+            return item.set.id == tile.set.id && item.number == tile.number;
+          });
+      if (match == plan.request.tiles.end())
+        throw std::runtime_error("Export source changed during preparation");
+      tile.output_resolution = match->output_resolution;
+    }
+    plan.request.tiles = std::move(inputs);
+    auto mesh = plan.usd ? s.hooks.mesh_source(plan.mesh_displacement) :
+                           std::shared_ptr<NativeMeshExport>();
+    FileDialog::remember_folder(QString::fromStdString(plan.request.directory));
+    s.launch(
+        "export",
+        [plan = std::move(plan), mesh = std::move(mesh)](const std::shared_ptr<Control> &control) {
+          Outcome result;
+          QJsonArray files;
+          control->total = int(export_file_list(plan.request).size()) + (plan.usd ? 2 : 0);
+          try {
+            write_texture_export(
+                plan.request, control->cancel, [&](int completed, const std::string &name) {
+                  files.append(QDir(QString::fromStdString(plan.request.directory))
+                                   .filePath(QString::fromStdString(name)));
+                  control->completed = completed;
+                });
+            if (plan.usd && !control->cancel) {
+              mesh->attach_usd_textures(usd_texture_exports(plan.request));
+              const QDir directory(QString::fromStdString(plan.request.directory));
+              const auto stem = export_token_component(
+                  QFileInfo(QString::fromStdString(plan.request.mesh)).completeBaseName());
+              const auto layer = directory.filePath(stem + ".usdc"),
+                         package = directory.filePath(stem + ".usdz");
+              mesh->write(layer.toStdString(), false);
+              files.append(layer);
+              ++control->completed;
+              if (!control->cancel) {
+                package_native_usd(layer.toStdString(), package.toStdString());
+                files.append(package);
+                ++control->completed;
+              }
+            }
+            result.info = {{"status", control->cancel ? "cancelled" : "success"},
+                           {"message", control->cancel ? "Export cancelled" : "Export completed"},
+                           {"files", files}};
+          }
+          catch (const std::exception &error) {
+            result.info = {{"status", "error"},
+                           {"message", QString::fromUtf8(error.what())},
+                           {"files", files}};
+          }
+          return result;
+        },
+        manifest);
+    if (operation == "export.run") {
+      QEventLoop loop;
+      QTimer wait;
+      wait.setInterval(16);
+      connect(&wait, &QTimer::timeout, &loop, [&] {
+        if (!s.work.valid())
+          loop.quit();
+      });
+      wait.start();
+      loop.exec();
+      return s.states[s.active]["result"];
+    }
+    return s.states[s.active];
+  }
+  if (operation == "baking.start") {
+    if (s.work.valid())
+      throw std::runtime_error("An automation job is running");
+    for (auto it = config.begin(); it != config.end(); ++it)
+      if (!QStringList{
+              "resolution", "maps", "rays", "dilation", "texture_sets", "tiles", "map_options"}
+               .contains(it.key()))
+        throw std::invalid_argument("Unknown bake setting");
+    AutoBakeOptions options;
+    options.maps.use_project_mesh = true;
+    options.maps.resolution = config.contains("resolution") ?
+                                  integer(config["resolution"], 128, max_texture_resolution) :
+                                  512;
+    const int resolution = options.maps.resolution;
+    if (resolution & (resolution - 1))
+      throw std::invalid_argument("Bake resolution must be a power of two");
+    options.maps.rays = config.contains("rays") ? integer(config["rays"], 1, 512) : 64;
+    options.maps.dilation = config.contains("dilation") ? integer(config["dilation"], 0, 256) : 32;
+    options.maps.enabled.fill(false);
+    const QJsonArray maps = config.contains("maps") ? config["maps"].toArray() : QJsonArray{3, 4};
+    if (maps.isEmpty())
+      throw std::invalid_argument("Select at least one mesh map");
+    for (const auto &map : maps)
+      options.maps.enabled[integer(map, 0, 6)] = true;
+    std::array<AutoBakeOptions, 7> per_map;
+    for (auto &entry : per_map)
+      entry = options;
+    const bool separate = config.contains("map_options");
+    if (separate) {
+      if (!config["map_options"].isObject())
+        throw std::invalid_argument("map_options must be a baker-indexed object");
+      const auto entries = config["map_options"].toObject();
+      for (auto it = entries.begin(); it != entries.end(); ++it) {
+        bool valid = false;
+        const int role = it.key().toInt(&valid);
+        if (!valid || role < 0 || role > 6 || QString::number(role) != it.key() ||
+            !it.value().isObject())
+          throw std::invalid_argument("Invalid baker options");
+        const auto fields = it.value().toObject();
+        auto &entry = per_map[role];
+        for (auto field = fields.begin(); field != fields.end(); ++field) {
+          if (field.key() == "resolution") {
+            entry.maps.resolution = integer(field.value(), 128, max_texture_resolution);
+            if (entry.maps.resolution & (entry.maps.resolution - 1))
+              throw std::invalid_argument("Baker resolution must be a power of two");
+          }
+          else if (field.key() == "rays")
+            entry.maps.rays = integer(field.value(), 1, 512);
+          else if (field.key() == "dilation")
+            entry.maps.dilation = integer(field.value(), 0, 256);
+          else
+            throw std::invalid_argument("Unknown per-baker option");
+        }
+      }
+    }
+    std::set<QUuid> selected;
+    if (config.contains("texture_sets")) {
+      if (!config["texture_sets"].isArray() || config["texture_sets"].toArray().isEmpty())
+        throw std::invalid_argument("Select at least one Texture Set UUID");
+      for (const auto &entry : config["texture_sets"].toArray()) {
+        if (!entry.isString() || QUuid(entry.toString()).isNull() ||
+            !selected.insert(QUuid(entry.toString())).second)
+          throw std::invalid_argument("Invalid Texture Set UUID");
+      }
+    }
+    std::set<int> tiles;
+    if (config.contains("tiles")) {
+      if (!config["tiles"].isArray() || config["tiles"].toArray().isEmpty())
+        throw std::invalid_argument("Select at least one UV tile");
+      for (const auto &entry : config["tiles"].toArray())
+        if (!tiles.insert(integer(entry, 1001, 2000)).second)
+          throw std::invalid_argument("Duplicate UV tile");
+    }
+    std::vector<TextureSet> sets;
+    std::uint64_t tile_count = 0;
+    for (const auto &set : document->texture_sets())
+      if (!set.disabled && (selected.empty() || selected.contains(set.id))) {
+        auto copy = set;
+        if (!tiles.empty()) {
+          copy.tiles.clear();
+          std::set_intersection(set.tiles.begin(),
+                                set.tiles.end(),
+                                tiles.begin(),
+                                tiles.end(),
+                                std::inserter(copy.tiles, copy.tiles.end()));
+        }
+        if (!copy.tiles.empty()) {
+          tile_count = resource_sum(tile_count, copy.tiles.size());
+          sets.push_back(std::move(copy));
+        }
+      }
+    for (const auto &id : selected)
+      if (std::none_of(sets.begin(), sets.end(), [&](const auto &set) { return set.id == id; }))
+        throw std::invalid_argument("Unknown or inactive Texture Set/tile");
+    if (sets.empty())
+      throw std::invalid_argument("Select an active Texture Set/tile");
+    std::uint64_t scratch_bytes = 0, atlas_bytes = 0;
+    for (int role = 0; role < 7; ++role)
+      if (options.maps.enabled[role]) {
+        const auto pixels = resource_product(per_map[role].maps.resolution,
+                                             per_map[role].maps.resolution);
+        scratch_bytes = std::max(scratch_bytes, resource_product(pixels, 64));
+        atlas_bytes = std::max(
+            atlas_bytes,
+            resource_product(resource_product(tile_count, pixels), sizeof(FillSurfacePoint) + 32));
+      }
+    const auto id = document->id();
+    auto scene = std::make_shared<const SceneSnapshot>(s.hooks.scene());
+    s.launch(
+        "bake",
+        [id, sets = std::move(sets), scene = std::move(scene), options, per_map, separate](
+            const std::shared_ptr<Control> &control) {
+          Outcome result;
+          result.project = id;
+          control->total = int(sets.size());
+          try {
+            AutoBakeEngine engine(scene, scene);
+            QJsonArray maps;
+            for (const auto &set : sets) {
+              if (control->cancel)
+                break;
+              MeshMaps baked;
+              if (!separate)
+                baked = engine.bake(set.material_session_uid,
+                                    set.name,
+                                    set.base_values,
+                                    set.tiles,
+                                    set.skew,
+                                    options,
+                                    control->cancel);
+              else
+                for (int role = 0; role < 7; ++role)
+                  if (options.maps.enabled[role]) {
+                    if (control->cancel)
+                      break;
+                    auto settings = per_map[role];
+                    settings.maps.enabled.fill(false);
+                    settings.maps.enabled[role] = true;
+                    auto maps = engine.bake(set.material_session_uid,
+                                            set.name,
+                                            set.base_values,
+                                            set.tiles,
+                                            set.skew,
+                                            settings,
+                                            control->cancel);
+                    baked[role] = std::move(maps[role]);
+                  }
+              if (control->cancel)
+                break;
+              for (int role = 0; role < 7; ++role)
+                if (baked[role])
+                  for (const auto &[tile, plane] : baked[role]->tiles)
+                    maps.append(QJsonObject{{"texture_set", set.id.toString(QUuid::WithoutBraces)},
+                                            {"role", role},
+                                            {"tile", tile},
+                                            {"hash", QString::fromStdString(plane.hash)},
+                                            {"width", plane.resolution},
+                                            {"height", plane.rows()}});
+              result.maps.push_back({set.material_session_uid, std::move(baked)});
+              ++control->completed;
+            }
+            result.info = {{"status", control->cancel ? "cancelled" : "success"},
+                           {"message", control->cancel ? "Bake cancelled" : "Baking completed"},
+                           {"maps", maps}};
+          }
+          catch (const std::exception &error) {
+            result.info = {{"status", "error"},
+                           {"message", QString::fromUtf8(error.what())},
+                           {"maps", QJsonArray{}}};
+            result.maps.clear();
+          }
+          return result;
+        });
+    return s.states[s.active];
+  }
+  throw std::invalid_argument("Unknown automation job operation");
+}
+}  // namespace bts

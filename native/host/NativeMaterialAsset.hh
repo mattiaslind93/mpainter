@@ -10,7 +10,8 @@ inline bool is_native_material_asset(const StudioAsset &asset)
 
 // The archive is one ordinary immutable catalog blob. Instances retain only
 // its UUID and their own parameter values, never another copy of its images.
-inline StudioAsset native_material_asset(QString name, QByteArray archive,
+inline StudioAsset native_material_asset(QString name,
+                                         QByteArray archive,
                                          NativeMaterialDescription description)
 {
   if (archive.isEmpty()) {
@@ -31,4 +32,4 @@ inline StudioAsset native_material_asset(QString name, QByteArray archive,
   asset.fill_preset = std::move(fill);
   return asset;
 }
-}
+}  // namespace bts

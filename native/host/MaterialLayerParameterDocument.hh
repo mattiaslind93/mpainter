@@ -23,17 +23,21 @@ inline TextureDocument reconstruct_material_layer_document(
     const MaterialParameterColorSequenceValidator &validate_sequence = {})
 {
   const auto target = std::find_if(
-      document.texture_sets().begin(), document.texture_sets().end(),
-      [material_uid](const TextureSet &set) {
-        return set.material_session_uid == material_uid;
-      });
+      document.texture_sets().begin(),
+      document.texture_sets().end(),
+      [material_uid](const TextureSet &set) { return set.material_session_uid == material_uid; });
   if (target == document.texture_sets().end()) {
     throw std::invalid_argument("Parameter reconstruction target no longer exists");
   }
 
-  auto restored = reconstruct_material_layer_parameters(
-      *target, parameters, working_space, scene_linear_to_xyz,
-      decode, processor, validate_target, validate_sequence);
+  auto restored = reconstruct_material_layer_parameters(*target,
+                                                        parameters,
+                                                        working_space,
+                                                        scene_linear_to_xyz,
+                                                        decode,
+                                                        processor,
+                                                        validate_target,
+                                                        validate_sequence);
   auto shaders = document.shader_instances();
   const auto original_shader = shaders.assignments.at(target->id);
   const QString prefix = QStringLiteral("Imported materials");

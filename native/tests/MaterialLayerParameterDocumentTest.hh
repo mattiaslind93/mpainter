@@ -23,15 +23,19 @@ inline QJsonObject verify_material_layer_parameter_document(
   const auto before = source.to_json();
   const auto shaders_before = source.shader_instances();
   const auto target = std::find_if(
-      source.texture_sets().begin(), source.texture_sets().end(),
-      [material_uid](const TextureSet &set) {
-        return set.material_session_uid == material_uid;
-      });
+      source.texture_sets().begin(),
+      source.texture_sets().end(),
+      [material_uid](const TextureSet &set) { return set.material_session_uid == material_uid; });
   check(target != source.texture_sets().end(), "Document test target missing");
   const auto old_shader = shaders_before.assignments.at(target->id);
-  auto result = reconstruct_material_layer_document(
-      source, material_uid, parameters, parameters.working_space,
-      parameters.scene_linear_to_xyz, decode, processor, native_gate);
+  auto result = reconstruct_material_layer_document(source,
+                                                    material_uid,
+                                                    parameters,
+                                                    parameters.working_space,
+                                                    parameters.scene_linear_to_xyz,
+                                                    decode,
+                                                    processor,
+                                                    native_gate);
   check(source.to_json() == before, "Reconstruction modified source document");
   const auto &library = result.shader_instances();
   const auto local = library.assignments.at(target->id);
@@ -64,7 +68,8 @@ inline QJsonObject verify_material_layer_parameter_document(
   const auto set_metadata = [](const QJsonObject &value, const QUuid &id) {
     for (const auto &entry : value["texture_sets"].toArray()) {
       const auto set = entry.toObject();
-      if (QUuid(set["id"].toString()) == id) return set;
+      if (QUuid(set["id"].toString()) == id)
+        return set;
     }
     throw std::runtime_error("Document test Texture Set metadata missing");
   };

@@ -1,6 +1,6 @@
 #pragma once
 namespace bts {
-inline constexpr char gpu_path_math[]=R"GLSL(
+inline constexpr char gpu_path_math[] = R"GLSL(
 // Two-float predicates retain the CPU contour side at near-collinear texels.
 // This uses ordinary FP32/FMA and is portable to GPU backends without FP64.
 vec2 ds_add(vec2 a,vec2 b){precise float s=a.x+b.x;precise float v=s-a.x;precise float e=(a.x-(s-v))+(b.x-v)+a.y+b.y;precise float h=s+e;return vec2(h,e-(h-s));}

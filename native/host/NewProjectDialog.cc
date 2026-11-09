@@ -74,14 +74,43 @@ NewProjectDialog::NewProjectDialog(QWidget *parent) : QDialog(parent)
   body_font.setPixelSize(11);
   setFont(body_font);
 
-  auto *outer = new QVBoxLayout(this);auto *scroll=new QScrollArea(this);scroll->setObjectName("newProjectScroll");scroll->setWidgetResizable(true);scroll->setFrameShape(QFrame::NoFrame);auto *body=new QWidget(scroll);body->setObjectName("newProjectBody");scroll->setWidget(body);outer->addWidget(scroll,1);
+  auto *outer = new QVBoxLayout(this);
+  auto *scroll = new QScrollArea(this);
+  scroll->setObjectName("newProjectScroll");
+  scroll->setWidgetResizable(true);
+  scroll->setFrameShape(QFrame::NoFrame);
+  auto *body = new QWidget(scroll);
+  body->setObjectName("newProjectBody");
+  scroll->setWidget(body);
+  outer->addWidget(scroll, 1);
   auto *layout = new QVBoxLayout(body);
   layout->setContentsMargins(16, 16, 16, 16);
   layout->setSpacing(14);
   auto *file_row = new QHBoxLayout;
   file_row->setSpacing(8);
-  template_=new QComboBox(this);template_->setObjectName("projectTemplate");template_->addItem("Select template…","");template_->addItem("PBR - Metallic Roughness (BTS)",":pbr");template_->addItem("OpenPBR 1.1 — Principled compatibility (BTS)",":openpbr-compatibility");auto *template_row=new QHBoxLayout;template_row->addWidget(new QLabel("Template",this));template_row->addWidget(template_,1);auto *load_template=new QPushButton("Browse…",this);load_template->setObjectName("browseProjectTemplate");template_row->addWidget(load_template);layout->addLayout(template_row);
-  for(const auto &name:QDir(project_template_directory()).entryList({"*.btst"},QDir::Files,QDir::Name)){const auto path=QDir(project_template_directory()).absoluteFilePath(name);try{read_project_template(path);template_->addItem(QFileInfo(name).completeBaseName()+" (user)",path);}catch(const std::exception &){}}
+  template_ = new QComboBox(this);
+  template_->setObjectName("projectTemplate");
+  template_->addItem("Select template…", "");
+  template_->addItem("PBR - Metallic Roughness (BTS)", ":pbr");
+  template_->addItem("OpenPBR 1.1 — Principled compatibility (BTS)", ":openpbr-compatibility");
+  auto *template_row = new QHBoxLayout;
+  template_row->addWidget(new QLabel("Template", this));
+  template_row->addWidget(template_, 1);
+  auto *load_template = new QPushButton("Browse…", this);
+  load_template->setObjectName("browseProjectTemplate");
+  template_row->addWidget(load_template);
+  layout->addLayout(template_row);
+  for (const auto &name :
+       QDir(project_template_directory()).entryList({"*.btst"}, QDir::Files, QDir::Name))
+  {
+    const auto path = QDir(project_template_directory()).absoluteFilePath(name);
+    try {
+      read_project_template(path);
+      template_->addItem(QFileInfo(name).completeBaseName() + " (user)", path);
+    }
+    catch (const std::exception &) {
+    }
+  }
   auto *file_label = new QLabel(tr("&File"), this);
   mesh_path_ = new QLineEdit(this);
   mesh_path_->setObjectName("meshPath");
@@ -94,29 +123,36 @@ NewProjectDialog::NewProjectDialog(QWidget *parent) : QDialog(parent)
   select_mesh_->setAutoDefault(false);
   file_row->addWidget(file_label);
   file_row->addWidget(mesh_path_, 1);
-  const auto add_builtin = [&](const QString &label, const char *name,
-                               const QString &filename, const QString &tip) {
-    auto *button = new QPushButton(label, this);
-    button->setObjectName(name);
-    button->setAutoDefault(false);
-    button->setToolTip(tip);
-    const QString path = builtin_mesh_path(filename);
-    button->setEnabled(!path.isEmpty());
-    if (path.isEmpty()) button->setToolTip(tr("Bundled mesh is missing: %1").arg(filename));
-    connect(button, &QPushButton::clicked, this, [this, path] {
-      mesh_path_->setText(path);
-      mesh_path_->setToolTip(path);
-      mesh_path_->setCursorPosition(path.size());
-    });
-    file_row->addWidget(button);
-  };
+  const auto add_builtin =
+      [&](const QString &label, const char *name, const QString &filename, const QString &tip) {
+        auto *button = new QPushButton(label, this);
+        button->setObjectName(name);
+        button->setAutoDefault(false);
+        button->setToolTip(tip);
+        const QString path = builtin_mesh_path(filename);
+        button->setEnabled(!path.isEmpty());
+        if (path.isEmpty())
+          button->setToolTip(tr("Bundled mesh is missing: %1").arg(filename));
+        connect(button, &QPushButton::clicked, this, [this, path] {
+          mesh_path_->setText(path);
+          mesh_path_->setToolTip(path);
+          mesh_path_->setCursorPosition(path.size());
+        });
+        file_row->addWidget(button);
+      };
   add_builtin(tr("Sphere"), "useSphereMesh", "sphere.obj", tr("Use the generated UV sphere"));
-  add_builtin(tr("Shaderball"), "useShaderballMesh", "Shader_Ball_JL_01.obj",
+  add_builtin(tr("Shaderball"),
+              "useShaderballMesh",
+              "Shader_Ball_JL_01.obj",
               tr("Use Shader_Ball_JL_01 by JLRIN / Craneo (CC BY 4.0)"));
   file_row->addWidget(select_mesh_);
   layout->addLayout(file_row);
-  blend_=new BlendLibraryPanel(mesh_path_,{},this);layout->addWidget(blend_);
-  blend_->changed=[this]{if(ok_)validate_options();};
+  blend_ = new BlendLibraryPanel(mesh_path_, {}, this);
+  layout->addWidget(blend_);
+  blend_->changed = [this] {
+    if (ok_)
+      validate_options();
+  };
 
   layout->addWidget(section(tr("Project Settings"), this));
   auto *settings = new QFormLayout;
@@ -124,7 +160,7 @@ NewProjectDialog::NewProjectDialog(QWidget *parent) : QDialog(parent)
   settings->setHorizontalSpacing(14);
   settings->setVerticalSpacing(10);
   settings->setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);
-  resolution_ = new TextureExtentComboBox(128,this);
+  resolution_ = new TextureExtentComboBox(128, this);
   resolution_->setObjectName("documentResolution");
   resolution_->setAccessibleName(tr("Document resolution"));
   resolution_->setCurrentIndex(resolution_->findData(int(DocumentResolution::Pixels1024)));
@@ -136,13 +172,31 @@ NewProjectDialog::NewProjectDialog(QWidget *parent) : QDialog(parent)
   normal_format_->addItems({QStringLiteral("OpenGL"), QStringLiteral("DirectX")});
   normal_format_->setMinimumWidth(92);
   settings->addRow(tr("&Normal Map Format"), normal_format_);
-  tangent_per_fragment_=new QCheckBox("Compute tangent space per fragment",this);tangent_per_fragment_->setObjectName("newTangentPerFragment");settings->addRow(tangent_per_fragment_);
+  tangent_per_fragment_ = new QCheckBox("Compute tangent space per fragment", this);
+  tangent_per_fragment_->setObjectName("newTangentPerFragment");
+  settings->addRow(tangent_per_fragment_);
   layout->addLayout(settings);
 
-  import_cameras_=new QCheckBox("Import Cameras",this);import_cameras_->setObjectName("newImportCameras");import_cameras_->setChecked(true);settings->addRow(import_cameras_);
-  auto_unwrap_=new QCheckBox("Auto-unwrap",this);auto_unwrap_->setObjectName("newAutoUnwrap");auto *unwrap_row=new QHBoxLayout;unwrap_row->addWidget(auto_unwrap_);auto *unwrap_options=new QPushButton("Options…",this);unwrap_options->setObjectName("newAutoUnwrapOptions");unwrap_options->setAutoDefault(false);unwrap_row->addWidget(unwrap_options);settings->addRow(unwrap_row);connect(unwrap_options,&QPushButton::clicked,this,[this]{edit_auto_unwrap_options(this,unwrap_options_);});
-  usd_=new UsdScenePanel(mesh_path_,{},this);layout->addWidget(usd_);
-  units_=new UnitsPanel(mesh_path_,{},{},this);layout->addWidget(units_);
+  import_cameras_ = new QCheckBox("Import Cameras", this);
+  import_cameras_->setObjectName("newImportCameras");
+  import_cameras_->setChecked(true);
+  settings->addRow(import_cameras_);
+  auto_unwrap_ = new QCheckBox("Auto-unwrap", this);
+  auto_unwrap_->setObjectName("newAutoUnwrap");
+  auto *unwrap_row = new QHBoxLayout;
+  unwrap_row->addWidget(auto_unwrap_);
+  auto *unwrap_options = new QPushButton("Options…", this);
+  unwrap_options->setObjectName("newAutoUnwrapOptions");
+  unwrap_options->setAutoDefault(false);
+  unwrap_row->addWidget(unwrap_options);
+  settings->addRow(unwrap_row);
+  connect(unwrap_options, &QPushButton::clicked, this, [this] {
+    edit_auto_unwrap_options(this, unwrap_options_);
+  });
+  usd_ = new UsdScenePanel(mesh_path_, {}, this);
+  layout->addWidget(usd_);
+  units_ = new UnitsPanel(mesh_path_, {}, {}, this);
+  layout->addWidget(units_);
   layout->addWidget(section(tr("UV Tile Settings (UDIMs)"), this));
   auto *uv_settings = new QVBoxLayout;
   uv_settings->setContentsMargins(16, 0, 0, 0);
@@ -158,13 +212,118 @@ NewProjectDialog::NewProjectDialog(QWidget *parent) : QDialog(parent)
   layout->addLayout(uv_settings);
   update_uv_description();
 
-  auto *map_header=new QHBoxLayout;auto *map_label=new QLabel(tr("Import mesh normal maps and baked maps"),this);map_label->setWordWrap(true);map_header->addWidget(map_label,1);auto *add_maps=new QPushButton(tr("Add…"),this);add_maps->setObjectName("addUtilityMaps");add_maps->setAutoDefault(false);auto *clear_maps=new QPushButton(tr("Clear"),this);clear_maps->setObjectName("clearUtilityMaps");clear_maps->setAutoDefault(false);map_header->addWidget(add_maps);map_header->addWidget(clear_maps);layout->addLayout(map_header);
-  utility_maps_=new QListWidget(this);utility_maps_->setObjectName("projectUtilityMaps");utility_maps_->setMinimumHeight(100);utility_maps_->setTextElideMode(Qt::ElideNone);utility_maps_->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);layout->addWidget(utility_maps_);
-  auto *naming=new QLabel(tr("Naming: TextureSet_normal_base, TextureSet_ambient_occlusion"),this);naming->setWordWrap(true);naming->setToolTip(tr("Mesh-map suffixes: normal_base, world_space_normals, id, ambient_occlusion, curvature, position, thickness. Optional .1001 or _1001 tile number."));layout->addWidget(naming);
-  connect(template_,&QComboBox::currentIndexChanged,this,[this]{try{const auto value=template_->currentData().toString();if(value.isEmpty())return;if(builtin_project_template(value.toStdString())){resolution_->setCurrentIndex(resolution_->findData(1024));normal_format_->setCurrentIndex(1);preserve_tiles_->setChecked(false);tangent_per_fragment_->setChecked(false);import_cameras_->setChecked(true);unwrap_options_={};auto_unwrap_->setChecked(false);units_->set_options({});}else{const auto options=project_template_options(read_project_template(value));resolution_->setCurrentIndex(resolution_->findData(int(options.resolution)));normal_format_->setCurrentIndex(options.normal_map_format==NormalMapFormat::DirectX?1:0);preserve_tiles_->setChecked(options.uv_workflow==UvWorkflow::PreserveTiles);tangent_per_fragment_->setChecked(options.tangent_per_fragment);import_cameras_->setChecked(options.import_cameras);unwrap_options_=options.auto_unwrap;auto_unwrap_->setChecked(unwrap_options_.enabled);units_->set_options(options.units);}validate_options();}catch(const std::exception &error){validation_error_->setText(QString::fromUtf8(error.what()));validation_error_->show();ok_->setEnabled(false);}});
-  connect(load_template,&QPushButton::clicked,this,[this]{auto *picker=new bts::FileDialog(this,"Select project template",project_template_directory(),"BTS project templates (*.btst)");picker->setObjectName("projectTemplatePicker");picker->setOption(QFileDialog::DontUseNativeDialog);picker->setFileMode(QFileDialog::ExistingFile);picker->setAttribute(Qt::WA_DeleteOnClose);connect(picker,&QFileDialog::fileSelected,this,[this](const QString &path){try{read_project_template(path);const auto absolute=QFileInfo(path).absoluteFilePath();int index=template_->findData(absolute);if(index<0){template_->addItem(QFileInfo(path).completeBaseName()+" (user)",absolute);index=template_->count()-1;}template_->setCurrentIndex(index);}catch(const std::exception &error){validation_error_->setText(QString::fromUtf8(error.what()));validation_error_->show();}});picker->open();});
-  connect(add_maps,&QPushButton::clicked,this,[this]{auto *picker=new bts::FileDialog(this,tr("Import images"),QDir::homePath(),tr("Images (*.png *.exr *.tif *.tiff *.tga *.bmp)"));picker->setObjectName("utilityMapPicker");picker->setFileMode(QFileDialog::ExistingFiles);picker->setOption(QFileDialog::DontUseNativeDialog);picker->setAttribute(Qt::WA_DeleteOnClose);connect(picker,&QFileDialog::filesSelected,this,[this](const QStringList &files){for(const auto &path:files){const auto absolute=QDir::cleanPath(QFileInfo(path).absoluteFilePath());if(utility_maps_->findItems(absolute,Qt::MatchExactly).isEmpty()){auto *item=new QListWidgetItem(absolute,utility_maps_);item->setToolTip(absolute);}}validate_options();});picker->open();});
-  connect(clear_maps,&QPushButton::clicked,this,[this]{utility_maps_->clear();validate_options();});
+  auto *map_header = new QHBoxLayout;
+  auto *map_label = new QLabel(tr("Import mesh normal maps and baked maps"), this);
+  map_label->setWordWrap(true);
+  map_header->addWidget(map_label, 1);
+  auto *add_maps = new QPushButton(tr("Add…"), this);
+  add_maps->setObjectName("addUtilityMaps");
+  add_maps->setAutoDefault(false);
+  auto *clear_maps = new QPushButton(tr("Clear"), this);
+  clear_maps->setObjectName("clearUtilityMaps");
+  clear_maps->setAutoDefault(false);
+  map_header->addWidget(add_maps);
+  map_header->addWidget(clear_maps);
+  layout->addLayout(map_header);
+  utility_maps_ = new QListWidget(this);
+  utility_maps_->setObjectName("projectUtilityMaps");
+  utility_maps_->setMinimumHeight(100);
+  utility_maps_->setTextElideMode(Qt::ElideNone);
+  utility_maps_->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+  layout->addWidget(utility_maps_);
+  auto *naming = new QLabel(tr("Naming: TextureSet_normal_base, TextureSet_ambient_occlusion"),
+                            this);
+  naming->setWordWrap(true);
+  naming->setToolTip(tr(
+      "Mesh-map suffixes: normal_base, world_space_normals, id, ambient_occlusion, curvature, position, thickness. Optional .1001 or _1001 tile number."));
+  layout->addWidget(naming);
+  connect(template_, &QComboBox::currentIndexChanged, this, [this] {
+    try {
+      const auto value = template_->currentData().toString();
+      if (value.isEmpty())
+        return;
+      if (builtin_project_template(value.toStdString())) {
+        resolution_->setCurrentIndex(resolution_->findData(1024));
+        normal_format_->setCurrentIndex(1);
+        preserve_tiles_->setChecked(false);
+        tangent_per_fragment_->setChecked(false);
+        import_cameras_->setChecked(true);
+        unwrap_options_ = {};
+        auto_unwrap_->setChecked(false);
+        units_->set_options({});
+      }
+      else {
+        const auto options = project_template_options(read_project_template(value));
+        resolution_->setCurrentIndex(resolution_->findData(int(options.resolution)));
+        normal_format_->setCurrentIndex(options.normal_map_format == NormalMapFormat::DirectX ? 1 :
+                                                                                                0);
+        preserve_tiles_->setChecked(options.uv_workflow == UvWorkflow::PreserveTiles);
+        tangent_per_fragment_->setChecked(options.tangent_per_fragment);
+        import_cameras_->setChecked(options.import_cameras);
+        unwrap_options_ = options.auto_unwrap;
+        auto_unwrap_->setChecked(unwrap_options_.enabled);
+        units_->set_options(options.units);
+      }
+      validate_options();
+    }
+    catch (const std::exception &error) {
+      validation_error_->setText(QString::fromUtf8(error.what()));
+      validation_error_->show();
+      ok_->setEnabled(false);
+    }
+  });
+  connect(load_template, &QPushButton::clicked, this, [this] {
+    auto *picker = new bts::FileDialog(this,
+                                       "Select project template",
+                                       project_template_directory(),
+                                       "BTS project templates (*.btst)");
+    picker->setObjectName("projectTemplatePicker");
+    picker->setOption(QFileDialog::DontUseNativeDialog);
+    picker->setFileMode(QFileDialog::ExistingFile);
+    picker->setAttribute(Qt::WA_DeleteOnClose);
+    connect(picker, &QFileDialog::fileSelected, this, [this](const QString &path) {
+      try {
+        read_project_template(path);
+        const auto absolute = QFileInfo(path).absoluteFilePath();
+        int index = template_->findData(absolute);
+        if (index < 0) {
+          template_->addItem(QFileInfo(path).completeBaseName() + " (user)", absolute);
+          index = template_->count() - 1;
+        }
+        template_->setCurrentIndex(index);
+      }
+      catch (const std::exception &error) {
+        validation_error_->setText(QString::fromUtf8(error.what()));
+        validation_error_->show();
+      }
+    });
+    picker->open();
+  });
+  connect(add_maps, &QPushButton::clicked, this, [this] {
+    auto *picker = new bts::FileDialog(this,
+                                       tr("Import images"),
+                                       QDir::homePath(),
+                                       tr("Images (*.png *.exr *.tif *.tiff *.tga *.bmp)"));
+    picker->setObjectName("utilityMapPicker");
+    picker->setFileMode(QFileDialog::ExistingFiles);
+    picker->setOption(QFileDialog::DontUseNativeDialog);
+    picker->setAttribute(Qt::WA_DeleteOnClose);
+    connect(picker, &QFileDialog::filesSelected, this, [this](const QStringList &files) {
+      for (const auto &path : files) {
+        const auto absolute = QDir::cleanPath(QFileInfo(path).absoluteFilePath());
+        if (utility_maps_->findItems(absolute, Qt::MatchExactly).isEmpty()) {
+          auto *item = new QListWidgetItem(absolute, utility_maps_);
+          item->setToolTip(absolute);
+        }
+      }
+      validate_options();
+    });
+    picker->open();
+  });
+  connect(clear_maps, &QPushButton::clicked, this, [this] {
+    utility_maps_->clear();
+    validate_options();
+  });
 
   validation_error_ = new QLabel(this);
   validation_error_->setObjectName("projectValidationError");
@@ -205,11 +364,13 @@ NewProjectDialog::NewProjectDialog(QWidget *parent) : QDialog(parent)
 void NewProjectDialog::choose_mesh()
 {
   const QString directory = mesh_path_->text().isEmpty() ?
-                                QDir::homePath() : QFileInfo(mesh_path_->text()).absolutePath();
-  auto *picker = new bts::FileDialog(this,
-                                tr("Select mesh"),
-                                directory,
-                                tr("Mesh scenes (*.obj *.OBJ *.blend *.BLEND *.abc *.ABC *.dae *.DAE *.fbx *.FBX *.gltf *.GLTF *.glb *.GLB *.usd *.usda *.usdc *.usdz)"));
+                                QDir::homePath() :
+                                QFileInfo(mesh_path_->text()).absolutePath();
+  auto *picker = new bts::FileDialog(
+      this,
+      tr("Select mesh"),
+      directory,
+      tr("Mesh scenes (*.obj *.OBJ *.blend *.BLEND *.abc *.ABC *.dae *.DAE *.fbx *.FBX *.gltf *.GLTF *.glb *.GLB *.usd *.usda *.usdc *.usdz)"));
   picker->setObjectName("meshFilePicker");
   picker->setFileMode(QFileDialog::ExistingFile);
   picker->setAcceptMode(QFileDialog::AcceptOpen);
@@ -237,8 +398,14 @@ std::optional<NewProjectOptions> NewProjectDialog::validate_options()
   else if (!file_info.isAbsolute() || path.contains(QChar::Null)) {
     error = tr("Select a mesh file with a valid absolute path.");
   }
-  else if (!QStringList{"obj","fbx","gltf","glb"}.contains(file_info.suffix(),Qt::CaseInsensitive) && file_info.suffix().compare(QStringLiteral("dae"),Qt::CaseInsensitive)!=0 && file_info.suffix().compare(QStringLiteral("abc"),Qt::CaseInsensitive)!=0 && !is_usd_scene(path.toStdString()) && !is_blend_library(path.toStdString())) {
-    error = tr("This project importer supports OBJ, Blender libraries, Alembic, FBX, glTF, Collada and USD scenes.");
+  else if (!QStringList{"obj", "fbx", "gltf", "glb"}.contains(file_info.suffix(),
+                                                              Qt::CaseInsensitive) &&
+           file_info.suffix().compare(QStringLiteral("dae"), Qt::CaseInsensitive) != 0 &&
+           file_info.suffix().compare(QStringLiteral("abc"), Qt::CaseInsensitive) != 0 &&
+           !is_usd_scene(path.toStdString()) && !is_blend_library(path.toStdString()))
+  {
+    error = tr(
+        "This project importer supports OBJ, Blender libraries, Alembic, FBX, glTF, Collada and USD scenes.");
   }
   else if (!file_info.exists()) {
     error = tr("The selected mesh file no longer exists.");
@@ -257,13 +424,20 @@ std::optional<NewProjectOptions> NewProjectDialog::validate_options()
   }
   const int resolution_value = resolution_->currentData().toInt();
   const int normal_index = normal_format_->currentIndex();
-  if (error.isEmpty() && (resolution_value>max_texture_resolution||!valid_sparse_texture_extent(resolution_value,128,true))) {
+  if (error.isEmpty() && (resolution_value > max_texture_resolution ||
+                          !valid_sparse_texture_extent(resolution_value, 128, true)))
+  {
     error = tr("Select a power-of-two document resolution from 128 to 8192 (8K).");
   }
   if (error.isEmpty() && (normal_index < 0 || normal_index >= int(normal_formats.size()))) {
     error = tr("Select a normal map format.");
   }
-  for(int i=0;i<utility_maps_->count()&&error.isEmpty();++i){const auto path=utility_maps_->item(i)->text();const QFileInfo map(path);if(!map.isAbsolute()||path.contains(QChar::Null)||!map.isFile()||!map.isReadable())error=tr("A selected utility map is unavailable. Clear the list or select it again.");}
+  for (int i = 0; i < utility_maps_->count() && error.isEmpty(); ++i) {
+    const auto path = utility_maps_->item(i)->text();
+    const QFileInfo map(path);
+    if (!map.isAbsolute() || path.contains(QChar::Null) || !map.isFile() || !map.isReadable())
+      error = tr("A selected utility map is unavailable. Clear the list or select it again.");
+  }
   validation_error_->setText(error);
   validation_error_->setVisible(!error.isEmpty());
   ok_->setEnabled(error.isEmpty());
@@ -275,14 +449,35 @@ std::optional<NewProjectOptions> NewProjectDialog::validate_options()
                            normal_formats[normal_index],
                            preserve_tiles_->isChecked() ? UvWorkflow::PreserveTiles :
                                                           UvWorkflow::SingleTile};
-  for(int i=0;i<utility_maps_->count();++i)result.utility_maps.push_back(utility_maps_->item(i)->text().toUtf8().toStdString());
-  try{result.blend=blend_->options();}catch(const std::exception &failure){validation_error_->setText(QString::fromUtf8(failure.what()));validation_error_->show();ok_->setEnabled(false);return {};}
-  result.usd=usd_->options();result.units=units_->options();
-  result.auto_unwrap=unwrap_options_;result.auto_unwrap.enabled=auto_unwrap_->isChecked();
-  result.import_cameras=import_cameras_->isChecked();
-  result.tangent_per_fragment=tangent_per_fragment_->isChecked();
-  result.template_path=template_->currentData().toString().toStdString();
-  if(!result.template_path.empty()&&!builtin_project_template(result.template_path)){try{read_project_template(QString::fromStdString(result.template_path));}catch(const std::exception &failure){validation_error_->setText(QString::fromUtf8(failure.what()));validation_error_->show();ok_->setEnabled(false);return {};}}
+  for (int i = 0; i < utility_maps_->count(); ++i)
+    result.utility_maps.push_back(utility_maps_->item(i)->text().toUtf8().toStdString());
+  try {
+    result.blend = blend_->options();
+  }
+  catch (const std::exception &failure) {
+    validation_error_->setText(QString::fromUtf8(failure.what()));
+    validation_error_->show();
+    ok_->setEnabled(false);
+    return {};
+  }
+  result.usd = usd_->options();
+  result.units = units_->options();
+  result.auto_unwrap = unwrap_options_;
+  result.auto_unwrap.enabled = auto_unwrap_->isChecked();
+  result.import_cameras = import_cameras_->isChecked();
+  result.tangent_per_fragment = tangent_per_fragment_->isChecked();
+  result.template_path = template_->currentData().toString().toStdString();
+  if (!result.template_path.empty() && !builtin_project_template(result.template_path)) {
+    try {
+      read_project_template(QString::fromStdString(result.template_path));
+    }
+    catch (const std::exception &failure) {
+      validation_error_->setText(QString::fromUtf8(failure.what()));
+      validation_error_->show();
+      ok_->setEnabled(false);
+      return {};
+    }
+  }
   return result;
 }
 

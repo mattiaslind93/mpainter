@@ -63,21 +63,94 @@ double snapped(double degrees)
 
 }  // namespace
 
-double OrbitCamera::half_fov_tan() const{return std::tan(fov_degrees_*radians_per_degree*.5);}
-double OrbitCamera::scene_camera_gate_scale(QSize size) const{return scene_camera_&&scene_camera_->aspect>0?std::max(1.,double(scene_camera_->aspect)/aspect_ratio(size)):1;}
-bool OrbitCamera::adopt_scene_camera(const SceneCamera &source){Vector position,forward,up;for(int i=0;i<3;++i){position[i]=source.position[i];forward[i]=source.forward[i];up[i]=source.up[i];}if(!finite(position)||!finite(forward)||!finite(up)||maximum_absolute(position)>maximum_scalar||!std::isfinite(source.vertical_fov)||source.vertical_fov<1||source.vertical_fov>175||!std::isfinite(source.aspect)||source.aspect<0||source.aspect>10000||!std::isfinite(source.near_clip)||source.near_clip<=0||source.far_clip<=source.near_clip||!std::isfinite(source.far_clip)||(source.orthographic&&(!std::isfinite(source.orthographic_extent)||source.orthographic_extent<=0)))return false;double length=std::sqrt(dot(forward,forward));if(length<1e-10)return false;for(auto &v:forward)v/=length;const double along=dot(up,forward);for(int i=0;i<3;++i)up[i]-=forward[i]*along;length=std::sqrt(dot(up,up));if(length<1e-10)return false;for(auto &v:up)v/=length;auto candidate=*this;candidate.orientation_.reset();candidate.snap_active_=false;candidate.roll_degrees_=0;candidate.fov_degrees_=source.vertical_fov;candidate.projection_=source.orthographic?Projection::Orthographic:Projection::Perspective;candidate.orthographic_extent_=source.orthographic_extent;double distance=dot(subtract(center_,position),forward);if(distance<=source.near_clip)distance=std::max(scene_radius_*3.,double(source.near_clip)*10);candidate.distance_=distance;for(int i=0;i<3;++i)candidate.center_[i]=position[i]+forward[i]*distance;candidate.yaw_degrees_=std::atan2(-forward[0],forward[1])/radians_per_degree;candidate.pitch_degrees_=std::asin(std::clamp(-forward[2],-1.,1.))/radians_per_degree;const auto axes=candidate.basis();candidate.roll_degrees_=std::atan2(dot(up,axes[0]),dot(up,axes[1]))/radians_per_degree;candidate.scene_camera_=source;*this=std::move(candidate);return true;}
-void OrbitCamera::release_scene_camera(QSize size){const double scale=scene_camera_gate_scale(size);fov_degrees_=2*std::atan(half_fov_tan()*scale)/radians_per_degree;orthographic_extent_*=scale;scene_camera_.reset();}
+double OrbitCamera::half_fov_tan() const
+{
+  return std::tan(fov_degrees_ * radians_per_degree * .5);
+}
+double OrbitCamera::scene_camera_gate_scale(QSize size) const
+{
+  return scene_camera_ && scene_camera_->aspect > 0 ?
+             std::max(1., double(scene_camera_->aspect) / aspect_ratio(size)) :
+             1;
+}
+bool OrbitCamera::adopt_scene_camera(const SceneCamera &source)
+{
+  Vector position, forward, up;
+  for (int i = 0; i < 3; ++i) {
+    position[i] = source.position[i];
+    forward[i] = source.forward[i];
+    up[i] = source.up[i];
+  }
+  if (!finite(position) || !finite(forward) || !finite(up) ||
+      maximum_absolute(position) > maximum_scalar || !std::isfinite(source.vertical_fov) ||
+      source.vertical_fov < 1 || source.vertical_fov > 175 || !std::isfinite(source.aspect) ||
+      source.aspect < 0 || source.aspect > 10000 || !std::isfinite(source.near_clip) ||
+      source.near_clip <= 0 || source.far_clip <= source.near_clip ||
+      !std::isfinite(source.far_clip) ||
+      (source.orthographic &&
+       (!std::isfinite(source.orthographic_extent) || source.orthographic_extent <= 0)))
+    return false;
+  double length = std::sqrt(dot(forward, forward));
+  if (length < 1e-10)
+    return false;
+  for (auto &v : forward)
+    v /= length;
+  const double along = dot(up, forward);
+  for (int i = 0; i < 3; ++i)
+    up[i] -= forward[i] * along;
+  length = std::sqrt(dot(up, up));
+  if (length < 1e-10)
+    return false;
+  for (auto &v : up)
+    v /= length;
+  auto candidate = *this;
+  candidate.orientation_.reset();
+  candidate.snap_active_ = false;
+  candidate.roll_degrees_ = 0;
+  candidate.fov_degrees_ = source.vertical_fov;
+  candidate.projection_ = source.orthographic ? Projection::Orthographic : Projection::Perspective;
+  candidate.orthographic_extent_ = source.orthographic_extent;
+  double distance = dot(subtract(center_, position), forward);
+  if (distance <= source.near_clip)
+    distance = std::max(scene_radius_ * 3., double(source.near_clip) * 10);
+  candidate.distance_ = distance;
+  for (int i = 0; i < 3; ++i)
+    candidate.center_[i] = position[i] + forward[i] * distance;
+  candidate.yaw_degrees_ = std::atan2(-forward[0], forward[1]) / radians_per_degree;
+  candidate.pitch_degrees_ = std::asin(std::clamp(-forward[2], -1., 1.)) / radians_per_degree;
+  const auto axes = candidate.basis();
+  candidate.roll_degrees_ = std::atan2(dot(up, axes[0]), dot(up, axes[1])) / radians_per_degree;
+  candidate.scene_camera_ = source;
+  *this = std::move(candidate);
+  return true;
+}
+void OrbitCamera::release_scene_camera(QSize size)
+{
+  const double scale = scene_camera_gate_scale(size);
+  fov_degrees_ = 2 * std::atan(half_fov_tan() * scale) / radians_per_degree;
+  orthographic_extent_ *= scale;
+  scene_camera_.reset();
+}
 
 std::array<OrbitCamera::Vector, 3> OrbitCamera::basis() const
 {
-  if(orientation_)return trackball::rows(*orientation_);
+  if (orientation_)
+    return trackball::rows(*orientation_);
   const double yaw = (snap_active_ ? snapped(yaw_degrees_) : yaw_degrees_) * radians_per_degree;
-  const double pitch = (snap_active_ ? snapped(pitch_degrees_) : pitch_degrees_) * radians_per_degree;
+  const double pitch = (snap_active_ ? snapped(pitch_degrees_) : pitch_degrees_) *
+                       radians_per_degree;
   const double sy = std::sin(yaw), cy = std::cos(yaw);
   const double sp = std::sin(pitch), cp = std::cos(pitch);
   // Analytic right/up/backward vectors stay defined at the top and bottom poles, where lookAt
   // with the fixed world-up vector would otherwise have a zero cross product.
-  Vector right{cy,sy,0},up{-sy*sp,cy*sp,cp};const double r=roll_degrees_*radians_per_degree,c=std::cos(r),sn=std::sin(r);Vector rolled_right,rolled_up;for(int i=0;i<3;++i){rolled_right[i]=right[i]*c-up[i]*sn;rolled_up[i]=right[i]*sn+up[i]*c;}return {rolled_right,rolled_up,Vector{sy*cp,-cy*cp,sp}};
+  Vector right{cy, sy, 0}, up{-sy * sp, cy * sp, cp};
+  const double r = roll_degrees_ * radians_per_degree, c = std::cos(r), sn = std::sin(r);
+  Vector rolled_right, rolled_up;
+  for (int i = 0; i < 3; ++i) {
+    rolled_right[i] = right[i] * c - up[i] * sn;
+    rolled_up[i] = right[i] * sn + up[i] * c;
+  }
+  return {rolled_right, rolled_up, Vector{sy * cp, -cy * cp, sp}};
 }
 
 QVector3D OrbitCamera::center() const
@@ -98,12 +171,13 @@ double OrbitCamera::pitch_degrees() const
 double OrbitCamera::vertical_extent() const
 {
   return projection_ == Projection::Orthographic ? orthographic_extent_ :
-                                                  2.0 * distance_ * half_fov_tan();
+                                                   2.0 * distance_ * half_fov_tan();
 }
 
 double OrbitCamera::minimum_extent() const
 {
-  return std::max({1e-8, maximum_absolute(center_) * float_epsilon * 16.0,
+  return std::max({1e-8,
+                   maximum_absolute(center_) * float_epsilon * 16.0,
                    scene_radius_ * float_epsilon * 4.0});
 }
 
@@ -122,9 +196,10 @@ QMatrix4x4 OrbitCamera::view_matrix() const
   return matrix;
 }
 
-std::pair<double,double> OrbitCamera::bounds_depths() const
+std::pair<double, double> OrbitCamera::bounds_depths() const
 {
-  if(!bounds_)return {0,0};
+  if (!bounds_)
+    return {0, 0};
   const Vector backward = basis()[2];
   double nearest = std::numeric_limits<double>::infinity();
   double farthest = -std::numeric_limits<double>::infinity();
@@ -134,23 +209,26 @@ std::pair<double,double> OrbitCamera::bounds_depths() const
     nearest = std::min(nearest, depth);
     farthest = std::max(farthest, depth);
   }
-  return {nearest,farthest};
+  return {nearest, farthest};
 }
 
 bool OrbitCamera::set_clipping(ViewportClipping value)
 {
-  if(!value.valid())return false;
-  clipping_=value;
+  if (!value.valid())
+    return false;
+  clipping_ = value;
   return true;
 }
 
 std::pair<double, double> OrbitCamera::clipping_range() const
 {
-  if(scene_camera_)return {scene_camera_->near_clip,scene_camera_->far_clip};
+  if (scene_camera_)
+    return {scene_camera_->near_clip, scene_camera_->far_clip};
   // Orthographic views can see past the eye, just as a modeling viewport does. The positive
   // near preference applies to perspective only; Clip End bounds orthographic depth both ways.
-  if(projection_==Projection::Orthographic)return {-clipping_.far_plane,clipping_.far_plane};
-  return {clipping_.near_plane,clipping_.far_plane};
+  if (projection_ == Projection::Orthographic)
+    return {-clipping_.far_plane, clipping_.far_plane};
+  return {clipping_.near_plane, clipping_.far_plane};
 }
 
 QMatrix4x4 OrbitCamera::projection_matrix(QSize pixel_size) const
@@ -158,7 +236,7 @@ QMatrix4x4 OrbitCamera::projection_matrix(QSize pixel_size) const
   const auto [near_plane, far_plane] = clipping_range();
   const double depth = far_plane - near_plane;
   const double aspect = aspect_ratio(pixel_size);
-  const double gate=scene_camera_gate_scale(pixel_size);
+  const double gate = scene_camera_gate_scale(pixel_size);
   QMatrix4x4 matrix;
   matrix.fill(0);
   // Calculate in double before storing floats. Qt's float-only convenience constructors can
@@ -185,7 +263,10 @@ void OrbitCamera::orbit(QPointF delta_pixels, bool snap)
   if (!finite(delta_pixels)) {
     return;
   }
-  if(orientation_){update_turntable_angles();orientation_.reset();}
+  if (orientation_) {
+    update_turntable_angles();
+    orientation_.reset();
+  }
   if (snap_active_ && !snap) {
     // Continue from the last visible snapped pose when Shift is released, without jumping back
     // to the sub-step accumulator. While snapping, small mouse deltas continue to accumulate.
@@ -199,27 +280,46 @@ void OrbitCamera::orbit(QPointF delta_pixels, bool snap)
 
 void OrbitCamera::update_turntable_angles()
 {
-  const auto axes=basis();const auto &back=axes[2];
+  const auto axes = basis();
+  const auto &back = axes[2];
   // Retain a finite yaw at the pole; roll resolves the remaining orientation.
-  if(std::hypot(back[0],back[1])>1e-12)yaw_degrees_=std::atan2(back[0],-back[1])/radians_per_degree;
-  pitch_degrees_=std::asin(std::clamp(back[2],-1.,1.))/radians_per_degree;
-  const double yaw=yaw_degrees_*radians_per_degree,pitch=pitch_degrees_*radians_per_degree;
-  const Vector right{std::cos(yaw),std::sin(yaw),0},up{-std::sin(yaw)*std::sin(pitch),std::cos(yaw)*std::sin(pitch),std::cos(pitch)};
-  roll_degrees_=std::atan2(dot(axes[1],right),dot(axes[1],up))/radians_per_degree;
+  if (std::hypot(back[0], back[1]) > 1e-12)
+    yaw_degrees_ = std::atan2(back[0], -back[1]) / radians_per_degree;
+  pitch_degrees_ = std::asin(std::clamp(back[2], -1., 1.)) / radians_per_degree;
+  const double yaw = yaw_degrees_ * radians_per_degree,
+               pitch = pitch_degrees_ * radians_per_degree;
+  const Vector right{std::cos(yaw), std::sin(yaw), 0},
+      up{-std::sin(yaw) * std::sin(pitch), std::cos(yaw) * std::sin(pitch), std::cos(pitch)};
+  roll_degrees_ = std::atan2(dot(axes[1], right), dot(axes[1], up)) / radians_per_degree;
 }
 
-std::optional<trackball::Press> OrbitCamera::begin_trackball(QPointF logical,QRect pane,double dpr) const
+std::optional<trackball::Press> OrbitCamera::begin_trackball(QPointF logical,
+                                                             QRect pane,
+                                                             double dpr) const
 {
-  const auto point=trackball::pointer(logical,pane,dpr);if(!point)return {};
-  return trackball::Press{pane,dpr,*point,trackball::from_rows(basis())};
+  const auto point = trackball::pointer(logical, pane, dpr);
+  if (!point)
+    return {};
+  return trackball::Press{pane, dpr, *point, trackball::from_rows(basis())};
 }
 
-bool OrbitCamera::orbit_trackball(const trackball::Press &press,QPointF logical)
+bool OrbitCamera::orbit_trackball(const trackball::Press &press, QPointF logical)
 {
-  const auto point=trackball::pointer(logical,press.pane,press.dpr);if(!point)return false;
-  double norm=0;for(double x:press.orientation){if(!std::isfinite(x))return false;norm+=x*x;}if(norm<1e-20||!std::isfinite(norm))return false;
-  orientation_=trackball::rotation(press.pointer,*point,press.pane.size(),press.orientation);
-  snap_active_=false;update_turntable_angles();return true;
+  const auto point = trackball::pointer(logical, press.pane, press.dpr);
+  if (!point)
+    return false;
+  double norm = 0;
+  for (double x : press.orientation) {
+    if (!std::isfinite(x))
+      return false;
+    norm += x * x;
+  }
+  if (norm < 1e-20 || !std::isfinite(norm))
+    return false;
+  orientation_ = trackball::rotation(press.pointer, *point, press.pane.size(), press.orientation);
+  snap_active_ = false;
+  update_turntable_angles();
+  return true;
 }
 
 void OrbitCamera::pan(QPointF delta_pixels, int viewport_height)
@@ -248,10 +348,12 @@ void OrbitCamera::dolly(double delta_pixels)
   }
   const double factor = std::exp(std::clamp(delta_pixels * 0.01, -100.0, 100.0));
   if (projection_ == Projection::Orthographic) {
-    orthographic_extent_ = std::clamp(orthographic_extent_ * factor, minimum_extent(), maximum_extent);
+    orthographic_extent_ = std::clamp(
+        orthographic_extent_ * factor, minimum_extent(), maximum_extent);
   }
   else {
-    distance_ = std::clamp(distance_ * factor, minimum_extent() / (2.0 * half_fov_tan()), maximum_scalar);
+    distance_ = std::clamp(
+        distance_ * factor, minimum_extent() / (2.0 * half_fov_tan()), maximum_scalar);
   }
 }
 
@@ -293,7 +395,8 @@ bool OrbitCamera::frame_bounds(QVector3D minimum, QVector3D maximum, QSize viewp
     pivot[axis] = low[axis] + span[axis] * 0.5;
   }
   const double precision_extent = std::max(1e-6, maximum_absolute(pivot) * float_epsilon * 32.0);
-  const double radius = std::max(std::hypot(span[0], span[1], span[2]) * 0.5, precision_extent * 0.5);
+  const double radius = std::max(std::hypot(span[0], span[1], span[2]) * 0.5,
+                                 precision_extent * 0.5);
   if (maximum_absolute(pivot) > maximum_scalar || radius > maximum_scalar) {
     return false;
   }
@@ -306,11 +409,13 @@ bool OrbitCamera::frame_bounds(QVector3D minimum, QVector3D maximum, QSize viewp
     const double x = std::abs(dot(axes[0], relative)) * 1.1;
     const double y = std::abs(dot(axes[1], relative)) * 1.1;
     const double z = dot(axes[2], relative);
-    required_distance = std::max({required_distance, z + x / (aspect * half_fov_tan()), z + y / half_fov_tan()});
+    required_distance = std::max(
+        {required_distance, z + x / (aspect * half_fov_tan()), z + y / half_fov_tan()});
     required_extent = std::max({required_extent, 2.0 * x / aspect, 2.0 * y});
   }
   if (!std::isfinite(required_distance) || required_distance > maximum_scalar ||
-      !std::isfinite(required_extent) || required_extent > maximum_extent) {
+      !std::isfinite(required_extent) || required_extent > maximum_extent)
+  {
     return false;
   }
   center_ = pivot;

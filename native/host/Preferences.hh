@@ -17,5 +17,9 @@ struct ReferenceImagePreferences {
 };
 ReferenceImagePreferences load_reference_image_preferences();
 void save_reference_image_preferences(const ReferenceImagePreferences &preferences);
-void show_preferences(QWidget *parent,const QString &shelf,bool project_open,ViewportClipping current,std::function<void(ViewportClipping)> preview);
-}
+void show_preferences(QWidget *parent,
+                      const QString &shelf,
+                      bool project_open,
+                      ViewportClipping current,
+                      std::function<void(ViewportClipping)> preview);
+}  // namespace bts

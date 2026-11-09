@@ -5,11 +5,14 @@
 namespace bts {
 struct ViewFrame;
 class UvGpuOverlay {
- struct Impl;std::unique_ptr<Impl> impl_;
+  struct Impl;
+  std::unique_ptr<Impl> impl_;
+
  public:
- UvGpuOverlay();~UvGpuOverlay();
- void draw(const UvPreviewSummary &,const ViewFrame &);
- void free();
- QJsonObject stats()const;
+  UvGpuOverlay();
+  ~UvGpuOverlay();
+  void draw(const UvPreviewSummary &, const ViewFrame &);
+  void free();
+  QJsonObject stats() const;
 };
-}
+}  // namespace bts

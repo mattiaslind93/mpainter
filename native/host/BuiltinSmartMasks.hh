@@ -6,4 +6,4 @@ namespace bts {
 const std::vector<StudioAsset> &builtin_smart_mask_assets();
 // Number of shared CC0 inputs decoded during initial catalog construction.
 std::uint64_t builtin_smart_mask_rcc_decodes();
-}
+}  // namespace bts

@@ -13,6 +13,5 @@ struct SpsmLevelsOptions {
 // independent uniform Roughness Fill -> Levels chains only; never adds effects
 // to bitmap/native-material/anchor bindings or repairs unknown mask/group data.
 // Keep original source omissions as provenance; restoration is separately noted.
-PreparedSpsm prepare_spsm_levels(const PreparedSpsm &original,
-                                SpsmLevelsOptions = {});
-} // namespace bts
+PreparedSpsm prepare_spsm_levels(const PreparedSpsm &original, SpsmLevelsOptions = {});
+}  // namespace bts

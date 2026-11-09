@@ -15,13 +15,15 @@ using namespace blender;
 
 bool is_blend_library(const std::string &path)
 {
-  return QFileInfo(QString::fromStdString(path)).suffix().compare("blend", Qt::CaseInsensitive) == 0;
+  return QFileInfo(QString::fromStdString(path)).suffix().compare("blend", Qt::CaseInsensitive) ==
+         0;
 }
 
 BlendLibraryCatalog inspect_blend_library(const std::string &path, std::stop_token cancellation)
 {
   const auto check = [&] {
-    if (cancellation.stop_requested()) throw std::runtime_error("Blender library listing cancelled");
+    if (cancellation.stop_requested())
+      throw std::runtime_error("Blender library listing cancelled");
   };
   check();
   const QFileInfo file(QString::fromStdString(path));
@@ -33,15 +35,18 @@ BlendLibraryCatalog inspect_blend_library(const std::string &path, std::stop_tok
   BlendFileReadReport reports{};
   std::unique_ptr<BlendHandle, decltype(&BLO_blendhandle_close)> handle(
       BLO_blendhandle_from_file(path.c_str(), &reports), BLO_blendhandle_close);
-  if (!handle) throw std::runtime_error("Cannot inspect Blender library: " + path);
+  if (!handle)
+    throw std::runtime_error("Cannot inspect Blender library: " + path);
   BlendLibraryCatalog result;
   result.source = path;
   const auto read = [&](short type, std::vector<std::string> &names) {
     check();
     int count = 0;
     std::unique_ptr<LinkNode, decltype(&BLI_linklist_freeN)> entries(
-        BLO_blendhandle_get_datablock_names(handle.get(), type, false, &count), BLI_linklist_freeN);
-    if(count<0)throw std::runtime_error("Invalid Blender library entry count");
+        BLO_blendhandle_get_datablock_names(handle.get(), type, false, &count),
+        BLI_linklist_freeN);
+    if (count < 0)
+      throw std::runtime_error("Invalid Blender library entry count");
 
     for (auto *entry = entries.get(); entry; entry = entry->next) {
       check();

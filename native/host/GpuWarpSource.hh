@@ -2,7 +2,7 @@
 namespace bts::gpu_warp {
 // Same bounded Hermite projection contract as WarpGrid::project. Only the
 // small immutable knot/control-point array is supplied by the CPU.
-inline const char *source=R"GLSL(
+inline const char *source = R"GLSL(
 vec4 warp_data(int index){return texelFetch(layer_parameters_img,ivec2(WARP_DATA_START+index,0),0);}
 struct WarpBasis {vec2 value;vec2 tangent;vec2 derivative;vec2 tangent_derivative;vec2 second;vec2 tangent_second;};
 WarpBasis warp_basis(float t,float span){float t2=t*t,t3=t2*t;WarpBasis b;b.value=vec2(2*t3-3*t2+1,-2*t3+3*t2);b.tangent=vec2(t3-2*t2+t,t3-t2)*span;b.derivative=vec2(6*t2-6*t,-6*t2+6*t)/span;b.tangent_derivative=vec2(3*t2-4*t+1,3*t2-2*t);b.second=vec2(12*t-6,-12*t+6)/(span*span);b.tangent_second=vec2(6*t-4,6*t-2)/span;return b;}
@@ -63,4 +63,4 @@ bool warp_project(vec3 point,out vec2 uv,out float depth,out vec3 normal,out vec
  vec3 residual=(point-value.position)*stretch;depth=dot(residual,normal);warp_projection_error=length(residual-normal*depth);if(warp_projection_error>1e-5)return false;derivative_u=value.du;derivative_v=value.dv;return true;
 }
 )GLSL";
-}
+}  // namespace bts::gpu_warp

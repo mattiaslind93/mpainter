@@ -10,14 +10,17 @@ class BlenderHost;
 // footprint, never scene transport. No document or saved brush is mutated.
 class BrushPresetThumbnailJobs {
  public:
- BrushPresetThumbnailJobs(BlenderHost &,std::function<bool()> ready,std::function<void(QString)> error);
- ~BrushPresetThumbnailJobs();
- void prepare_startup(); // Host GPU startup, before timed interactive requests.
- void request(const StudioAsset &,std::function<void(QImage)>);
- bool pending()const;
- QJsonObject diagnostics()const; // Empty unless BTS_BO_PRESET_DEMO is enabled.
- void shutdown(); // Owner thread, before BlenderHost shutdown and outside draw.
+  BrushPresetThumbnailJobs(BlenderHost &,
+                           std::function<bool()> ready,
+                           std::function<void(QString)> error);
+  ~BrushPresetThumbnailJobs();
+  void prepare_startup();  // Host GPU startup, before timed interactive requests.
+  void request(const StudioAsset &, std::function<void(QImage)>);
+  bool pending() const;
+  QJsonObject diagnostics() const;  // Empty unless BTS_BO_PRESET_DEMO is enabled.
+  void shutdown();                  // Owner thread, before BlenderHost shutdown and outside draw.
  private:
- struct Impl;std::shared_ptr<Impl> impl_;
+  struct Impl;
+  std::shared_ptr<Impl> impl_;
 };
-}
+}  // namespace bts

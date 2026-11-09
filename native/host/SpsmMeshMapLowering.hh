@@ -16,6 +16,5 @@ struct SpsmMeshMapOptions {
 // native Generator effect retains a live same-set/per-tile AO reference; native
 // preset apply validates every required destination map before changing the
 // set.
-PreparedSpsm enhance_prepared_spsm_mesh_maps(const PreparedSpsm &,
-                                             SpsmMeshMapOptions = {});
-} // namespace bts
+PreparedSpsm enhance_prepared_spsm_mesh_maps(const PreparedSpsm &, SpsmMeshMapOptions = {});
+}  // namespace bts

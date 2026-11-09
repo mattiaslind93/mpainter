@@ -24,21 +24,32 @@ class OrbitCamera {
 
   bool adopt_scene_camera(const SceneCamera &);
   void release_scene_camera(QSize viewport);
-  double fov_degrees() const{return fov_degrees_;}
+  double fov_degrees() const
+  {
+    return fov_degrees_;
+  }
   double scene_camera_gate_scale(QSize viewport) const;
   // Bounds are diagnostic/framing data only; they never tighten the clipping planes.
   bool set_clipping(ViewportClipping value);
-  ViewportClipping clipping_settings() const {return clipping_;}
-  std::pair<double,double> clipping_range() const;
-  std::pair<double,double> bounds_depths() const;
-  bool scene_camera_active() const {return scene_camera_.has_value();}
+  ViewportClipping clipping_settings() const
+  {
+    return clipping_;
+  }
+  std::pair<double, double> clipping_range() const;
+  std::pair<double, double> bounds_depths() const;
+  bool scene_camera_active() const
+  {
+    return scene_camera_.has_value();
+  }
   QMatrix4x4 view_matrix() const;
   QMatrix4x4 projection_matrix(QSize pixel_size) const;
 
   // Deltas and viewport_height must use the same pixel units. Rotation is constrained to Z-up.
   void orbit(QPointF delta_pixels, bool snap);
-  std::optional<trackball::Press> begin_trackball(QPointF logical,QRect physical_pane,double dpr) const;
-  bool orbit_trackball(const trackball::Press &,QPointF logical);
+  std::optional<trackball::Press> begin_trackball(QPointF logical,
+                                                  QRect physical_pane,
+                                                  double dpr) const;
+  bool orbit_trackball(const trackball::Press &, QPointF logical);
   void pan(QPointF delta_pixels, int viewport_height);
   // Positive dolly moves away; positive wheel angle zooms in. The event owner chooses platform
   // scroll polarity; this convention does not claim the observed macOS physical-wheel direction.
@@ -52,12 +63,18 @@ class OrbitCamera {
   bool frame_bounds(QVector3D minimum, QVector3D maximum, QSize viewport);
 
   QVector3D center() const;
-  double distance() const { return distance_; }
+  double distance() const
+  {
+    return distance_;
+  }
   double yaw_degrees() const;
   double pitch_degrees() const;
   // Full visible height at the pivot plane, in world units, for either projection mode.
   double vertical_extent() const;
-  Projection projection() const { return projection_; }
+  Projection projection() const
+  {
+    return projection_;
+  }
 
  private:
   using Vector = std::array<double, 3>;
@@ -72,7 +89,7 @@ class OrbitCamera {
 
   double half_fov_tan() const;
   ViewportClipping clipping_;
-  double fov_degrees_=vertical_fov_degrees,roll_degrees_=0;
+  double fov_degrees_ = vertical_fov_degrees, roll_degrees_ = 0;
   std::optional<SceneCamera> scene_camera_;
   Vector center_ = {0, 0, 0};
   double distance_ = 7;

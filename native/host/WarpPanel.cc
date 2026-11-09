@@ -15,30 +15,377 @@
 #include <QShortcut>
 #include <QVBoxLayout>
 namespace bts {
-WarpPanel::WarpPanel(QWidget *parent):QWidget(parent){
- setObjectName("warpPanel");auto *layout=new QVBoxLayout(this);layout->setContentsMargins(0,0,0,0);auto *form=new QFormLayout;layout->addLayout(form);
- edition_=new QComboBox(this);edition_->setObjectName("warpEdition");edition_->addItems({"Transform grid","Edit vertices (Shift+V)"});form->addRow("Warp edition",edition_);connect(edition_,&QComboBox::currentIndexChanged,this,[this](int index){modify([=](auto &p){p.warp_edit=index==1;},true);});
- surface_=new QCheckBox("Surface snap (Ctrl-drag: camera plane)",this);surface_->setObjectName("warpSurfaceSnap");form->addRow(surface_);connect(surface_,&QCheckBox::toggled,this,[this](bool value){modify([=](auto &p){p.warp_surface=value;},true);});
- space_=new QComboBox(this);space_->setObjectName("warpManipulatorSpace");space_->addItems({"World","Local"});space_->setToolTip("Translate/rotate axes use World or Local. Whole-grid scale uses projection-local axes; selected tangent scale supports both spaces.");form->addRow("Manipulator space",space_);connect(space_,&QComboBox::currentIndexChanged,this,[this](int index){if(space_changed)space_changed(index==1);});
- const auto number=[&](const char *name,double low,double high,int decimals=4){auto *control=new bts::NumericSpinBox(this);control->setObjectName(name);control->setLocale(QLocale::c());control->setRange(low,high);control->setDecimals(decimals);control->setKeyboardTracking(false);control->setSingleStep(.05);control->setMinimumWidth(0);return control;};
- depth_=number("warpProjectionDepth",.0001,1000);depth_->setToolTip("Ray reach inward from the grid, in projection depth units. Keep it low for distant/overlapping surfaces.");form->addRow("Projection depth",depth_);connect(depth_,&QDoubleSpinBox::valueChanged,this,[this](double value){modify([=](auto &p){p.warp_depth=value;});});
- auto *counts=new QWidget(this);auto *counts_layout=new QHBoxLayout(counts);counts_layout->setContentsMargins(0,0,0,0);columns_=new QSpinBox(counts);rows_=new QSpinBox(counts);columns_->setObjectName("warpColumns");rows_->setObjectName("warpRows");for(auto *control:{columns_,rows_}){control->setRange(2,9);control->setKeyboardTracking(false);counts_layout->addWidget(control);}form->addRow("Columns / rows",counts);const auto resize=[this]{modify([this](auto &p){const auto grid=warp_authored_grid(p);if(!grid->undeformed())throw std::invalid_argument("Reset all vertices before changing grid dimensions");p.warp=std::make_shared<const WarpGrid>(columns_->value(),rows_->value());},true);};connect(columns_,&QSpinBox::valueChanged,this,[resize](int){resize();});connect(rows_,&QSpinBox::valueChanged,this,[resize](int){resize();});
- automatic_=new QCheckBox("Automatic tangents",this);automatic_->setObjectName("warpAutomaticTangents");form->addRow(automatic_);connect(automatic_,&QCheckBox::toggled,this,[this](bool value){modify([=](auto &p){auto grid=std::make_shared<WarpGrid>(*warp_authored_grid(p));grid->automatic_tangents=value;if(value)grid->align_tangents();p.warp=std::move(grid);},true);});
- point_=new QComboBox(this);point_->setObjectName("warpSelectedPoint");form->addRow("Selected point",point_);connect(point_,&QComboBox::currentIndexChanged,this,[this](int index){selected_.clear();if(index>0)selected_.push_back(point_->itemData(index).toInt());synchronize(state_);if(selection_changed)selection_changed(selected_);});
- for(int kind=0;kind<3;++kind){auto *line=new QWidget(this);auto *row=new QHBoxLayout(line);row->setContentsMargins(0,0,0,0);for(int c=0;c<3;++c){auto *control=number(qPrintable(QString("warpVector%1_%2").arg(kind).arg(c)),-10000,10000);control->setParent(line);vectors_[kind][c]=control;control->setPrefix(QString("%1 ").arg(QChar::fromLatin1("XYZ"[c])));row->addWidget(control);connect(control,&QDoubleSpinBox::valueChanged,this,[this,kind,c](double value){modify([=,this](auto &p){if(selected_.empty())return;auto grid=std::make_shared<WarpGrid>(*warp_authored_grid(p));double previous=0;for(int id:selected_)previous+=(kind==0?grid->nodes.at(id).position:kind==1?grid->nodes.at(id).du:grid->nodes.at(id).dv)[c];previous/=selected_.size();for(int id:selected_){auto &node=grid->nodes.at(id);auto &vector=kind==0?node.position:kind==1?node.du:node.dv;vector[c]+=value-previous;}if(kind==0&&grid->automatic_tangents)grid->align_tangents();if(kind!=0)grid->automatic_tangents=false;grid->validate();p.warp=std::move(grid);});});}form->addRow(QStringList{"Position","Tangent U","Tangent V"}[kind],line);}
- split_=new QComboBox(this);split_->setObjectName("warpSplitMode");split_->addItems({"No split tool","Split crosswise","Split horizontally","Split vertically"});form->addRow("Split grid",split_);connect(split_,&QComboBox::currentIndexChanged,this,[this](int mode){if(split_requested)split_requested(mode);});
- auto *split_line=new QWidget(this);auto *split_layout=new QHBoxLayout(split_line);split_layout->setContentsMargins(0,0,0,0);split_u_=number("warpSplitU",.00001,.99999,5);split_v_=number("warpSplitV",.00001,.99999,5);split_u_->setValue(.25);split_v_->setValue(.25);split_layout->addWidget(split_u_);split_layout->addWidget(split_v_);auto *split_button=new QPushButton("Split",split_line);split_button->setObjectName("warpSplitAtCoordinates");split_layout->addWidget(split_button);form->addRow("Split at U / V",split_line);connect(split_button,&QPushButton::clicked,this,[this]{const int mode=split_->currentIndex();if(!mode){status_->setText("Choose a split direction first. Escape cancels the viewport tool.");return;}modify([=,this](auto &p){auto grid=std::make_shared<WarpGrid>(*warp_authored_grid(p));if(mode==1||mode==3)grid->split(true,split_u_->value());if(mode==1||mode==2)grid->split(false,split_v_->value());p.warp=std::move(grid);},true);});
- handle_=new QSpinBox(this);handle_->setObjectName("warpHandleSize");handle_->setRange(2,24);form->addRow("Handle size (px)",handle_);connect(handle_,&QSpinBox::valueChanged,this,[this](int value){modify([=](auto &p){p.warp_handle_size=value;});});
- color_=new ColorPicker(this);color_->setObjectName("warpGridColor");for(auto *child:color_->findChildren<QWidget *>())if(!child->objectName().isEmpty())child->setObjectName("warp_"+child->objectName());if(auto *pick=color_->findChild<QWidget *>("warp_colorEyedropper"))pick->hide();form->addRow("Grid color",color_);color_->started=[this]{if(edit_started)edit_started();};color_->finished=[this]{if(edit_finished)edit_finished();};color_->changed=[this](const PickerColor &value){modify([=](auto &p){for(int c=0;c<3;++c)p.warp_color[c]=value[c];});};
- auto *resets=new QWidget(this);auto *reset_layout=new QVBoxLayout(resets);reset_layout->setContentsMargins(0,0,0,0);for(int type=0;type<3;++type){auto *button=new QPushButton(QStringList{"Restore global transform","Reset all vertices","Reset selected vertices"}[type],resets);button->setObjectName(QString("warpReset%1").arg(type));reset_layout->addWidget(button);connect(button,&QPushButton::clicked,this,[this,type]{modify([=,this](auto &p){if(type==0){p.offset3={};p.rotation3={};p.scale3={1,1,1};return;}auto grid=std::make_shared<WarpGrid>(*warp_authored_grid(p));if(type==1)grid->reset_vertices();else{for(int id:selected_)grid->nodes.at(id)=WarpGrid::initial(grid->columns.at(id%grid->width()),grid->rows.at(id/grid->width()));if(grid->automatic_tangents)grid->align_tangents();}p.warp=std::move(grid);},true);});}layout->addWidget(resets);
- auto *mirrors=new QWidget(this);auto *mirror_layout=new QHBoxLayout(mirrors);mirror_layout->setContentsMargins(0,0,0,0);for(int axis=0;axis<3;++axis){auto *button=new QPushButton(QString("Mirror %1").arg(QChar::fromLatin1("XYZ"[axis])),mirrors);button->setObjectName(QString("warpMirror%1").arg(axis));mirror_layout->addWidget(button);connect(button,&QPushButton::clicked,this,[this,axis]{modify([=](auto &p){p.linked3=false;p.scale3[axis]*=-1;},true);});}layout->addWidget(mirrors);
- auto *help=new QLabel("Shift+V: transform / vertices. W/E/R: move / rotate / scale. Shift selects; Ctrl removes or drags in camera space. Rotation/scale edit selected tangents. Escape cancels a drag or split.",this);help->setWordWrap(true);layout->addWidget(help);
- auto *toggle=new QShortcut(QKeySequence(Qt::SHIFT|Qt::Key_V),this);toggle->setContext(Qt::WidgetWithChildrenShortcut);connect(toggle,&QShortcut::activated,this,[this]{edition_->setCurrentIndex(1-edition_->currentIndex());});
- auto *escape=new QShortcut(QKeySequence(Qt::Key_Escape),this);escape->setContext(Qt::WidgetWithChildrenShortcut);connect(escape,&QShortcut::activated,this,[this]{cancel_split();});
- status_=new QLabel(this);status_->setWordWrap(true);layout->addWidget(status_);for(auto *control:findChildren<QDoubleSpinBox *>())if(!color_->isAncestorOf(control))connect(control,&QDoubleSpinBox::editingFinished,this,[this]{if(edit_finished)edit_finished();});for(auto *control:findChildren<QSpinBox *>())connect(control,&QSpinBox::editingFinished,this,[this]{if(edit_finished)edit_finished();});synchronize({});
+WarpPanel::WarpPanel(QWidget *parent) : QWidget(parent)
+{
+  setObjectName("warpPanel");
+  auto *layout = new QVBoxLayout(this);
+  layout->setContentsMargins(0, 0, 0, 0);
+  auto *form = new QFormLayout;
+  layout->addLayout(form);
+  edition_ = new QComboBox(this);
+  edition_->setObjectName("warpEdition");
+  edition_->addItems({"Transform grid", "Edit vertices (Shift+V)"});
+  form->addRow("Warp edition", edition_);
+  connect(edition_, &QComboBox::currentIndexChanged, this, [this](int index) {
+    modify([=](auto &p) { p.warp_edit = index == 1; }, true);
+  });
+  surface_ = new QCheckBox("Surface snap (Ctrl-drag: camera plane)", this);
+  surface_->setObjectName("warpSurfaceSnap");
+  form->addRow(surface_);
+  connect(surface_, &QCheckBox::toggled, this, [this](bool value) {
+    modify([=](auto &p) { p.warp_surface = value; }, true);
+  });
+  space_ = new QComboBox(this);
+  space_->setObjectName("warpManipulatorSpace");
+  space_->addItems({"World", "Local"});
+  space_->setToolTip(
+      "Translate/rotate axes use World or Local. Whole-grid scale uses projection-local axes; selected tangent scale supports both spaces.");
+  form->addRow("Manipulator space", space_);
+  connect(space_, &QComboBox::currentIndexChanged, this, [this](int index) {
+    if (space_changed)
+      space_changed(index == 1);
+  });
+  const auto number = [&](const char *name, double low, double high, int decimals = 4) {
+    auto *control = new bts::NumericSpinBox(this);
+    control->setObjectName(name);
+    control->setLocale(QLocale::c());
+    control->setRange(low, high);
+    control->setDecimals(decimals);
+    control->setKeyboardTracking(false);
+    control->setSingleStep(.05);
+    control->setMinimumWidth(0);
+    return control;
+  };
+  depth_ = number("warpProjectionDepth", .0001, 1000);
+  depth_->setToolTip(
+      "Ray reach inward from the grid, in projection depth units. Keep it low for distant/overlapping surfaces.");
+  form->addRow("Projection depth", depth_);
+  connect(depth_, &QDoubleSpinBox::valueChanged, this, [this](double value) {
+    modify([=](auto &p) { p.warp_depth = value; });
+  });
+  auto *counts = new QWidget(this);
+  auto *counts_layout = new QHBoxLayout(counts);
+  counts_layout->setContentsMargins(0, 0, 0, 0);
+  columns_ = new QSpinBox(counts);
+  rows_ = new QSpinBox(counts);
+  columns_->setObjectName("warpColumns");
+  rows_->setObjectName("warpRows");
+  for (auto *control : {columns_, rows_}) {
+    control->setRange(2, 9);
+    control->setKeyboardTracking(false);
+    counts_layout->addWidget(control);
+  }
+  form->addRow("Columns / rows", counts);
+  const auto resize = [this] {
+    modify(
+        [this](auto &p) {
+          const auto grid = warp_authored_grid(p);
+          if (!grid->undeformed())
+            throw std::invalid_argument("Reset all vertices before changing grid dimensions");
+          p.warp = std::make_shared<const WarpGrid>(columns_->value(), rows_->value());
+        },
+        true);
+  };
+  connect(columns_, &QSpinBox::valueChanged, this, [resize](int) { resize(); });
+  connect(rows_, &QSpinBox::valueChanged, this, [resize](int) { resize(); });
+  automatic_ = new QCheckBox("Automatic tangents", this);
+  automatic_->setObjectName("warpAutomaticTangents");
+  form->addRow(automatic_);
+  connect(automatic_, &QCheckBox::toggled, this, [this](bool value) {
+    modify(
+        [=](auto &p) {
+          auto grid = std::make_shared<WarpGrid>(*warp_authored_grid(p));
+          grid->automatic_tangents = value;
+          if (value)
+            grid->align_tangents();
+          p.warp = std::move(grid);
+        },
+        true);
+  });
+  point_ = new QComboBox(this);
+  point_->setObjectName("warpSelectedPoint");
+  form->addRow("Selected point", point_);
+  connect(point_, &QComboBox::currentIndexChanged, this, [this](int index) {
+    selected_.clear();
+    if (index > 0)
+      selected_.push_back(point_->itemData(index).toInt());
+    synchronize(state_);
+    if (selection_changed)
+      selection_changed(selected_);
+  });
+  for (int kind = 0; kind < 3; ++kind) {
+    auto *line = new QWidget(this);
+    auto *row = new QHBoxLayout(line);
+    row->setContentsMargins(0, 0, 0, 0);
+    for (int c = 0; c < 3; ++c) {
+      auto *control = number(
+          qPrintable(QString("warpVector%1_%2").arg(kind).arg(c)), -10000, 10000);
+      control->setParent(line);
+      vectors_[kind][c] = control;
+      control->setPrefix(QString("%1 ").arg(QChar::fromLatin1("XYZ"[c])));
+      row->addWidget(control);
+      connect(control, &QDoubleSpinBox::valueChanged, this, [this, kind, c](double value) {
+        modify([=, this](auto &p) {
+          if (selected_.empty())
+            return;
+          auto grid = std::make_shared<WarpGrid>(*warp_authored_grid(p));
+          double previous = 0;
+          for (int id : selected_)
+            previous += (kind == 0 ? grid->nodes.at(id).position :
+                         kind == 1 ? grid->nodes.at(id).du :
+                                     grid->nodes.at(id).dv)[c];
+          previous /= selected_.size();
+          for (int id : selected_) {
+            auto &node = grid->nodes.at(id);
+            auto &vector = kind == 0 ? node.position : kind == 1 ? node.du : node.dv;
+            vector[c] += value - previous;
+          }
+          if (kind == 0 && grid->automatic_tangents)
+            grid->align_tangents();
+          if (kind != 0)
+            grid->automatic_tangents = false;
+          grid->validate();
+          p.warp = std::move(grid);
+        });
+      });
+    }
+    form->addRow(QStringList{"Position", "Tangent U", "Tangent V"}[kind], line);
+  }
+  split_ = new QComboBox(this);
+  split_->setObjectName("warpSplitMode");
+  split_->addItems({"No split tool", "Split crosswise", "Split horizontally", "Split vertically"});
+  form->addRow("Split grid", split_);
+  connect(split_, &QComboBox::currentIndexChanged, this, [this](int mode) {
+    if (split_requested)
+      split_requested(mode);
+  });
+  auto *split_line = new QWidget(this);
+  auto *split_layout = new QHBoxLayout(split_line);
+  split_layout->setContentsMargins(0, 0, 0, 0);
+  split_u_ = number("warpSplitU", .00001, .99999, 5);
+  split_v_ = number("warpSplitV", .00001, .99999, 5);
+  split_u_->setValue(.25);
+  split_v_->setValue(.25);
+  split_layout->addWidget(split_u_);
+  split_layout->addWidget(split_v_);
+  auto *split_button = new QPushButton("Split", split_line);
+  split_button->setObjectName("warpSplitAtCoordinates");
+  split_layout->addWidget(split_button);
+  form->addRow("Split at U / V", split_line);
+  connect(split_button, &QPushButton::clicked, this, [this] {
+    const int mode = split_->currentIndex();
+    if (!mode) {
+      status_->setText("Choose a split direction first. Escape cancels the viewport tool.");
+      return;
+    }
+    modify(
+        [=, this](auto &p) {
+          auto grid = std::make_shared<WarpGrid>(*warp_authored_grid(p));
+          if (mode == 1 || mode == 3)
+            grid->split(true, split_u_->value());
+          if (mode == 1 || mode == 2)
+            grid->split(false, split_v_->value());
+          p.warp = std::move(grid);
+        },
+        true);
+  });
+  handle_ = new QSpinBox(this);
+  handle_->setObjectName("warpHandleSize");
+  handle_->setRange(2, 24);
+  form->addRow("Handle size (px)", handle_);
+  connect(handle_, &QSpinBox::valueChanged, this, [this](int value) {
+    modify([=](auto &p) { p.warp_handle_size = value; });
+  });
+  color_ = new ColorPicker(this);
+  color_->setObjectName("warpGridColor");
+  for (auto *child : color_->findChildren<QWidget *>())
+    if (!child->objectName().isEmpty())
+      child->setObjectName("warp_" + child->objectName());
+  if (auto *pick = color_->findChild<QWidget *>("warp_colorEyedropper"))
+    pick->hide();
+  form->addRow("Grid color", color_);
+  color_->started = [this] {
+    if (edit_started)
+      edit_started();
+  };
+  color_->finished = [this] {
+    if (edit_finished)
+      edit_finished();
+  };
+  color_->changed = [this](const PickerColor &value) {
+    modify([=](auto &p) {
+      for (int c = 0; c < 3; ++c)
+        p.warp_color[c] = value[c];
+    });
+  };
+  auto *resets = new QWidget(this);
+  auto *reset_layout = new QVBoxLayout(resets);
+  reset_layout->setContentsMargins(0, 0, 0, 0);
+  for (int type = 0; type < 3; ++type) {
+    auto *button = new QPushButton(QStringList{"Restore global transform",
+                                               "Reset all vertices",
+                                               "Reset selected vertices"}[type],
+                                   resets);
+    button->setObjectName(QString("warpReset%1").arg(type));
+    reset_layout->addWidget(button);
+    connect(button, &QPushButton::clicked, this, [this, type] {
+      modify(
+          [=, this](auto &p) {
+            if (type == 0) {
+              p.offset3 = {};
+              p.rotation3 = {};
+              p.scale3 = {1, 1, 1};
+              return;
+            }
+            auto grid = std::make_shared<WarpGrid>(*warp_authored_grid(p));
+            if (type == 1)
+              grid->reset_vertices();
+            else {
+              for (int id : selected_)
+                grid->nodes.at(id) = WarpGrid::initial(grid->columns.at(id % grid->width()),
+                                                       grid->rows.at(id / grid->width()));
+              if (grid->automatic_tangents)
+                grid->align_tangents();
+            }
+            p.warp = std::move(grid);
+          },
+          true);
+    });
+  }
+  layout->addWidget(resets);
+  auto *mirrors = new QWidget(this);
+  auto *mirror_layout = new QHBoxLayout(mirrors);
+  mirror_layout->setContentsMargins(0, 0, 0, 0);
+  for (int axis = 0; axis < 3; ++axis) {
+    auto *button = new QPushButton(QString("Mirror %1").arg(QChar::fromLatin1("XYZ"[axis])),
+                                   mirrors);
+    button->setObjectName(QString("warpMirror%1").arg(axis));
+    mirror_layout->addWidget(button);
+    connect(button, &QPushButton::clicked, this, [this, axis] {
+      modify(
+          [=](auto &p) {
+            p.linked3 = false;
+            p.scale3[axis] *= -1;
+          },
+          true);
+    });
+  }
+  layout->addWidget(mirrors);
+  auto *help = new QLabel(
+      "Shift+V: transform / vertices. W/E/R: move / rotate / scale. Shift selects; Ctrl removes or drags in camera space. Rotation/scale edit selected tangents. Escape cancels a drag or split.",
+      this);
+  help->setWordWrap(true);
+  layout->addWidget(help);
+  auto *toggle = new QShortcut(QKeySequence(Qt::SHIFT | Qt::Key_V), this);
+  toggle->setContext(Qt::WidgetWithChildrenShortcut);
+  connect(toggle, &QShortcut::activated, this, [this] {
+    edition_->setCurrentIndex(1 - edition_->currentIndex());
+  });
+  auto *escape = new QShortcut(QKeySequence(Qt::Key_Escape), this);
+  escape->setContext(Qt::WidgetWithChildrenShortcut);
+  connect(escape, &QShortcut::activated, this, [this] { cancel_split(); });
+  status_ = new QLabel(this);
+  status_->setWordWrap(true);
+  layout->addWidget(status_);
+  for (auto *control : findChildren<QDoubleSpinBox *>())
+    if (!color_->isAncestorOf(control))
+      connect(control, &QDoubleSpinBox::editingFinished, this, [this] {
+        if (edit_finished)
+          edit_finished();
+      });
+  for (auto *control : findChildren<QSpinBox *>())
+    connect(control, &QSpinBox::editingFinished, this, [this] {
+      if (edit_finished)
+        edit_finished();
+    });
+  synchronize({});
 }
-void WarpPanel::modify(const std::function<void(FillProjection &)> &edit,bool atomic){try{auto candidate=state_;edit(candidate);validate_fill_projection(candidate);if(atomic&&edit_started)edit_started();synchronize(candidate);if(changed)changed(candidate);if(atomic&&edit_finished)edit_finished();status_->clear();}catch(const std::exception &error){status_->setText(QString::fromUtf8(error.what()));}}
-void WarpPanel::cancel_split(){split_->setCurrentIndex(0);}
-void WarpPanel::set_selection(std::vector<int> selected){selected_=std::move(selected);synchronize(state_);}
-void WarpPanel::synchronize(const FillProjection &p){const auto previous=warp_authored_grid(state_),grid=warp_authored_grid(p);if(!selected_.empty()&&(previous->columns!=grid->columns||previous->rows!=grid->rows)){std::vector<int> mapped;for(int id:selected_)if(id>=0&&id<int(previous->nodes.size())){const double u=previous->columns[id%previous->width()],v=previous->rows[id/previous->width()];for(int j=0;j<grid->height();++j)for(int i=0;i<grid->width();++i)if(std::abs(grid->columns[i]-u)<1e-6&&std::abs(grid->rows[j]-v)<1e-6)mapped.push_back(j*grid->width()+i);}selected_=std::move(mapped);}state_=p;std::erase_if(selected_,[&](int id){return id<0||id>=int(grid->nodes.size());});const QSignalBlocker a(edition_),b(columns_),c(rows_),d(depth_),e(automatic_),f(point_),g(handle_),h(surface_);edition_->setCurrentIndex(p.warp_edit?1:0);columns_->setValue(grid->width());rows_->setValue(grid->height());columns_->setEnabled(grid->undeformed());rows_->setEnabled(grid->undeformed());columns_->setToolTip("Grid dimensions can change only before deformation; reset all vertices to unlock them.");rows_->setToolTip(columns_->toolTip());depth_->setValue(p.warp_depth);automatic_->setChecked(grid->automatic_tangents);surface_->setChecked(p.warp_surface);handle_->setValue(int(p.warp_handle_size));color_->set_color({p.warp_color[0],p.warp_color[1],p.warp_color[2],1});if(point_->count()!=int(grid->nodes.size())+1||point_width_!=grid->width()||point_height_!=grid->height()){point_width_=grid->width();point_height_=grid->height();point_->clear();point_->addItem("None",-1);for(int j=0;j<grid->height();++j)for(int i=0;i<grid->width();++i)point_->addItem(QString("Row %1, column %2").arg(j+1).arg(i+1),j*grid->width()+i);}point_->setCurrentIndex(selected_.empty()?0:selected_.front()+1);for(int kind=0;kind<3;++kind)for(int axis=0;axis<3;++axis){auto *control=vectors_[kind][axis];const QSignalBlocker blocker(control);double value=0;for(int id:selected_){const auto &node=grid->nodes[id];value+=(kind==0?node.position:kind==1?node.du:node.dv)[axis];}if(!selected_.empty())value/=selected_.size();control->setValue(value);control->setEnabled(!selected_.empty()&&(kind==0||!grid->automatic_tangents));}}
+void WarpPanel::modify(const std::function<void(FillProjection &)> &edit, bool atomic)
+{
+  try {
+    auto candidate = state_;
+    edit(candidate);
+    validate_fill_projection(candidate);
+    if (atomic && edit_started)
+      edit_started();
+    synchronize(candidate);
+    if (changed)
+      changed(candidate);
+    if (atomic && edit_finished)
+      edit_finished();
+    status_->clear();
+  }
+  catch (const std::exception &error) {
+    status_->setText(QString::fromUtf8(error.what()));
+  }
 }
+void WarpPanel::cancel_split()
+{
+  split_->setCurrentIndex(0);
+}
+void WarpPanel::set_selection(std::vector<int> selected)
+{
+  selected_ = std::move(selected);
+  synchronize(state_);
+}
+void WarpPanel::synchronize(const FillProjection &p)
+{
+  const auto previous = warp_authored_grid(state_), grid = warp_authored_grid(p);
+  if (!selected_.empty() && (previous->columns != grid->columns || previous->rows != grid->rows)) {
+    std::vector<int> mapped;
+    for (int id : selected_)
+      if (id >= 0 && id < int(previous->nodes.size())) {
+        const double u = previous->columns[id % previous->width()],
+                     v = previous->rows[id / previous->width()];
+        for (int j = 0; j < grid->height(); ++j)
+          for (int i = 0; i < grid->width(); ++i)
+            if (std::abs(grid->columns[i] - u) < 1e-6 && std::abs(grid->rows[j] - v) < 1e-6)
+              mapped.push_back(j * grid->width() + i);
+      }
+    selected_ = std::move(mapped);
+  }
+  state_ = p;
+  std::erase_if(selected_, [&](int id) { return id < 0 || id >= int(grid->nodes.size()); });
+  const QSignalBlocker a(edition_), b(columns_), c(rows_), d(depth_), e(automatic_), f(point_),
+      g(handle_), h(surface_);
+  edition_->setCurrentIndex(p.warp_edit ? 1 : 0);
+  columns_->setValue(grid->width());
+  rows_->setValue(grid->height());
+  columns_->setEnabled(grid->undeformed());
+  rows_->setEnabled(grid->undeformed());
+  columns_->setToolTip(
+      "Grid dimensions can change only before deformation; reset all vertices to unlock them.");
+  rows_->setToolTip(columns_->toolTip());
+  depth_->setValue(p.warp_depth);
+  automatic_->setChecked(grid->automatic_tangents);
+  surface_->setChecked(p.warp_surface);
+  handle_->setValue(int(p.warp_handle_size));
+  color_->set_color({p.warp_color[0], p.warp_color[1], p.warp_color[2], 1});
+  if (point_->count() != int(grid->nodes.size()) + 1 || point_width_ != grid->width() ||
+      point_height_ != grid->height())
+  {
+    point_width_ = grid->width();
+    point_height_ = grid->height();
+    point_->clear();
+    point_->addItem("None", -1);
+    for (int j = 0; j < grid->height(); ++j)
+      for (int i = 0; i < grid->width(); ++i)
+        point_->addItem(QString("Row %1, column %2").arg(j + 1).arg(i + 1), j * grid->width() + i);
+  }
+  point_->setCurrentIndex(selected_.empty() ? 0 : selected_.front() + 1);
+  for (int kind = 0; kind < 3; ++kind)
+    for (int axis = 0; axis < 3; ++axis) {
+      auto *control = vectors_[kind][axis];
+      const QSignalBlocker blocker(control);
+      double value = 0;
+      for (int id : selected_) {
+        const auto &node = grid->nodes[id];
+        value += (kind == 0 ? node.position : kind == 1 ? node.du : node.dv)[axis];
+      }
+      if (!selected_.empty())
+        value /= selected_.size();
+      control->setValue(value);
+      control->setEnabled(!selected_.empty() && (kind == 0 || !grid->automatic_tangents));
+    }
+}
+}  // namespace bts

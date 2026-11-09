@@ -4,24 +4,36 @@
 #include <string>
 namespace bts::gpu_derived {
 using namespace blender;
-inline constexpr char hosted_resource_owner[]="pyGPU_Shader";
+inline constexpr char hosted_resource_owner[] = "pyGPU_Shader";
 // These hosted builders declare every resource locally. Blender Resource::info_name
 // and SharedVariable::info_name are non-owning views of ShaderCreateInfo::name_.
 // Copying the CreateInfo into a queued compiler job does not rebase those views;
 // pin this known local namespace to literal storage before the source goes away.
 // Resource/socket names are already literals and generated source strings are owned.
-inline void stabilize_hosted_resource_owners(gpu::shader::ShaderCreateInfo &info){
- for(auto *resources:{&info.pass_resources_,&info.batch_resources_,&info.geometry_resources_})
-  for(auto &resource:*resources)resource.info_name=hosted_resource_owner;
- for(auto &variable:info.shared_variables_)variable.info_name=hosted_resource_owner;
+inline void stabilize_hosted_resource_owners(gpu::shader::ShaderCreateInfo &info)
+{
+  for (auto *resources :
+       {&info.pass_resources_, &info.batch_resources_, &info.geometry_resources_})
+    for (auto &resource : *resources)
+      resource.info_name = hosted_resource_owner;
+  for (auto &variable : info.shared_variables_)
+    variable.info_name = hosted_resource_owner;
 }
-inline gpu::shader::ShaderCreateInfo coverage_info(){
- using namespace gpu::shader;
- ShaderCreateInfo info("pyGPU_Shader");
- info.shared_variable(Type::uint_t,"present[256]").local_group_size(16,16).sampler(0,ImageType::Float2D,"prefix_img")
- .image(0,gpu::TextureFormat::SFLOAT_32_32_32_32,Qualifier::write,ImageReadWriteType::image2D,"flags_img")
- .push_constant(Type::int2_t,"origin").push_constant(Type::int2_t,"size");
- info.compute_source_generated=R"GLSL(
+inline gpu::shader::ShaderCreateInfo coverage_info()
+{
+  using namespace gpu::shader;
+  ShaderCreateInfo info("pyGPU_Shader");
+  info.shared_variable(Type::uint_t, "present[256]")
+      .local_group_size(16, 16)
+      .sampler(0, ImageType::Float2D, "prefix_img")
+      .image(0,
+             gpu::TextureFormat::SFLOAT_32_32_32_32,
+             Qualifier::write,
+             ImageReadWriteType::image2D,
+             "flags_img")
+      .push_constant(Type::int2_t, "origin")
+      .push_constant(Type::int2_t, "size");
+  info.compute_source_generated = R"GLSL(
 CREATE_INFO_RES_SHARED_VARS_pyGPU_Shader
 void main(){
  ivec2 p=origin+ivec2(gl_GlobalInvocationID.xy);uint lane=gl_LocalInvocationIndex;
@@ -29,20 +41,28 @@ void main(){
  barrier();for(uint stride=128u;stride>0u;stride>>=1u){if(lane<stride)present[lane]|=present[lane+stride];barrier();}
  if(lane==0u)imageStore(flags_img,origin/16+ivec2(gl_WorkGroupID.xy),vec4(float(present[0])));
 })GLSL";
- stabilize_hosted_resource_owners(info);
- return info;
+  stabilize_hosted_resource_owners(info);
+  return info;
 }
-inline gpu::Shader *coverage_shader(){
- auto info=coverage_info();
- return GPU_shader_create_from_info_python(reinterpret_cast<GPUShaderCreateInfo *>(&info));
+inline gpu::Shader *coverage_shader()
+{
+  auto info = coverage_info();
+  return GPU_shader_create_from_info_python(reinterpret_cast<GPUShaderCreateInfo *>(&info));
 }
-inline gpu::shader::ShaderCreateInfo presence_info(){
- using namespace gpu::shader;
- ShaderCreateInfo info("pyGPU_Shader");
- info.shared_variable(Type::uint_t,"present[256]").local_group_size(256).sampler(0,ImageType::Float2D,"flags_img")
- .image(0,gpu::TextureFormat::SFLOAT_32_32_32_32,Qualifier::read_write,ImageReadWriteType::image2D,"presence_img")
- .push_constant(Type::int_t,"first_tile");
- info.compute_source_generated=R"GLSL(
+inline gpu::shader::ShaderCreateInfo presence_info()
+{
+  using namespace gpu::shader;
+  ShaderCreateInfo info("pyGPU_Shader");
+  info.shared_variable(Type::uint_t, "present[256]")
+      .local_group_size(256)
+      .sampler(0, ImageType::Float2D, "flags_img")
+      .image(0,
+             gpu::TextureFormat::SFLOAT_32_32_32_32,
+             Qualifier::read_write,
+             ImageReadWriteType::image2D,
+             "presence_img")
+      .push_constant(Type::int_t, "first_tile");
+  info.compute_source_generated = R"GLSL(
 CREATE_INFO_RES_SHARED_VARS_pyGPU_Shader
 void main(){
  uint lane=gl_LocalInvocationIndex;ivec2 size=textureSize(flags_img,0);uint total=uint(size.x*size.y);uint found=0u;
@@ -50,24 +70,37 @@ void main(){
  present[lane]=found;barrier();for(uint stride=128u;stride>0u;stride>>=1u){if(lane<stride)present[lane]|=present[lane+stride];barrier();}
  if(lane==0u){vec4 previous=imageLoad(presence_img,ivec2(0));imageStore(presence_img,ivec2(0),vec4(max(float(present[0]),first_tile!=0?0.0:previous.r),first_tile!=0?previous.r:previous.g,0,0));}
 })GLSL";
- stabilize_hosted_resource_owners(info);
- return info;
+  stabilize_hosted_resource_owners(info);
+  return info;
 }
-inline gpu::Shader *presence_shader(){
- auto info=presence_info();
- return GPU_shader_create_from_info_python(reinterpret_cast<GPUShaderCreateInfo *>(&info));
+inline gpu::Shader *presence_shader()
+{
+  auto info = presence_info();
+  return GPU_shader_create_from_info_python(reinterpret_cast<GPUShaderCreateInfo *>(&info));
 }
-inline gpu::shader::ShaderCreateInfo ao_info(gpu::TextureFormat format,bool array,const char *quant_source){
- using namespace gpu::shader;
- ShaderCreateInfo info("pyGPU_Shader");
- info.local_group_size(16,16).sampler(0,ImageType::Float2D,"prefix_img")
- .sampler(1,ImageType::Float2D,"baked_img").sampler(2,ImageType::Float2D,"presence_img")
- .sampler(3,ImageType::Uint2D,"dirty_img")
- .image(0,format,Qualifier::write,array?ImageReadWriteType::image2DArray:ImageReadWriteType::image2D,"result_img")
- .push_constant(Type::int2_t,"size").push_constant(Type::int3_t,"target_offset")
- .push_constant(Type::float_t,"base_value").push_constant(Type::int_t,"authored_enabled")
- .push_constant(Type::int_t,"replace_mode").push_constant(Type::int_t,"value_precision");
- std::string body=R"GLSL(
+inline gpu::shader::ShaderCreateInfo ao_info(gpu::TextureFormat format,
+                                             bool array,
+                                             const char *quant_source)
+{
+  using namespace gpu::shader;
+  ShaderCreateInfo info("pyGPU_Shader");
+  info.local_group_size(16, 16)
+      .sampler(0, ImageType::Float2D, "prefix_img")
+      .sampler(1, ImageType::Float2D, "baked_img")
+      .sampler(2, ImageType::Float2D, "presence_img")
+      .sampler(3, ImageType::Uint2D, "dirty_img")
+      .image(0,
+             format,
+             Qualifier::write,
+             array ? ImageReadWriteType::image2DArray : ImageReadWriteType::image2D,
+             "result_img")
+      .push_constant(Type::int2_t, "size")
+      .push_constant(Type::int3_t, "target_offset")
+      .push_constant(Type::float_t, "base_value")
+      .push_constant(Type::int_t, "authored_enabled")
+      .push_constant(Type::int_t, "replace_mode")
+      .push_constant(Type::int_t, "value_precision");
+  std::string body = R"GLSL(
 void main(){
  ivec2 p=ivec2(gl_GlobalInvocationID.xy);if(any(greaterThanEqual(p,size)))return;
  vec2 presence=texelFetch(presence_img,ivec2(0),0).rg;
@@ -82,34 +115,60 @@ void main(){
  vec4 result=vec4(quantize_value(vec3(value),value_precision),1);
  STORE_RESULT
 })GLSL";
- body.replace(body.find("STORE_RESULT"),12,array?
- "imageStore(result_img,ivec3(p+target_offset.xy,target_offset.z),result);":
- "imageStore(result_img,p+target_offset.xy,result);");
- info.compute_source_generated=std::string(quant_source)+body;
- stabilize_hosted_resource_owners(info);
- return info;
+  body.replace(body.find("STORE_RESULT"),
+               12,
+               array ? "imageStore(result_img,ivec3(p+target_offset.xy,target_offset.z),result);" :
+                       "imageStore(result_img,p+target_offset.xy,result);");
+  info.compute_source_generated = std::string(quant_source) + body;
+  stabilize_hosted_resource_owners(info);
+  return info;
 }
-inline gpu::Shader *ao_shader(gpu::TextureFormat format,bool array,const char *quant_source){
- auto info=ao_info(format,array,quant_source);
- return GPU_shader_create_from_info_python(reinterpret_cast<GPUShaderCreateInfo *>(&info));
+inline gpu::Shader *ao_shader(gpu::TextureFormat format, bool array, const char *quant_source)
+{
+  auto info = ao_info(format, array, quant_source);
+  return GPU_shader_create_from_info_python(reinterpret_cast<GPUShaderCreateInfo *>(&info));
 }
-inline gpu::shader::ShaderCreateInfo normal_info(gpu::TextureFormat format,bool array,const char *quant_source){
- using namespace gpu::shader;
- ShaderCreateInfo info("pyGPU_Shader");
- info.local_group_size(16,16).sampler(0,ImageType::Float2D,"prefix_img")
- .sampler(1,ImageType::Float2D,"baked_img").sampler(2,ImageType::Float2D,"presence_img")
- .sampler(3,ImageType::Float2D,"neighbors_img");
- static constexpr const char *height_names[]={"height0","height1","height2","height3","height4","height5","height6","height7","height8"};
- for(int i=0;i<9;++i)info.sampler(4+i,ImageType::Float2D,height_names[i]);
- info.sampler(13,ImageType::Uint2D,"dirty_img");
- info.image(0,format,Qualifier::write,array?ImageReadWriteType::image2DArray:ImageReadWriteType::image2D,"result_img")
- .push_constant(Type::int2_t,"size").push_constant(Type::int3_t,"target_offset")
- .push_constant(Type::float3_t,"normal_base").push_constant(Type::float3_t,"quantized_base")
- .push_constant(Type::float_t,"height_base").push_constant(Type::int_t,"height_precision")
- .push_constant(Type::int_t,"authored_enabled").push_constant(Type::int_t,"height_enabled")
- .push_constant(Type::int_t,"sobel").push_constant(Type::int_t,"directx")
- .push_constant(Type::int_t,"replace_mode").push_constant(Type::int_t,"value_precision");
- std::string body=R"GLSL(
+inline gpu::shader::ShaderCreateInfo normal_info(gpu::TextureFormat format,
+                                                 bool array,
+                                                 const char *quant_source)
+{
+  using namespace gpu::shader;
+  ShaderCreateInfo info("pyGPU_Shader");
+  info.local_group_size(16, 16)
+      .sampler(0, ImageType::Float2D, "prefix_img")
+      .sampler(1, ImageType::Float2D, "baked_img")
+      .sampler(2, ImageType::Float2D, "presence_img")
+      .sampler(3, ImageType::Float2D, "neighbors_img");
+  static constexpr const char *height_names[] = {"height0",
+                                                 "height1",
+                                                 "height2",
+                                                 "height3",
+                                                 "height4",
+                                                 "height5",
+                                                 "height6",
+                                                 "height7",
+                                                 "height8"};
+  for (int i = 0; i < 9; ++i)
+    info.sampler(4 + i, ImageType::Float2D, height_names[i]);
+  info.sampler(13, ImageType::Uint2D, "dirty_img");
+  info.image(0,
+             format,
+             Qualifier::write,
+             array ? ImageReadWriteType::image2DArray : ImageReadWriteType::image2D,
+             "result_img")
+      .push_constant(Type::int2_t, "size")
+      .push_constant(Type::int3_t, "target_offset")
+      .push_constant(Type::float3_t, "normal_base")
+      .push_constant(Type::float3_t, "quantized_base")
+      .push_constant(Type::float_t, "height_base")
+      .push_constant(Type::int_t, "height_precision")
+      .push_constant(Type::int_t, "authored_enabled")
+      .push_constant(Type::int_t, "height_enabled")
+      .push_constant(Type::int_t, "sobel")
+      .push_constant(Type::int_t, "directx")
+      .push_constant(Type::int_t, "replace_mode")
+      .push_constant(Type::int_t, "value_precision");
+  std::string body = R"GLSL(
 vec3 unit_normal(vec3 v){float len=length(v);return len<1e-12?vec3(0,0,1):v/len;}
 vec3 rnm(vec3 base,vec3 detail){
  base=unit_normal(base);detail=unit_normal(detail);
@@ -163,19 +222,23 @@ void main(){
  result.rgb=quantize_value(result.rgb+normal_base*(1-result.a),value_precision)-quantized_base*(1-result.a);
  STORE_RESULT
 })GLSL";
- std::string fetch;
- for(int i=0;i<9;++i)fetch+="if(index=="+std::to_string(i)+")return texelFetch(height"+std::to_string(i)+",clamp(p,ivec2(0),textureSize(height"+std::to_string(i)+",0)-1),0);\n";
- fetch+="return vec4(0);";
- body.replace(body.find("FETCH_HEIGHT"),12,fetch);
- body.replace(body.find("STORE_RESULT"),12,array?
- "imageStore(result_img,ivec3(p+target_offset.xy,target_offset.z),result);":
- "imageStore(result_img,p+target_offset.xy,result);");
- info.compute_source_generated=std::string(quant_source)+body;
- stabilize_hosted_resource_owners(info);
- return info;
+  std::string fetch;
+  for (int i = 0; i < 9; ++i)
+    fetch += "if(index==" + std::to_string(i) + ")return texelFetch(height" + std::to_string(i) +
+             ",clamp(p,ivec2(0),textureSize(height" + std::to_string(i) + ",0)-1),0);\n";
+  fetch += "return vec4(0);";
+  body.replace(body.find("FETCH_HEIGHT"), 12, fetch);
+  body.replace(body.find("STORE_RESULT"),
+               12,
+               array ? "imageStore(result_img,ivec3(p+target_offset.xy,target_offset.z),result);" :
+                       "imageStore(result_img,p+target_offset.xy,result);");
+  info.compute_source_generated = std::string(quant_source) + body;
+  stabilize_hosted_resource_owners(info);
+  return info;
 }
-inline gpu::Shader *normal_shader(gpu::TextureFormat format,bool array,const char *quant_source){
- auto info=normal_info(format,array,quant_source);
- return GPU_shader_create_from_info_python(reinterpret_cast<GPUShaderCreateInfo *>(&info));
+inline gpu::Shader *normal_shader(gpu::TextureFormat format, bool array, const char *quant_source)
+{
+  auto info = normal_info(format, array, quant_source);
+  return GPU_shader_create_from_info_python(reinterpret_cast<GPUShaderCreateInfo *>(&info));
 }
-}
+}  // namespace bts::gpu_derived

@@ -7,16 +7,28 @@
 #include <optional>
 #include <span>
 namespace bts {
-struct ResidencyView {std::array<float,16> view,projection;int width=0,height=0;bool uv=false;};
+struct ResidencyView {
+  std::array<float, 16> view, projection;
+  int width = 0, height = 0;
+  bool uv = false;
+};
 // Owner-context software fallback: budgeted image/UDIM-array mip regions.
 // Full-resolution CPU composites and document/export pixels are not modified.
 class ViewportResidency {
  public:
-  ViewportResidency();~ViewportResidency();
+  ViewportResidency();
+  ~ViewportResidency();
   void reset();
-  void update(blender::Main &,std::span<const ResidencyView>,std::optional<std::uint32_t>,const std::function<SceneSnapshot()> &,bool editing);
+  void update(blender::Main &,
+              std::span<const ResidencyView>,
+              std::optional<std::uint32_t>,
+              const std::function<SceneSnapshot()> &,
+              bool editing);
   void finish_frame();
-  QJsonObject snapshot()const;
- private:struct Impl;std::unique_ptr<Impl> impl_;
+  QJsonObject snapshot() const;
+
+ private:
+  struct Impl;
+  std::unique_ptr<Impl> impl_;
 };
-}
+}  // namespace bts

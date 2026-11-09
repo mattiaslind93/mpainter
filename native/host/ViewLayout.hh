@@ -27,16 +27,16 @@ struct ViewPane {
 };
 
 inline std::vector<ViewPane> view_panes(const ViewLayoutState &layout,
-                                       int width,
-                                       int height,
-                                       int divider_width = 2)
+                                        int width,
+                                        int height,
+                                        int divider_width = 2)
 {
   if (width < 1 || height < 1) {
     return {};
   }
   if (layout.mode != ViewLayout::Split) {
-    return {{layout.mode == ViewLayout::UvOnly ? ViewKind::Uv : ViewKind::Scene,
-             0, 0, width, height}};
+    return {
+        {layout.mode == ViewLayout::UvOnly ? ViewKind::Uv : ViewKind::Scene, 0, 0, width, height}};
   }
   const int divider = std::clamp(divider_width, 0, std::max(0, width - 2));
   const int left_width = (width - divider) / 2;

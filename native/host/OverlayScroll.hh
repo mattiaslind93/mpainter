@@ -8,4 +8,4 @@ namespace bts {
 // viewport's right edge instead, the way macOS overlay scrollbars do, and the
 // content keeps the panel's full width whether it scrolls or not.
 void overlay_scrollbar(QAbstractScrollArea *area);
-}
+}  // namespace bts

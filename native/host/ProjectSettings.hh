@@ -20,12 +20,12 @@ enum class UvWorkflow { SingleTile, PreserveTiles };
 
 enum class UvDataPolicy { Missing, Recompute };
 struct AutoUnwrapOptions {
-  bool enabled=false;
-  UvDataPolicy seams=UvDataPolicy::Missing;
-  UvDataPolicy islands=UvDataPolicy::Missing;
-  UvDataPolicy packing=UvDataPolicy::Missing;
-  int margin=1; // None, Small (0.2%), Medium (0.5%), Large (1%).
-  bool hard_surface=false; // Native orthographic projection + axis-aligned packing.
+  bool enabled = false;
+  UvDataPolicy seams = UvDataPolicy::Missing;
+  UvDataPolicy islands = UvDataPolicy::Missing;
+  UvDataPolicy packing = UvDataPolicy::Missing;
+  int margin = 1;             // None, Small (0.2%), Medium (0.5%), Large (1%).
+  bool hard_surface = false;  // Native orthographic projection + axis-aligned packing.
   bool operator==(const AutoUnwrapOptions &) const = default;
 };
 
@@ -36,8 +36,8 @@ struct NewProjectOptions {
   UvWorkflow uv_workflow = UvWorkflow::SingleTile;
   std::vector<std::string> utility_maps;
   std::string template_path;
-  bool tangent_per_fragment=false;
-  bool import_cameras=true;
+  bool tangent_per_fragment = false;
+  bool import_cameras = true;
   AutoUnwrapOptions auto_unwrap;
   UsdImportOptions usd;
   BlendMeshSelection blend;
@@ -45,4 +45,4 @@ struct NewProjectOptions {
   SourceUnits source_units;
 };
 
-}
+}  // namespace bts

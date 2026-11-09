@@ -13,5 +13,6 @@ struct FolderMaterialBundle {
   std::vector<StudioAsset> textures;
   StudioAsset material;
 };
-FolderMaterialBundle build_folder_material_bundle(const TextureSet &folder_set, const QString &name);
-} // namespace bts
+FolderMaterialBundle build_folder_material_bundle(const TextureSet &folder_set,
+                                                  const QString &name);
+}  // namespace bts

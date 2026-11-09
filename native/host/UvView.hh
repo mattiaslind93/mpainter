@@ -35,7 +35,10 @@ class UvView final : public QWidget {
   // Owns a copy when passed an lvalue, or takes ownership of an rvalue. Does not change framing.
   // Rejects non-finite coordinates or an overflowing aggregate extent, preserving previous data.
   bool set_triangles(std::vector<UvTriangle> triangles);
-  const std::vector<UvTriangle> &triangles() const { return triangles_; }
+  const std::vector<UvTriangle> &triangles() const
+  {
+    return triangles_;
+  }
 
   void frame_all();
   void reset_view();
@@ -43,8 +46,14 @@ class UvView final : public QWidget {
   // Draws this preview into an existing viewport pane. keep_underlay leaves the
   // GPU material image unchanged and only adds contours, axes and labels.
   void paint_into(QPainter &painter, const QRectF &target, bool keep_underlay = false) const;
-  QPointF view_center() const { return center_; }
-  double pixels_per_uv() const { return pixels_per_uv_; }
+  QPointF view_center() const
+  {
+    return center_;
+  }
+  double pixels_per_uv() const
+  {
+    return pixels_per_uv_;
+  }
   QPointF uv_to_widget(const QPointF &uv) const;
   QPointF widget_to_uv(const QPointF &point) const;
   QSize sizeHint() const override;

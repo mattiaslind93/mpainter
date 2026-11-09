@@ -6,9 +6,36 @@
 #include <QVBoxLayout>
 #include <functional>
 namespace bts {
-class EmptyProjectView final:public QFrame {
+class EmptyProjectView final : public QFrame {
  public:
-  std::function<void()> new_requested,open_requested;
-  explicit EmptyProjectView(QWidget *parent):QFrame(parent){setObjectName("emptyProjectView");setStyleSheet(bts::theme::qss("#emptyProjectView{background:@Surface@;border:1px solid @Border@}"));auto *layout=new QVBoxLayout(this);auto *label=new QLabel("No project – File → New (Ctrl+N) / File → Open",this);label->setObjectName("emptyProjectMessage");label->setWordWrap(true);label->setAlignment(Qt::AlignCenter);layout->addWidget(label);auto *buttons=new QHBoxLayout;auto *create=new QPushButton("New project…",this),*open=new QPushButton("Open project…",this);create->setObjectName("emptyProjectNew");open->setObjectName("emptyProjectOpen");buttons->addWidget(create);buttons->addWidget(open);layout->addLayout(buttons);connect(create,&QPushButton::clicked,this,[this]{if(new_requested)new_requested();});connect(open,&QPushButton::clicked,this,[this]{if(open_requested)open_requested();});}
+  std::function<void()> new_requested, open_requested;
+  explicit EmptyProjectView(QWidget *parent) : QFrame(parent)
+  {
+    setObjectName("emptyProjectView");
+    setStyleSheet(
+        bts::theme::qss("#emptyProjectView{background:@Surface@;border:1px solid @Border@}"));
+    auto *layout = new QVBoxLayout(this);
+    auto *label = new QLabel("No project – File → New (Ctrl+N) / File → Open", this);
+    label->setObjectName("emptyProjectMessage");
+    label->setWordWrap(true);
+    label->setAlignment(Qt::AlignCenter);
+    layout->addWidget(label);
+    auto *buttons = new QHBoxLayout;
+    auto *create = new QPushButton("New project…", this),
+         *open = new QPushButton("Open project…", this);
+    create->setObjectName("emptyProjectNew");
+    open->setObjectName("emptyProjectOpen");
+    buttons->addWidget(create);
+    buttons->addWidget(open);
+    layout->addLayout(buttons);
+    connect(create, &QPushButton::clicked, this, [this] {
+      if (new_requested)
+        new_requested();
+    });
+    connect(open, &QPushButton::clicked, this, [this] {
+      if (open_requested)
+        open_requested();
+    });
+  }
 };
-}
+}  // namespace bts

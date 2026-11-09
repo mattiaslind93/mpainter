@@ -10,8 +10,9 @@ struct ConvertedScene {
   std::string obj_path;
   std::vector<SceneCamera> cameras;
   std::vector<std::string> embedded_images;
-  ConvertedScene();~ConvertedScene();
+  ConvertedScene();
+  ~ConvertedScene();
 };
-std::unique_ptr<ConvertedScene> convert_mesh_scene(const std::string &,bool import_cameras);
-std::unique_ptr<ConvertedScene> convert_collada_scene(const std::string &,bool import_cameras);
-}
+std::unique_ptr<ConvertedScene> convert_mesh_scene(const std::string &, bool import_cameras);
+std::unique_ptr<ConvertedScene> convert_collada_scene(const std::string &, bool import_cameras);
+}  // namespace bts

@@ -3,21 +3,30 @@
 #include <QString>
 #include <span>
 namespace bts {
-enum class ExportPresetKind {Channels,UsdMetalRough,Studio};
-struct ExportOutputPreset {QUuid id=QUuid::createUuid();QString name;std::array<std::string,9> naming;bool standard_outputs=true;std::optional<PackedOutput> packed;std::vector<ExportMapOutput> outputs;ExportPresetKind kind=ExportPresetKind::Channels;std::array<std::optional<ExportFormat>,9> formats{};};
+enum class ExportPresetKind { Channels, UsdMetalRough, Studio };
+struct ExportOutputPreset {
+  QUuid id = QUuid::createUuid();
+  QString name;
+  std::array<std::string, 9> naming;
+  bool standard_outputs = true;
+  std::optional<PackedOutput> packed;
+  std::vector<ExportMapOutput> outputs;
+  ExportPresetKind kind = ExportPresetKind::Channels;
+  std::array<std::optional<ExportFormat>, 9> formats{};
+};
 struct ExportConfiguration {
   QString directory;
-  ExportFormat format=ExportFormat::Png8;
+  ExportFormat format = ExportFormat::Png8;
   std::set<QUuid> selected;
   QUuid preset;
-  int size=0;
-  std::map<QUuid,int> sizes;
-  ExportPadding padding=ExportPadding::None;
-  int padding_width=16;
+  int size = 0;
+  std::map<QUuid, int> sizes;
+  ExportPadding padding = ExportPadding::None;
+  int padding_width = 16;
   std::vector<ExportOutputPreset> presets;
-  bool mesh_displacement=false;
-  ExportNamingConvention naming_convention=ExportNamingConvention::Classic;
-  bool openpbr_materialx=false;
+  bool mesh_displacement = false;
+  ExportNamingConvention naming_convention = ExportNamingConvention::Classic;
+  bool openpbr_materialx = false;
 };
 // Used only for newly created templates. Legacy templates retain inheritance.
 void set_default_export_formats(ExportOutputPreset &);
@@ -32,8 +41,8 @@ ExportOutputPreset material_id_preset();
 // Metadata-only test: true when a visible, enabled layer authors this standard
 // channel (paint pages, fill, generator/anchor, paint effect, material layering).
 // Texture Set base values alone do not count. Performs no pixel readback.
-bool export_channel_used(const TextureSet &,int channel);
-void apply_export_preset(ExportRequest &,const ExportOutputPreset &);
+bool export_channel_used(const TextureSet &, int channel);
+void apply_export_preset(ExportRequest &, const ExportOutputPreset &);
 QJsonObject export_configuration_json(const ExportConfiguration &);
-ExportConfiguration read_export_configuration(const QJsonObject &,std::span<const QUuid> sets);
-}
+ExportConfiguration read_export_configuration(const QJsonObject &, std::span<const QUuid> sets);
+}  // namespace bts

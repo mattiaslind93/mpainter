@@ -1,7 +1,12 @@
 #pragma once
 #include <array>
 
-namespace blender {struct Main;struct bNodeTree;struct Image;struct bNode;}
+namespace blender {
+struct Main;
+struct bNodeTree;
+struct Image;
+struct bNode;
+}  // namespace blender
 namespace bts {
 struct TextureSet;
 
@@ -15,15 +20,20 @@ struct TextureSet;
 // storage when disabled, without changing these Image IDs or sampler types.
 // Central material admission must reserve the two extra samplers (and tiled
 // image mappings); this helper does not waive the existing shader capacity cap.
-void install_native_world_normal_shader(
-    blender::Main &,blender::bNodeTree &,const TextureSet &,
-    std::array<blender::Image *,2> &,blender::bNode *&enabled,
-    blender::bNode &legacy_normal,blender::bNode &principled);
+void install_native_world_normal_shader(blender::Main &,
+                                        blender::bNodeTree &,
+                                        const TextureSet &,
+                                        std::array<blender::Image *, 2> &,
+                                        blender::bNode *&enabled,
+                                        blender::bNode &legacy_normal,
+                                        blender::bNode &principled);
 
 // Metadata/topology only; no GPU calls, buffer acquisition or pixel comparison.
 // Equal front/back alpha is enforced by the pair producer, not by a readback.
-void validate_native_world_normal_shader(
-    const blender::Main &,const blender::bNodeTree &,const TextureSet &,
-    std::array<blender::Image *,2>,const blender::bNode &legacy_normal,
-    const blender::bNode &principled);
-}
+void validate_native_world_normal_shader(const blender::Main &,
+                                         const blender::bNodeTree &,
+                                         const TextureSet &,
+                                         std::array<blender::Image *, 2>,
+                                         const blender::bNode &legacy_normal,
+                                         const blender::bNode &principled);
+}  // namespace bts

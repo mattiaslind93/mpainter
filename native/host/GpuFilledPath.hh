@@ -7,44 +7,106 @@ namespace bts {
 // Rasterize only requested immutable authoring pages. Shared charts/geometry
 // stay on the GPU across material channels and path-history consumers.
 class GpuFilledPath {
- friend class GpuPaintPages;
- using Texture=std::unique_ptr<blender::gpu::Texture,decltype(&blender::GPU_texture_free)>;
- using Shader=std::unique_ptr<blender::gpu::Shader,decltype(&blender::GPU_shader_free)>;
- using Row=std::array<float,4>;
- struct GeometryEntry {std::uint64_t bytes=0,used=0;std::weak_ptr<const FilledPathGeometry> source;Texture image{nullptr,blender::GPU_texture_free};};
- struct GridEntry {std::uint64_t bytes=0,used=0;std::weak_ptr<const FilledPathGrid> source;Texture image{nullptr,blender::GPU_texture_free};std::map<std::uint32_t,std::array<int,2>> ranges;};
- std::map<const FilledPathGeometry *,GeometryEntry> geometry_;
- std::map<const FilledPathGrid *,GridEntry> grids_;
- std::uint64_t clock_=0;
- static std::uint64_t row_bytes(std::uint64_t rows){const auto width=std::min<std::uint64_t>(1024,std::max<std::uint64_t>(1,rows));return width*std::max<std::uint64_t>(1,(rows+width-1)/width)*16;}
- std::uint64_t owned()const{std::uint64_t bytes=0;for(const auto &[key,entry]:geometry_)bytes+=entry.bytes;for(const auto &[key,entry]:grids_)bytes+=entry.bytes;return bytes;}
- void reserve(std::uint64_t requested,const FilledPathGeometry *geometry,const FilledPathGrid *grid){
-  const auto free=texture_free_vram.load(),budget=resource_sum(owned(),(texture_vram_query_valid.load()||free!=0)?free:texture_available_ram_bytes());
-  while(owned()+requested>budget){
-   auto g=geometry_.end();for(auto i=geometry_.begin();i!=geometry_.end();++i)if(i->first!=geometry&&(g==geometry_.end()||i->second.used<g->second.used))g=i;
-   auto p=grids_.end();for(auto i=grids_.begin();i!=grids_.end();++i)if(i->first!=grid&&(p==grids_.end()||i->second.used<p->second.used))p=i;
-   if(g==geometry_.end()&&p==grids_.end())break;
-   if(p==grids_.end()||(g!=geometry_.end()&&g->second.used<p->second.used))geometry_.erase(g);else grids_.erase(p);
+  friend class GpuPaintPages;
+  using Texture = std::unique_ptr<blender::gpu::Texture, decltype(&blender::GPU_texture_free)>;
+  using Shader = std::unique_ptr<blender::gpu::Shader, decltype(&blender::GPU_shader_free)>;
+  using Row = std::array<float, 4>;
+  struct GeometryEntry {
+    std::uint64_t bytes = 0, used = 0;
+    std::weak_ptr<const FilledPathGeometry> source;
+    Texture image{nullptr, blender::GPU_texture_free};
+  };
+  struct GridEntry {
+    std::uint64_t bytes = 0, used = 0;
+    std::weak_ptr<const FilledPathGrid> source;
+    Texture image{nullptr, blender::GPU_texture_free};
+    std::map<std::uint32_t, std::array<int, 2>> ranges;
+  };
+  std::map<const FilledPathGeometry *, GeometryEntry> geometry_;
+  std::map<const FilledPathGrid *, GridEntry> grids_;
+  std::uint64_t clock_ = 0;
+  static std::uint64_t row_bytes(std::uint64_t rows)
+  {
+    const auto width = std::min<std::uint64_t>(1024, std::max<std::uint64_t>(1, rows));
+    return width * std::max<std::uint64_t>(1, (rows + width - 1) / width) * 16;
   }
- }
- Shader shader_{nullptr,blender::GPU_shader_free};
- static Texture upload(std::vector<Row> rows){
-  using namespace blender;
-  const int width=std::min<int>(1024,std::max<std::size_t>(1,rows.size())),height=int((rows.size()+width-1)/width);
-  if(height>GPU_max_texture_size())throw std::length_error("Filled-path GPU metadata exceeds device texture dimensions");
-  rows.resize(std::size_t(width)*std::max(1,height));
-  Texture result(GPU_texture_create_2d("BTS shared filled-path metadata",width,std::max(1,height),1,gpu::TextureFormat::SFLOAT_32_32_32_32,GPU_TEXTURE_USAGE_GENERAL,rows.front().data()),GPU_texture_free);
-  if(!result)throw std::bad_alloc();return result;
- }
- static blender::gpu::shader::ShaderCreateInfo program_info(){
-  using namespace blender;using namespace gpu::shader;
-  ShaderCreateInfo info("pyGPU_Shader");
-  info.local_group_size(16,16).sampler(0,ImageType::Float2D,"geometry_img").sampler(1,ImageType::Float2D,"indices_img").sampler(2,ImageType::Float2D,"coverage_img")
-   .image(0,gpu::TextureFormat::SFLOAT_32_32_32_32,Qualifier::write,ImageReadWriteType::image2D,"result_img")
-   .push_constant(Type::int2_t,"page_origin").push_constant(Type::int2_t,"triangle_range")
-   .push_constant(Type::int2_t,"tile_offset").push_constant(Type::int_t,"paint_size")
-   .push_constant(Type::int_t,"mask_mode").push_constant(Type::float3_t,"paint_value");
-  info.compute_source_generated=std::string(R"GLSL(
+  std::uint64_t owned() const
+  {
+    std::uint64_t bytes = 0;
+    for (const auto &[key, entry] : geometry_)
+      bytes += entry.bytes;
+    for (const auto &[key, entry] : grids_)
+      bytes += entry.bytes;
+    return bytes;
+  }
+  void reserve(std::uint64_t requested,
+               const FilledPathGeometry *geometry,
+               const FilledPathGrid *grid)
+  {
+    const auto free = texture_free_vram.load(),
+               budget = resource_sum(owned(),
+                                     (texture_vram_query_valid.load() || free != 0) ?
+                                         free :
+                                         texture_available_ram_bytes());
+    while (owned() + requested > budget) {
+      auto g = geometry_.end();
+      for (auto i = geometry_.begin(); i != geometry_.end(); ++i)
+        if (i->first != geometry && (g == geometry_.end() || i->second.used < g->second.used))
+          g = i;
+      auto p = grids_.end();
+      for (auto i = grids_.begin(); i != grids_.end(); ++i)
+        if (i->first != grid && (p == grids_.end() || i->second.used < p->second.used))
+          p = i;
+      if (g == geometry_.end() && p == grids_.end())
+        break;
+      if (p == grids_.end() || (g != geometry_.end() && g->second.used < p->second.used))
+        geometry_.erase(g);
+      else
+        grids_.erase(p);
+    }
+  }
+  Shader shader_{nullptr, blender::GPU_shader_free};
+  static Texture upload(std::vector<Row> rows)
+  {
+    using namespace blender;
+    const int width = std::min<int>(1024, std::max<std::size_t>(1, rows.size())),
+              height = int((rows.size() + width - 1) / width);
+    if (height > GPU_max_texture_size())
+      throw std::length_error("Filled-path GPU metadata exceeds device texture dimensions");
+    rows.resize(std::size_t(width) * std::max(1, height));
+    Texture result(GPU_texture_create_2d("BTS shared filled-path metadata",
+                                         width,
+                                         std::max(1, height),
+                                         1,
+                                         gpu::TextureFormat::SFLOAT_32_32_32_32,
+                                         GPU_TEXTURE_USAGE_GENERAL,
+                                         rows.front().data()),
+                   GPU_texture_free);
+    if (!result)
+      throw std::bad_alloc();
+    return result;
+  }
+  static blender::gpu::shader::ShaderCreateInfo program_info()
+  {
+    using namespace blender;
+    using namespace gpu::shader;
+    ShaderCreateInfo info("pyGPU_Shader");
+    info.local_group_size(16, 16)
+        .sampler(0, ImageType::Float2D, "geometry_img")
+        .sampler(1, ImageType::Float2D, "indices_img")
+        .sampler(2, ImageType::Float2D, "coverage_img")
+        .image(0,
+               gpu::TextureFormat::SFLOAT_32_32_32_32,
+               Qualifier::write,
+               ImageReadWriteType::image2D,
+               "result_img")
+        .push_constant(Type::int2_t, "page_origin")
+        .push_constant(Type::int2_t, "triangle_range")
+        .push_constant(Type::int2_t, "tile_offset")
+        .push_constant(Type::int_t, "paint_size")
+        .push_constant(Type::int_t, "mask_mode")
+        .push_constant(Type::float3_t, "paint_value");
+    info.compute_source_generated = std::string(R"GLSL(
 vec4 geometry(int i){ivec2 s=textureSize(geometry_img,0);return texelFetch(geometry_img,ivec2(i%s.x,i/s.x),0);}
 int triangle_index(int i){ivec2 s=textureSize(indices_img,0);return int(texelFetch(indices_img,ivec2(i%s.x,i/s.x),0).x);}
 float coverage(ivec2 p){
@@ -58,7 +120,7 @@ float coverage(ivec2 p){
  float allowed=clamp(sum.r+1-sum.a,0.0,1.0);return mask_mode==2?1-allowed:allowed;
 }
 
-)GLSL")+gpu_path_math+R"GLSL(
+)GLSL") + gpu_path_math + R"GLSL(
 bool contains(int shape,vec2 px,vec2 py,vec2 pz){
  vec4 origin=geometry(shape),normal=geometry(shape+1),u=geometry(shape+2),v=geometry(shape+3),bounds=geometry(shape+4);
  vec4 origin_lo=geometry(shape+5),normal_lo=geometry(shape+6),u_lo=geometry(shape+7),v_lo=geometry(shape+8),bounds_lo=geometry(shape+9);
@@ -96,63 +158,141 @@ void main(){
  }imageStore(result_img,p,result);
 }
 )GLSL";
-  return info;
- }
- void prepare(){
-  if(shader_)return;trace_authoring_compilation();auto info=program_info();gpu_derived::stabilize_hosted_resource_owners(info);
-  shader_=Shader(blender::GPU_shader_create_from_info_python(reinterpret_cast<GPUShaderCreateInfo *>(&info)),blender::GPU_shader_free);
-  if(!shader_)throw std::runtime_error("Filled-path GPU shader compilation failed");
- }
- public:
- void evict(){geometry_.clear();grids_.clear();}
- void warm_up(){prepare();}
- void render(blender::gpu::Texture *target,const FilledPathSource &source,int channel,std::uint32_t page,blender::gpu::Texture *mask){
-  using namespace blender;performance::Scope timing("gpu_filled_path_page");prepare();
-  std::erase_if(geometry_,[](const auto &entry){return entry.second.source.expired();});
-  std::erase_if(grids_,[](const auto &entry){return entry.second.source.expired();});
-  const auto &grid=*source.grid;const auto &g=*grid.geometry;
-  std::uint64_t geometry_rows=g.scene.uv_triangles.size()*5+g.shapes.size()*10,index_rows=0;
-  if(!geometry_.contains(&g)){for(const auto &shape:g.shapes)geometry_rows+=shape.boundary.size();for(const auto &indices:g.candidates)geometry_rows+=indices.size();}
-  if(!grids_.contains(&grid))for(const auto &[key,indices]:grid.pages)index_rows+=indices.size();
-  const auto geometry_bytes=geometry_.contains(&g)?geometry_.at(&g).bytes:row_bytes(geometry_rows),index_bytes=grids_.contains(&grid)?grids_.at(&grid).bytes:row_bytes(index_rows);
-  reserve((geometry_.contains(&g)?0:geometry_bytes)+(grids_.contains(&grid)?0:index_bytes),&g,&grid);
-  auto &geometry=geometry_[&g];geometry.used=++clock_;
-  if(!geometry.image){
-   const auto &triangles=g.scene.uv_triangles;std::vector<Row> rows(triangles.size()*5+g.shapes.size()*10);
-   std::vector<int> shapes;
-   for(std::size_t i=0;i<g.shapes.size();++i){const auto &s=g.shapes[i];const int at=int(triangles.size()*5+i*10);shapes.push_back(at);
-    rows[at]={float(s.origin[0]),float(s.origin[1]),float(s.origin[2]),float(rows.size())};
-    rows[at+1]={float(s.normal[0]),float(s.normal[1]),float(s.normal[2]),float(s.boundary.size())};
-    rows[at+2]={float(s.u[0]),float(s.u[1]),float(s.u[2]),float(s.depth_low-s.depth_margin)};
-    rows[at+3]={float(s.v[0]),float(s.v[1]),float(s.v[2]),float(s.depth_high+s.depth_margin)};
-    rows[at+4]={float(s.low[0]),float(s.low[1]),float(s.high[0]),float(s.high[1])};
-    const auto low=[](double value){return float(value-double(float(value)));};
-    rows[at+5]={low(s.origin[0]),low(s.origin[1]),low(s.origin[2]),0};
-    rows[at+6]={low(s.normal[0]),low(s.normal[1]),low(s.normal[2]),0};
-    rows[at+7]={low(s.u[0]),low(s.u[1]),low(s.u[2]),low(s.depth_low-s.depth_margin)};
-    rows[at+8]={low(s.v[0]),low(s.v[1]),low(s.v[2]),low(s.depth_high+s.depth_margin)};
-    rows[at+9]={low(s.low[0]),low(s.low[1]),low(s.high[0]),low(s.high[1])};
-    for(const auto &point:s.boundary)rows.push_back({float(point[0]),float(point[1]),low(point[0]),low(point[1])});
-   }
-   for(std::size_t i=0;i<triangles.size();++i){const auto &t=triangles[i];const int at=int(i*5);
-    rows[at]={t.corners[0][0],t.corners[0][1],t.corners[1][0],t.corners[1][1]};
-    rows[at+1]={t.corners[2][0],t.corners[2][1],float(rows.size()),float(g.candidates[i].size())};
-    for(int k=0;k<3;++k)rows[at+2+k]={t.positions[k][0],t.positions[k][1],t.positions[k][2],0};
-    for(int shape:g.candidates[i])rows.push_back({float(shapes[shape]),0,0,0});
-   }
-   if(rows.size()>16777216)throw std::length_error("Filled-path GPU metadata exceeds exact index addressing");
-   geometry.image=upload(std::move(rows));geometry.source=grid.geometry;geometry.bytes=geometry_bytes;
+    return info;
   }
-  auto &indices=grids_[&grid];indices.used=++clock_;
-  if(!indices.image){std::vector<Row> rows;for(const auto &[key,triangles]:grid.pages){indices.ranges[key]={int(rows.size()),int(triangles.size())};for(int triangle:triangles)rows.push_back({float(triangle),0,0,0});}indices.image=upload(std::move(rows));indices.source=source.grid;indices.bytes=index_bytes;}
-  const int origin[2]={int(page%65536)*64,int(page/65536)*64},tile[2]={(grid.tile-1001)%10,(grid.tile-1001)/10};
-  const auto value=source.value(channel);GPU_shader_bind(shader_.get());
-  GPU_shader_uniform_2iv(shader_.get(),"page_origin",origin);GPU_shader_uniform_2iv(shader_.get(),"tile_offset",tile);
-  GPU_shader_uniform_2iv(shader_.get(),"triangle_range",indices.ranges.at(page).data());GPU_shader_uniform_1i(shader_.get(),"paint_size",grid.size);
-  GPU_shader_uniform_1i(shader_.get(),"mask_mode",g.mask?(g.mask->inverted?2:1):0);GPU_shader_uniform_3fv(shader_.get(),"paint_value",value.data());
-  GPU_texture_bind(geometry.image.get(),0);GPU_texture_bind(indices.image.get(),1);GPU_texture_bind(mask,2);GPU_texture_image_bind(target,0);
-  GPU_compute_dispatch(shader_.get(),4,4,1);trace_authoring_dispatch(shader_.get());GPU_memory_barrier(GPU_BARRIER_TEXTURE_FETCH|GPU_BARRIER_SHADER_IMAGE_ACCESS);
-  GPU_texture_image_unbind(target);GPU_shader_unbind();
- }
+  void prepare()
+  {
+    if (shader_)
+      return;
+    trace_authoring_compilation();
+    auto info = program_info();
+    gpu_derived::stabilize_hosted_resource_owners(info);
+    shader_ = Shader(blender::GPU_shader_create_from_info_python(
+                         reinterpret_cast<GPUShaderCreateInfo *>(&info)),
+                     blender::GPU_shader_free);
+    if (!shader_)
+      throw std::runtime_error("Filled-path GPU shader compilation failed");
+  }
+
+ public:
+  void evict()
+  {
+    geometry_.clear();
+    grids_.clear();
+  }
+  void warm_up()
+  {
+    prepare();
+  }
+  void render(blender::gpu::Texture *target,
+              const FilledPathSource &source,
+              int channel,
+              std::uint32_t page,
+              blender::gpu::Texture *mask)
+  {
+    using namespace blender;
+    performance::Scope timing("gpu_filled_path_page");
+    prepare();
+    std::erase_if(geometry_, [](const auto &entry) { return entry.second.source.expired(); });
+    std::erase_if(grids_, [](const auto &entry) { return entry.second.source.expired(); });
+    const auto &grid = *source.grid;
+    const auto &g = *grid.geometry;
+    std::uint64_t geometry_rows = g.scene.uv_triangles.size() * 5 + g.shapes.size() * 10,
+                  index_rows = 0;
+    if (!geometry_.contains(&g)) {
+      for (const auto &shape : g.shapes)
+        geometry_rows += shape.boundary.size();
+      for (const auto &indices : g.candidates)
+        geometry_rows += indices.size();
+    }
+    if (!grids_.contains(&grid))
+      for (const auto &[key, indices] : grid.pages)
+        index_rows += indices.size();
+    const auto geometry_bytes = geometry_.contains(&g) ? geometry_.at(&g).bytes :
+                                                         row_bytes(geometry_rows),
+               index_bytes = grids_.contains(&grid) ? grids_.at(&grid).bytes :
+                                                      row_bytes(index_rows);
+    reserve((geometry_.contains(&g) ? 0 : geometry_bytes) +
+                (grids_.contains(&grid) ? 0 : index_bytes),
+            &g,
+            &grid);
+    auto &geometry = geometry_[&g];
+    geometry.used = ++clock_;
+    if (!geometry.image) {
+      const auto &triangles = g.scene.uv_triangles;
+      std::vector<Row> rows(triangles.size() * 5 + g.shapes.size() * 10);
+      std::vector<int> shapes;
+      for (std::size_t i = 0; i < g.shapes.size(); ++i) {
+        const auto &s = g.shapes[i];
+        const int at = int(triangles.size() * 5 + i * 10);
+        shapes.push_back(at);
+        rows[at] = {
+            float(s.origin[0]), float(s.origin[1]), float(s.origin[2]), float(rows.size())};
+        rows[at + 1] = {
+            float(s.normal[0]), float(s.normal[1]), float(s.normal[2]), float(s.boundary.size())};
+        rows[at + 2] = {
+            float(s.u[0]), float(s.u[1]), float(s.u[2]), float(s.depth_low - s.depth_margin)};
+        rows[at + 3] = {
+            float(s.v[0]), float(s.v[1]), float(s.v[2]), float(s.depth_high + s.depth_margin)};
+        rows[at + 4] = {float(s.low[0]), float(s.low[1]), float(s.high[0]), float(s.high[1])};
+        const auto low = [](double value) { return float(value - double(float(value))); };
+        rows[at + 5] = {low(s.origin[0]), low(s.origin[1]), low(s.origin[2]), 0};
+        rows[at + 6] = {low(s.normal[0]), low(s.normal[1]), low(s.normal[2]), 0};
+        rows[at + 7] = {low(s.u[0]), low(s.u[1]), low(s.u[2]), low(s.depth_low - s.depth_margin)};
+        rows[at + 8] = {low(s.v[0]), low(s.v[1]), low(s.v[2]), low(s.depth_high + s.depth_margin)};
+        rows[at + 9] = {low(s.low[0]), low(s.low[1]), low(s.high[0]), low(s.high[1])};
+        for (const auto &point : s.boundary)
+          rows.push_back({float(point[0]), float(point[1]), low(point[0]), low(point[1])});
+      }
+      for (std::size_t i = 0; i < triangles.size(); ++i) {
+        const auto &t = triangles[i];
+        const int at = int(i * 5);
+        rows[at] = {t.corners[0][0], t.corners[0][1], t.corners[1][0], t.corners[1][1]};
+        rows[at + 1] = {
+            t.corners[2][0], t.corners[2][1], float(rows.size()), float(g.candidates[i].size())};
+        for (int k = 0; k < 3; ++k)
+          rows[at + 2 + k] = {t.positions[k][0], t.positions[k][1], t.positions[k][2], 0};
+        for (int shape : g.candidates[i])
+          rows.push_back({float(shapes[shape]), 0, 0, 0});
+      }
+      if (rows.size() > 16777216)
+        throw std::length_error("Filled-path GPU metadata exceeds exact index addressing");
+      geometry.image = upload(std::move(rows));
+      geometry.source = grid.geometry;
+      geometry.bytes = geometry_bytes;
+    }
+    auto &indices = grids_[&grid];
+    indices.used = ++clock_;
+    if (!indices.image) {
+      std::vector<Row> rows;
+      for (const auto &[key, triangles] : grid.pages) {
+        indices.ranges[key] = {int(rows.size()), int(triangles.size())};
+        for (int triangle : triangles)
+          rows.push_back({float(triangle), 0, 0, 0});
+      }
+      indices.image = upload(std::move(rows));
+      indices.source = source.grid;
+      indices.bytes = index_bytes;
+    }
+    const int origin[2] = {int(page % 65536) * 64, int(page / 65536) * 64},
+              tile[2] = {(grid.tile - 1001) % 10, (grid.tile - 1001) / 10};
+    const auto value = source.value(channel);
+    GPU_shader_bind(shader_.get());
+    GPU_shader_uniform_2iv(shader_.get(), "page_origin", origin);
+    GPU_shader_uniform_2iv(shader_.get(), "tile_offset", tile);
+    GPU_shader_uniform_2iv(shader_.get(), "triangle_range", indices.ranges.at(page).data());
+    GPU_shader_uniform_1i(shader_.get(), "paint_size", grid.size);
+    GPU_shader_uniform_1i(shader_.get(), "mask_mode", g.mask ? (g.mask->inverted ? 2 : 1) : 0);
+    GPU_shader_uniform_3fv(shader_.get(), "paint_value", value.data());
+    GPU_texture_bind(geometry.image.get(), 0);
+    GPU_texture_bind(indices.image.get(), 1);
+    GPU_texture_bind(mask, 2);
+    GPU_texture_image_bind(target, 0);
+    GPU_compute_dispatch(shader_.get(), 4, 4, 1);
+    trace_authoring_dispatch(shader_.get());
+    GPU_memory_barrier(GPU_BARRIER_TEXTURE_FETCH | GPU_BARRIER_SHADER_IMAGE_ACCESS);
+    GPU_texture_image_unbind(target);
+    GPU_shader_unbind();
+  }
 };
-}
+}  // namespace bts

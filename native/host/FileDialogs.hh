@@ -7,12 +7,33 @@ namespace bts {
 // All product choosers deliberately use Qt widgets on every platform.
 class FileDialog : public QFileDialog {
  public:
-  explicit FileDialog(QWidget *parent=nullptr,const QString &caption={},const QString &directory={},const QString &filter={});
+  explicit FileDialog(QWidget *parent = nullptr,
+                      const QString &caption = {},
+                      const QString &directory = {},
+                      const QString &filter = {});
   ~FileDialog() override;
-  static QString getOpenFileName(QWidget *parent=nullptr,const QString &caption={},const QString &directory={},const QString &filter={},QString *selected_filter=nullptr,Options options={});
-  static QStringList getOpenFileNames(QWidget *parent=nullptr,const QString &caption={},const QString &directory={},const QString &filter={},QString *selected_filter=nullptr,Options options={});
-  static QString getSaveFileName(QWidget *parent=nullptr,const QString &caption={},const QString &directory={},const QString &filter={},QString *selected_filter=nullptr,Options options={});
-  static QString getExistingDirectory(QWidget *parent=nullptr,const QString &caption={},const QString &directory={},Options options=ShowDirsOnly);
+  static QString getOpenFileName(QWidget *parent = nullptr,
+                                 const QString &caption = {},
+                                 const QString &directory = {},
+                                 const QString &filter = {},
+                                 QString *selected_filter = nullptr,
+                                 Options options = {});
+  static QStringList getOpenFileNames(QWidget *parent = nullptr,
+                                      const QString &caption = {},
+                                      const QString &directory = {},
+                                      const QString &filter = {},
+                                      QString *selected_filter = nullptr,
+                                      Options options = {});
+  static QString getSaveFileName(QWidget *parent = nullptr,
+                                 const QString &caption = {},
+                                 const QString &directory = {},
+                                 const QString &filter = {},
+                                 QString *selected_filter = nullptr,
+                                 Options options = {});
+  static QString getExistingDirectory(QWidget *parent = nullptr,
+                                      const QString &caption = {},
+                                      const QString &directory = {},
+                                      Options options = ShowDirsOnly);
   static void remember_folder(const QString &);
   // Optional bookkeeping must not delay a durable project save.
   static void remember_folder_async(const QString &);
@@ -20,12 +41,16 @@ class FileDialog : public QFileDialog {
   static void prepare_directory_thread();
   // Reuse one hidden chooser to avoid repeated model/widget initialization.
   // The pinned Qt patch lets this subclass own asynchronous state persistence.
-  static FileDialog *borrow(QWidget *parent,const QString &caption={},const QString &directory={},const QString &filter={});
+  static FileDialog *borrow(QWidget *parent,
+                            const QString &caption = {},
+                            const QString &directory = {},
+                            const QString &filter = {});
   static QStringList recent_folders();
   static QStringList pinned_folders();
+
  private:
-  QListWidget *pinned_=nullptr,*recent_=nullptr;
-  bool state_published_=false;
+  QListWidget *pinned_ = nullptr, *recent_ = nullptr;
+  bool state_published_ = false;
   void showEvent(QShowEvent *event) override;
   void hideEvent(QHideEvent *event) override;
   void publish_state();
@@ -39,4 +64,4 @@ class FileDialog : public QFileDialog {
   void move_pin(int);
   void save_pins();
 };
-}
+}  // namespace bts

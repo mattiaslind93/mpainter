@@ -17,7 +17,7 @@
 namespace blender {
 struct Main;
 struct Scene;
-}
+}  // namespace blender
 
 namespace bts {
 
@@ -34,7 +34,7 @@ struct ImportedMaterial {
   std::uint32_t session_uid = 0;
   std::string name;
   std::set<int> tiles;
-  bool udim_valid=true;
+  bool udim_valid = true;
 };
 
 struct ImportSummary {
@@ -44,7 +44,7 @@ struct ImportSummary {
       "Linear Rec.709: raw MTL RGB assumed; OBJ vertex RGB decoded from sRGB by Blender";
   std::size_t objects = 0;
   std::size_t cameras = 0;
-  std::map<std::uint32_t,std::string> camera_names;
+  std::map<std::uint32_t, std::string> camera_names;
   std::size_t polygon_meshes = 0;
   std::size_t vertices = 0;
   std::size_t polygons = 0;
@@ -85,15 +85,28 @@ class PendingMeshProject {
   // It preserves imported Image color tags/pixels and Normal Map/Bump data defaults.
   // This guarantee covers native OBJ-created trees, not arbitrary group/data graphs.
   // The application's New rendering/working-space defaults are applied separately.
-  static std::unique_ptr<PendingMeshProject> from_scene(blender::Main &,const std::string &,bool import_cameras=true,std::stop_token cancellation={},const UsdImportOptions &usd={},const BlendMeshSelection &blend={});
-  static std::unique_ptr<PendingMeshProject> from_blend(blender::Main &,const std::string &,bool,const BlendMeshSelection &,std::stop_token);
-  static std::unique_ptr<PendingMeshProject> from_fbx(blender::Main &,const std::string &,bool,std::stop_token);
-  static std::unique_ptr<PendingMeshProject> from_alembic(blender::Main &,const std::string &,bool,std::stop_token,std::optional<double> frame={});
-  static std::unique_ptr<PendingMeshProject> from_usd(blender::Main &,const std::string &,bool,const UsdImportOptions &,std::stop_token);
-  static std::unique_ptr<PendingMeshProject> from_obj(
-      blender::Main &live,
-      const std::string &absolute_source_path,
-      std::stop_token cancellation = {});
+  static std::unique_ptr<PendingMeshProject> from_scene(blender::Main &,
+                                                        const std::string &,
+                                                        bool import_cameras = true,
+                                                        std::stop_token cancellation = {},
+                                                        const UsdImportOptions &usd = {},
+                                                        const BlendMeshSelection &blend = {});
+  static std::unique_ptr<PendingMeshProject> from_blend(
+      blender::Main &, const std::string &, bool, const BlendMeshSelection &, std::stop_token);
+  static std::unique_ptr<PendingMeshProject> from_fbx(blender::Main &,
+                                                      const std::string &,
+                                                      bool,
+                                                      std::stop_token);
+  static std::unique_ptr<PendingMeshProject> from_alembic(blender::Main &,
+                                                          const std::string &,
+                                                          bool,
+                                                          std::stop_token,
+                                                          std::optional<double> frame = {});
+  static std::unique_ptr<PendingMeshProject> from_usd(
+      blender::Main &, const std::string &, bool, const UsdImportOptions &, std::stop_token);
+  static std::unique_ptr<PendingMeshProject> from_obj(blender::Main &live,
+                                                      const std::string &absolute_source_path,
+                                                      std::stop_token cancellation = {});
 
   ~PendingMeshProject();
   PendingMeshProject(const PendingMeshProject &) = delete;

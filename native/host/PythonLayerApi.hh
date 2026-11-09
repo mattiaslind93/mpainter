@@ -1,6 +1,6 @@
 #pragma once
 namespace bts {
-inline constexpr const char *python_layer_api_source=R"BTS_LAYER(
+inline constexpr const char *python_layer_api_source = R"BTS_LAYER(
 import enum as _enum
 layerstack = _module('layerstack')
 class ChannelType(_enum.IntEnum):

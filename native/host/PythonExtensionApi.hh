@@ -1,6 +1,6 @@
 #pragma once
 namespace bts {
-inline constexpr const char *python_extension_api_source=R"BTS_EXT(
+inline constexpr const char *python_extension_api_source = R"BTS_EXT(
 import weakref as _weakref, uuid as _uuid
 _current_plugin = ''
 event = _module('event')

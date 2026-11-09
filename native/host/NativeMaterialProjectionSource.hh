@@ -7,29 +7,50 @@
 namespace bts {
 // The source graph receives projected attributes; view/AO/owner/displacement
 // context stays on the immutable real surface. Numeric edits are SSBO data.
-inline std::string native_material_projection_source() {
- std::string result;
- for(std::size_t i=0;i<std::size(GpuLayerParameters::fields);++i){
-  const auto &f=GpuLayerParameters::fields[i];
-  result+="#define bts_fill_"+std::string(f.name)+" "+f.type+"(native_projection["+std::to_string(i+1)+"]."+f.components+")\n";
- }
- // Reuse the actual bounded Hermite solver, with a distinct symbol namespace
- // and SSBO getter. No projected geometry or raster pixels are copied here.
- std::string warp=gpu_warp::source;
- const std::string getter="return texelFetch(layer_parameters_img,ivec2(WARP_DATA_START+index,0),0);";
- const auto at=warp.find(getter);if(at==std::string::npos)throw std::logic_error("Native Warp getter contract changed");
- warp.replace(at,getter.size(),"return native_projection["+std::to_string(1+GpuLayerParameters::warp_data_start)+"+index];");
- for(std::size_t i=0;i<warp.size();){
-  if(std::isalpha(static_cast<unsigned char>(warp[i]))||warp[i]=='_'){
-   std::size_t end=i+1;while(end<warp.size()&&(std::isalnum(static_cast<unsigned char>(warp[end]))||warp[end]=='_'))++end;
-   const auto token=warp.substr(i,end-i);std::string replacement;
-   if(token.starts_with("warp_")||token=="WarpBasis"||token=="WarpSurfaceValue")replacement="bts_fill_"+token;
-   else if(token=="inverse_denominator")replacement="bts_fill_inverse_denominator";
-   if(!replacement.empty()){warp.replace(i,end-i,replacement);i+=replacement.size();}else i=end;
-  }else ++i;
- }
- result+=warp;
- result+=R"GLSL(
+inline std::string native_material_projection_source()
+{
+  std::string result;
+  for (std::size_t i = 0; i < std::size(GpuLayerParameters::fields); ++i) {
+    const auto &f = GpuLayerParameters::fields[i];
+    result += "#define bts_fill_" + std::string(f.name) + " " + f.type + "(native_projection[" +
+              std::to_string(i + 1) + "]." + f.components + ")\n";
+  }
+  // Reuse the actual bounded Hermite solver, with a distinct symbol namespace
+  // and SSBO getter. No projected geometry or raster pixels are copied here.
+  std::string warp = gpu_warp::source;
+  const std::string getter =
+      "return texelFetch(layer_parameters_img,ivec2(WARP_DATA_START+index,0),0);";
+  const auto at = warp.find(getter);
+  if (at == std::string::npos)
+    throw std::logic_error("Native Warp getter contract changed");
+  warp.replace(at,
+               getter.size(),
+               "return native_projection[" +
+                   std::to_string(1 + GpuLayerParameters::warp_data_start) + "+index];");
+  for (std::size_t i = 0; i < warp.size();) {
+    if (std::isalpha(static_cast<unsigned char>(warp[i])) || warp[i] == '_') {
+      std::size_t end = i + 1;
+      while (end < warp.size() &&
+             (std::isalnum(static_cast<unsigned char>(warp[end])) || warp[end] == '_'))
+        ++end;
+      const auto token = warp.substr(i, end - i);
+      std::string replacement;
+      if (token.starts_with("warp_") || token == "WarpBasis" || token == "WarpSurfaceValue")
+        replacement = "bts_fill_" + token;
+      else if (token == "inverse_denominator")
+        replacement = "bts_fill_inverse_denominator";
+      if (!replacement.empty()) {
+        warp.replace(i, end - i, replacement);
+        i += replacement.size();
+      }
+      else
+        i = end;
+    }
+    else
+      ++i;
+  }
+  result += warp;
+  result += R"GLSL(
 vec3 bts_fill_point,bts_fill_weights;
 vec2 bts_fill_center,bts_fill_spread;
 float bts_fill_coverage,bts_fill_depth;
@@ -115,6 +136,6 @@ bool bts_fill_select(int axis,int tap,out float weight){
  bts_uv=vec3(uv,0);bts_position=vec3(uv,depth);bts_object=bts_position;bts_generated=bts_position;return weight>0;
 }
 )GLSL";
- return result;
+  return result;
 }
-}
+}  // namespace bts

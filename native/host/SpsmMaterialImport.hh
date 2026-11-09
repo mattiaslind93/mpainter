@@ -10,7 +10,7 @@ struct SpsmImportDiagnostic {
   std::size_t preset = 0;
   spsm::NodeId source = 0;
   SpsmDiagnosticKind kind = SpsmDiagnosticKind::Omission;
-  std::string_view code, detail; // Static descriptions; original values remain in source.
+  std::string_view code, detail;  // Static descriptions; original values remain in source.
 };
 struct SpsmLayerBinding {
   spsm::NodeId source = 0;
@@ -26,8 +26,8 @@ struct SpsmImportOptions {
   // Explicit source policy supplied by the host, normally configured OCIO
   // Linear Rec.709 -> scene-linear ACEScg. No callback means color is skipped;
   // scalar data channels do not pass through this conversion.
-  std::function<std::array<float,3>(std::array<float,3>)> uniform_rgb_to_scene_linear;
-  bool native_actions = false; // Final lowering follows optional bitmap hydration.
+  std::function<std::array<float, 3>(std::array<float, 3>)> uniform_rgb_to_scene_linear;
+  bool native_actions = false;  // Final lowering follows optional bitmap hydration.
 };
 struct PreparedSpsm {
   SmartMaterialPreset material;
@@ -38,11 +38,13 @@ struct PreparedSpsm {
   std::vector<SpsmImportDiagnostic> diagnostics;
   std::vector<SpsmLayerBinding> layers;
   std::vector<SpsmActionBinding> actions;
-  std::map<spsm::NodeId,spsm::NodeId> initial_fill_actions;
-  std::map<spsm::NodeId,std::uint64_t> bitmap_content_channels;
-  std::map<spsm::NodeId,FillProjection> bitmap_content_sources; // Independent ordered UV image sources.
+  std::map<spsm::NodeId, spsm::NodeId> initial_fill_actions;
+  std::map<spsm::NodeId, std::uint64_t> bitmap_content_channels;
+  std::map<spsm::NodeId, FillProjection>
+      bitmap_content_sources;  // Independent ordered UV image sources.
   std::shared_ptr<const LinearColorTransform> bitmap_color_transform;
-  std::map<spsm::NodeId,FillProjection> bitmap_mask_sources; // Worker-resolved direct mask images.
+  std::map<spsm::NodeId, FillProjection>
+      bitmap_mask_sources;  // Worker-resolved direct mask images.
   bool partial = false;
   bool appearance_verified = false;
   std::string diagnostic_path(const SpsmImportDiagnostic &) const;
@@ -58,5 +60,5 @@ PreparedSpsm prepare_spsm_material(const std::filesystem::path &, SpsmImportOpti
 // origin-zero targets rebase Fill constants and translate Signed Addition into
 // Linear Dodge, including folders. Unsupported authored Bump data throws before
 // copying/adapting; neither argument is modified or rasterized.
-SmartMaterialPreset spsm_material_for_destination(const PreparedSpsm &,const TextureSet &);
-} // namespace bts
+SmartMaterialPreset spsm_material_for_destination(const PreparedSpsm &, const TextureSet &);
+}  // namespace bts

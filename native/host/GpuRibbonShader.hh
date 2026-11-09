@@ -4,10 +4,11 @@
 namespace bts {
 inline std::string gpu_ribbon_shader()
 {
- return std::string(R"GLSL(
+  return std::string(R"GLSL(
 vec4 geometry(int i){ivec2 s=textureSize(geometry_img,0);return texelFetch(geometry_img,ivec2(i%s.x,i/s.x),0);}
 int triangle_index(int i){ivec2 s=textureSize(indices_img,0);return int(texelFetch(indices_img,ivec2(i%s.x,i/s.x),0).x);}
-)GLSL")+gpu_path_math+R"GLSL(
+)GLSL") + gpu_path_math +
+         R"GLSL(
 vec2 number(int base,int row,int component){return vec2(geometry(base+row*2)[component],geometry(base+row*2+1)[component]);}
 vec2 dot_row(vec2 x,vec2 y,vec2 z,int base,int row){return ds_dot(x,y,z,geometry(base+row*2).xyz,geometry(base+row*2+1).xyz);}
 vec2 ds_abs(vec2 value){return ds_less(value,vec2(0))?-value:value;}
@@ -176,4 +177,4 @@ void main(){
 }
 )GLSL";
 }
-}
+}  // namespace bts

@@ -2,7 +2,7 @@
 namespace bts::gpu_projection {
 // The CPU projection contracts are PlanarProjection/SpatialProjection/FillProjection.
 // Resource pixels remain shared; transforms and coverage are evaluated at the dirty texel.
-inline const char *source=R"GLSL(
+inline const char *source = R"GLSL(
 int fold_projection(inout vec3 position,inout vec3 normal){
  if(projection_symmetry==0)return 0;int axis=int(symmetry_options.x);
  if(symmetry_options.y==0){float side=projection_offset[axis]>=symmetry_options.w?1:-1;if((position[axis]-symmetry_options.w)*side<0){position[axis]=2*symmetry_options.w-position[axis];normal[axis]=-normal[axis];return 1;}return 0;}
@@ -71,4 +71,4 @@ vec4 spatial_sample(vec2 uv){
  return result*coverage;
 }
 )GLSL";
-}
+}  // namespace bts::gpu_projection

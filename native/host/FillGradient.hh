@@ -14,25 +14,33 @@ namespace bts {
 class FillGradient final : public QWidget {
   QSlider *slider_;
   QDoubleSpinBox *value_;
-  QString text() const {
+  QString text() const
+  {
     QString printed = QLocale::c().toString(value_->value(), 'f', value_->decimals());
     return printed;
   }
   // Where the ramp starts inside the widget. Small, so the handle is not clipped.
   static constexpr int bar_top = 2;
-  void place(qreal x) {
+  void place(qreal x)
+  {
     const int radius = 7;
     const double span = std::max(1, width() - 2 * radius);
     const double t = std::clamp((x - radius) / span, 0.0, 1.0);
-    slider_->setValue(slider_->minimum() + int(std::lround(t * (slider_->maximum() - slider_->minimum()))));
+    slider_->setValue(slider_->minimum() +
+                      int(std::lround(t * (slider_->maximum() - slider_->minimum()))));
   }
+
  public:
-  FillGradient(QSlider *slider, QDoubleSpinBox *value, QWidget *parent) : QWidget(parent), slider_(slider), value_(value) {
+  FillGradient(QSlider *slider, QDoubleSpinBox *value, QWidget *parent)
+      : QWidget(parent), slider_(slider), value_(value)
+  {
     new SliderHandleGeometry(this, [this] {
-      if (!slider_->isEnabled()) return QList<QRectF>{};
-      const double t = double(slider_->value()-slider_->minimum()) / std::max(1,slider_->maximum()-slider_->minimum());
-      const QPointF center(7+t*std::max(1,width()-14), bar_top+7);
-      return QList<QRectF>{QRectF(center-QPointF(7.75,7.75),QSizeF(15.5,15.5))};
+      if (!slider_->isEnabled())
+        return QList<QRectF>{};
+      const double t = double(slider_->value() - slider_->minimum()) /
+                       std::max(1, slider_->maximum() - slider_->minimum());
+      const QPointF center(7 + t * std::max(1, width() - 14), bar_top + 7);
+      return QList<QRectF>{QRectF(center - QPointF(7.75, 7.75), QSizeF(15.5, 15.5))};
     });
     setProperty("fillOnly", true);
     // The value used to be printed above the ramp, which cost a line of height
@@ -42,19 +50,29 @@ class FillGradient final : public QWidget {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     setCursor(Qt::PointingHandCursor);
     hide();
-    connect(slider_, &QSlider::valueChanged, this, [this] { setAccessibleName(text()); update(); });
-    connect(value_, &QDoubleSpinBox::valueChanged, this, [this] { setAccessibleName(text()); update(); });
+    connect(slider_, &QSlider::valueChanged, this, [this] {
+      setAccessibleName(text());
+      update();
+    });
+    connect(value_, &QDoubleSpinBox::valueChanged, this, [this] {
+      setAccessibleName(text());
+      update();
+    });
     setAccessibleName(text());
   }
+
  protected:
-  void paintEvent(QPaintEvent *) override {
+  void paintEvent(QPaintEvent *) override
+  {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
-    if (!slider_->isEnabled()) painter.setOpacity(.45);
+    if (!slider_->isEnabled())
+      painter.setOpacity(.45);
     setAccessibleName(text());
     const int radius = 7;
     const int bar_h = 8;
-    const QRect bar(radius, bar_top + radius - bar_h / 2, std::max(1, width() - 2 * radius), bar_h);
+    const QRect bar(
+        radius, bar_top + radius - bar_h / 2, std::max(1, width() - 2 * radius), bar_h);
     QLinearGradient gradient(bar.topLeft(), bar.topRight());
     gradient.setColorAt(0, Qt::black);
     gradient.setColorAt(1, Qt::white);
@@ -71,19 +89,25 @@ class FillGradient final : public QWidget {
     painter.setPen(Qt::NoPen);
     painter.drawEllipse(center, 3, 3);
   }
-  void mousePressEvent(QMouseEvent *event) override {
-    if (event->button() != Qt::LeftButton || !slider_->isEnabled()) return;
+  void mousePressEvent(QMouseEvent *event) override
+  {
+    if (event->button() != Qt::LeftButton || !slider_->isEnabled())
+      return;
     slider_->setSliderDown(true);
     place(event->position().x());
   }
-  void mouseMoveEvent(QMouseEvent *event) override {
-    if (!slider_->isSliderDown()) return;
+  void mouseMoveEvent(QMouseEvent *event) override
+  {
+    if (!slider_->isSliderDown())
+      return;
     place(event->position().x());
   }
-  void mouseReleaseEvent(QMouseEvent *event) override {
-    if (slider_->isSliderDown()) slider_->setSliderDown(false);
+  void mouseReleaseEvent(QMouseEvent *event) override
+  {
+    if (slider_->isSliderDown())
+      slider_->setSliderDown(false);
     QWidget::mouseReleaseEvent(event);
   }
 };
 
-}
+}  // namespace bts

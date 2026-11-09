@@ -3,29 +3,265 @@
 #include "RibbonIO.hh"
 namespace bts {
 namespace {
-[[noreturn]] void fail(){throw std::invalid_argument("Invalid surface path metadata");}
-QJsonArray numbers(const auto &values){QJsonArray array;for(auto value:values)array.append(double(value));return array;}
-QJsonArray flags(const auto &values){QJsonArray array;for(bool value:values)array.append(value);return array;}
-double number(const QJsonValue &value){if(!value.isDouble()||!std::isfinite(value.toDouble()))fail();return value.toDouble();}
-bool boolean(const QJsonValue &value){if(!value.isBool())fail();return value.toBool();}
-int integer(const QJsonValue &value){const auto n=number(value);if(n<0||n>65536||n!=int(n))fail();return int(n);}
-void read_numbers(const QJsonValue &value,auto &target){if(!value.isArray()||value.toArray().size()!=qsizetype(target.size()))fail();const auto array=value.toArray();for(int i=0;i<array.size();++i)target[i]=number(array[i]);}
-void read_flags(const QJsonValue &value,auto &target){if(!value.isArray()||value.toArray().size()!=qsizetype(target.size()))fail();const auto array=value.toArray();for(int i=0;i<array.size();++i)target[i]=boolean(array[i]);}
+[[noreturn]] void fail()
+{
+  throw std::invalid_argument("Invalid surface path metadata");
 }
-QJsonObject surface_path_json(const SurfacePath &path){
-  path.validate();const auto &b=path.brush;QJsonArray points;
-  for(const auto &p:path.points)points.append(QJsonObject{{"position",numbers(p.position)},{"normal",numbers(p.normal)},{"uv",numbers(p.uv)},{"pressure",p.pressure},{"curve",QJsonObject{{"smooth",p.smooth},{"custom",p.custom},{"broken",p.broken},{"in",numbers(p.tangent_in)},{"out",numbers(p.tangent_out)}}}});
-  return {{"version",6},{"bump_origin",path.bump_origin},{"filled",path.filled},{"ribbon",ribbon_json(path.ribbon)},{"closed",path.closed},{"id",QString::fromStdString(path.id)},{"name",QString::fromStdString(path.name)},{"visible",path.visible},{"seed",QString::number(path.seed,16)},{"points",points},{"symmetry",QJsonObject{{"enabled",path.symmetry.enabled},{"intersection",path.symmetry.intersection},{"manipulator",path.symmetry.manipulator},{"mode",int(path.symmetry.mode)},{"axis",path.symmetry.axis},{"copies",path.symmetry.copies},{"offset",path.symmetry.offset},{"center",numbers(path.symmetry.center)}}},
-    {"brush",QJsonObject{{"values",numbers(std::array{b.diameter,b.flow,b.stroke_opacity,b.spacing,b.angle,b.hardness,b.minimum_size,b.minimum_flow})},{"pressure",flags(std::array{b.pressure_size,b.pressure_flow})},{"follow",b.follow_path},{"channels",flags(b.channels)},{"ao",b.ao},{"displacement",QJsonObject{{"enabled",b.displacement},{"value",b.displacement_value}}},{"mask_value",b.mask_value},{"users",flags(b.users)},{"user_values",numbers(b.user_values)},{"base_color",numbers(b.values.base_color)},{"normal",numbers(b.values.normal)},{"material",numbers(std::array{b.values.metallic,b.values.roughness,b.values.bump,b.values.ambient_occlusion})},{"alignment",int(b.projection.alignment)},{"cull",b.projection.cull},{"cull_angle",b.projection.angle},{"jitter",numbers(b.jitter.values())},
-      {"alpha",QJsonObject{{"kind",int(b.alpha.kind)},{"inverted",b.alpha.inverted},{"uniform",b.alpha.uniform},{"cycle",b.alpha.dynamic.cycle},{"random",b.alpha.dynamic.random_start},{"roundness",b.alpha.dynamic.roundness},{"width",b.alpha.dynamic.width}}}}}};
+QJsonArray numbers(const auto &values)
+{
+  QJsonArray array;
+  for (auto value : values)
+    array.append(double(value));
+  return array;
 }
-std::shared_ptr<const SurfacePath> read_surface_path(const QJsonValue &value){
-  if(!value.isObject())fail();const auto o=value.toObject();const int version=o.contains("version")?integer(o["version"]):1;if(version<1||version>6)fail();auto path=std::make_shared<SurfacePath>();path->bump_origin=version>=6?float(number(o["bump_origin"])):0;if(version>=5)path->filled=boolean(o["filled"]);if(version>=4&&!o["ribbon"].isNull())path->ribbon=read_ribbon(o["ribbon"]);if(!o["id"].isString()||!o["name"].isString())fail();path->id=o["id"].toString().toStdString();path->name=o["name"].toString().toStdString();path->visible=boolean(o["visible"]);if(version>=2)path->closed=boolean(o["closed"]);bool valid=false;const auto seed=o["seed"].toString();if(seed.isEmpty()||seed.size()>16)fail();path->seed=seed.toULongLong(&valid,16);if(!valid)fail();
-  if(!o["points"].isArray())fail();
-  path->points.reserve(o["points"].toArray().size());for(const auto &point:o["points"].toArray()){if(!point.isObject())fail();const auto p=point.toObject();SurfacePathPoint result;read_numbers(p["position"],result.position);read_numbers(p["normal"],result.normal);read_numbers(p["uv"],result.uv);result.pressure=float(number(p["pressure"]));if(version>=2){if(!p["curve"].isObject())fail();const auto curve=p["curve"].toObject();result.smooth=boolean(curve["smooth"]);result.custom=boolean(curve["custom"]);result.broken=boolean(curve["broken"]);read_numbers(curve["in"],result.tangent_in);read_numbers(curve["out"],result.tangent_out);}path->points.push_back(result);}
-  if(o.contains("symmetry")){if(!o["symmetry"].isObject())fail();const auto symmetry=o["symmetry"].toObject();auto &s=path->symmetry;s.enabled=boolean(symmetry["enabled"]);if(symmetry.contains("intersection"))s.intersection=boolean(symmetry["intersection"]);if(symmetry.contains("manipulator"))s.manipulator=boolean(symmetry["manipulator"]);s.mode=SymmetryMode(integer(symmetry["mode"]));s.axis=integer(symmetry["axis"]);s.copies=integer(symmetry["copies"]);s.offset=number(symmetry["offset"]);read_numbers(symmetry["center"],s.center);s.validate();}
-  if(!o["brush"].isObject())fail();const auto b=o["brush"].toObject();auto &brush=path->brush;std::array<float,8> values;read_numbers(b["values"],values);brush.diameter=values[0];brush.flow=values[1];brush.stroke_opacity=values[2];brush.spacing=values[3];brush.angle=values[4];brush.hardness=values[5];brush.minimum_size=values[6];brush.minimum_flow=values[7];std::array<bool,2> pressure;read_flags(b["pressure"],pressure);brush.pressure_size=pressure[0];brush.pressure_flow=pressure[1];brush.follow_path=boolean(b["follow"]);
-  read_flags(b["channels"],brush.channels);read_flags(b["users"],brush.users);read_numbers(b["user_values"],brush.user_values);brush.ao=boolean(b["ao"]);brush.displacement=false;if(version>=3){const auto displacement=b["displacement"].toObject();brush.displacement=boolean(displacement["enabled"]);brush.displacement_value=number(displacement["value"]);}if(b.contains("mask_value"))brush.mask_value=float(number(b["mask_value"]));read_numbers(b["base_color"],brush.values.base_color);read_numbers(b["normal"],brush.values.normal);std::array<float,4> material;read_numbers(b["material"],material);brush.values.metallic=material[0];brush.values.roughness=material[1];brush.values.bump=material[2];brush.values.ambient_occlusion=material[3];const int alignment=integer(b["alignment"]);if(alignment>3)fail();brush.projection.alignment=BrushAlignment(alignment);brush.projection.cull=boolean(b["cull"]);brush.projection.angle=float(number(b["cull_angle"]));std::array<float,4> jitter;read_numbers(b["jitter"],jitter);brush.jitter={jitter[0],jitter[1],jitter[2],jitter[3]};
-  if(!b["alpha"].isObject())fail();const auto alpha=b["alpha"].toObject();const int kind=integer(alpha["kind"]);if(kind>int(AlphaKind::DynamicOutline)||kind==int(AlphaKind::Bitmap))fail();brush.alpha.kind=AlphaKind(kind);brush.alpha.inverted=boolean(alpha["inverted"]);brush.alpha.uniform=float(number(alpha["uniform"]));brush.alpha.dynamic.cycle=integer(alpha["cycle"]);brush.alpha.dynamic.random_start=boolean(alpha["random"]);brush.alpha.dynamic.roundness=float(number(alpha["roundness"]));brush.alpha.dynamic.width=float(number(alpha["width"]));path->validate();return path;
+QJsonArray flags(const auto &values)
+{
+  QJsonArray array;
+  for (bool value : values)
+    array.append(value);
+  return array;
 }
+double number(const QJsonValue &value)
+{
+  if (!value.isDouble() || !std::isfinite(value.toDouble()))
+    fail();
+  return value.toDouble();
 }
+bool boolean(const QJsonValue &value)
+{
+  if (!value.isBool())
+    fail();
+  return value.toBool();
+}
+int integer(const QJsonValue &value)
+{
+  const auto n = number(value);
+  if (n < 0 || n > 65536 || n != int(n))
+    fail();
+  return int(n);
+}
+void read_numbers(const QJsonValue &value, auto &target)
+{
+  if (!value.isArray() || value.toArray().size() != qsizetype(target.size()))
+    fail();
+  const auto array = value.toArray();
+  for (int i = 0; i < array.size(); ++i)
+    target[i] = number(array[i]);
+}
+void read_flags(const QJsonValue &value, auto &target)
+{
+  if (!value.isArray() || value.toArray().size() != qsizetype(target.size()))
+    fail();
+  const auto array = value.toArray();
+  for (int i = 0; i < array.size(); ++i)
+    target[i] = boolean(array[i]);
+}
+}  // namespace
+QJsonObject surface_path_json(const SurfacePath &path)
+{
+  path.validate();
+  const auto &b = path.brush;
+  QJsonArray points;
+  for (const auto &p : path.points)
+    points.append(QJsonObject{{"position", numbers(p.position)},
+                              {"normal", numbers(p.normal)},
+                              {"uv", numbers(p.uv)},
+                              {"pressure", p.pressure},
+                              {"curve",
+                               QJsonObject{{"smooth", p.smooth},
+                                           {"custom", p.custom},
+                                           {"broken", p.broken},
+                                           {"in", numbers(p.tangent_in)},
+                                           {"out", numbers(p.tangent_out)}}}});
+  return {{"version", 6},
+          {"bump_origin", path.bump_origin},
+          {"filled", path.filled},
+          {"ribbon", ribbon_json(path.ribbon)},
+          {"closed", path.closed},
+          {"id", QString::fromStdString(path.id)},
+          {"name", QString::fromStdString(path.name)},
+          {"visible", path.visible},
+          {"seed", QString::number(path.seed, 16)},
+          {"points", points},
+          {"symmetry",
+           QJsonObject{{"enabled", path.symmetry.enabled},
+                       {"intersection", path.symmetry.intersection},
+                       {"manipulator", path.symmetry.manipulator},
+                       {"mode", int(path.symmetry.mode)},
+                       {"axis", path.symmetry.axis},
+                       {"copies", path.symmetry.copies},
+                       {"offset", path.symmetry.offset},
+                       {"center", numbers(path.symmetry.center)}}},
+          {"brush",
+           QJsonObject{{"values",
+                        numbers(std::array{b.diameter,
+                                           b.flow,
+                                           b.stroke_opacity,
+                                           b.spacing,
+                                           b.angle,
+                                           b.hardness,
+                                           b.minimum_size,
+                                           b.minimum_flow})},
+                       {"pressure", flags(std::array{b.pressure_size, b.pressure_flow})},
+                       {"follow", b.follow_path},
+                       {"channels", flags(b.channels)},
+                       {"ao", b.ao},
+                       {"displacement",
+                        QJsonObject{{"enabled", b.displacement}, {"value", b.displacement_value}}},
+                       {"mask_value", b.mask_value},
+                       {"users", flags(b.users)},
+                       {"user_values", numbers(b.user_values)},
+                       {"base_color", numbers(b.values.base_color)},
+                       {"normal", numbers(b.values.normal)},
+                       {"material",
+                        numbers(std::array{b.values.metallic,
+                                           b.values.roughness,
+                                           b.values.bump,
+                                           b.values.ambient_occlusion})},
+                       {"alignment", int(b.projection.alignment)},
+                       {"cull", b.projection.cull},
+                       {"cull_angle", b.projection.angle},
+                       {"jitter", numbers(b.jitter.values())},
+                       {"alpha",
+                        QJsonObject{{"kind", int(b.alpha.kind)},
+                                    {"inverted", b.alpha.inverted},
+                                    {"uniform", b.alpha.uniform},
+                                    {"cycle", b.alpha.dynamic.cycle},
+                                    {"random", b.alpha.dynamic.random_start},
+                                    {"roundness", b.alpha.dynamic.roundness},
+                                    {"width", b.alpha.dynamic.width}}}}}};
+}
+std::shared_ptr<const SurfacePath> read_surface_path(const QJsonValue &value)
+{
+  if (!value.isObject())
+    fail();
+  const auto o = value.toObject();
+  const int version = o.contains("version") ? integer(o["version"]) : 1;
+  if (version < 1 || version > 6)
+    fail();
+  auto path = std::make_shared<SurfacePath>();
+  path->bump_origin = version >= 6 ? float(number(o["bump_origin"])) : 0;
+  if (version >= 5)
+    path->filled = boolean(o["filled"]);
+  if (version >= 4 && !o["ribbon"].isNull())
+    path->ribbon = read_ribbon(o["ribbon"]);
+  if (!o["id"].isString() || !o["name"].isString())
+    fail();
+  path->id = o["id"].toString().toStdString();
+  path->name = o["name"].toString().toStdString();
+  path->visible = boolean(o["visible"]);
+  if (version >= 2)
+    path->closed = boolean(o["closed"]);
+  bool valid = false;
+  const auto seed = o["seed"].toString();
+  if (seed.isEmpty() || seed.size() > 16)
+    fail();
+  path->seed = seed.toULongLong(&valid, 16);
+  if (!valid)
+    fail();
+  if (!o["points"].isArray())
+    fail();
+  path->points.reserve(o["points"].toArray().size());
+  for (const auto &point : o["points"].toArray()) {
+    if (!point.isObject())
+      fail();
+    const auto p = point.toObject();
+    SurfacePathPoint result;
+    read_numbers(p["position"], result.position);
+    read_numbers(p["normal"], result.normal);
+    read_numbers(p["uv"], result.uv);
+    result.pressure = float(number(p["pressure"]));
+    if (version >= 2) {
+      if (!p["curve"].isObject())
+        fail();
+      const auto curve = p["curve"].toObject();
+      result.smooth = boolean(curve["smooth"]);
+      result.custom = boolean(curve["custom"]);
+      result.broken = boolean(curve["broken"]);
+      read_numbers(curve["in"], result.tangent_in);
+      read_numbers(curve["out"], result.tangent_out);
+    }
+    path->points.push_back(result);
+  }
+  if (o.contains("symmetry")) {
+    if (!o["symmetry"].isObject())
+      fail();
+    const auto symmetry = o["symmetry"].toObject();
+    auto &s = path->symmetry;
+    s.enabled = boolean(symmetry["enabled"]);
+    if (symmetry.contains("intersection"))
+      s.intersection = boolean(symmetry["intersection"]);
+    if (symmetry.contains("manipulator"))
+      s.manipulator = boolean(symmetry["manipulator"]);
+    s.mode = SymmetryMode(integer(symmetry["mode"]));
+    s.axis = integer(symmetry["axis"]);
+    s.copies = integer(symmetry["copies"]);
+    s.offset = number(symmetry["offset"]);
+    read_numbers(symmetry["center"], s.center);
+    s.validate();
+  }
+  if (!o["brush"].isObject())
+    fail();
+  const auto b = o["brush"].toObject();
+  auto &brush = path->brush;
+  std::array<float, 8> values;
+  read_numbers(b["values"], values);
+  brush.diameter = values[0];
+  brush.flow = values[1];
+  brush.stroke_opacity = values[2];
+  brush.spacing = values[3];
+  brush.angle = values[4];
+  brush.hardness = values[5];
+  brush.minimum_size = values[6];
+  brush.minimum_flow = values[7];
+  std::array<bool, 2> pressure;
+  read_flags(b["pressure"], pressure);
+  brush.pressure_size = pressure[0];
+  brush.pressure_flow = pressure[1];
+  brush.follow_path = boolean(b["follow"]);
+  read_flags(b["channels"], brush.channels);
+  read_flags(b["users"], brush.users);
+  read_numbers(b["user_values"], brush.user_values);
+  brush.ao = boolean(b["ao"]);
+  brush.displacement = false;
+  if (version >= 3) {
+    const auto displacement = b["displacement"].toObject();
+    brush.displacement = boolean(displacement["enabled"]);
+    brush.displacement_value = number(displacement["value"]);
+  }
+  if (b.contains("mask_value"))
+    brush.mask_value = float(number(b["mask_value"]));
+  read_numbers(b["base_color"], brush.values.base_color);
+  read_numbers(b["normal"], brush.values.normal);
+  std::array<float, 4> material;
+  read_numbers(b["material"], material);
+  brush.values.metallic = material[0];
+  brush.values.roughness = material[1];
+  brush.values.bump = material[2];
+  brush.values.ambient_occlusion = material[3];
+  const int alignment = integer(b["alignment"]);
+  if (alignment > 3)
+    fail();
+  brush.projection.alignment = BrushAlignment(alignment);
+  brush.projection.cull = boolean(b["cull"]);
+  brush.projection.angle = float(number(b["cull_angle"]));
+  std::array<float, 4> jitter;
+  read_numbers(b["jitter"], jitter);
+  brush.jitter = {jitter[0], jitter[1], jitter[2], jitter[3]};
+  if (!b["alpha"].isObject())
+    fail();
+  const auto alpha = b["alpha"].toObject();
+  const int kind = integer(alpha["kind"]);
+  if (kind > int(AlphaKind::DynamicOutline) || kind == int(AlphaKind::Bitmap))
+    fail();
+  brush.alpha.kind = AlphaKind(kind);
+  brush.alpha.inverted = boolean(alpha["inverted"]);
+  brush.alpha.uniform = float(number(alpha["uniform"]));
+  brush.alpha.dynamic.cycle = integer(alpha["cycle"]);
+  brush.alpha.dynamic.random_start = boolean(alpha["random"]);
+  brush.alpha.dynamic.roundness = float(number(alpha["roundness"]));
+  brush.alpha.dynamic.width = float(number(alpha["width"]));
+  path->validate();
+  return path;
+}
+}  // namespace bts

@@ -11,13 +11,132 @@
 #include <QVBoxLayout>
 #include <functional>
 namespace bts {
-class AnchorPanel final:public QWidget {
+class AnchorPanel final : public QWidget {
  public:
-  explicit AnchorPanel(QWidget *parent):QWidget(parent){setObjectName("anchorProperties");setSizePolicy(QSizePolicy::Preferred,QSizePolicy::Maximum);auto *layout=new QVBoxLayout(this);layout->setContentsMargins(0,0,0,0);layout->addWidget(new QLabel("ANCHOR POINT",this));auto *form=new QFormLayout;form->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);name_=new QLineEdit(this);name_->setObjectName("anchorName");name_->setMaxLength(std::numeric_limits<int>::max());name_->setMinimumWidth(0);name_->setSizePolicy(QSizePolicy::Ignored,QSizePolicy::Fixed);form->addRow("Anchor point name",name_);layout->addLayout(form);disclosure_=new QToolButton(this);disclosure_->setObjectName("anchorReferencesDisclosure");disclosure_->setText("References");disclosure_->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);disclosure_->setArrowType(Qt::DownArrow);disclosure_->setCheckable(true);disclosure_->setChecked(true);layout->addWidget(disclosure_);body_=new QWidget(this);auto *body=new QVBoxLayout(body_);body->setContentsMargins(8,0,0,0);empty_=new QLabel("no references found",body_);empty_->setObjectName("anchorNoReferences");body->addWidget(empty_);references_=new QListWidget(body_);references_->setObjectName("anchorReferences");references_->setMaximumHeight(120);references_->setToolTip("Activate a reference to select its layer or effect.");connect(references_,&QListWidget::itemActivated,this,[this](QListWidgetItem *item){if(item&&consumer_requested)consumer_requested(QUuid(item->data(Qt::UserRole).toString()),QUuid(item->data(Qt::UserRole+1).toString()));});body->addWidget(references_);layout->addWidget(body_);connect(disclosure_,&QToolButton::toggled,this,[this](bool expanded){body_->setVisible(expanded);disclosure_->setArrowType(expanded?Qt::DownArrow:Qt::RightArrow);});connect(name_,&QLineEdit::editingFinished,this,[this]{if(name_->text()!=name_value_&&renamed)renamed(id_,name_->text());});}
-  std::function<void(QUuid,const QString &)> renamed;
-  std::function<void(QUuid,QUuid)> consumer_requested;
-  void synchronize(const TextureSet *set,const MaskEffect *effect){setVisible(set&&effect);if(!set||!effect)return;id_=effect->id;const bool model_changed=name_value_!=effect->anchor_name;name_value_=effect->anchor_name;const QSignalBlocker block(name_);if(model_changed||!name_->hasFocus()||name_->text().trimmed()==name_value_)name_->setText(name_value_);references_->clear();for(const auto &layer:set->layers)if(layer.mask)for(const auto &entry:mask_effect_entries(layer.mask->effects))if(const auto &consumer=*entry.effect;consumer.kind==MaskEffectKind::Fill&&consumer.anchor_source==effect->id){auto *item=new QListWidgetItem(QString::fromStdString(layer.name)+" — Fill",references_);item->setData(Qt::UserRole,layer.id.toString());item->setData(Qt::UserRole+1,consumer.id.toString());}for(const auto &layer:set->layers)if(layer.kind==LayerKind::Fill)for(int channel=0;channel<15;++channel)if(channel!=3&&layer.fill.anchors[channel].source==effect->id){const QString name=channel<5?QString(channel_names[channel]):channel==5?QString("Ambient occlusion"):channel==14?QString("Displacement"):QString::fromStdString(set->users[channel-6].name);auto *item=new QListWidgetItem(QString::fromStdString(layer.name)+" — Fill: "+name,references_);item->setData(Qt::UserRole+2,channel);item->setData(Qt::UserRole,layer.id.toString());item->setData(Qt::UserRole+1,QString());}const auto add_generator=[&](const auto &layer,const auto &consumer){for(int slot=0;slot<generator_input_count(consumer.generator);++slot)if(consumer.input_anchors[slot].source==effect->id){auto *item=new QListWidgetItem(QString::fromStdString(layer.name)+" — Generator: "+mesh_map_names[generator_input_role(consumer.generator,slot)],references_);item->setData(Qt::UserRole,layer.id.toString());item->setData(Qt::UserRole+1,consumer.id.toString());}};for(const auto &layer:set->layers){for(const auto &consumer:layer.effects)if(consumer.kind==ContentEffectKind::Generator)add_generator(layer,consumer);if(layer.mask)for(const auto &entry:mask_effect_entries(layer.mask->effects))if(entry.effect->kind==MaskEffectKind::Generator)add_generator(layer,*entry.effect);}empty_->setVisible(references_->count()==0);references_->setVisible(references_->count()>0);body_->setVisible(disclosure_->isChecked());}
+  explicit AnchorPanel(QWidget *parent) : QWidget(parent)
+  {
+    setObjectName("anchorProperties");
+    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
+    auto *layout = new QVBoxLayout(this);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(new QLabel("ANCHOR POINT", this));
+    auto *form = new QFormLayout;
+    form->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+    name_ = new QLineEdit(this);
+    name_->setObjectName("anchorName");
+    name_->setMaxLength(std::numeric_limits<int>::max());
+    name_->setMinimumWidth(0);
+    name_->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
+    form->addRow("Anchor point name", name_);
+    layout->addLayout(form);
+    disclosure_ = new QToolButton(this);
+    disclosure_->setObjectName("anchorReferencesDisclosure");
+    disclosure_->setText("References");
+    disclosure_->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    disclosure_->setArrowType(Qt::DownArrow);
+    disclosure_->setCheckable(true);
+    disclosure_->setChecked(true);
+    layout->addWidget(disclosure_);
+    body_ = new QWidget(this);
+    auto *body = new QVBoxLayout(body_);
+    body->setContentsMargins(8, 0, 0, 0);
+    empty_ = new QLabel("no references found", body_);
+    empty_->setObjectName("anchorNoReferences");
+    body->addWidget(empty_);
+    references_ = new QListWidget(body_);
+    references_->setObjectName("anchorReferences");
+    references_->setMaximumHeight(120);
+    references_->setToolTip("Activate a reference to select its layer or effect.");
+    connect(references_, &QListWidget::itemActivated, this, [this](QListWidgetItem *item) {
+      if (item && consumer_requested)
+        consumer_requested(QUuid(item->data(Qt::UserRole).toString()),
+                           QUuid(item->data(Qt::UserRole + 1).toString()));
+    });
+    body->addWidget(references_);
+    layout->addWidget(body_);
+    connect(disclosure_, &QToolButton::toggled, this, [this](bool expanded) {
+      body_->setVisible(expanded);
+      disclosure_->setArrowType(expanded ? Qt::DownArrow : Qt::RightArrow);
+    });
+    connect(name_, &QLineEdit::editingFinished, this, [this] {
+      if (name_->text() != name_value_ && renamed)
+        renamed(id_, name_->text());
+    });
+  }
+  std::function<void(QUuid, const QString &)> renamed;
+  std::function<void(QUuid, QUuid)> consumer_requested;
+  void synchronize(const TextureSet *set, const MaskEffect *effect)
+  {
+    setVisible(set && effect);
+    if (!set || !effect)
+      return;
+    id_ = effect->id;
+    const bool model_changed = name_value_ != effect->anchor_name;
+    name_value_ = effect->anchor_name;
+    const QSignalBlocker block(name_);
+    if (model_changed || !name_->hasFocus() || name_->text().trimmed() == name_value_)
+      name_->setText(name_value_);
+    references_->clear();
+    for (const auto &layer : set->layers)
+      if (layer.mask)
+        for (const auto &entry : mask_effect_entries(layer.mask->effects))
+          if (const auto &consumer = *entry.effect;
+              consumer.kind == MaskEffectKind::Fill && consumer.anchor_source == effect->id)
+          {
+            auto *item = new QListWidgetItem(QString::fromStdString(layer.name) + " — Fill",
+                                             references_);
+            item->setData(Qt::UserRole, layer.id.toString());
+            item->setData(Qt::UserRole + 1, consumer.id.toString());
+          }
+    for (const auto &layer : set->layers)
+      if (layer.kind == LayerKind::Fill)
+        for (int channel = 0; channel < 15; ++channel)
+          if (channel != 3 && layer.fill.anchors[channel].source == effect->id) {
+            const QString name = channel < 5 ?
+                                     QString(channel_names[channel]) :
+                                 channel == 5 ?
+                                     QString("Ambient occlusion") :
+                                 channel == 14 ?
+                                     QString("Displacement") :
+                                     QString::fromStdString(set->users[channel - 6].name);
+            auto *item = new QListWidgetItem(
+                QString::fromStdString(layer.name) + " — Fill: " + name, references_);
+            item->setData(Qt::UserRole + 2, channel);
+            item->setData(Qt::UserRole, layer.id.toString());
+            item->setData(Qt::UserRole + 1, QString());
+          }
+    const auto add_generator = [&](const auto &layer, const auto &consumer) {
+      for (int slot = 0; slot < generator_input_count(consumer.generator); ++slot)
+        if (consumer.input_anchors[slot].source == effect->id) {
+          auto *item = new QListWidgetItem(
+              QString::fromStdString(layer.name) + " — Generator: " +
+                  mesh_map_names[generator_input_role(consumer.generator, slot)],
+              references_);
+          item->setData(Qt::UserRole, layer.id.toString());
+          item->setData(Qt::UserRole + 1, consumer.id.toString());
+        }
+    };
+    for (const auto &layer : set->layers) {
+      for (const auto &consumer : layer.effects)
+        if (consumer.kind == ContentEffectKind::Generator)
+          add_generator(layer, consumer);
+      if (layer.mask)
+        for (const auto &entry : mask_effect_entries(layer.mask->effects))
+          if (entry.effect->kind == MaskEffectKind::Generator)
+            add_generator(layer, *entry.effect);
+    }
+    empty_->setVisible(references_->count() == 0);
+    references_->setVisible(references_->count() > 0);
+    body_->setVisible(disclosure_->isChecked());
+  }
+
  private:
-  QUuid id_;QString name_value_;QLineEdit *name_;QToolButton *disclosure_;QWidget *body_;QLabel *empty_;QListWidget *references_;
+  QUuid id_;
+  QString name_value_;
+  QLineEdit *name_;
+  QToolButton *disclosure_;
+  QWidget *body_;
+  QLabel *empty_;
+  QListWidget *references_;
 };
-}
+}  // namespace bts

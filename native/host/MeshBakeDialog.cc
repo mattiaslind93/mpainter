@@ -35,149 +35,774 @@
 #include <QJsonArray>
 namespace bts {
 namespace {
-struct BakeChoice {MeshBakeSettings options=[] {MeshBakeSettings value;value.use_project_mesh=true;return value;}();std::map<QUuid,std::set<int>> tiles;BakeRayOptions ray;QStringList high_files;QString cage_file;BakeSourceOptions source;};
+struct BakeChoice {
+  MeshBakeSettings options = [] {
+    MeshBakeSettings value;
+    value.use_project_mesh = true;
+    return value;
+  }();
+  std::map<QUuid, std::set<int>> tiles;
+  BakeRayOptions ray;
+  QStringList high_files;
+  QString cage_file;
+  BakeSourceOptions source;
+};
 // Session UI state belongs to the document, never the authoring/Undo history.
-std::map<QUuid,BakeChoice> choices;
+std::map<QUuid, BakeChoice> choices;
+}  // namespace
+QJsonObject mesh_bake_template(const QUuid &id)
+{
+  BakeChoice choice;
+  if (choices.contains(id))
+    choice = choices.at(id);
+  const auto &o = choice.options;
+  const auto &r = choice.ray;
+  QJsonArray enabled, high;
+  QJsonObject tiles;
+  for (auto value : o.enabled)
+    enabled.append(value);
+  for (const auto &path : choice.high_files)
+    high.append(path);
+  for (const auto &[id, numbers] : choice.tiles) {
+    QJsonArray selected;
+    for (int tile : numbers)
+      selected.append(tile);
+    tiles[id.toString()] = selected;
+  }
+  return {{"source_scale", choice.source.scale},
+          {"source_frame_enabled", choice.source.frame.has_value()},
+          {"source_frame", choice.source.frame.value_or(1)},
+          {"resolution", o.resolution},
+          {"height", o.rows()},
+          {"locked", o.dimensions_locked},
+          {"dilation", o.dilation},
+          {"rays", o.rays},
+          {"sampling", o.sampling},
+          {"diffusion", o.diffusion},
+          {"denoise", o.denoise},
+          {"curvature_radius", o.curvature_radius},
+          {"curvature_scale", o.curvature_scale},
+          {"ao_distance", o.ao_distance},
+          {"thickness_distance", o.thickness_distance},
+          {"ray_offset", o.ray_offset},
+          {"normal_detail", o.normal_detail},
+          {"project_mesh", o.use_project_mesh},
+          {"enabled", enabled},
+          {"frontal", r.frontal},
+          {"rear", r.rear},
+          {"relative", r.relative},
+          {"average", r.average_normals},
+          {"ignore_backface", r.ignore_backface},
+          {"use_cage", r.use_cage},
+          {"match_names", r.match_names},
+          {"low_marker", QString::fromStdString(r.low_marker)},
+          {"high_marker", QString::fromStdString(r.high_marker)},
+          {"ignore_marker", QString::fromStdString(r.ignore_marker)},
+          {"high_files", high},
+          {"cage_file", choice.cage_file},
+          {"tiles", tiles}};
 }
-QJsonObject mesh_bake_template(const QUuid &id){BakeChoice choice;if(choices.contains(id))choice=choices.at(id);const auto &o=choice.options;const auto &r=choice.ray;QJsonArray enabled,high;QJsonObject tiles;for(auto value:o.enabled)enabled.append(value);for(const auto &path:choice.high_files)high.append(path);for(const auto &[id,numbers]:choice.tiles){QJsonArray selected;for(int tile:numbers)selected.append(tile);tiles[id.toString()]=selected;}return {{"source_scale",choice.source.scale},{"source_frame_enabled",choice.source.frame.has_value()},{"source_frame",choice.source.frame.value_or(1)},{"resolution",o.resolution},{"height",o.rows()},{"locked",o.dimensions_locked},{"dilation",o.dilation},{"rays",o.rays},{"sampling",o.sampling},{"diffusion",o.diffusion},{"denoise",o.denoise},{"curvature_radius",o.curvature_radius},{"curvature_scale",o.curvature_scale},{"ao_distance",o.ao_distance},{"thickness_distance",o.thickness_distance},{"ray_offset",o.ray_offset},{"normal_detail",o.normal_detail},{"project_mesh",o.use_project_mesh},{"enabled",enabled},{"frontal",r.frontal},{"rear",r.rear},{"relative",r.relative},{"average",r.average_normals},{"ignore_backface",r.ignore_backface},{"use_cage",r.use_cage},{"match_names",r.match_names},{"low_marker",QString::fromStdString(r.low_marker)},{"high_marker",QString::fromStdString(r.high_marker)},{"ignore_marker",QString::fromStdString(r.ignore_marker)},{"high_files",high},{"cage_file",choice.cage_file},{"tiles",tiles}};}
-void apply_mesh_bake_template(const QUuid &id,const QJsonObject &data){if(data.isEmpty()){choices.erase(id);return;}BakeChoice choice;choice.source=bake_source_options(data);auto &o=choice.options;auto &r=choice.ray;read_surface_bake_settings(o,data);
- o.resolution=data["resolution"].toInt(o.resolution);o.height=data["height"].toInt(o.height);o.dimensions_locked=data["locked"].toBool(o.dimensions_locked);o.dilation=data["dilation"].toInt(o.dilation);o.rays=data["rays"].toInt(o.rays);o.sampling=data["sampling"].toInt(o.sampling);o.diffusion=data["diffusion"].toBool(o.diffusion);o.use_project_mesh=data["project_mesh"].toBool(data["high_files"].toArray().isEmpty());
- if(data.contains("enabled")){const auto enabled=data["enabled"].toArray();for(int i=0;i<7;++i)o.enabled[i]=enabled[i].toBool();}
- r.frontal=data["frontal"].toDouble(r.frontal);r.rear=data["rear"].toDouble(r.rear);r.relative=data["relative"].toBool(r.relative);r.average_normals=data["average"].toBool(r.average_normals);r.ignore_backface=data["ignore_backface"].toBool(r.ignore_backface);r.use_cage=data["use_cage"].toBool();r.match_names=data["match_names"].toBool();
- r.low_marker=data["low_marker"].toString(QString::fromStdString(r.low_marker)).toStdString();r.high_marker=data["high_marker"].toString(QString::fromStdString(r.high_marker)).toStdString();r.ignore_marker=data["ignore_marker"].toString(QString::fromStdString(r.ignore_marker)).toStdString();
- for(auto path:data["high_files"].toArray())choice.high_files.append(path.toString());choice.cage_file=data["cage_file"].toString();const auto tiles=data["tiles"].toObject();for(auto i=tiles.begin();i!=tiles.end();++i)for(auto tile:i.value().toArray())choice.tiles[QUuid(i.key())].insert(tile.toInt());
- // Preserve an explicitly empty selection as well as populated selections.
- for(auto i=tiles.begin();i!=tiles.end();++i)choice.tiles.try_emplace(QUuid(i.key()));choices[id]=std::move(choice);
+void apply_mesh_bake_template(const QUuid &id, const QJsonObject &data)
+{
+  if (data.isEmpty()) {
+    choices.erase(id);
+    return;
+  }
+  BakeChoice choice;
+  choice.source = bake_source_options(data);
+  auto &o = choice.options;
+  auto &r = choice.ray;
+  read_surface_bake_settings(o, data);
+  o.resolution = data["resolution"].toInt(o.resolution);
+  o.height = data["height"].toInt(o.height);
+  o.dimensions_locked = data["locked"].toBool(o.dimensions_locked);
+  o.dilation = data["dilation"].toInt(o.dilation);
+  o.rays = data["rays"].toInt(o.rays);
+  o.sampling = data["sampling"].toInt(o.sampling);
+  o.diffusion = data["diffusion"].toBool(o.diffusion);
+  o.use_project_mesh = data["project_mesh"].toBool(data["high_files"].toArray().isEmpty());
+  if (data.contains("enabled")) {
+    const auto enabled = data["enabled"].toArray();
+    for (int i = 0; i < 7; ++i)
+      o.enabled[i] = enabled[i].toBool();
+  }
+  r.frontal = data["frontal"].toDouble(r.frontal);
+  r.rear = data["rear"].toDouble(r.rear);
+  r.relative = data["relative"].toBool(r.relative);
+  r.average_normals = data["average"].toBool(r.average_normals);
+  r.ignore_backface = data["ignore_backface"].toBool(r.ignore_backface);
+  r.use_cage = data["use_cage"].toBool();
+  r.match_names = data["match_names"].toBool();
+  r.low_marker = data["low_marker"].toString(QString::fromStdString(r.low_marker)).toStdString();
+  r.high_marker =
+      data["high_marker"].toString(QString::fromStdString(r.high_marker)).toStdString();
+  r.ignore_marker =
+      data["ignore_marker"].toString(QString::fromStdString(r.ignore_marker)).toStdString();
+  for (auto path : data["high_files"].toArray())
+    choice.high_files.append(path.toString());
+  choice.cage_file = data["cage_file"].toString();
+  const auto tiles = data["tiles"].toObject();
+  for (auto i = tiles.begin(); i != tiles.end(); ++i)
+    for (auto tile : i.value().toArray())
+      choice.tiles[QUuid(i.key())].insert(tile.toInt());
+  // Preserve an explicitly empty selection as well as populated selections.
+  for (auto i = tiles.begin(); i != tiles.end(); ++i)
+    choice.tiles.try_emplace(QUuid(i.key()));
+  choices[id] = std::move(choice);
 }
-std::optional<std::vector<MeshBakeResult>> choose_mesh_bake(QWidget *parent,const TextureDocument &document,const SceneSnapshot &snapshot,const BakeSourceLoader &load_source,std::function<void(const std::function<void()> &)> with_gpu){
+std::optional<std::vector<MeshBakeResult>> choose_mesh_bake(
+    QWidget *parent,
+    const TextureDocument &document,
+    const SceneSnapshot &snapshot,
+    const BakeSourceLoader &load_source,
+    std::function<void(const std::function<void()> &)> with_gpu)
+{
   BakeChoice initial;
-  if(!choices.contains(document.id())&&!document.bake_configuration().isEmpty())apply_mesh_bake_template(document.id(),document.bake_configuration());
-  if(const auto found=choices.find(document.id());found!=choices.end())initial=found->second;
-  QDialog settings(parent);settings.setObjectName("meshBakeDialog");settings.setWindowTitle("Baking");settings.resize(620,620);
-  auto *layout=new QVBoxLayout(&settings);auto *body=new QHBoxLayout;layout->addLayout(body,1);
-  auto *left=new QVBoxLayout;body->addLayout(left,1);
-  left->addWidget(new QLabel("Texture Sets / UV Tiles",&settings));
-  auto *sets=new QTreeWidget(&settings);sets->setObjectName("bakeTextureSets");sets->setHeaderHidden(true);left->addWidget(sets);
-  for(const auto &set:document.texture_sets()){
-    auto *item=new QTreeWidgetItem(sets,{QString::fromStdString(set.name)});item->setFlags(item->flags()|Qt::ItemIsUserCheckable);item->setData(0,Qt::UserRole,set.id);
-    const auto found=initial.tiles.find(set.id);const auto selected=found==initial.tiles.end()?set.tiles:found->second;
-    item->setCheckState(0,set.disabled||set.loaded_tiles().empty()||selected.empty()?Qt::Unchecked:Qt::Checked);if(set.disabled||set.loaded_tiles().empty()){item->setToolTip(0,"Unloaded — enable in Texture Sets before baking");item->setFlags(Qt::NoItemFlags);continue;}
-    if(set.tiles!=std::set<int>{1001})for(int number:set.tiles){auto *tile=new QTreeWidgetItem(item,{QString::number(number)});tile->setFlags(tile->flags()|Qt::ItemIsUserCheckable);tile->setData(0,Qt::UserRole,number);tile->setCheckState(0,set.tile_loaded(number)&&selected.contains(number)?Qt::Checked:Qt::Unchecked);if(!set.tile_loaded(number)){tile->setFlags(Qt::NoItemFlags);tile->setToolTip(0,"Unloaded — enable in Texture Sets before baking");}}
+  if (!choices.contains(document.id()) && !document.bake_configuration().isEmpty())
+    apply_mesh_bake_template(document.id(), document.bake_configuration());
+  if (const auto found = choices.find(document.id()); found != choices.end())
+    initial = found->second;
+  QDialog settings(parent);
+  settings.setObjectName("meshBakeDialog");
+  settings.setWindowTitle("Baking");
+  settings.resize(620, 620);
+  auto *layout = new QVBoxLayout(&settings);
+  auto *body = new QHBoxLayout;
+  layout->addLayout(body, 1);
+  auto *left = new QVBoxLayout;
+  body->addLayout(left, 1);
+  left->addWidget(new QLabel("Texture Sets / UV Tiles", &settings));
+  auto *sets = new QTreeWidget(&settings);
+  sets->setObjectName("bakeTextureSets");
+  sets->setHeaderHidden(true);
+  left->addWidget(sets);
+  for (const auto &set : document.texture_sets()) {
+    auto *item = new QTreeWidgetItem(sets, {QString::fromStdString(set.name)});
+    item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+    item->setData(0, Qt::UserRole, set.id);
+    const auto found = initial.tiles.find(set.id);
+    const auto selected = found == initial.tiles.end() ? set.tiles : found->second;
+    item->setCheckState(0,
+                        set.disabled || set.loaded_tiles().empty() || selected.empty() ?
+                            Qt::Unchecked :
+                            Qt::Checked);
+    if (set.disabled || set.loaded_tiles().empty()) {
+      item->setToolTip(0, "Unloaded — enable in Texture Sets before baking");
+      item->setFlags(Qt::NoItemFlags);
+      continue;
+    }
+    if (set.tiles != std::set<int>{1001})
+      for (int number : set.tiles) {
+        auto *tile = new QTreeWidgetItem(item, {QString::number(number)});
+        tile->setFlags(tile->flags() | Qt::ItemIsUserCheckable);
+        tile->setData(0, Qt::UserRole, number);
+        tile->setCheckState(
+            0, set.tile_loaded(number) && selected.contains(number) ? Qt::Checked : Qt::Unchecked);
+        if (!set.tile_loaded(number)) {
+          tile->setFlags(Qt::NoItemFlags);
+          tile->setToolTip(0, "Unloaded — enable in Texture Sets before baking");
+        }
+      }
     item->setExpanded(true);
   }
-  left->addWidget(new QLabel("Mesh Maps",&settings));auto *maps=new QListWidget(&settings);maps->setObjectName("bakeMapTypes");
-  for(int role=0;role<7;++role){auto *item=new QListWidgetItem(QString::fromLatin1(mesh_map_names[role]),maps);item->setFlags(item->flags()|Qt::ItemIsUserCheckable);item->setCheckState(initial.options.enabled[role]?Qt::Checked:Qt::Unchecked);}left->addWidget(maps,2);
-  auto *scroll=new QScrollArea(&settings);scroll->setWidgetResizable(true);auto *common=new QWidget(scroll);common->setObjectName("bakeCommonParameters");auto *right=new QFormLayout(common);auto *common_title=new QLabel("Common Parameters",common);common_title->setObjectName("bakeCommonParametersTitle");right->addRow(common_title);scroll->setWidget(common);body->addWidget(scroll,2);
-  auto *resolution=new TextureExtentComboBox(32,&settings);resolution->setObjectName("bakeResolution");refresh_texture_extent_choices(*resolution,32,initial.options.resolution);auto *dimensions=new QHBoxLayout;dimensions->addWidget(resolution);auto *lock=new QCheckBox("Lock",&settings);lock->setObjectName("bakeDimensionsLocked");lock->setChecked(initial.options.dimensions_locked);dimensions->addWidget(lock);auto *height=new TextureExtentComboBox(32,&settings);height->setObjectName("bakeHeight");refresh_texture_extent_choices(*height,32,initial.options.rows());height->setEnabled(!lock->isChecked());dimensions->addWidget(height);right->addRow("Output size",dimensions);QObject::connect(resolution,&QComboBox::currentIndexChanged,&settings,[&]{if(lock->isChecked())refresh_texture_extent_choices(*height,32,resolution->currentData().toInt());});QObject::connect(lock,&QCheckBox::toggled,&settings,[&](bool locked){height->setEnabled(!locked);if(locked)refresh_texture_extent_choices(*height,32,resolution->currentData().toInt());});
-  auto *sampling=new QComboBox(&settings);sampling->setObjectName("bakeAntialiasing");sampling->addItem("None (1x1)",1);for(int size:{2,4,8})sampling->addItem(QString("Subsampling %1x%1").arg(size),size);sampling->setCurrentIndex(sampling->findData(initial.options.sampling));right->addRow("Subsampling (antialiasing)",sampling);
-  auto *rays=new QSpinBox(&settings);rays->setObjectName("bakeSecondaryRays");rays->setRange(1,512);rays->setValue(initial.options.rays);auto *rays_preset=new QComboBox(&settings);rays_preset->setObjectName("bakeSecondaryRaysPreset");for(int p:{16,32,64,128,256,512})rays_preset->addItem(QString("%1 samples").arg(p),p);rays_preset->addItem("Custom",-1);const int initial_preset=rays_preset->findData(initial.options.rays);rays_preset->setCurrentIndex(initial_preset>=0?initial_preset:rays_preset->findData(-1));auto *rays_row=new QHBoxLayout;rays_row->addWidget(rays);rays_row->addWidget(rays_preset);right->addRow("Baking samples (rays)",rays_row);
-  QObject::connect(rays_preset,&QComboBox::currentIndexChanged,&settings,[=]{const int v=rays_preset->currentData().toInt();if(v>0&&rays->value()!=v)rays->setValue(v);});
-  QObject::connect(rays,&QSpinBox::valueChanged,&settings,[=](int v){const int idx=rays_preset->findData(v);const int target=idx>=0?idx:rays_preset->findData(-1);if(rays_preset->currentIndex()!=target)rays_preset->setCurrentIndex(target);});
-  auto *dilation=new QSpinBox(&settings);dilation->setObjectName("bakeDilation");dilation->setRange(0,64);dilation->setValue(initial.options.dilation);right->addRow("Dilation Width",dilation);auto *diffusion=new QCheckBox("Apply Diffusion",&settings);diffusion->setObjectName("bakeDiffusion");diffusion->setChecked(initial.options.diffusion);right->addRow(diffusion);
-  auto *source=new QCheckBox("Use Low Poly Mesh as High Poly Mesh",common);source->setObjectName("bakeUseProjectMesh");source->setChecked(initial.options.use_project_mesh);right->insertRow(1,source);
-  auto *high_files=new QListWidget(&settings);high_files->setObjectName("bakeHighMeshes");high_files->addItems(initial.high_files);high_files->setMaximumHeight(100);right->addRow("High Definition Meshes",high_files);auto *high_buttons=new QHBoxLayout;auto *add_high=new QPushButton("Add mesh…",&settings);add_high->setObjectName("addBakeHighMesh");auto *remove_high=new QPushButton("Remove",&settings);remove_high->setObjectName("removeBakeHighMesh");high_buttons->addWidget(add_high);high_buttons->addWidget(remove_high);right->addRow(high_buttons);
-  QJsonObject source_recipe;store_bake_source_options(source_recipe,initial.source);auto *source_controls=new BakeSourceControls(&settings,"bake",source_recipe);right->addRow(source_controls);
-  auto *use_cage=new QCheckBox("Use Cage",&settings);use_cage->setObjectName("bakeUseCage");use_cage->setChecked(initial.ray.use_cage);right->addRow(use_cage);auto *cage_row=new QHBoxLayout;auto *cage_file=new QLineEdit(initial.cage_file,&settings);cage_file->setObjectName("bakeCageFile");auto *choose_cage=new QPushButton("…",&settings);choose_cage->setObjectName("chooseBakeCage");choose_cage->setMaximumWidth(30);cage_row->addWidget(cage_file);cage_row->addWidget(choose_cage);right->addRow("Cage File",cage_row);
-  const auto distance=[&](const char *name,double value){auto *control=new bts::NumericSpinBox(&settings);control->setObjectName(name);control->setRange(0,10000);control->setDecimals(5);control->setSingleStep(.01);control->setValue(value);return control;};auto *frontal=distance("bakeFrontalDistance",initial.ray.frontal),*rear=distance("bakeRearDistance",initial.ray.rear);right->addRow("Max Frontal Distance",frontal);right->addRow("Max Rear Distance",rear);
-  auto *curve_radius=distance("bakeCurvatureRadius",initial.options.curvature_radius),*curve_scale=distance("bakeCurvatureScale",initial.options.curvature_scale),*ao_distance=distance("bakeAoDistance",initial.options.ao_distance),*thickness_distance=distance("bakeThicknessDistance",initial.options.thickness_distance),*ray_offset=distance("bakeRayOffset",initial.options.ray_offset);
-  right->addRow("Pointiness smoothing (world; 0 = Cycles)",curve_radius);right->addRow("Pointiness strength (1 = Cycles)",curve_scale);right->addRow("AO distance (world; 0 = auto)",ao_distance);right->addRow("Thickness distance (world; 0 = auto)",thickness_distance);right->addRow("Ray offset (world; 0 = auto)",ray_offset);
-  auto *denoise=new QCheckBox("Denoise AO / Thickness (OIDN)",&settings);denoise->setObjectName("bakeDenoise");denoise->setChecked(initial.options.denoise);right->addRow(denoise);
-  auto *quality_preset=new QComboBox(common);quality_preset->setObjectName("bakeQualityPreset");quality_preset->addItems({"Draft","Final","Custom"});right->insertRow(2,"Quality preset",quality_preset);
-  const auto refresh_preset=[=]{const QSignalBlocker block(quality_preset);quality_preset->setCurrentIndex(int(detect_bake_preset(rays->value(),sampling->currentData().toInt(),denoise->isChecked())));};
-  QObject::connect(quality_preset,&QComboBox::activated,&settings,[=](int index){int r=rays->value(),s=sampling->currentData().toInt();bool d=denoise->isChecked();apply_bake_preset(BakePreset(index),r,s,d);rays->setValue(r);sampling->setCurrentIndex(sampling->findData(s));denoise->setChecked(d);refresh_preset();});
-  QObject::connect(rays,&QSpinBox::valueChanged,&settings,refresh_preset);QObject::connect(sampling,&QComboBox::currentIndexChanged,&settings,refresh_preset);QObject::connect(denoise,&QCheckBox::toggled,&settings,refresh_preset);refresh_preset();
-  auto *relative=new QCheckBox("Relative to Bounding Box",&settings);relative->setObjectName("bakeRelativeDistances");relative->setChecked(initial.ray.relative);right->addRow(relative);auto *average=new QCheckBox("Average Normals",&settings);average->setObjectName("bakeAverageNormals");average->setChecked(initial.ray.average_normals);right->addRow(average);auto *backface=new QCheckBox("Ignore Backface",&settings);backface->setObjectName("bakeIgnoreBackface");backface->setChecked(initial.ray.ignore_backface);backface->setToolTip("Reject backfaces on marked objects; an empty suffix applies to all objects");right->addRow(backface);
-  const auto cage_state=[&]{for(QWidget *control:std::initializer_list<QWidget *>{frontal,rear,relative,average})control->setEnabled(!use_cage->isChecked());};QObject::connect(use_cage,&QCheckBox::toggled,&settings,cage_state);cage_state();
-  QObject::connect(add_high,&QPushButton::clicked,&settings,[&]{const auto files=bts::FileDialog::getOpenFileNames(&settings,"High Definition Meshes",{},bake_mesh_filter,nullptr,QFileDialog::DontUseNativeDialog);for(const auto &path:files)if(high_files->findItems(path,Qt::MatchExactly).isEmpty())high_files->addItem(path);});QObject::connect(remove_high,&QPushButton::clicked,&settings,[&]{delete high_files->takeItem(high_files->currentRow());});QObject::connect(choose_cage,&QPushButton::clicked,&settings,[&]{const auto path=bts::FileDialog::getOpenFileName(&settings,"Cage File",{},bake_mesh_filter,nullptr,QFileDialog::DontUseNativeDialog);if(!path.isEmpty())cage_file->setText(path);});
-  auto *match=new QComboBox(&settings);match->setObjectName("bakeMatch");match->addItems({"Always","By Mesh Name"});match->setCurrentIndex(initial.ray.match_names?1:0);match->setToolTip("Case-sensitive geometry names. Low-poly-as-high-poly uses each mesh itself.");right->addRow("Match",match);
-  const auto marker=[&](const char *name,const std::string &value){auto *control=new QLineEdit(&settings);control->setObjectName(name);control->setMaxLength(std::numeric_limits<int>::max());control->setText(QString::fromStdString(value));return control;};auto *low_marker=marker("bakeLowSuffix",initial.ray.low_marker),*high_marker=marker("bakeHighSuffix",initial.ray.high_marker),*ignore_marker=marker("bakeIgnoreSuffix",initial.ray.ignore_marker);right->addRow("Low poly mesh suffix",low_marker);right->addRow("High poly mesh suffix",high_marker);right->addRow("Ignore backfaces suffix",ignore_marker);
-  auto *help=new QLabel("Bake from the evaluated project mesh and its UVs.\n\nAO and Thickness use cosine-weighted rays. Position uses full-scene sphere normalization. Curvature uses Cycles-style Pointiness on the subdivided surface with displacement applied. UV copies share the same geometric field. Normal maps do not change Pointiness. Zero smoothing and strength 1 preserve its native values.\n\nExternal OBJ, Alembic and USD sources use Blender ray projection and tangent conversion. Custom cages require matching object order and vertex indices. Automatic cages are not available.",&settings);help->setWordWrap(true);right->addRow(help);
-  auto *disabled_reason=new QLabel(&settings);disabled_reason->setObjectName("bakeDisabledReason");disabled_reason->setWordWrap(true);layout->addWidget(disabled_reason);
-  auto *count=new QLabel(&settings);count->setObjectName("bakeSelectedCount");layout->addWidget(count);
-  auto *buttons=new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel,&settings);auto *start=buttons->button(QDialogButtonBox::Ok);start->setText("Bake selected textures");start->setObjectName("startMeshBake");
-  auto *save=buttons->addButton("Save settings",QDialogButtonBox::ActionRole);save->setObjectName("saveBakeSettings");QObject::connect(save,&QPushButton::clicked,&settings,[&]{settings.done(2);});layout->addWidget(buttons);
-  QObject::connect(buttons,&QDialogButtonBox::accepted,&settings,&QDialog::accept);QObject::connect(buttons,&QDialogButtonBox::rejected,&settings,&QDialog::reject);
-  const auto selected_tiles=[&]{std::map<QUuid,std::set<int>> result;for(int i=0;i<sets->topLevelItemCount();++i){auto *item=sets->topLevelItem(i);auto &tiles=result[item->data(0,Qt::UserRole).toUuid()];if(item->childCount()){for(int t=0;t<item->childCount();++t)if((item->child(t)->flags()&Qt::ItemIsEnabled)&&item->child(t)->checkState(0)==Qt::Checked)tiles.insert(item->child(t)->data(0,Qt::UserRole).toInt());}else if((item->flags()&Qt::ItemIsEnabled)&&item->checkState(0)==Qt::Checked)tiles.insert(1001);}return result;};
-  const auto selection=[&]{int selected=0,enabled=0;for(const auto &[id,tiles]:selected_tiles())selected+=int(tiles.size());for(int i=0;i<7;++i)enabled+=maps->item(i)->checkState()==Qt::Checked;const int total=selected*enabled;count->setText(total?QString(total==1?"%1 texture selected for baking":"%1 textures selected for baking").arg(total):"No textures selected for baking");QStringList reasons;if(!source->isChecked()&&high_files->count()==0)reasons<<"Add a high-poly mesh or enable Use Low Poly Mesh as High Poly Mesh";if(!enabled)reasons<<"Select at least one mesh map";if(!selected)reasons<<"Select at least one texture set/tile";if(use_cage->isChecked()&&cage_file->text().trimmed().isEmpty())reasons<<"Select a cage file or disable Use Cage";const auto reason=reasons.join("\n");start->setEnabled(reasons.isEmpty());start->setToolTip(reason);disabled_reason->setText(reasons.isEmpty()?QString(source->isChecked()?"Ready to bake using the project mesh":"Ready to bake using the high-poly meshes"):reason);};
-  bool updating=false;
-  QObject::connect(sets,&QTreeWidget::itemChanged,&settings,[&](QTreeWidgetItem *item,int){if(updating)return;updating=true;if(item->parent()){auto *parent=item->parent();bool any=false;for(int i=0;i<parent->childCount();++i)any|=parent->child(i)->checkState(0)==Qt::Checked;parent->setCheckState(0,any?Qt::Checked:Qt::Unchecked);}else for(int i=0;i<item->childCount();++i)item->child(i)->setCheckState(0,item->checkState(0));updating=false;selection();});
-  QObject::connect(maps,&QListWidget::itemChanged,&settings,selection);QObject::connect(source,&QCheckBox::toggled,&settings,selection);QObject::connect(use_cage,&QCheckBox::toggled,&settings,selection);QObject::connect(cage_file,&QLineEdit::textChanged,&settings,selection);QObject::connect(high_files->model(),&QAbstractItemModel::rowsInserted,&settings,selection);QObject::connect(high_files->model(),&QAbstractItemModel::rowsRemoved,&settings,selection);selection();
-  const int accepted=settings.exec();if(accepted==QDialog::Rejected)return {};
-  MeshBakeSettings options;options.resolution=resolution->currentData().toInt();options.height=height->currentData().toInt();options.dimensions_locked=lock->isChecked();options.diffusion=diffusion->isChecked();options.sampling=sampling->currentData().toInt();options.dilation=dilation->value();options.rays=rays->value();options.curvature_radius=curve_radius->value();options.curvature_scale=curve_scale->value();options.ao_distance=ao_distance->value();options.thickness_distance=thickness_distance->value();options.ray_offset=ray_offset->value();options.normal_detail=0;options.denoise=denoise->isChecked();options.use_project_mesh=source->isChecked();for(int i=0;i<7;++i)options.enabled[i]=maps->item(i)->checkState()==Qt::Checked;
-  const auto selected=selected_tiles();BakeRayOptions ray;ray.use_cage=use_cage->isChecked();ray.frontal=frontal->value();ray.rear=rear->value();ray.relative=relative->isChecked();ray.average_normals=average->isChecked();ray.ignore_backface=backface->isChecked();ray.match_names=match->currentIndex()==1;ray.low_marker=low_marker->text().toStdString();ray.high_marker=high_marker->text().toStdString();ray.ignore_marker=ignore_marker->text().toStdString();ray.directx=document.settings().normal_map_format==NormalMapFormat::DirectX;ray.per_fragment=document.settings().tangent_per_fragment;QStringList high_paths;for(int i=0;i<high_files->count();++i)high_paths.append(high_files->item(i)->text());const BakeChoice choice{options,selected,ray,high_paths,cage_file->text(),source_controls->options()};const auto remember=[&]{if(choices.size()>=128&&!choices.contains(document.id()))choices.erase(choices.begin());choices[document.id()]=choice;};if(accepted==2){remember();return {};}
-  // Check the entire resulting document, including retained maps, before allocating atlases.
-  SceneSnapshot secondary=snapshot;std::optional<SceneSnapshot> cage;
-  if(!options.use_project_mesh){if(!load_source)throw std::runtime_error("Native bake-source loader is unavailable");secondary={};for(const auto &path:high_paths){auto part=load_source(path.toStdString(),source_controls->options());const auto offset=secondary.materials.size();for(auto &triangle:part.uv_triangles){triangle.material+=offset;secondary.uv_triangles.push_back(std::move(triangle));}secondary.materials.insert(secondary.materials.end(),part.materials.begin(),part.materials.end());secondary.object_names.insert(part.object_names.begin(),part.object_names.end());secondary.object_vertex_counts.insert(part.object_vertex_counts.begin(),part.object_vertex_counts.end());if(!secondary.has_bounds){secondary.minimum=part.minimum;secondary.maximum=part.maximum;}else for(int axis=0;axis<3;++axis){secondary.minimum[axis]=std::min(secondary.minimum[axis],part.minimum[axis]);secondary.maximum[axis]=std::max(secondary.maximum[axis],part.maximum[axis]);}secondary.has_bounds|=part.has_bounds;secondary.mesh_objects+=part.mesh_objects;}}
-  if(ray.use_cage){if(!load_source)throw std::runtime_error("Native cage loader is unavailable");cage=load_source(cage_file->text().toStdString(),source_controls->options());TexturePadding::validate_cage(snapshot,*cage);}options.external_source=!options.use_project_mesh||ray.use_cage;
-  options.ignore_backface_objects=bake_backface_objects(secondary,ray.ignore_backface,ray.ignore_marker);
-  if(ray.match_names&&options.use_project_mesh)for(const auto &tri:secondary.uv_triangles){const auto object=std::uint32_t(tri.vertex_ids[0]>>32);options.matched_objects[object].insert(object);}
-  std::vector<MeshBakeResult> results;
-  if(with_gpu)options.with_gpu=[owner=std::move(with_gpu)](const std::function<void()> &work){owner([&]{
-    blender::GPU_finish();int total=0,free=0;if(blender::GPU_mem_stats_supported())blender::GPU_mem_stats_get(&total,&free);
-    texture_vram_query_valid=total>0&&free>=0&&free<=total;texture_free_vram=texture_vram_query_valid?std::uint64_t(free)*1024:0;++texture_vram_query_generation;
-    work();
-  });};
-  auto remaining_sets=std::count_if(document.texture_sets().begin(),document.texture_sets().end(),[&](const auto &set){return !selected.at(set.id).empty();});
-  for(const auto &set:document.texture_sets())if(!selected.at(set.id).empty()){
-    --remaining_sets;
-    std::vector<MeshBakeInput> inputs;capture_bake_channels(options,document,snapshot);
-    const int width=options.resolution*options.sampling,height=options.rows()*options.sampling;
-    std::shared_ptr<const FillSurfaceAtlas> atlas;
-    if(options.external_source&&!options.use_project_mesh&&ray.match_names){
-      // Partition by geometry, including multiple low objects in the same Texture Set.
-      auto merged=std::make_shared<FillSurfaceAtlas>();merged->resolution=width;merged->height=height;merged->extent=0;for(int axis=0;axis<3;++axis)merged->extent=std::max(merged->extent,double(snapshot.maximum[axis]-snapshot.minimum[axis]));
-      for(int tile:selected.at(set.id)){merged->tiles[tile].resize(std::size_t(width)*height);if(options.enabled[4])merged->curvature[tile].resize(std::size_t(width)*height,0);}
-      std::set<std::uint32_t> objects;for(const auto &triangle:snapshot.uv_triangles)if(snapshot.materials.at(triangle.material).session_id==set.material_session_uid)objects.insert(std::uint32_t(triangle.vertex_ids[0]>>32));
-      for(auto uid:objects){
-        auto &matched=options.matched_objects[uid];const auto &low_name=snapshot.object_names.at(uid);for(const auto &[other,name]:secondary.object_names)if(bake_names_match(low_name,name,ray.low_marker,ray.high_marker))matched.insert(other);
-        if(matched.empty())continue;
-        SceneSnapshot low_part;low_part.materials=snapshot.materials;low_part.minimum=snapshot.minimum;low_part.maximum=snapshot.maximum;low_part.has_bounds=snapshot.has_bounds;for(const auto &triangle:snapshot.uv_triangles)if(std::uint32_t(triangle.vertex_ids[0]>>32)==uid)low_part.uv_triangles.push_back(triangle);
-        SceneSnapshot high_part;high_part.materials=secondary.materials;high_part.object_names=secondary.object_names;for(const auto &triangle:secondary.uv_triangles)if(matched.contains(std::uint32_t(triangle.vertex_ids[0]>>32)))high_part.uv_triangles.push_back(triangle);if(high_part.uv_triangles.empty())continue;
-        TexturePadding geometry(low_part,set.material_session_uid);const auto part=geometry.project_source(snapshot,high_part,cage?&*cage:nullptr,ray,width,height,selected.at(set.id),false);
-        for(int tile:selected.at(set.id)){const auto &points=part->tiles.at(tile);auto &output=merged->tiles.at(tile);for(std::size_t i=0;i<points.size();++i)if(points[i].valid){output[i]=points[i];output[i].match_object=uid;}}
-      }
-      atlas=std::move(merged);
-    }
-    else {TexturePadding geometry(snapshot,set.material_session_uid);atlas=options.external_source?geometry.project_source(snapshot,secondary,cage?&*cage:nullptr,ray,width,height,selected.at(set.id),false):geometry.projection_geometry(width,selected.at(set.id),false,height);}
-    inputs.push_back({set.material_session_uid,set.name,set.base_values,std::move(atlas)});
-
-  MeshBakeJob job(secondary,std::move(inputs),options);
-  CancellableOperationDialog progress(parent);
-  progress.setObjectName("meshBakeProgress");progress.setWindowTitle("Baking mesh maps");progress.resize(400,300);
-  auto *progress_layout=new QVBoxLayout(&progress);
-  auto *tasks=new QListWidget(&progress);tasks->setObjectName("bakeProgressTasks");
-  for(const auto &name:job.tasks)tasks->addItem(QString::fromStdString(name));
-  progress_layout->addWidget(tasks);
-  auto *bar=new QProgressBar(&progress);bar->setObjectName("bakeProgressBar");
-  bar->setRange(0,int(job.tasks.size()));progress_layout->addWidget(bar);
-  auto *status=new QLabel(&progress);status->setObjectName("meshBakeProgressStatus");
-  status->setWordWrap(true);progress_layout->addWidget(status);
-  auto *finish=new QPushButton("Cancel",&progress);finish->setObjectName("finishMeshBake");progress_layout->addWidget(finish);
-  progress.pending=[&]{return !job.finished.load(std::memory_order_acquire);};
-  progress.cancel=[&]{job.cancel();finish->setEnabled(false);finish->setText("Stopping…");status->setText("Stopping bake…");};
-  LongOperationCancel escape(progress.pending,[&]{progress.reject();});
-  QObject::connect(finish,&QPushButton::clicked,&progress,[&]{
-    if(job.finished.load(std::memory_order_acquire)&&!job.cancelled.load()&&job.error.empty())progress.accept();
-    else progress.reject();
-  });
-  QTimer timer;
-  QObject::connect(&timer,&QTimer::timeout,&progress,[&]{
-    job.process_gpu();const int complete=job.completed;bar->setValue(complete);
-    for(int i=0;i<tasks->count();++i)tasks->item(i)->setText((i<complete?"✓ ":i==job.current?"… ":"  ")+QString::fromStdString(job.tasks[i]));
-    if(job.finished.load(std::memory_order_acquire)){
-      if(job.cancelled.load()){progress.reject();return;}
-      if(job.error.empty()&&remaining_sets>0){progress.accept();return;}
-      finish->setEnabled(true);finish->setText(job.error.empty()?"OK":"Close");
-      status->setText(job.error.empty()?QString("%1/%1 maps complete").arg(job.tasks.size()):QString::fromStdString(job.error));
-    }else if(!job.cancelled.load()){
-      status->setText((job.cpu_fallback.load()?QString("GPU unavailable; continuing on CPU. "):QString{})+QString("%1 / %2").arg(complete).arg(job.tasks.size()));
-    }
-  });
-  timer.start(50);
-  if(progress.exec()!=QDialog::Accepted){job.cancel();return {};}
-  if(!job.error.empty())throw std::runtime_error(job.error);
-  for(auto &result:job.result)results.push_back(std::move(result));
+  left->addWidget(new QLabel("Mesh Maps", &settings));
+  auto *maps = new QListWidget(&settings);
+  maps->setObjectName("bakeMapTypes");
+  for (int role = 0; role < 7; ++role) {
+    auto *item = new QListWidgetItem(QString::fromLatin1(mesh_map_names[role]), maps);
+    item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+    item->setCheckState(initial.options.enabled[role] ? Qt::Checked : Qt::Unchecked);
   }
-  remember();return results;
+  left->addWidget(maps, 2);
+  auto *scroll = new QScrollArea(&settings);
+  scroll->setWidgetResizable(true);
+  auto *common = new QWidget(scroll);
+  common->setObjectName("bakeCommonParameters");
+  auto *right = new QFormLayout(common);
+  auto *common_title = new QLabel("Common Parameters", common);
+  common_title->setObjectName("bakeCommonParametersTitle");
+  right->addRow(common_title);
+  scroll->setWidget(common);
+  body->addWidget(scroll, 2);
+  auto *resolution = new TextureExtentComboBox(32, &settings);
+  resolution->setObjectName("bakeResolution");
+  refresh_texture_extent_choices(*resolution, 32, initial.options.resolution);
+  auto *dimensions = new QHBoxLayout;
+  dimensions->addWidget(resolution);
+  auto *lock = new QCheckBox("Lock", &settings);
+  lock->setObjectName("bakeDimensionsLocked");
+  lock->setChecked(initial.options.dimensions_locked);
+  dimensions->addWidget(lock);
+  auto *height = new TextureExtentComboBox(32, &settings);
+  height->setObjectName("bakeHeight");
+  refresh_texture_extent_choices(*height, 32, initial.options.rows());
+  height->setEnabled(!lock->isChecked());
+  dimensions->addWidget(height);
+  right->addRow("Output size", dimensions);
+  QObject::connect(resolution, &QComboBox::currentIndexChanged, &settings, [&] {
+    if (lock->isChecked())
+      refresh_texture_extent_choices(*height, 32, resolution->currentData().toInt());
+  });
+  QObject::connect(lock, &QCheckBox::toggled, &settings, [&](bool locked) {
+    height->setEnabled(!locked);
+    if (locked)
+      refresh_texture_extent_choices(*height, 32, resolution->currentData().toInt());
+  });
+  auto *sampling = new QComboBox(&settings);
+  sampling->setObjectName("bakeAntialiasing");
+  sampling->addItem("None (1x1)", 1);
+  for (int size : {2, 4, 8})
+    sampling->addItem(QString("Subsampling %1x%1").arg(size), size);
+  sampling->setCurrentIndex(sampling->findData(initial.options.sampling));
+  right->addRow("Subsampling (antialiasing)", sampling);
+  auto *rays = new QSpinBox(&settings);
+  rays->setObjectName("bakeSecondaryRays");
+  rays->setRange(1, 512);
+  rays->setValue(initial.options.rays);
+  auto *rays_preset = new QComboBox(&settings);
+  rays_preset->setObjectName("bakeSecondaryRaysPreset");
+  for (int p : {16, 32, 64, 128, 256, 512})
+    rays_preset->addItem(QString("%1 samples").arg(p), p);
+  rays_preset->addItem("Custom", -1);
+  const int initial_preset = rays_preset->findData(initial.options.rays);
+  rays_preset->setCurrentIndex(initial_preset >= 0 ? initial_preset : rays_preset->findData(-1));
+  auto *rays_row = new QHBoxLayout;
+  rays_row->addWidget(rays);
+  rays_row->addWidget(rays_preset);
+  right->addRow("Baking samples (rays)", rays_row);
+  QObject::connect(rays_preset, &QComboBox::currentIndexChanged, &settings, [=] {
+    const int v = rays_preset->currentData().toInt();
+    if (v > 0 && rays->value() != v)
+      rays->setValue(v);
+  });
+  QObject::connect(rays, &QSpinBox::valueChanged, &settings, [=](int v) {
+    const int idx = rays_preset->findData(v);
+    const int target = idx >= 0 ? idx : rays_preset->findData(-1);
+    if (rays_preset->currentIndex() != target)
+      rays_preset->setCurrentIndex(target);
+  });
+  auto *dilation = new QSpinBox(&settings);
+  dilation->setObjectName("bakeDilation");
+  dilation->setRange(0, 64);
+  dilation->setValue(initial.options.dilation);
+  right->addRow("Dilation Width", dilation);
+  auto *diffusion = new QCheckBox("Apply Diffusion", &settings);
+  diffusion->setObjectName("bakeDiffusion");
+  diffusion->setChecked(initial.options.diffusion);
+  right->addRow(diffusion);
+  auto *source = new QCheckBox("Use Low Poly Mesh as High Poly Mesh", common);
+  source->setObjectName("bakeUseProjectMesh");
+  source->setChecked(initial.options.use_project_mesh);
+  right->insertRow(1, source);
+  auto *high_files = new QListWidget(&settings);
+  high_files->setObjectName("bakeHighMeshes");
+  high_files->addItems(initial.high_files);
+  high_files->setMaximumHeight(100);
+  right->addRow("High Definition Meshes", high_files);
+  auto *high_buttons = new QHBoxLayout;
+  auto *add_high = new QPushButton("Add mesh…", &settings);
+  add_high->setObjectName("addBakeHighMesh");
+  auto *remove_high = new QPushButton("Remove", &settings);
+  remove_high->setObjectName("removeBakeHighMesh");
+  high_buttons->addWidget(add_high);
+  high_buttons->addWidget(remove_high);
+  right->addRow(high_buttons);
+  QJsonObject source_recipe;
+  store_bake_source_options(source_recipe, initial.source);
+  auto *source_controls = new BakeSourceControls(&settings, "bake", source_recipe);
+  right->addRow(source_controls);
+  auto *use_cage = new QCheckBox("Use Cage", &settings);
+  use_cage->setObjectName("bakeUseCage");
+  use_cage->setChecked(initial.ray.use_cage);
+  right->addRow(use_cage);
+  auto *cage_row = new QHBoxLayout;
+  auto *cage_file = new QLineEdit(initial.cage_file, &settings);
+  cage_file->setObjectName("bakeCageFile");
+  auto *choose_cage = new QPushButton("…", &settings);
+  choose_cage->setObjectName("chooseBakeCage");
+  choose_cage->setMaximumWidth(30);
+  cage_row->addWidget(cage_file);
+  cage_row->addWidget(choose_cage);
+  right->addRow("Cage File", cage_row);
+  const auto distance = [&](const char *name, double value) {
+    auto *control = new bts::NumericSpinBox(&settings);
+    control->setObjectName(name);
+    control->setRange(0, 10000);
+    control->setDecimals(5);
+    control->setSingleStep(.01);
+    control->setValue(value);
+    return control;
+  };
+  auto *frontal = distance("bakeFrontalDistance", initial.ray.frontal),
+       *rear = distance("bakeRearDistance", initial.ray.rear);
+  right->addRow("Max Frontal Distance", frontal);
+  right->addRow("Max Rear Distance", rear);
+  auto *curve_radius = distance("bakeCurvatureRadius", initial.options.curvature_radius),
+       *curve_scale = distance("bakeCurvatureScale", initial.options.curvature_scale),
+       *ao_distance = distance("bakeAoDistance", initial.options.ao_distance),
+       *thickness_distance = distance("bakeThicknessDistance", initial.options.thickness_distance),
+       *ray_offset = distance("bakeRayOffset", initial.options.ray_offset);
+  right->addRow("Pointiness smoothing (world; 0 = Cycles)", curve_radius);
+  right->addRow("Pointiness strength (1 = Cycles)", curve_scale);
+  right->addRow("AO distance (world; 0 = auto)", ao_distance);
+  right->addRow("Thickness distance (world; 0 = auto)", thickness_distance);
+  right->addRow("Ray offset (world; 0 = auto)", ray_offset);
+  auto *denoise = new QCheckBox("Denoise AO / Thickness (OIDN)", &settings);
+  denoise->setObjectName("bakeDenoise");
+  denoise->setChecked(initial.options.denoise);
+  right->addRow(denoise);
+  auto *quality_preset = new QComboBox(common);
+  quality_preset->setObjectName("bakeQualityPreset");
+  quality_preset->addItems({"Draft", "Final", "Custom"});
+  right->insertRow(2, "Quality preset", quality_preset);
+  const auto refresh_preset = [=] {
+    const QSignalBlocker block(quality_preset);
+    quality_preset->setCurrentIndex(int(
+        detect_bake_preset(rays->value(), sampling->currentData().toInt(), denoise->isChecked())));
+  };
+  QObject::connect(quality_preset, &QComboBox::activated, &settings, [=](int index) {
+    int r = rays->value(), s = sampling->currentData().toInt();
+    bool d = denoise->isChecked();
+    apply_bake_preset(BakePreset(index), r, s, d);
+    rays->setValue(r);
+    sampling->setCurrentIndex(sampling->findData(s));
+    denoise->setChecked(d);
+    refresh_preset();
+  });
+  QObject::connect(rays, &QSpinBox::valueChanged, &settings, refresh_preset);
+  QObject::connect(sampling, &QComboBox::currentIndexChanged, &settings, refresh_preset);
+  QObject::connect(denoise, &QCheckBox::toggled, &settings, refresh_preset);
+  refresh_preset();
+  auto *relative = new QCheckBox("Relative to Bounding Box", &settings);
+  relative->setObjectName("bakeRelativeDistances");
+  relative->setChecked(initial.ray.relative);
+  right->addRow(relative);
+  auto *average = new QCheckBox("Average Normals", &settings);
+  average->setObjectName("bakeAverageNormals");
+  average->setChecked(initial.ray.average_normals);
+  right->addRow(average);
+  auto *backface = new QCheckBox("Ignore Backface", &settings);
+  backface->setObjectName("bakeIgnoreBackface");
+  backface->setChecked(initial.ray.ignore_backface);
+  backface->setToolTip(
+      "Reject backfaces on marked objects; an empty suffix applies to all objects");
+  right->addRow(backface);
+  const auto cage_state = [&] {
+    for (QWidget *control : std::initializer_list<QWidget *>{frontal, rear, relative, average})
+      control->setEnabled(!use_cage->isChecked());
+  };
+  QObject::connect(use_cage, &QCheckBox::toggled, &settings, cage_state);
+  cage_state();
+  QObject::connect(add_high, &QPushButton::clicked, &settings, [&] {
+    const auto files = bts::FileDialog::getOpenFileNames(&settings,
+                                                         "High Definition Meshes",
+                                                         {},
+                                                         bake_mesh_filter,
+                                                         nullptr,
+                                                         QFileDialog::DontUseNativeDialog);
+    for (const auto &path : files)
+      if (high_files->findItems(path, Qt::MatchExactly).isEmpty())
+        high_files->addItem(path);
+  });
+  QObject::connect(remove_high, &QPushButton::clicked, &settings, [&] {
+    delete high_files->takeItem(high_files->currentRow());
+  });
+  QObject::connect(choose_cage, &QPushButton::clicked, &settings, [&] {
+    const auto path = bts::FileDialog::getOpenFileName(
+        &settings, "Cage File", {}, bake_mesh_filter, nullptr, QFileDialog::DontUseNativeDialog);
+    if (!path.isEmpty())
+      cage_file->setText(path);
+  });
+  auto *match = new QComboBox(&settings);
+  match->setObjectName("bakeMatch");
+  match->addItems({"Always", "By Mesh Name"});
+  match->setCurrentIndex(initial.ray.match_names ? 1 : 0);
+  match->setToolTip("Case-sensitive geometry names. Low-poly-as-high-poly uses each mesh itself.");
+  right->addRow("Match", match);
+  const auto marker = [&](const char *name, const std::string &value) {
+    auto *control = new QLineEdit(&settings);
+    control->setObjectName(name);
+    control->setMaxLength(std::numeric_limits<int>::max());
+    control->setText(QString::fromStdString(value));
+    return control;
+  };
+  auto *low_marker = marker("bakeLowSuffix", initial.ray.low_marker),
+       *high_marker = marker("bakeHighSuffix", initial.ray.high_marker),
+       *ignore_marker = marker("bakeIgnoreSuffix", initial.ray.ignore_marker);
+  right->addRow("Low poly mesh suffix", low_marker);
+  right->addRow("High poly mesh suffix", high_marker);
+  right->addRow("Ignore backfaces suffix", ignore_marker);
+  auto *help = new QLabel(
+      "Bake from the evaluated project mesh and its UVs.\n\nAO and Thickness use cosine-weighted rays. Position uses full-scene sphere normalization. Curvature uses Cycles-style Pointiness on the subdivided surface with displacement applied. UV copies share the same geometric field. Normal maps do not change Pointiness. Zero smoothing and strength 1 preserve its native values.\n\nExternal OBJ, Alembic and USD sources use Blender ray projection and tangent conversion. Custom cages require matching object order and vertex indices. Automatic cages are not available.",
+      &settings);
+  help->setWordWrap(true);
+  right->addRow(help);
+  auto *disabled_reason = new QLabel(&settings);
+  disabled_reason->setObjectName("bakeDisabledReason");
+  disabled_reason->setWordWrap(true);
+  layout->addWidget(disabled_reason);
+  auto *count = new QLabel(&settings);
+  count->setObjectName("bakeSelectedCount");
+  layout->addWidget(count);
+  auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &settings);
+  auto *start = buttons->button(QDialogButtonBox::Ok);
+  start->setText("Bake selected textures");
+  start->setObjectName("startMeshBake");
+  auto *save = buttons->addButton("Save settings", QDialogButtonBox::ActionRole);
+  save->setObjectName("saveBakeSettings");
+  QObject::connect(save, &QPushButton::clicked, &settings, [&] { settings.done(2); });
+  layout->addWidget(buttons);
+  QObject::connect(buttons, &QDialogButtonBox::accepted, &settings, &QDialog::accept);
+  QObject::connect(buttons, &QDialogButtonBox::rejected, &settings, &QDialog::reject);
+  const auto selected_tiles = [&] {
+    std::map<QUuid, std::set<int>> result;
+    for (int i = 0; i < sets->topLevelItemCount(); ++i) {
+      auto *item = sets->topLevelItem(i);
+      auto &tiles = result[item->data(0, Qt::UserRole).toUuid()];
+      if (item->childCount()) {
+        for (int t = 0; t < item->childCount(); ++t)
+          if ((item->child(t)->flags() & Qt::ItemIsEnabled) &&
+              item->child(t)->checkState(0) == Qt::Checked)
+            tiles.insert(item->child(t)->data(0, Qt::UserRole).toInt());
+      }
+      else if ((item->flags() & Qt::ItemIsEnabled) && item->checkState(0) == Qt::Checked)
+        tiles.insert(1001);
+    }
+    return result;
+  };
+  const auto selection = [&] {
+    int selected = 0, enabled = 0;
+    for (const auto &[id, tiles] : selected_tiles())
+      selected += int(tiles.size());
+    for (int i = 0; i < 7; ++i)
+      enabled += maps->item(i)->checkState() == Qt::Checked;
+    const int total = selected * enabled;
+    count->setText(total ? QString(total == 1 ? "%1 texture selected for baking" :
+                                                "%1 textures selected for baking")
+                               .arg(total) :
+                           "No textures selected for baking");
+    QStringList reasons;
+    if (!source->isChecked() && high_files->count() == 0)
+      reasons << "Add a high-poly mesh or enable Use Low Poly Mesh as High Poly Mesh";
+    if (!enabled)
+      reasons << "Select at least one mesh map";
+    if (!selected)
+      reasons << "Select at least one texture set/tile";
+    if (use_cage->isChecked() && cage_file->text().trimmed().isEmpty())
+      reasons << "Select a cage file or disable Use Cage";
+    const auto reason = reasons.join("\n");
+    start->setEnabled(reasons.isEmpty());
+    start->setToolTip(reason);
+    disabled_reason->setText(reasons.isEmpty() ?
+                                 QString(source->isChecked() ?
+                                             "Ready to bake using the project mesh" :
+                                             "Ready to bake using the high-poly meshes") :
+                                 reason);
+  };
+  bool updating = false;
+  QObject::connect(sets, &QTreeWidget::itemChanged, &settings, [&](QTreeWidgetItem *item, int) {
+    if (updating)
+      return;
+    updating = true;
+    if (item->parent()) {
+      auto *parent = item->parent();
+      bool any = false;
+      for (int i = 0; i < parent->childCount(); ++i)
+        any |= parent->child(i)->checkState(0) == Qt::Checked;
+      parent->setCheckState(0, any ? Qt::Checked : Qt::Unchecked);
+    }
+    else
+      for (int i = 0; i < item->childCount(); ++i)
+        item->child(i)->setCheckState(0, item->checkState(0));
+    updating = false;
+    selection();
+  });
+  QObject::connect(maps, &QListWidget::itemChanged, &settings, selection);
+  QObject::connect(source, &QCheckBox::toggled, &settings, selection);
+  QObject::connect(use_cage, &QCheckBox::toggled, &settings, selection);
+  QObject::connect(cage_file, &QLineEdit::textChanged, &settings, selection);
+  QObject::connect(high_files->model(), &QAbstractItemModel::rowsInserted, &settings, selection);
+  QObject::connect(high_files->model(), &QAbstractItemModel::rowsRemoved, &settings, selection);
+  selection();
+  const int accepted = settings.exec();
+  if (accepted == QDialog::Rejected)
+    return {};
+  MeshBakeSettings options;
+  options.resolution = resolution->currentData().toInt();
+  options.height = height->currentData().toInt();
+  options.dimensions_locked = lock->isChecked();
+  options.diffusion = diffusion->isChecked();
+  options.sampling = sampling->currentData().toInt();
+  options.dilation = dilation->value();
+  options.rays = rays->value();
+  options.curvature_radius = curve_radius->value();
+  options.curvature_scale = curve_scale->value();
+  options.ao_distance = ao_distance->value();
+  options.thickness_distance = thickness_distance->value();
+  options.ray_offset = ray_offset->value();
+  options.normal_detail = 0;
+  options.denoise = denoise->isChecked();
+  options.use_project_mesh = source->isChecked();
+  for (int i = 0; i < 7; ++i)
+    options.enabled[i] = maps->item(i)->checkState() == Qt::Checked;
+  const auto selected = selected_tiles();
+  BakeRayOptions ray;
+  ray.use_cage = use_cage->isChecked();
+  ray.frontal = frontal->value();
+  ray.rear = rear->value();
+  ray.relative = relative->isChecked();
+  ray.average_normals = average->isChecked();
+  ray.ignore_backface = backface->isChecked();
+  ray.match_names = match->currentIndex() == 1;
+  ray.low_marker = low_marker->text().toStdString();
+  ray.high_marker = high_marker->text().toStdString();
+  ray.ignore_marker = ignore_marker->text().toStdString();
+  ray.directx = document.settings().normal_map_format == NormalMapFormat::DirectX;
+  ray.per_fragment = document.settings().tangent_per_fragment;
+  QStringList high_paths;
+  for (int i = 0; i < high_files->count(); ++i)
+    high_paths.append(high_files->item(i)->text());
+  const BakeChoice choice{
+      options, selected, ray, high_paths, cage_file->text(), source_controls->options()};
+  const auto remember = [&] {
+    if (choices.size() >= 128 && !choices.contains(document.id()))
+      choices.erase(choices.begin());
+    choices[document.id()] = choice;
+  };
+  if (accepted == 2) {
+    remember();
+    return {};
+  }
+  // Check the entire resulting document, including retained maps, before allocating atlases.
+  SceneSnapshot secondary = snapshot;
+  std::optional<SceneSnapshot> cage;
+  if (!options.use_project_mesh) {
+    if (!load_source)
+      throw std::runtime_error("Native bake-source loader is unavailable");
+    secondary = {};
+    for (const auto &path : high_paths) {
+      auto part = load_source(path.toStdString(), source_controls->options());
+      const auto offset = secondary.materials.size();
+      for (auto &triangle : part.uv_triangles) {
+        triangle.material += offset;
+        secondary.uv_triangles.push_back(std::move(triangle));
+      }
+      secondary.materials.insert(
+          secondary.materials.end(), part.materials.begin(), part.materials.end());
+      secondary.object_names.insert(part.object_names.begin(), part.object_names.end());
+      secondary.object_vertex_counts.insert(part.object_vertex_counts.begin(),
+                                            part.object_vertex_counts.end());
+      if (!secondary.has_bounds) {
+        secondary.minimum = part.minimum;
+        secondary.maximum = part.maximum;
+      }
+      else
+        for (int axis = 0; axis < 3; ++axis) {
+          secondary.minimum[axis] = std::min(secondary.minimum[axis], part.minimum[axis]);
+          secondary.maximum[axis] = std::max(secondary.maximum[axis], part.maximum[axis]);
+        }
+      secondary.has_bounds |= part.has_bounds;
+      secondary.mesh_objects += part.mesh_objects;
+    }
+  }
+  if (ray.use_cage) {
+    if (!load_source)
+      throw std::runtime_error("Native cage loader is unavailable");
+    cage = load_source(cage_file->text().toStdString(), source_controls->options());
+    TexturePadding::validate_cage(snapshot, *cage);
+  }
+  options.external_source = !options.use_project_mesh || ray.use_cage;
+  options.ignore_backface_objects = bake_backface_objects(
+      secondary, ray.ignore_backface, ray.ignore_marker);
+  if (ray.match_names && options.use_project_mesh)
+    for (const auto &tri : secondary.uv_triangles) {
+      const auto object = std::uint32_t(tri.vertex_ids[0] >> 32);
+      options.matched_objects[object].insert(object);
+    }
+  std::vector<MeshBakeResult> results;
+  if (with_gpu)
+    options.with_gpu = [owner = std::move(with_gpu)](const std::function<void()> &work) {
+      owner([&] {
+        blender::GPU_finish();
+        int total = 0, free = 0;
+        if (blender::GPU_mem_stats_supported())
+          blender::GPU_mem_stats_get(&total, &free);
+        texture_vram_query_valid = total > 0 && free >= 0 && free <= total;
+        texture_free_vram = texture_vram_query_valid ? std::uint64_t(free) * 1024 : 0;
+        ++texture_vram_query_generation;
+        work();
+      });
+    };
+  auto remaining_sets = std::count_if(
+      document.texture_sets().begin(), document.texture_sets().end(), [&](const auto &set) {
+        return !selected.at(set.id).empty();
+      });
+  for (const auto &set : document.texture_sets())
+    if (!selected.at(set.id).empty()) {
+      --remaining_sets;
+      std::vector<MeshBakeInput> inputs;
+      capture_bake_channels(options, document, snapshot);
+      const int width = options.resolution * options.sampling,
+                height = options.rows() * options.sampling;
+      std::shared_ptr<const FillSurfaceAtlas> atlas;
+      if (options.external_source && !options.use_project_mesh && ray.match_names) {
+        // Partition by geometry, including multiple low objects in the same Texture Set.
+        auto merged = std::make_shared<FillSurfaceAtlas>();
+        merged->resolution = width;
+        merged->height = height;
+        merged->extent = 0;
+        for (int axis = 0; axis < 3; ++axis)
+          merged->extent = std::max(merged->extent,
+                                    double(snapshot.maximum[axis] - snapshot.minimum[axis]));
+        for (int tile : selected.at(set.id)) {
+          merged->tiles[tile].resize(std::size_t(width) * height);
+          if (options.enabled[4])
+            merged->curvature[tile].resize(std::size_t(width) * height, 0);
+        }
+        std::set<std::uint32_t> objects;
+        for (const auto &triangle : snapshot.uv_triangles)
+          if (snapshot.materials.at(triangle.material).session_id == set.material_session_uid)
+            objects.insert(std::uint32_t(triangle.vertex_ids[0] >> 32));
+        for (auto uid : objects) {
+          auto &matched = options.matched_objects[uid];
+          const auto &low_name = snapshot.object_names.at(uid);
+          for (const auto &[other, name] : secondary.object_names)
+            if (bake_names_match(low_name, name, ray.low_marker, ray.high_marker))
+              matched.insert(other);
+          if (matched.empty())
+            continue;
+          SceneSnapshot low_part;
+          low_part.materials = snapshot.materials;
+          low_part.minimum = snapshot.minimum;
+          low_part.maximum = snapshot.maximum;
+          low_part.has_bounds = snapshot.has_bounds;
+          for (const auto &triangle : snapshot.uv_triangles)
+            if (std::uint32_t(triangle.vertex_ids[0] >> 32) == uid)
+              low_part.uv_triangles.push_back(triangle);
+          SceneSnapshot high_part;
+          high_part.materials = secondary.materials;
+          high_part.object_names = secondary.object_names;
+          for (const auto &triangle : secondary.uv_triangles)
+            if (matched.contains(std::uint32_t(triangle.vertex_ids[0] >> 32)))
+              high_part.uv_triangles.push_back(triangle);
+          if (high_part.uv_triangles.empty())
+            continue;
+          TexturePadding geometry(low_part, set.material_session_uid);
+          const auto part = geometry.project_source(snapshot,
+                                                    high_part,
+                                                    cage ? &*cage : nullptr,
+                                                    ray,
+                                                    width,
+                                                    height,
+                                                    selected.at(set.id),
+                                                    false);
+          for (int tile : selected.at(set.id)) {
+            const auto &points = part->tiles.at(tile);
+            auto &output = merged->tiles.at(tile);
+            for (std::size_t i = 0; i < points.size(); ++i)
+              if (points[i].valid) {
+                output[i] = points[i];
+                output[i].match_object = uid;
+              }
+          }
+        }
+        atlas = std::move(merged);
+      }
+      else {
+        TexturePadding geometry(snapshot, set.material_session_uid);
+        atlas = options.external_source ?
+                    geometry.project_source(snapshot,
+                                            secondary,
+                                            cage ? &*cage : nullptr,
+                                            ray,
+                                            width,
+                                            height,
+                                            selected.at(set.id),
+                                            false) :
+                    geometry.projection_geometry(width, selected.at(set.id), false, height);
+      }
+      inputs.push_back({set.material_session_uid, set.name, set.base_values, std::move(atlas)});
+
+      MeshBakeJob job(secondary, std::move(inputs), options);
+      CancellableOperationDialog progress(parent);
+      progress.setObjectName("meshBakeProgress");
+      progress.setWindowTitle("Baking mesh maps");
+      progress.resize(400, 300);
+      auto *progress_layout = new QVBoxLayout(&progress);
+      auto *tasks = new QListWidget(&progress);
+      tasks->setObjectName("bakeProgressTasks");
+      for (const auto &name : job.tasks)
+        tasks->addItem(QString::fromStdString(name));
+      progress_layout->addWidget(tasks);
+      auto *bar = new QProgressBar(&progress);
+      bar->setObjectName("bakeProgressBar");
+      bar->setRange(0, int(job.tasks.size()));
+      progress_layout->addWidget(bar);
+      auto *status = new QLabel(&progress);
+      status->setObjectName("meshBakeProgressStatus");
+      status->setWordWrap(true);
+      progress_layout->addWidget(status);
+      auto *finish = new QPushButton("Cancel", &progress);
+      finish->setObjectName("finishMeshBake");
+      progress_layout->addWidget(finish);
+      progress.pending = [&] { return !job.finished.load(std::memory_order_acquire); };
+      progress.cancel = [&] {
+        job.cancel();
+        finish->setEnabled(false);
+        finish->setText("Stopping…");
+        status->setText("Stopping bake…");
+      };
+      LongOperationCancel escape(progress.pending, [&] { progress.reject(); });
+      QObject::connect(finish, &QPushButton::clicked, &progress, [&] {
+        if (job.finished.load(std::memory_order_acquire) && !job.cancelled.load() &&
+            job.error.empty())
+          progress.accept();
+        else
+          progress.reject();
+      });
+      QTimer timer;
+      QObject::connect(&timer, &QTimer::timeout, &progress, [&] {
+        job.process_gpu();
+        const int complete = job.completed;
+        bar->setValue(complete);
+        for (int i = 0; i < tasks->count(); ++i)
+          tasks->item(i)->setText((i < complete     ? "✓ " :
+                                   i == job.current ? "… " :
+                                                      "  ") +
+                                  QString::fromStdString(job.tasks[i]));
+        if (job.finished.load(std::memory_order_acquire)) {
+          if (job.cancelled.load()) {
+            progress.reject();
+            return;
+          }
+          if (job.error.empty() && remaining_sets > 0) {
+            progress.accept();
+            return;
+          }
+          finish->setEnabled(true);
+          finish->setText(job.error.empty() ? "OK" : "Close");
+          status->setText(job.error.empty() ?
+                              QString("%1/%1 maps complete").arg(job.tasks.size()) :
+                              QString::fromStdString(job.error));
+        }
+        else if (!job.cancelled.load()) {
+          status->setText((job.cpu_fallback.load() ?
+                               QString("GPU unavailable; continuing on CPU. ") :
+                               QString{}) +
+                          QString("%1 / %2").arg(complete).arg(job.tasks.size()));
+        }
+      });
+      timer.start(50);
+      if (progress.exec() != QDialog::Accepted) {
+        job.cancel();
+        return {};
+      }
+      if (!job.error.empty())
+        throw std::runtime_error(job.error);
+      for (auto &result : job.result)
+        results.push_back(std::move(result));
+    }
+  remember();
+  return results;
 }
-}
+}  // namespace bts

@@ -13,17 +13,19 @@ class SpsmAoAliasOption final : public QCheckBox {
   {
     setObjectName("spsmNativeAoAlias");
     setChecked(true);
-    setToolTip("Requires baked Ambient Occlusion for every destination tile. "
-               "Uses the current texture set's native AO generator with identity "
-               "UVs and nearest sampling. Named procedural generators use our native approximations. Source alpha/filter/color semantics and Painter "
-               "appearance are unverified.");
+    setToolTip(
+        "Requires baked Ambient Occlusion for every destination tile. "
+        "Uses the current texture set's native AO generator with identity "
+        "UVs and nearest sampling. Named procedural generators use our native approximations. Source alpha/filter/color semantics and Painter "
+        "appearance are unverified.");
   }
 
   QStringList policy_tags() const
   {
-    return isChecked() ? QStringList{
-        "spsm:policy:meshmap-ao-color=native-ao-generator-uv-identity-nearest"}
-                       : QStringList{};
+    return isChecked() ?
+               QStringList{
+                   "spsm:policy:meshmap-ao-color=native-ao-generator-uv-identity-nearest"} :
+               QStringList{};
   }
 };
-} // namespace bts
+}  // namespace bts

@@ -16,10 +16,8 @@ struct SpsmBitmapLoweringPolicy {
   SpsmLevelsPolicy levels = SpsmLevelsPolicy::Unknown;
   SpsmMaskBitmapPolicy mask = SpsmMaskBitmapPolicy::Unknown;
 };
-using SpsmBitmapResolver =
-    std::function<std::shared_ptr<const SpsmBitmapTexture>(
-        const spsm::bitmap::Descriptor &, const SpsmBitmapPolicy &,
-        spsm::ReadOptions)>;
+using SpsmBitmapResolver = std::function<std::shared_ptr<const SpsmBitmapTexture>(
+    const spsm::bitmap::Descriptor &, const SpsmBitmapPolicy &, spsm::ReadOptions)>;
 // Per-use interpretation never enters the raw decode/cache identity. Null Color
 // is Unknown/off; non-null explicitly chooses native source-linear RGB Levels
 // and ignored A under the supplied named transform. The legacy API keeps R use.
@@ -37,4 +35,4 @@ PreparedSpsm enhance_prepared_spsm_bitmaps(const PreparedSpsm &,
                                            const SpsmBitmapLoweringPolicy &,
                                            const SpsmBitmapResolver &,
                                            const SpsmBitmapUse & = {});
-} // namespace bts
+}  // namespace bts

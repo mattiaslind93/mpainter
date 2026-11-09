@@ -44,10 +44,14 @@ QPolygonF clip_polygon(QPolygonF polygon, const QRectF &rect)
   for (int plane = 0; plane < 4 && !polygon.empty(); ++plane) {
     const auto distance = [&rect, plane](const QPointF &p) {
       switch (plane) {
-        case 0: return p.x() - rect.left();
-        case 1: return rect.right() - p.x();
-        case 2: return p.y() - rect.top();
-        default: return rect.bottom() - p.y();
+        case 0:
+          return p.x() - rect.left();
+        case 1:
+          return rect.right() - p.x();
+        case 2:
+          return p.y() - rect.top();
+        default:
+          return rect.bottom() - p.y();
       }
     };
     QPolygonF clipped;
@@ -108,8 +112,9 @@ UvView::UvView(QWidget *parent) : QWidget(parent)
   setFocusPolicy(Qt::StrongFocus);
   setAttribute(Qt::WA_OpaquePaintEvent);
   setAccessibleName("UV / Base Color");
-  setToolTip("Constant base colors; textures and material lighting are unavailable.\n"
-             "Middle-drag to pan, wheel to zoom, F to frame UVs.");
+  setToolTip(
+      "Constant base colors; textures and material lighting are unavailable.\n"
+      "Middle-drag to pan, wheel to zoom, F to frame UVs.");
 }
 
 bool UvView::set_triangles(std::vector<UvTriangle> triangles)
@@ -126,7 +131,8 @@ bool UvView::set_triangles(std::vector<UvTriangle> triangles)
     return false;
   }
   triangles_ = std::move(triangles);
-  if (isVisible()) update();
+  if (isVisible())
+    update();
   return true;
 }
 
@@ -150,15 +156,16 @@ void UvView::frame_all()
 void UvView::reset_view()
 {
   center_ = {0.5, 0.5};
-  pixels_per_uv_ = std::clamp(std::min(width(), height()) - 2 * frame_padding,
-                             minimum_scale, maximum_scale);
+  pixels_per_uv_ = std::clamp(
+      std::min(width(), height()) - 2 * frame_padding, minimum_scale, maximum_scale);
   initial_frame_pending_ = false;
   update();
 }
 
 void UvView::set_camera(QPointF center, double pixels_per_uv)
 {
-  if (!std::isfinite(center.x()) || !std::isfinite(center.y()) || !std::isfinite(pixels_per_uv)) return;
+  if (!std::isfinite(center.x()) || !std::isfinite(center.y()) || !std::isfinite(pixels_per_uv))
+    return;
   center_ = center;
   pixels_per_uv_ = std::clamp(pixels_per_uv, minimum_scale, maximum_scale);
   initial_frame_pending_ = false;
@@ -201,8 +208,10 @@ void UvView::paint_into(QPainter &painter, const QRectF &target, bool keep_under
     return QPointF(center_.x() + (point.x() - pane_w * 0.5) / pixels_per_uv_,
                    center_.y() - (point.y() - pane_h * 0.5) / pixels_per_uv_);
   };
-  if (!keep_underlay) painter.fillRect(QRectF(0, 0, pane_w, pane_h), QColor(bts::theme::Surface));
-  const QRectF visible_uv = QRectF(to_uv({-2, -2}), to_uv({pane_w + 2.0, pane_h + 2.0})).normalized();
+  if (!keep_underlay)
+    painter.fillRect(QRectF(0, 0, pane_w, pane_h), QColor(bts::theme::Surface));
+  const QRectF visible_uv =
+      QRectF(to_uv({-2, -2}), to_uv({pane_w + 2.0, pane_h + 2.0})).normalized();
 
   const auto draw_grid = [&](double step, const QColor &color) {
     const double pitch = step * pixels_per_uv_;
@@ -232,7 +241,8 @@ void UvView::paint_into(QPainter &painter, const QRectF &target, bool keep_under
       continue;
     }
     ++available_colors;
-    if (keep_underlay) continue;
+    if (keep_underlay)
+      continue;
     QPolygonF polygon({triangle.uv[0], triangle.uv[1], triangle.uv[2]});
     if (!polygon.boundingRect().intersects(visible_uv)) {
       continue;
@@ -278,7 +288,8 @@ void UvView::paint_into(QPainter &painter, const QRectF &target, bool keep_under
   // Blender's supported UDIM range is 1001..2000, with ten columns. Labels describe coordinates,
   // not the existence of an image tile, and never wrap negative coordinates or U >= 10.
   if (pixels_per_uv_ >= 72 && visible_uv.right() >= 0 && visible_uv.left() < 10 &&
-      visible_uv.bottom() >= 0 && visible_uv.top() < 100) {
+      visible_uv.bottom() >= 0 && visible_uv.top() < 100)
+  {
     const int first_u = int(std::clamp(std::floor(visible_uv.left()), 0.0, 9.0));
     const int last_u = int(std::clamp(std::floor(visible_uv.right()), 0.0, 9.0));
     const int first_v = int(std::clamp(std::floor(visible_uv.top()), 0.0, 99.0));
@@ -305,16 +316,17 @@ void UvView::paint_into(QPainter &painter, const QRectF &target, bool keep_under
   painter.fillRect(label_rect, QColor(bts::theme::Surface));
   painter.setPen(QColor(bts::theme::Text));
   painter.drawText(label_rect, Qt::AlignCenter, "UV / Base Color");
-  if (!triangles_.empty()) painter.fillRect(QRect(8, 36, 8, 8), QColor(bts::theme::Error));
+  if (!triangles_.empty())
+    painter.fillRect(QRect(8, 36, 8, 8), QColor(bts::theme::Error));
   if (triangles_.empty()) {
     painter.drawText(QRectF(0, 0, pane_w, pane_h), Qt::AlignCenter, "No UV data");
   }
   else {
-    const char *caption = available_colors == 0 ? "Base color unavailable" :
+    const char *caption = available_colors == 0                ? "Base color unavailable" :
                           available_colors < triangles_.size() ? "Some base colors unavailable" :
                                                                  "Constant base colors";
-    painter.drawText(QRectF(8, pane_h - 22, pane_w - 72, 16), Qt::AlignVCenter,
-                     QString::fromLatin1(caption));
+    painter.drawText(
+        QRectF(8, pane_h - 22, pane_w - 72, 16), Qt::AlignVCenter, QString::fromLatin1(caption));
   }
   painter.restore();
 }
@@ -331,7 +343,7 @@ void UvView::resizeEvent(QResizeEvent *event)
 void UvView::wheelEvent(QWheelEvent *event)
 {
   const double delta = event->pixelDelta().isNull() ? double(event->angleDelta().y()) :
-                                                    double(event->pixelDelta().y()) * 2.0;
+                                                      double(event->pixelDelta().y()) * 2.0;
   if (delta == 0) {
     event->ignore();
     return;

@@ -5,8 +5,11 @@
 namespace bts {
 // Explicit native interpretation choices, never meanings inferred from source
 // colorSpace/alpha ordinals. Unknown keeps Color hydration off.
-enum class SpsmBitmapColorInput { Unknown, NativeLinearRec709RGBLevelsIgnoreA,
-                                NativeACEScgRGBLevelsIgnoreA };
+enum class SpsmBitmapColorInput {
+  Unknown,
+  NativeLinearRec709RGBLevelsIgnoreA,
+  NativeACEScgRGBLevelsIgnoreA
+};
 // GUI-independent native application defaults; no archive/cache IO. Explicit
 // Unknown overrides disable the corresponding use; conflicts/unknown values throw.
 struct SpsmSourcePolicy {
@@ -29,14 +32,12 @@ struct PreparedSpsmSource {
   QString source_sha256, cache_path, uniform_input_space;
   SpsmSourcePolicy policy;
   QStringList policy_tags;
-  QString
-      report; // Produced on the worker, including original diagnostic paths.
+  QString report;  // Produced on the worker, including original diagnostic paths.
 };
 void configure_spsm_source_hydration();
 // Cache-only GUI-safe accessors: no file IO, source hashing or worker waits.
-std::shared_ptr<const PreparedSpsmSource>
-prepared_spsm_source(const StudioAsset &);
+std::shared_ptr<const PreparedSpsmSource> prepared_spsm_source(const StudioAsset &);
 QString spsm_source_report(const StudioAsset &);
 QString spsm_source_summary(const StudioAsset &);
 bool spsm_source_partial(const StudioAsset &);
-} // namespace bts
+}  // namespace bts

@@ -1,38 +1,261 @@
 #include "OpenPbrMaterialImport.hh"
 #include <chrono>
 namespace bts {
-PreparedOpenPbrMaterial prepare_openpbr_material(const OpenPbrMaterialImportRequest &request,const std::atomic_bool &cancel,const std::function<void(const QString &)> &progress){
- const auto check=[&]{if(cancel.load())throw std::runtime_error("Material import cancelled");};check();auto frozen=freeze_usd_scene(request.source.toStdString(),request.options);check();const auto profiles=read_openpbr_usd_profiles(QString::fromStdString(frozen->path));const auto found=std::find_if(profiles.begin(),profiles.end(),[&](const auto &profile){return profile.material_path==request.material_path;});if(found==profiles.end()||found->parameters!=request.expected)throw std::runtime_error("USD source profile changed; reimport the mesh before its materials");
- PreparedOpenPbrMaterial result;result.request=request;result.source=*found;result.constants=openpbr_import_constants(found->parameters);result.geometry_scale=frozen->info.meters_per_unit;
- if(!std::isfinite(result.geometry_scale)||result.geometry_scale<=0)throw std::invalid_argument("Invalid USD material unit scale");const std::map<std::string,int> channels{{"base_color",0},{"base_metalness",1},{"specular_roughness",2},{"bump",4},{"displacement",14}};
- for(const auto &[parameter,image]:found->images){check();const auto channel=channels.find(parameter);if(channel==channels.end())throw std::invalid_argument("Texture-bound OpenPBR input is not supported by the layer stack: "+parameter);progress(QString("Importing %1 — resolving %2…").arg(found->name,QString::fromStdString(parameter)));auto asset=prepare_openpbr_usd_resource(image,request.tiles,request.cache,cancel,[&](int index,int total,const QString &name){progress(QString("Importing %1 — %2/%3 %4").arg(found->name).arg(index+1).arg(total).arg(name));});
-  TextureDecodeControl control;control.cancel=&cancel;control.progress=[&](const TextureDecodeProgress &value){progress(QString("Importing %1 — %2 %3").arg(found->name,value.phase,value.filename));};const bool raw=channel->second!=0;auto texture=decode_fill_texture(asset,raw,raw?"":"ACEScg",control);check();if(texture->tiles&&texture->tiles->size()>1&&!request.uv_tiles)throw std::invalid_argument("UDIM material import requires the UV Tile project workflow");result.textures.emplace(channel->second,std::move(texture));if(std::none_of(result.assets.begin(),result.assets.end(),[&](const auto &existing){return existing.id==asset.id;}))result.assets.push_back(std::move(asset));
- }
- return result;
+PreparedOpenPbrMaterial prepare_openpbr_material(
+    const OpenPbrMaterialImportRequest &request,
+    const std::atomic_bool &cancel,
+    const std::function<void(const QString &)> &progress)
+{
+  const auto check = [&] {
+    if (cancel.load())
+      throw std::runtime_error("Material import cancelled");
+  };
+  check();
+  auto frozen = freeze_usd_scene(request.source.toStdString(), request.options);
+  check();
+  const auto profiles = read_openpbr_usd_profiles(QString::fromStdString(frozen->path));
+  const auto found = std::find_if(profiles.begin(), profiles.end(), [&](const auto &profile) {
+    return profile.material_path == request.material_path;
+  });
+  if (found == profiles.end() || found->parameters != request.expected)
+    throw std::runtime_error("USD source profile changed; reimport the mesh before its materials");
+  PreparedOpenPbrMaterial result;
+  result.request = request;
+  result.source = *found;
+  result.constants = openpbr_import_constants(found->parameters);
+  result.geometry_scale = frozen->info.meters_per_unit;
+  if (!std::isfinite(result.geometry_scale) || result.geometry_scale <= 0)
+    throw std::invalid_argument("Invalid USD material unit scale");
+  const std::map<std::string, int> channels{{"base_color", 0},
+                                            {"base_metalness", 1},
+                                            {"specular_roughness", 2},
+                                            {"bump", 4},
+                                            {"displacement", 14}};
+  for (const auto &[parameter, image] : found->images) {
+    check();
+    const auto channel = channels.find(parameter);
+    if (channel == channels.end())
+      throw std::invalid_argument(
+          "Texture-bound OpenPBR input is not supported by the layer stack: " + parameter);
+    progress(QString("Importing %1 — resolving %2…")
+                 .arg(found->name, QString::fromStdString(parameter)));
+    auto asset = prepare_openpbr_usd_resource(image,
+                                              request.tiles,
+                                              request.cache,
+                                              cancel,
+                                              [&](int index, int total, const QString &name) {
+                                                progress(QString("Importing %1 — %2/%3 %4")
+                                                             .arg(found->name)
+                                                             .arg(index + 1)
+                                                             .arg(total)
+                                                             .arg(name));
+                                              });
+    TextureDecodeControl control;
+    control.cancel = &cancel;
+    control.progress = [&](const TextureDecodeProgress &value) {
+      progress(QString("Importing %1 — %2 %3").arg(found->name, value.phase, value.filename));
+    };
+    const bool raw = channel->second != 0;
+    auto texture = decode_fill_texture(asset, raw, raw ? "" : "ACEScg", control);
+    check();
+    if (texture->tiles && texture->tiles->size() > 1 && !request.uv_tiles)
+      throw std::invalid_argument("UDIM material import requires the UV Tile project workflow");
+    result.textures.emplace(channel->second, std::move(texture));
+    if (std::none_of(result.assets.begin(), result.assets.end(), [&](const auto &existing) {
+          return existing.id == asset.id;
+        }))
+      result.assets.push_back(std::move(asset));
+  }
+  return result;
 }
-void apply_openpbr_import_fill(TextureSet &set,const PreparedOpenPbrMaterial &prepared){
- if(set.material_session_uid!=prepared.request.material_uid||set.tiles!=prepared.request.tiles||prepared.textures.empty())throw std::invalid_argument("Imported material target changed");
- set.base_values.base_color=prepared.constants.base.base_color;set.base_values.metallic=prepared.constants.base.metallic;set.base_values.roughness=prepared.constants.base.roughness;set.uniform_editable=true;set.shader_parameters.openpbr=prepared.constants.shader;
- set.precision[0]=ChannelPrecision::RGB32F;set.precision[1]=set.precision[2]=set.precision[4]=ChannelPrecision::L32F;
- TextureLayer fill;fill.id=QUuid::createUuidV5(set.id,QByteArray("OpenPBR source ")+prepared.request.material_path.toUtf8());if(std::any_of(set.layers.begin(),set.layers.end(),[&](const auto &layer){return layer.id==fill.id;}))throw std::invalid_argument("Imported material already has a source layer");fill.kind=LayerKind::Fill;fill.name="Imported OpenPBR maps";fill.values=prepared.constants.base;fill.channels.fill(false);fill.ao_enabled=false;fill.displacement.enabled=false;for(auto &user:fill.users)user.enabled=false;fill.fill.alpha_mask.fill(false); // MaterialX image_color3/float outputs do not consume file alpha.
- for(const auto &[channel,texture]:prepared.textures){if(channel==0)fill.values.base_color={1,1,1,1};fill_channel_texture(fill.fill,channel)=texture;if(texture->tiles&&set.tiles.size()>1)fill.fill.mode=6;if(channel<5){set.channels[channel]=true;fill.channels[channel]=true;}else if(channel==14){TextureDocument::add_displacement_channel(set);fill.displacement.enabled=true;set.displacement.enabled=prepared.source.displacement_enabled;set.displacement.strength=float(prepared.source.displacement_scale*prepared.geometry_scale);set.displacement.midlevel=prepared.source.displacement_midlevel;set.displacement.precision=ChannelPrecision::L32F;set.displacement.validate();}}
- const auto id=fill.id;set.layers.insert(set.layers.begin(),std::move(fill));set.selected_layer=id;set.selected_mask=false;set.selected_geometry=false;set.selected_effect=QUuid();
+void apply_openpbr_import_fill(TextureSet &set, const PreparedOpenPbrMaterial &prepared)
+{
+  if (set.material_session_uid != prepared.request.material_uid ||
+      set.tiles != prepared.request.tiles || prepared.textures.empty())
+    throw std::invalid_argument("Imported material target changed");
+  set.base_values.base_color = prepared.constants.base.base_color;
+  set.base_values.metallic = prepared.constants.base.metallic;
+  set.base_values.roughness = prepared.constants.base.roughness;
+  set.uniform_editable = true;
+  set.shader_parameters.openpbr = prepared.constants.shader;
+  set.precision[0] = ChannelPrecision::RGB32F;
+  set.precision[1] = set.precision[2] = set.precision[4] = ChannelPrecision::L32F;
+  TextureLayer fill;
+  fill.id = QUuid::createUuidV5(
+      set.id, QByteArray("OpenPBR source ") + prepared.request.material_path.toUtf8());
+  if (std::any_of(set.layers.begin(), set.layers.end(), [&](const auto &layer) {
+        return layer.id == fill.id;
+      }))
+    throw std::invalid_argument("Imported material already has a source layer");
+  fill.kind = LayerKind::Fill;
+  fill.name = "Imported OpenPBR maps";
+  fill.values = prepared.constants.base;
+  fill.channels.fill(false);
+  fill.ao_enabled = false;
+  fill.displacement.enabled = false;
+  for (auto &user : fill.users)
+    user.enabled = false;
+  fill.fill.alpha_mask.fill(
+      false);  // MaterialX image_color3/float outputs do not consume file alpha.
+  for (const auto &[channel, texture] : prepared.textures) {
+    if (channel == 0)
+      fill.values.base_color = {1, 1, 1, 1};
+    fill_channel_texture(fill.fill, channel) = texture;
+    if (texture->tiles && set.tiles.size() > 1)
+      fill.fill.mode = 6;
+    if (channel < 5) {
+      set.channels[channel] = true;
+      fill.channels[channel] = true;
+    }
+    else if (channel == 14) {
+      TextureDocument::add_displacement_channel(set);
+      fill.displacement.enabled = true;
+      set.displacement.enabled = prepared.source.displacement_enabled;
+      set.displacement.strength = float(prepared.source.displacement_scale *
+                                        prepared.geometry_scale);
+      set.displacement.midlevel = prepared.source.displacement_midlevel;
+      set.displacement.precision = ChannelPrecision::L32F;
+      set.displacement.validate();
+    }
+  }
+  const auto id = fill.id;
+  set.layers.insert(set.layers.begin(), std::move(fill));
+  set.selected_layer = id;
+  set.selected_mask = false;
+  set.selected_geometry = false;
+  set.selected_effect = QUuid();
 }
-OpenPbrMaterialImporter::OpenPbrMaterialImporter(QObject *parent,OpenPbrMaterialImportHooks hooks):QObject(parent),hooks_(std::move(hooks)){
- setObjectName("openpbrMaterialImporter");timer_.setInterval(16);connect(&timer_,&QTimer::timeout,this,[this]{poll();});worker_=std::async(std::launch::async,[this]{for(;;){std::function<void()> task;{std::unique_lock lock(mutex_);condition_.wait(lock,[&]{return stop_||!tasks_.empty();});if(stop_&&tasks_.empty())return;task=std::move(tasks_.front());tasks_.pop_front();}task();}});
+OpenPbrMaterialImporter::OpenPbrMaterialImporter(QObject *parent, OpenPbrMaterialImportHooks hooks)
+    : QObject(parent), hooks_(std::move(hooks))
+{
+  setObjectName("openpbrMaterialImporter");
+  timer_.setInterval(16);
+  connect(&timer_, &QTimer::timeout, this, [this] { poll(); });
+  worker_ = std::async(std::launch::async, [this] {
+    for (;;) {
+      std::function<void()> task;
+      {
+        std::unique_lock lock(mutex_);
+        condition_.wait(lock, [&] { return stop_ || !tasks_.empty(); });
+        if (stop_ && tasks_.empty())
+          return;
+        task = std::move(tasks_.front());
+        tasks_.pop_front();
+      }
+      task();
+    }
+  });
 }
-OpenPbrMaterialImporter::~OpenPbrMaterialImporter(){cancel();if(future_.valid())future_.wait();{std::lock_guard lock(mutex_);stop_=true;}condition_.notify_one();if(worker_.valid())worker_.wait();}
-void OpenPbrMaterialImporter::cancel(){queue_.clear();if(cancel_)cancel_->store(true);if(hooks_.release)hooks_.release();}
-void OpenPbrMaterialImporter::start(std::vector<OpenPbrMaterialImportRequest> requests){cancel();for(auto &request:requests)queue_.push_back(std::move(request));next();if(pending())timer_.start();}
-void OpenPbrMaterialImporter::next(){if(future_.valid()||queue_.empty())return;current_=std::move(queue_.front());queue_.pop_front();cancel_=std::make_shared<std::atomic_bool>(false);progress_=std::make_shared<Progress>();shown_.clear();auto promise=std::make_shared<std::promise<PreparedOpenPbrMaterial>>();future_=promise->get_future();const auto request=*current_;auto cancel=cancel_;auto progress=progress_;{std::lock_guard lock(mutex_);tasks_.push_back([promise,request,cancel,progress]{try{promise->set_value(prepare_openpbr_material(request,*cancel,[progress](const QString &message){std::lock_guard lock(progress->mutex);progress->text=message;}));}catch(...){promise->set_exception(std::current_exception());}});}condition_.notify_one();}
-void OpenPbrMaterialImporter::poll(){if(!future_.valid()){next();if(!future_.valid()){timer_.stop();return;}}if(!hooks_.valid(*current_)&&!cancel_->load()){cancel_->store(true);queue_.clear();hooks_.status("Material import cancelled — project changed; native source retained");}
- {std::lock_guard lock(progress_->mutex);if(!cancel_->load()&&progress_->text!=shown_){shown_=progress_->text;hooks_.status(shown_);}}
- if(future_.wait_for(std::chrono::seconds(0))!=std::future_status::ready||(!cancel_->load()&&hooks_.busy()))return;
- try{auto result=future_.get();if(!cancel_->load()&&hooks_.valid(*current_)){
-  // GPU preparation can span frames. Preserve the immutable result while waiting.
-  if(!hooks_.prepare(result)){auto promise=std::promise<PreparedOpenPbrMaterial>();future_=promise.get_future();promise.set_value(std::move(result));return;}
-  hooks_.install(std::move(result));hooks_.status("Imported OpenPBR material ready");
- }}catch(const std::exception &error){if(!cancel_->load())hooks_.error(QString::fromUtf8(error.what()));}
- if(hooks_.release)hooks_.release();current_.reset();cancel_.reset();progress_.reset();next();if(!pending())timer_.stop();
+OpenPbrMaterialImporter::~OpenPbrMaterialImporter()
+{
+  cancel();
+  if (future_.valid())
+    future_.wait();
+  {
+    std::lock_guard lock(mutex_);
+    stop_ = true;
+  }
+  condition_.notify_one();
+  if (worker_.valid())
+    worker_.wait();
 }
+void OpenPbrMaterialImporter::cancel()
+{
+  queue_.clear();
+  if (cancel_)
+    cancel_->store(true);
+  if (hooks_.release)
+    hooks_.release();
 }
+void OpenPbrMaterialImporter::start(std::vector<OpenPbrMaterialImportRequest> requests)
+{
+  cancel();
+  for (auto &request : requests)
+    queue_.push_back(std::move(request));
+  next();
+  if (pending())
+    timer_.start();
+}
+void OpenPbrMaterialImporter::next()
+{
+  if (future_.valid() || queue_.empty())
+    return;
+  current_ = std::move(queue_.front());
+  queue_.pop_front();
+  cancel_ = std::make_shared<std::atomic_bool>(false);
+  progress_ = std::make_shared<Progress>();
+  shown_.clear();
+  auto promise = std::make_shared<std::promise<PreparedOpenPbrMaterial>>();
+  future_ = promise->get_future();
+  const auto request = *current_;
+  auto cancel = cancel_;
+  auto progress = progress_;
+  {
+    std::lock_guard lock(mutex_);
+    tasks_.push_back([promise, request, cancel, progress] {
+      try {
+        promise->set_value(
+            prepare_openpbr_material(request, *cancel, [progress](const QString &message) {
+              std::lock_guard lock(progress->mutex);
+              progress->text = message;
+            }));
+      }
+      catch (...) {
+        promise->set_exception(std::current_exception());
+      }
+    });
+  }
+  condition_.notify_one();
+}
+void OpenPbrMaterialImporter::poll()
+{
+  if (!future_.valid()) {
+    next();
+    if (!future_.valid()) {
+      timer_.stop();
+      return;
+    }
+  }
+  if (!hooks_.valid(*current_) && !cancel_->load()) {
+    cancel_->store(true);
+    queue_.clear();
+    hooks_.status("Material import cancelled — project changed; native source retained");
+  }
+  {
+    std::lock_guard lock(progress_->mutex);
+    if (!cancel_->load() && progress_->text != shown_) {
+      shown_ = progress_->text;
+      hooks_.status(shown_);
+    }
+  }
+  if (future_.wait_for(std::chrono::seconds(0)) != std::future_status::ready ||
+      (!cancel_->load() && hooks_.busy()))
+    return;
+  try {
+    auto result = future_.get();
+    if (!cancel_->load() && hooks_.valid(*current_)) {
+      // GPU preparation can span frames. Preserve the immutable result while waiting.
+      if (!hooks_.prepare(result)) {
+        auto promise = std::promise<PreparedOpenPbrMaterial>();
+        future_ = promise.get_future();
+        promise.set_value(std::move(result));
+        return;
+      }
+      hooks_.install(std::move(result));
+      hooks_.status("Imported OpenPBR material ready");
+    }
+  }
+  catch (const std::exception &error) {
+    if (!cancel_->load())
+      hooks_.error(QString::fromUtf8(error.what()));
+  }
+  if (hooks_.release)
+    hooks_.release();
+  current_.reset();
+  cancel_.reset();
+  progress_.reset();
+  next();
+  if (!pending())
+    timer_.stop();
+}
+}  // namespace bts

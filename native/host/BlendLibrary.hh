@@ -16,7 +16,10 @@ struct BlendMeshSelection {
   std::vector<std::string> objects, collections;
   bool operator==(const BlendMeshSelection &) const = default;
 
-  bool empty() const { return objects.empty() && collections.empty(); }
+  bool empty() const
+  {
+    return objects.empty() && collections.empty();
+  }
   void validate(bool require_selection = false) const
   {
     if ((require_selection && empty())) {
@@ -26,10 +29,10 @@ struct BlendMeshSelection {
       std::set<std::string> unique;
       for (const auto &name : *names) {
         // Native ID.name[258] reserves two type bytes and one NUL byte.
-        if(name.empty()||name.size()>255||name.find('\0')!=std::string::npos)throw std::invalid_argument("Invalid Blender library ID name");
+        if (name.empty() || name.size() > 255 || name.find('\0') != std::string::npos)
+          throw std::invalid_argument("Invalid Blender library ID name");
         const auto text = QString::fromUtf8(name.data(), qsizetype(name.size()));
-        if (text.toUtf8().toStdString() != name || !unique.insert(name).second)
-        {
+        if (text.toUtf8().toStdString() != name || !unique.insert(name).second) {
           throw std::invalid_argument("Invalid or duplicate Blender library selection");
         }
       }
@@ -39,22 +42,25 @@ struct BlendMeshSelection {
   {
     validate();
     QJsonArray object_names, collection_names;
-    for (const auto &name : objects) object_names.append(QString::fromStdString(name));
-    for (const auto &name : collections) collection_names.append(QString::fromStdString(name));
+    for (const auto &name : objects)
+      object_names.append(QString::fromStdString(name));
+    for (const auto &name : collections)
+      collection_names.append(QString::fromStdString(name));
     return {{"objects", object_names}, {"collections", collection_names}};
   }
   static BlendMeshSelection from_json(const QJsonValue &value)
   {
-    if (!value.isObject()) throw std::invalid_argument("Missing Blender library selection");
+    if (!value.isObject())
+      throw std::invalid_argument("Missing Blender library selection");
     const auto data = value.toObject();
     if (data.size() != 2 || !data["objects"].isArray() || !data["collections"].isArray()) {
       throw std::invalid_argument("Invalid Blender library selection metadata");
     }
     BlendMeshSelection result;
     const auto read = [](const QJsonArray &entries, std::vector<std::string> &names) {
-
       for (const auto &entry : entries) {
-        if (!entry.isString()) throw std::invalid_argument("Invalid Blender library entry name");
+        if (!entry.isString())
+          throw std::invalid_argument("Invalid Blender library entry name");
         names.push_back(entry.toString().toStdString());
       }
     };
