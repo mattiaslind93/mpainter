@@ -18,7 +18,7 @@ with private_gpu_gui(out,env,root)as(prefix,env):
   if featured:run_env['MPAINTER_SPLASH_IMAGE']=str(featured)
   command=prefix+[str(binary),'--workspace']+(['--no-splash']if disabled else [])
   with(directory/'run.log').open('w')as log:subprocess.run(command,env=run_env,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=120)
-  data=json.loads((directory/'branding.json').read_text());assert data['display_name']=='mPainter'and data['internal_name']=='Blender Texture Studio'and data['title']=='mPainter'and data['version']==versionand data['icon']and data['splash_closed'],data
+  data=json.loads((directory/'branding.json').read_text());assert data['display_name']=='mPainter'and data['internal_name']=='Blender Texture Studio'and data['title']=='mPainter'and data['version']==version and data['icon']and data['splash_closed'],data
   assert(directory/'workspace.png').is_file();assert(directory/'splash.png').is_file()!=disabled
   data['run']=name;results.append(data)
  first=Image.open(out/'normal-1/splash.png').convert('RGB');changed=Image.open(out/'alternate/splash.png').convert('RGB');assert first.size==changed.size==(1200,600);assert changed.getpixel((1000,300))==(20,70,210);assert first.getpixel((1000,300))!=changed.getpixel((1000,300));assert first.crop((0,0,400,500)).tobytes()==changed.crop((0,0,400,500)).tobytes();assert Image.open(out/'hidpi/splash.png').size==(2400,1200)
