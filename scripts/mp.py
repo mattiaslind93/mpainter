@@ -6,6 +6,8 @@
   mp check [--only NAME]     fast source gates; see CHECKS below
   mp doctor                  report which local tools are present, without changing anything
   mp docs [--check]          regenerate docs/blender-surface.md and docs/architecture/bts-variables.md
+  mp move DEST --list FILE [--refs]
+                             git mv native/host files into a domain folder and repoint CMake
   mp brief --output PATH ... write a worker brief with every required field
 
 Not here yet (later phases of the restructure plan): build, package, test, release.
@@ -278,6 +280,69 @@ def write_docs(root, check_only):
     return stale
 
 
+HOST = "native/host"
+HOST_CMAKE = "native/host/CMakeLists.txt"
+MOVE_DESTINATIONS = re.compile(r"native/(harness|host/[a-z][a-z0-9_-]*(/[a-z][a-z0-9_-]*)?)\Z")
+REF_FILES = re.compile(r"(scripts|native)/.*\.(py|json|sh)\Z|native/tests/.*\.(cc|hh|inc)\Z")
+NAME_END = r"(?![A-Za-z0-9_.])"
+
+
+def move_files(root, dest, sources, refs=False):
+    """git mv top-level native/host files into dest and repoint what names them.
+
+    Rewrites `${BTS_HOST_SOURCE_DIR}/<name>` in native/host/CMakeLists.txt. With refs,
+    also `native/host/<name>` in tracked Python, JSON and shell files and
+    `"../host/<name>"` includes in native/tests. Adding dest to BTS_HOST_DOMAINS
+    (or the harness include folder) is left to the caller, because it is a decision.
+    Returns {"cmake": n, "refs": {file: n}}.
+    """
+    if not MOVE_DESTINATIONS.fullmatch(dest):
+        raise UsageError(f"{dest} is not native/harness or a native/host domain folder")
+    tracked = set(git_files(root))
+    names = []
+    for rel in sources:
+        name = rel[len(HOST) + 1:]
+        if not rel.startswith(HOST + "/") or "/" in name or rel not in tracked:
+            raise UsageError(f"{rel} is not a tracked top-level native/host file")
+        if (root / dest / name).exists():
+            raise UsageError(f"{dest}/{name} already exists")
+        names.append(name)
+    if len(set(names)) != len(names):
+        raise UsageError("a file is listed twice")
+    prefix = os.path.relpath(dest, HOST).replace(os.sep, "/")
+    cmake = (root / HOST_CMAKE).read_text(encoding="utf-8")
+    total = 0
+    for name in names:
+        pattern = re.compile(r"\$\{BTS_HOST_SOURCE_DIR\}/" + re.escape(name) + NAME_END)
+        cmake, n = pattern.subn(lambda m, name=name: "${BTS_HOST_SOURCE_DIR}/" + prefix + "/" + name, cmake)
+        total += n
+    rewritten = {}
+    if refs:
+        rules = [(re.compile(r"native/host/" + re.escape(n) + NAME_END), f"{dest}/{n}") for n in names]
+        rules += [(re.compile(r'"\.\./host/' + re.escape(n) + '"'), f'"../{dest[len("native/"):]}/{n}"')
+                  for n in names]
+        for rel in sorted(tracked):
+            path = root / rel
+            if not REF_FILES.match(rel) or path.is_symlink() or not path.is_file():
+                continue
+            content = path.read_text(encoding="utf-8", errors="surrogateescape")
+            count = 0
+            for pattern, replacement in rules:
+                content, n = pattern.subn(lambda m, r=replacement: r, content)
+                count += n
+            if count:
+                path.write_text(content, encoding="utf-8", errors="surrogateescape")
+                rewritten[rel] = count
+    (root / dest).mkdir(parents=True, exist_ok=True)
+    for rel, name in zip(sources, names):
+        proc = subprocess.run(["git", "-C", str(root), "mv", "--", rel, f"{dest}/{name}"], capture_output=True,
+                              text=True, timeout=TIMEOUT, stdin=subprocess.DEVNULL)
+        if proc.returncode:
+            raise UsageError(f"git mv {rel} failed: {proc.stderr.strip()}")
+    (root / HOST_CMAKE).write_text(cmake, encoding="utf-8")
+    return {"cmake": total, "refs": rewritten}
+
+
 def check_agent_docs(root, files):
     checker = root / "scripts/verify/check_agent_docs.py"
     if not checker.is_file():
@@ -414,6 +479,10 @@ def main(argv=None, root=ROOT, out=sys.stdout):
     sub.add_parser("doctor")
     docs = sub.add_parser("docs")
     docs.add_argument("--check", action="store_true")
+    move = sub.add_parser("move")
+    move.add_argument("dest")
+    move.add_argument("--list", required=True, help="file with one native/host/<file> path per line")
+    move.add_argument("--refs", action="store_true", help="also rewrite exact paths in scripts and tests")
     brief = sub.add_parser("brief")
     for name in ("output", "goal", "platform", "base", "worktree", "proof", "report"):
         brief.add_argument(f"--{name}", required=name == "output", default="")
@@ -454,6 +523,14 @@ def main(argv=None, root=ROOT, out=sys.stdout):
             if not stale:
                 print("generated docs are current", file=out)
             return 1 if args.check and stale else 0
+        if args.command == "move":
+            listing = Path(args.list)
+            sources = [line.strip() for line in listing.read_text(encoding="utf-8").splitlines() if line.strip()]
+            result = move_files(root, args.dest, sources, args.refs)
+            print(f"moved {len(sources)} files to {args.dest}; {result['cmake']} CMake references", file=out)
+            for rel, count in result["refs"].items():
+                print(f"  rewrote {count} reference(s) in {rel}", file=out)
+            return 0
         if args.command == "brief":
             print(f"wrote {write_brief(root, args)}", file=out)
             return 0

@@ -242,6 +242,57 @@ class Checks(unittest.TestCase):
         self.assertEqual(before, after)
 
 
+class Move(unittest.TestCase):
+    CMAKE = ("add_executable(bts-host ${BTS_HOST_SOURCE_DIR}/Brush.cc ${BTS_HOST_SOURCE_DIR}/BrushJitter.cc\n"
+             "  ${BTS_HOST_SOURCE_DIR}/Other.cc)\n")
+
+    def repo(self):
+        return Repo(self, {"native/host/CMakeLists.txt": self.CMAKE, "native/host/Brush.cc": "x\n",
+                           "native/host/Brush.hh": "x\n", "native/host/BrushJitter.cc": "y\n",
+                           "native/host/Other.cc": "z\n",
+                           "scripts/host/verify-brush.py": "a = 'native/host/Brush.cc'; b = 'native/host/Brush.ccx'\n",
+                           "native/tests/brush_test.cc": '#include "../host/Brush.hh"\n#include "../host/Other.hh"\n'})
+
+    def move(self, repo, *names, refs=False):
+        listing = repo.root.parent / "list.txt"
+        listing.write_text("".join(f"native/host/{n}\n" for n in names))
+        return repo.mp("move", "native/host/painting", "--list", str(listing), *(["--refs"] if refs else []))
+
+    def test_move_rewrites_cmake_exactly(self):
+        repo = self.repo()
+        code, out, err = self.move(repo, "Brush.cc", "Brush.hh")
+        self.assertEqual(code, 0, err)
+        self.assertIn("2 files", out)
+        cmake = (repo.root / "native/host/CMakeLists.txt").read_text()
+        self.assertIn("${BTS_HOST_SOURCE_DIR}/painting/Brush.cc ${BTS_HOST_SOURCE_DIR}/BrushJitter.cc", cmake)
+        self.assertTrue((repo.root / "native/host/painting/Brush.cc").is_file())
+        self.assertFalse((repo.root / "native/host/Brush.cc").exists())
+        self.assertIn("native/host/Brush.cc", (repo.root / "scripts/host/verify-brush.py").read_text())
+        status = repo.git("status", "--porcelain").decode()
+        self.assertIn("R  native/host/Brush.cc -> native/host/painting/Brush.cc", status)
+
+    def test_refs_rewrite_scripts_and_test_includes(self):
+        repo = self.repo()
+        self.assertEqual(self.move(repo, "Brush.cc", "Brush.hh", refs=True)[0], 0)
+        self.assertEqual((repo.root / "scripts/host/verify-brush.py").read_text(),
+                         "a = 'native/host/painting/Brush.cc'; b = 'native/host/Brush.ccx'\n")
+        self.assertEqual((repo.root / "native/tests/brush_test.cc").read_text(),
+                         '#include "../host/painting/Brush.hh"\n#include "../host/Other.hh"\n')
+
+    def test_move_refuses_bad_input_and_changes_nothing(self):
+        repo = self.repo()
+        before = (repo.root / "native/host/CMakeLists.txt").read_text()
+        for names in (("Missing.cc",), ("Brush.cc", "Brush.cc")):
+            with self.subTest(names):
+                self.assertEqual(self.move(repo, *names)[0], 2)
+        listing = repo.root.parent / "list.txt"
+        listing.write_text("native/host/Brush.cc\n")
+        for dest in ("native/other", "native/host/../x", "native/host/Painting"):
+            self.assertEqual(repo.mp("move", dest, "--list", str(listing))[0], 2)
+        self.assertEqual((repo.root / "native/host/CMakeLists.txt").read_text(), before)
+        self.assertTrue((repo.root / "native/host/Brush.cc").is_file())
+
+
 class Doctor(unittest.TestCase):
     def fake(self, outputs):
         def run(argv, **kwargs):
