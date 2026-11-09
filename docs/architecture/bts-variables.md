@@ -230,7 +230,7 @@ leaves the release build.
 | `BTS_NATIVE_MATERIAL_GPU_TEST` | native/harness, native/host | `NativeMaterialCaptureDemo.hh`, `NativeMaterialHostQueueDemo.cc`, `NativeMaterialMultiObjectDemo.hh`, `NativeMaterialThumbnailTest.hh` and 4 more |
 | `BTS_NATIVE_MATERIAL_HOST_QUEUE_TEST` | native/harness | `ViewportHeadlessDemo.cc` |
 | `BTS_NATIVE_MULTI_OBJECT_TEST` | native/harness | `NativeMaterialHostQueueDemo.cc` |
-| `BTS_NATIVE_PREPARATION_TRACE` | native/host | `NativeMaterialGpuPreparation.hh`, `NativeMaterialResource.cc` |
+| `BTS_NATIVE_PREPARATION_TRACE` | native/host | `NativeMaterialResource.cc`, `NativeMaterialGpuPreparation.hh` |
 | `BTS_NATIVE_RECOVERY_TEST` | native/harness | `NativeMaterialInspectionDemo.cc` |
 | `BTS_NATIVE_THUMBNAIL_COLD` | native/harness | `NativeMaterialThumbnailTest.hh` |
 | `BTS_NATIVE_THUMBNAIL_OUTPUT` | native/harness | `NativeMaterialThumbnailTest.hh` |

@@ -130,16 +130,16 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialInspectionDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialGpuProgramTest.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialStackTest.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialGpuLibrary.cc
+  ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialGpuLibrary.cc
   ${BTS_HOST_SOURCE_DIR}/ShaderTreeCache.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialGpuProgram.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialGpuCompiler.cc
+  ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialGpuProgram.cc
+  ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialGpuCompiler.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialFragmentBumpTest.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialFragmentGpuCompiler.cc
+  ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialFragmentGpuCompiler.cc
   ${BTS_HOST_SOURCE_DIR}/NativeFragmentGeometry.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialFragmentGpuTest.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialGpuPrototype.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialContext.cc
+  ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialGpuPrototype.cc
+  ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialContext.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialImagePanel.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialImageJobs.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialImageUi.cc
@@ -150,12 +150,12 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialArchive.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialDecodedImage.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialImages.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialImageUpload.cc
+  ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialImageUpload.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialImageResource.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialImageArchive.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialSourceLoader.cc
+  ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialImageArchive.cc
+  ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialSourceLoader.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialHostQueueDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialSharedGpuImages.cc
+  ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialSharedGpuImages.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialGraph.cc
   ${BTS_HOST_SOURCE_DIR}/ui/dialogs/BlendMaterialDialog.cc
   ${BTS_HOST_SOURCE_DIR}/BlendLibrary.cc
@@ -240,7 +240,7 @@ set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/../harness/ViewportHeadlessDemo.cc AP
     "${CMAKE_SOURCE_DIR}/source/blender/draw/engines/eevee"
     "${CMAKE_SOURCE_DIR}/source/blender/draw/intern")
 # Explicit fragment Normal Map bindings consume the real ObjectInfos layout.
-set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/NativeMaterialFragmentGpuCompiler.cc
+set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialFragmentGpuCompiler.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialFragmentGpuTest.cc APPEND PROPERTY
   INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/source/blender/draw/intern")
 set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/EeveeCompletionSnapshot.cc APPEND PROPERTY
@@ -786,7 +786,7 @@ cmake_language(DEFER CALL bts_register_cpu_tests)
 # Test and demo code lives in native/harness, and host code is moving into domain
 # folders under native/host. Files include each other by bare name across all of
 # them, so every compiled bts target searches every one of these folders.
-set(BTS_HOST_DOMAINS python materials/openpbr baking gpu painting layers fill ui/panels ui/dialogs assets viewport materials/layering)
+set(BTS_HOST_DOMAINS python materials/openpbr baking gpu painting layers fill ui/panels ui/dialogs assets viewport materials/layering materials/native)
 set(BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR} ${BTS_HOST_SOURCE_DIR}/../harness)
 foreach(_bts_domain IN LISTS BTS_HOST_DOMAINS)
   list(APPEND BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR}/${_bts_domain})
@@ -1396,9 +1396,9 @@ set_source_files_properties(${BTS_HOST_SOURCE_DIR}/../tests/spsm_bitmap_color_te
     INCLUDE_DIRECTORIES "${BTS_HDF5_FIXTURE_INCLUDES}")
 
 # Instance interpretation is explicit, strict and separate from source metadata.
-target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/NativeMaterialHeightResource.cc)
-target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/NativeMaterialHeightProject.cc)
-target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/NativeMaterialHeightContext.cc)
+target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialHeightResource.cc)
+target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialHeightProject.cc)
+target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialHeightContext.cc)
 target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/PendingProjectGpu.cc)
 target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/ProjectOpenJob.cc)
 add_executable(bts-native-height-policy-tests ${BTS_HOST_SOURCE_DIR}/../tests/native_height_policy_test.cc)
@@ -1420,7 +1420,7 @@ target_compile_options(bts-native-height-image-retention-tests PRIVATE "$<IF:$<C
 target_link_libraries(bts-native-height-image-retention-tests PRIVATE Qt6::Core)
 add_dependencies(bts-cpu-tests bts-native-height-image-retention-tests)
 
-target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/NativeMaterialHeightGpu.cc ${BTS_HOST_SOURCE_DIR}/NativeMaterialHeightUi.cc)
+target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialHeightGpu.cc ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialHeightUi.cc)
 
 # Real WorkspaceShell/FillPanel hide-time editor regression, before Blender startup.
 target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/../tests/workspace_shutdown_test.cc)
