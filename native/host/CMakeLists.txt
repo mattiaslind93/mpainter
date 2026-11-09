@@ -74,7 +74,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/../harness/PropertyPerformanceDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/StrokeSplineDemo.cc
   ${BTS_HOST_SOURCE_DIR}/ui/panels/WarpPanel.cc
-  ${BTS_HOST_SOURCE_DIR}/WarpEditor.cc
+  ${BTS_HOST_SOURCE_DIR}/ui/widgets/WarpEditor.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/WarpGeometryDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/WarpDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/ImageSequenceDemo.cc
@@ -87,8 +87,8 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/../harness/FilledPathDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/RibbonDemo.cc
   ${BTS_HOST_SOURCE_DIR}/ui/panels/RibbonPanel.cc
-  ${BTS_HOST_SOURCE_DIR}/OverlayScroll.cc
-  ${BTS_HOST_SOURCE_DIR}/PanelScrolling.cc
+  ${BTS_HOST_SOURCE_DIR}/ui/widgets/OverlayScroll.cc
+  ${BTS_HOST_SOURCE_DIR}/ui/widgets/PanelScrolling.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/ScrollDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/AlembicDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/JpegExportCpuDemo.cc
@@ -720,7 +720,7 @@ target_include_directories(bts-edit-state-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-edit-state-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-edit-state-tests PRIVATE bts-export-config)
 
-add_executable(bts-panel-scroll-tests ${BTS_HOST_SOURCE_DIR}/../tests/panel_scrolling_test.cc ${BTS_HOST_SOURCE_DIR}/PanelScrolling.cc)
+add_executable(bts-panel-scroll-tests ${BTS_HOST_SOURCE_DIR}/../tests/panel_scrolling_test.cc ${BTS_HOST_SOURCE_DIR}/ui/widgets/PanelScrolling.cc)
 target_include_directories(bts-panel-scroll-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-panel-scroll-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-panel-scroll-tests PRIVATE Qt6::Widgets)
@@ -759,7 +759,7 @@ target_compile_features(bts-warp-grid-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-warp-grid-tests PRIVATE Qt6::Core)
 
 add_executable(bts-warp-editor-tests ${BTS_HOST_SOURCE_DIR}/../tests/warp_editor_test.cc
-  ${BTS_HOST_SOURCE_DIR}/WarpEditor.cc ${BTS_HOST_SOURCE_DIR}/ColorPicker.cc)
+  ${BTS_HOST_SOURCE_DIR}/ui/widgets/WarpEditor.cc ${BTS_HOST_SOURCE_DIR}/ColorPicker.cc)
 target_include_directories(bts-warp-editor-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-warp-editor-tests PRIVATE cxx_std_20)
 target_compile_definitions(bts-warp-editor-tests PRIVATE BTS_STANDALONE_COLOR_PICKER)
@@ -786,7 +786,7 @@ cmake_language(DEFER CALL bts_register_cpu_tests)
 # Test and demo code lives in native/harness, and host code is moving into domain
 # folders under native/host. Files include each other by bare name across all of
 # them, so every compiled bts target searches every one of these folders.
-set(BTS_HOST_DOMAINS python materials/openpbr baking gpu painting layers fill ui/panels ui/dialogs assets viewport materials/layering materials/native persistence io diagnostics platform)
+set(BTS_HOST_DOMAINS python materials/openpbr baking gpu painting layers fill ui/panels ui/dialogs assets viewport materials/layering materials/native persistence io diagnostics platform ui/widgets)
 set(BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR} ${BTS_HOST_SOURCE_DIR}/../harness)
 foreach(_bts_domain IN LISTS BTS_HOST_DOMAINS)
   list(APPEND BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR}/${_bts_domain})
