@@ -35,11 +35,16 @@ def tracked(root):
     return {os.fsdecode(p) for p in proc.stdout.split(b"\0") if p}
 
 
-def resolve(name, including, files):
+def domain_folders(files):
+    return tuple(sorted({f.rsplit("/", 1)[0] for f in files if f.startswith("native/host/") and f.count("/") >= 3}))
+
+
+def resolve(name, including, files, domains=()):
     folder = including.rsplit("/", 1)[0]
     # The same search order the build uses: the includer's folder, then the include
-    # path every bts target gets (native/host and native/harness).
-    for base in (folder, "native/host", "native/harness", "native", ""):
+    # path every bts target gets (native/host, native/harness and the native/host
+    # domain folders).
+    for base in (folder, "native/host", "native/harness", *domains, "native", ""):
         candidate = os.path.normpath(f"{base}/{name}" if base else name).replace(os.sep, "/")
         if candidate in files:
             return candidate
@@ -48,6 +53,7 @@ def resolve(name, including, files):
 
 def classify(root):
     files = tracked(root)
+    domains = domain_folders(files)
     surface, others, includers = {}, {}, {}
     for rel in sorted(f for f in files if f.endswith(SOURCE_SUFFIXES)):
         path = root / rel
@@ -55,7 +61,7 @@ def classify(root):
             continue
         text = path.read_text(encoding="utf-8", errors="replace")
         for _, name in INCLUDE.findall(text):
-            if resolve(name, rel, files):
+            if resolve(name, rel, files, domains):
                 continue
             module = BLENDER_MODULE.fullmatch(name.rsplit("/", 1)[-1])
             if module or name.startswith(BLENDER_DIRS):

@@ -33,8 +33,8 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/../harness/HardSurfaceDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/ChannelConfigurationDemo.cc
   ${BTS_HOST_SOURCE_DIR}/ChannelConfigurationDialog.cc
-  ${BTS_HOST_SOURCE_DIR}/PythonUi.cc
-  ${BTS_HOST_SOURCE_DIR}/PythonConsole.cc
+  ${BTS_HOST_SOURCE_DIR}/python/PythonUi.cc
+  ${BTS_HOST_SOURCE_DIR}/python/PythonConsole.cc
   ${BTS_FILE_BROWSER_WIDGET_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/FileBrowserNativeThumbnails.cc
   ${BTS_HOST_SOURCE_DIR}/QtSharedContext.cc
@@ -783,16 +783,21 @@ function(bts_register_cpu_tests)
 endfunction()
 cmake_language(DEFER CALL bts_register_cpu_tests)
 
-# Test and demo code lives in native/harness and includes host headers by bare name,
-# and host code includes harness headers the same way, so every compiled bts target
-# searches both folders.
+# Test and demo code lives in native/harness, and host code is moving into domain
+# folders under native/host. Files include each other by bare name across all of
+# them, so every compiled bts target searches every one of these folders.
+set(BTS_HOST_DOMAINS python)
+set(BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR} ${BTS_HOST_SOURCE_DIR}/../harness)
+foreach(_bts_domain IN LISTS BTS_HOST_DOMAINS)
+  list(APPEND BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR}/${_bts_domain})
+endforeach()
 function(bts_add_source_include_dirs)
   get_property(_bts_targets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
   foreach(_bts_target IN LISTS _bts_targets)
     if(_bts_target MATCHES "^bts-")
       get_target_property(_bts_type ${_bts_target} TYPE)
       if(_bts_type MATCHES "^(EXECUTABLE|STATIC_LIBRARY|SHARED_LIBRARY|MODULE_LIBRARY|OBJECT_LIBRARY)$")
-        target_include_directories(${_bts_target} PRIVATE ${BTS_HOST_SOURCE_DIR} ${BTS_HOST_SOURCE_DIR}/../harness)
+        target_include_directories(${_bts_target} PRIVATE ${BTS_SOURCE_INCLUDE_DIRS})
       endif()
     endif()
   endforeach()

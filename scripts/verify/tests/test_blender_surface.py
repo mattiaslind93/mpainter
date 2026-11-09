@@ -91,6 +91,12 @@ class BlenderSurface(unittest.TestCase):
         self.assertEqual(others, {})
         self.assertEqual(sorted(includers), ["native/host/A.cc"])
 
+    def test_domain_folder_headers_resolve(self):
+        fixture = Fixture(self, {"native/host/A.cc": '#include "PythonUi.hh"\n',
+                                 "native/host/python/PythonUi.hh": '#include "A.hh"\n', "native/host/A.hh": ""})
+        _, others, _ = bs.classify(fixture.root)
+        self.assertEqual(others, {})
+
     def test_deterministic(self):
         fixture = Fixture(self, FILES)
         self.assertEqual(bs.render(*bs.classify(fixture.root)), bs.render(*bs.classify(fixture.root)))

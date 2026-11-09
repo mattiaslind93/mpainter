@@ -121,7 +121,7 @@ leaves the release build.
 | `BTS_FILL_ANCHORS` | native/harness, native/host | `ContentAnchorDemo.inc`, `FillAnchorCapture.inc`, `main.cc` |
 | `BTS_FILL_CHANNELS_DEMO` | native/host | `GuiFixDemo.cc`, `main.cc` |
 | `BTS_FILL_CHANNELS_LEGACY` | native/harness, native/host | `FillChannelsDemo.cc`, `main.cc` |
-| `BTS_FILL_SYMMETRY_DEMO` | native/harness, native/host | `FillSymmetryDemo.cc`, `PythonConsole.cc`, `main.cc` |
+| `BTS_FILL_SYMMETRY_DEMO` | native/harness, native/host | `FillSymmetryDemo.cc`, `main.cc`, `PythonConsole.cc` |
 | `BTS_FILL_TEXTURE_DEMO` | native/host | `GuiFixDemo.cc`, `main.cc` |
 | `BTS_FLATTEN_DEMO` | native/harness, native/host | `FlattenProofActions.inc`, `GuiFixDemo.cc`, `main.cc` |
 | `BTS_FLATTEN_LARGE` | native/harness | `FlattenDemo.cc`, `FlattenProofActions.inc` |
@@ -155,7 +155,7 @@ leaves the release build.
 | `BTS_GPU_UNIFORM_DEMO` | native/harness | `PerformanceDemo.cc` |
 | `BTS_GPU_WARP_TIMING` | native/host | `GpuLayerPreview.cc` |
 | `BTS_GUI_PERFORMANCE` | native/host | `GuiFixDemo.cc` |
-| `BTS_HARD_UNWRAP_DEMO` | native/harness, native/host | `HardSurfaceDemo.cc`, `PythonConsole.cc`, `main.cc` |
+| `BTS_HARD_UNWRAP_DEMO` | native/harness, native/host | `HardSurfaceDemo.cc`, `main.cc`, `PythonConsole.cc` |
 | `BTS_HEADLESS_WORKSPACE` | native/harness, native/host, native/tests | `PainterWorkflowDemo.hh`, `main.cc`, `GpuProgramWarmupDiagnostic.hh` |
 | `BTS_HEIGHT_8K_IMPORT_TEST` | native/harness | `TextureImportCpuDemo.cc` |
 | `BTS_HEIGHT_NEUTRAL_DEMO` | native/host, native/tests | `GuiFixDemo.cc`, `main.cc`, `native_height_policy_artist_test.cc` |
@@ -305,7 +305,7 @@ leaves the release build.
 | `BTS_RENDER_WORKSPACE_DEMO` | native/harness, native/host | `RenderModeDemo.cc`, `GuiFixDemo.cc` |
 | `BTS_REQUESTED_FEATURES_PROOF` | native/harness | `ExportCpuDemo.cc` |
 | `BTS_RES8K_DEMO` | native/harness, native/host | `Res8kWitness.inc`, `GuiFixDemo.cc` |
-| `BTS_RESIDENCY_DEMO` | native/harness, native/host | `ResidencyDemo.cc`, `PythonConsole.cc`, `main.cc` |
+| `BTS_RESIDENCY_DEMO` | native/harness, native/host | `ResidencyDemo.cc`, `main.cc`, `PythonConsole.cc` |
 | `BTS_RESIDENCY_OPEN_ONLY` | native/harness | `ResidencyDemo.cc` |
 | `BTS_RESIDENCY_RESTART` | native/harness | `ResidencyDemo.cc` |
 | `BTS_RESOLUTION_LOG` | native/host | `GpuLayerPreview.cc`, `ViewportResidency.cc` |
@@ -383,4 +383,4 @@ leaves the release build.
 | `BTS_VERIFY_HOSTED_SHADER_WORKERS` | native/harness | `ViewportHeadlessDemo.cc` |
 | `BTS_VERIFY_SHARED_TEXTURE` | native/host | `GpuLayerPreview.cc` |
 | `BTS_WARP_DEMO` | native/host | `GuiFixDemo.cc`, `main.cc` |
-| `BTS_WARP_GEOMETRY_DEMO` | native/harness, native/host | `WarpGeometryDemo.cc`, `PythonConsole.cc`, `main.cc` |
+| `BTS_WARP_GEOMETRY_DEMO` | native/harness, native/host | `WarpGeometryDemo.cc`, `main.cc`, `PythonConsole.cc` |
