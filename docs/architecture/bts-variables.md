@@ -75,7 +75,7 @@ leaves the release build.
 | `BTS_BLEND_MATERIAL_SOURCE` | native/harness, native/tests | `BlendImagesDemo.hh`, `BlendMaterialDemo.hh`, `native_height_policy_artist_test.cc`, `native_material_artist_edit_test.cc` and 1 more |
 | `BTS_BL_BAKE_SAMPLES_TEST` | native/harness | `GpuBakeRayDemo.hh` |
 | `BTS_BM_ADJUSTMENT_COLD` | native/harness | `ViewportHeadlessDemo.cc` |
-| `BTS_BM_ADJUSTMENT_DEMO` | native/host | `GpuLayerPreview.cc`, `GpuTextureExportSource.hh`, `GuiFixDemo.cc`, `MaterialInspection.cc` and 3 more |
+| `BTS_BM_ADJUSTMENT_DEMO` | native/host | `GpuLayerPreview.cc`, `GuiFixDemo.cc`, `MaterialInspection.cc`, `NativeAdjustmentState.inc` and 3 more |
 | `BTS_BM_ADJUSTMENT_EXPECTED` | native/harness | `AdjustmentPaintColdProof.hh` |
 | `BTS_BM_GPU_ADJUSTMENT_TEST` | native/harness, native/host | `ViewportHeadlessDemo.cc`, `GpuLayerPreview.cc` |
 | `BTS_BN_PRECISION_DIAG` | native/harness | `GpuSmartMaskTests.inc` |
