@@ -6,6 +6,7 @@
   mp check [--only NAME]     fast source gates; see CHECKS below
   mp doctor                  report which local tools are present, without changing anything
   mp docs [--check]          regenerate docs/blender-surface.md and docs/architecture/bts-variables.md
+  mp spdx [--write]          list (or add) missing SPDX-License-Identifier lines
   mp move DEST --list FILE [--refs]
                              git mv native/host files into a domain folder and repoint CMake
   mp brief --output PATH ... write a worker brief with every required field
@@ -374,6 +375,74 @@ def move_files(root, dest, sources, refs=False, allow_referenced=False):
     return {"cmake": total, "refs": rewritten}
 
 
+SPDX_LICENSE = "GPL-3.0-or-later"
+SPDX_PATTERN = re.compile(r"SPDX-License-Identifier:")
+SPDX_FOLDERS = ("native/", "scripts/")
+# Windows, macOS and packaging files change only in their own reviewed work.
+SPDX_SKIP = ("scripts/cross-windows/", "scripts/package-", "scripts/package_")
+SPDX_COMMENTS = {".cc": "//", ".hh": "//", ".h": "//", ".c": "//", ".cpp": "//", ".hpp": "//", ".inl": "//",
+                 ".inc": "//", ".mm": "//", ".py": "#", ".sh": "#", ".cmake": "#"}
+
+
+def spdx_comment(rel):
+    if rel.endswith("/CMakeLists.txt") or rel == "CMakeLists.txt":
+        return "#"
+    return SPDX_COMMENTS.get(os.path.splitext(rel)[1])
+
+
+def pinned_hashes(root, files):
+    """(hashes, paths) pinned in tracked Python or JSON files: every 64-hex value, and every
+    quoted native/ or scripts/ path on a line that also holds one. A pin may hash a transformed
+    copy of its file (cycles_burst_snapshot.py strips a friend line first), so the path counts too."""
+    hashes, paths = set(), set()
+    for rel in files:
+        if rel.endswith((".py", ".json")) and rel.startswith(SPDX_FOLDERS):
+            for line in (text(root, rel) or "").splitlines():
+                found = re.findall(r"\b[0-9a-f]{64}\b", line)
+                if found:
+                    hashes.update(found)
+                    paths.update(re.findall(r"""['"]((?:native|scripts)/[^'"\s]+)['"]""", line))
+    return hashes, paths
+
+
+def spdx_plan(root):
+    """(missing, pinned, present): source files without an SPDX line, those left alone because a
+    verifier pins their sha256, and those that already carry one (any licence)."""
+    import hashlib
+    files = git_files(root)
+    pins, pinned_paths = pinned_hashes(root, files)
+    missing, pinned, present = [], [], []
+    for rel in files:
+        if not rel.startswith(SPDX_FOLDERS) or rel.startswith(SPDX_SKIP) or spdx_comment(rel) is None:
+            continue
+        data = (root / rel).read_bytes()
+        head = "\n".join(data.decode("utf-8", "replace").split("\n")[:3])
+        if SPDX_PATTERN.search(head):
+            present.append(rel)
+        elif hashlib.sha256(data).hexdigest() in pins or rel in pinned_paths:
+            pinned.append(rel)
+        else:
+            missing.append(rel)
+    return missing, pinned, present
+
+
+def add_spdx(path, comment):
+    data = path.read_text(encoding="utf-8", errors="surrogateescape")
+    line = f"{comment} SPDX-License-Identifier: {SPDX_LICENSE}\n"
+    if data.startswith("#!"):
+        first, _, rest = data.partition("\n")
+        path.write_text(first + "\n" + line + rest, encoding="utf-8", errors="surrogateescape")
+    else:
+        path.write_text(line + data, encoding="utf-8", errors="surrogateescape")
+
+
+def check_spdx(root, files):
+    missing, pinned, _ = spdx_plan(root)
+    summary = (f"{len(missing)} source files under native/ and scripts/ lack an SPDX line; "
+               f"{len(pinned)} more are left alone because a verifier pins their sha256")
+    return ("FAIL" if missing else "PASS", summary, missing + [f"pinned: {p}" for p in pinned])
+
+
 def check_agent_docs(root, files):
     checker = root / "scripts/verify/check_agent_docs.py"
     if not checker.is_file():
@@ -404,6 +473,7 @@ CHECKS = {
     "blender-surface": check_blender_surface_doc,
     "bts-variables": check_bts_variables_doc,
     "blender-patch-count": check_blender_patch_count,
+    "spdx": check_spdx,
     "agent-docs": check_agent_docs,
     "unpushed": check_unpushed,
 }
@@ -510,6 +580,8 @@ def main(argv=None, root=ROOT, out=sys.stdout):
     sub.add_parser("doctor")
     docs = sub.add_parser("docs")
     docs.add_argument("--check", action="store_true")
+    spdx = sub.add_parser("spdx")
+    spdx.add_argument("--write", action="store_true", help=f"add `SPDX-License-Identifier: {SPDX_LICENSE}`")
     move = sub.add_parser("move")
     move.add_argument("dest")
     move.add_argument("--list", required=True, help="file with one native/host/<file> path per line")
@@ -556,6 +628,17 @@ def main(argv=None, root=ROOT, out=sys.stdout):
             if not stale:
                 print("generated docs are current", file=out)
             return 1 if args.check and stale else 0
+        if args.command == "spdx":
+            missing, pinned, present = spdx_plan(root)
+            if args.write:
+                for rel in missing:
+                    add_spdx(root / rel, spdx_comment(rel))
+            verb = "added" if args.write else "missing"
+            print(f"{verb}: {len(missing)}; pinned by a verifier, left alone: {len(pinned)}; "
+                  f"already present: {len(present)}", file=out)
+            for rel in pinned:
+                print(f"  pinned {rel}", file=out)
+            return 0 if args.write or not missing else 1
         if args.command == "move":
             listing = Path(args.list)
             sources = [line.strip() for line in listing.read_text(encoding="utf-8").splitlines() if line.strip()]

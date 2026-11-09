@@ -316,6 +316,40 @@ class Move(unittest.TestCase):
         self.assertTrue((repo.root / "native/host/Brush.cc").is_file())
 
 
+class Spdx(unittest.TestCase):
+    def test_spdx_adds_lines_and_keeps_pinned_and_existing(self):
+        import hashlib
+        pinned = "int pinned;\n"
+        repo = Repo(self, {
+            "native/host/A.cc": "int a;\n",
+            "native/host/Blend.cc": "// SPDX-License-Identifier: GPL-2.0-or-later\nint b;\n",
+            "native/tests/pinned.cc": pinned,
+            "scripts/host/pin.py": f"PIN = '{hashlib.sha256(pinned.encode()).hexdigest()}'\n"
+                                   f"PINS = {{'native/tests/friend.cc': '{'a' * 64}'}}\n",
+            "native/tests/friend.cc": "int transformed_before_hashing;\n",
+            "scripts/host/run.sh": "#!/usr/bin/env bash\necho hi\n",
+            "native/host/CMakeLists.txt": "project(x)\n",
+            "third_party/blender/x.cc": "int vendor;\n",
+            "docs/readme.md": "doc\n"})
+        self.assertEqual(statuses(repo)["spdx"][0], "FAIL")
+        code, out, _ = repo.mp("spdx", "--write")
+        self.assertEqual(code, 0, out)
+        self.assertIn("pinned native/tests/pinned.cc", out)
+        self.assertEqual((repo.root / "native/host/A.cc").read_text(),
+                         "// SPDX-License-Identifier: GPL-3.0-or-later\nint a;\n")
+        self.assertEqual((repo.root / "scripts/host/run.sh").read_text(),
+                         "#!/usr/bin/env bash\n# SPDX-License-Identifier: GPL-3.0-or-later\necho hi\n")
+        self.assertTrue((repo.root / "native/host/CMakeLists.txt").read_text().startswith("# SPDX"))
+        self.assertIn("GPL-2.0-or-later", (repo.root / "native/host/Blend.cc").read_text())
+        self.assertNotIn("GPL-3.0", (repo.root / "native/host/Blend.cc").read_text())
+        self.assertEqual((repo.root / "native/tests/pinned.cc").read_text(), pinned)
+        self.assertEqual((repo.root / "native/tests/friend.cc").read_text(), "int transformed_before_hashing;\n")
+        self.assertEqual((repo.root / "third_party/blender/x.cc").read_text(), "int vendor;\n")
+        self.assertEqual((repo.root / "docs/readme.md").read_text(), "doc\n")
+        repo.git("add", "-A")
+        self.assertEqual(statuses(repo)["spdx"][0], "PASS")
+
+
 class Doctor(unittest.TestCase):
     def fake(self, outputs):
         def run(argv, **kwargs):
