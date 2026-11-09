@@ -5,7 +5,7 @@ How `native/` is organised while the restructure plan's phases 4 and 5 are under
 | Folder | What lives there |
 |---|---|
 | `native/host/` | The application, compiled into `bts-host`. Files not yet assigned to a domain stay at the top level. |
-| `native/host/<domain>/` | Domain folders so far: `python/`, `materials/openpbr/`, `materials/layering/`, `materials/native/`, `baking/`, `gpu/`, `painting/`, `layers/`, `fill/`, `ui/panels/`, `ui/dialogs/`, `assets/`, `viewport/`. The rest of the plan's domains follow. |
+| `native/host/<domain>/` | Domain folders so far: `assets/`, `baking/`, `diagnostics/`, `fill/`, `gpu/`, `io/`, `layers/`, `materials/layering/`, `materials/native/`, `materials/openpbr/`, `painting/`, `persistence/`, `platform/`, `python/`, `ui/dialogs/`, `ui/panels/`, `ui/widgets/`, `viewport/`. Still to come from the plan: `app/`, `blender/`, `document/`, `spsm-import/`, `ui/shell/`, `ui/theme/`, `materials/common/`. |
 | `native/host/openpbr/` | Vendored OpenPBR resources (Apache-2.0), not our code. |
 | `native/harness/` | Test, demo and proof code (`*Demo`, `*Test`, `*Proof`, `*Fixture`, `*Witness`, ...). Still compiled into `bts-host`, because `main()` calls it. |
 | `native/tests/` | Test programs and their fixtures. |
