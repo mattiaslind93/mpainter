@@ -291,15 +291,19 @@ def name_references(root, names):
     """Where scripts, JSON, shell files or tests name these files: by file name, or by a quoted
     bare stem (verifiers build paths as 'native/host/' + stem + '.cc'). [(file:line, name)]"""
     stems = {n.split(".")[0]: n for n in names}
-    full = re.compile(r"(?<![A-Za-z0-9_])(" + "|".join(re.escape(n) for n in names) + r")(?![A-Za-z0-9_.])")
+    alternatives = "|".join(re.escape(n) for n in names)
+    full = re.compile(r"(?<![A-Za-z0-9_])(" + alternatives + r")(?![A-Za-z0-9_.])")
+    # In C++ a bare include resolves through the include path; only a relative path pins a folder.
+    relative = re.compile(r'"\.\./host/(' + alternatives + r')"')
     quoted = re.compile(r"""['"]([A-Za-z0-9_]+)['"]""")
     hits = []
     for rel in git_files(root):
         if not REF_FILES.match(rel) or rel == HOST_CMAKE:
             continue
         content = text(root, rel) or ""
+        pattern = relative if rel.endswith((".cc", ".hh", ".inc")) else full
         for number, line in enumerate(content.splitlines(), 1):
-            for match in full.finditer(line):
+            for match in pattern.finditer(line):
                 hits.append((f"{rel}:{number}", match.group(1)))
             if rel.endswith(".py"):
                 for stem in quoted.findall(line):

@@ -272,6 +272,15 @@ class Move(unittest.TestCase):
         self.assertTrue((repo.root / "native/host/Brush.cc").is_file())
         self.assertEqual(self.move(repo, "Other.cc", allow=False)[0], 0)
 
+    def test_bare_includes_in_tests_do_not_block_but_relative_ones_do(self):
+        repo = self.repo()
+        repo.write("native/tests/jitter_test.cc", '#include "BrushJitter.cc"\n')
+        repo.git("add", "-A")
+        self.assertEqual(self.move(repo, "BrushJitter.cc", allow=False)[0], 0)
+        code, _, err = self.move(repo, "Brush.hh", allow=False)
+        self.assertEqual(code, 2)
+        self.assertIn("native/tests/brush_test.cc:1: Brush.hh", err)
+
     def test_move_rewrites_cmake_exactly(self):
         repo = self.repo()
         code, out, err = self.move(repo, "Brush.cc", "Brush.hh")
