@@ -8,7 +8,7 @@ from pathlib import Path
 import re
 root = Path(__file__).resolve().parents[2]
 failures = []
-for path in (root / 'native/host').iterdir():
+for path in (root / 'native/host').rglob('*'):
     if path.suffix not in ('.cc', '.hh') or path.name == 'Theme.hh':
         continue
     if 'Demo' in path.name or 'Test' in path.name:
@@ -27,7 +27,7 @@ for name, alias in re.findall(r'inline constexpr auto (\w+) = (\w+);', source):
     colors[name] = colors[alias]
 # Theme.hh also carries non-color QSS tokens, such as the shared control radius.
 metrics = dict(re.findall(r'inline constexpr auto (\w+) = "([^"#][^"]*)";', source))
-for path in (root / 'native/host').iterdir():
+for path in (root / 'native/host').rglob('*'):
     if path.suffix not in ('.cc', '.hh'):
         continue
     for token in re.findall(r'@([A-Za-z]+)@', path.read_text()):

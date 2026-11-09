@@ -35,7 +35,7 @@ manifest = json.loads(fixture.with_suffix('.json').read_text())
 assert manifest['kind'] == 'owned-retained-vector-math-v1' and manifest['images'] == 0
 assert manifest['materials'] == ['AW Vector Add', 'AW Vector Multiply'] and manifest['operations'] == ['ADD', 'MULTIPLY']
 # Pin all native sources used by this executable, and the new actor/runtime tools.
-source_hashes = {str(p.relative_to(root)): sha(p) for p in sorted((root/'native/host').glob('*')) if p.is_file()}
+source_hashes = {str(p.relative_to(root)): sha(p) for p in sorted((root/'native/host').rglob('*')) if p.is_file()}
 for name in ['native/tests/native_vector_mapping_fixture.py', 'scripts/host/verify-native-vector-mapping-ui.py', 'scripts/host/private_gpu_gui.py']:
     source_hashes[name] = sha(root/name)
 out.mkdir(parents=True)

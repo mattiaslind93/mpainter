@@ -64,7 +64,7 @@ for row,original in zip(rows,inspection):
     require(row['material']==original['material'] and row['source']==original['source'] and row['group']==original['group'],'Explicit source/material does not match actual inspected source')
     require(Path(row['source']).is_absolute(),'Only explicit absolute source paths allowed')
 selected=[row for row in rows if a.case is None or row['id']==a.case]
-source_files={str(p.relative_to(root)):sha(p) for p in sorted((root/'native/host').glob('*')) if p.is_file()}
+source_files={str(p.relative_to(root)):sha(p) for p in sorted((root/'native/host').rglob('*')) if p.is_file()}
 for name in ['scripts/host/verify-native-real-material-ui.py','scripts/host/private_gpu_gui.py','scripts/host/run-host.sh','native/tests/native_real_material_cases.json',table['inspection_proof']]:source_files[name]=sha(root/name)
 case_sha=sha(case_path);environment=a.environment.resolve();require(sha(environment)=='48505ffc80c0ca026775c77621b5a85a4c44b0fb7819ddadfa9e7bc6f5732031','Approved HDRI changed')
 # Pin existing source metadata, not a copied substitute. No actor changes data files.

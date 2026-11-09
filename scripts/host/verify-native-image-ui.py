@@ -100,7 +100,7 @@ if not a.run_only:
     resolved=set()
     for path in pending:
      pattern=re.compile(r'^\s*#\s*include\s*"'+re.escape(Path(path).name)+r'"',re.M)
-     parents={str(parent.relative_to(repo))for parent in(repo/'native/host').iterdir()if parent.is_file()and parent.suffix in('.hh','.cc','.inc')and pattern.search(parent.read_text())}
+     parents={str(parent.relative_to(repo))for parent in(repo/'native/host').rglob('*')if parent.is_file()and parent.suffix in('.hh','.cc','.inc')and pattern.search(parent.read_text())}
      if parents and parents<=covered:resolved.add(path)
     assert resolved,'New header has an uncovered include edge; use full rebuild or regenerate audit'
     pending-=resolved;covered|=resolved
