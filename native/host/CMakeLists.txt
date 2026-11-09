@@ -187,7 +187,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/BitmapMask.cc
   ${BTS_HOST_SOURCE_DIR}/TexturePadding.cc
   ${BTS_HOST_SOURCE_DIR}/SymmetryIO.cc
-  ${BTS_HOST_SOURCE_DIR}/LayerThumbnail.cc
+  ${BTS_HOST_SOURCE_DIR}/layers/LayerThumbnail.cc
   ${BTS_HOST_SOURCE_DIR}/EnvironmentResource.cc
   ${BTS_HOST_SOURCE_DIR}/ProjectIO.cc
   ${BTS_HOST_SOURCE_DIR}/SurfaceBrush.cc
@@ -786,7 +786,7 @@ cmake_language(DEFER CALL bts_register_cpu_tests)
 # Test and demo code lives in native/harness, and host code is moving into domain
 # folders under native/host. Files include each other by bare name across all of
 # them, so every compiled bts target searches every one of these folders.
-set(BTS_HOST_DOMAINS python materials/openpbr baking gpu painting)
+set(BTS_HOST_DOMAINS python materials/openpbr baking gpu painting layers)
 set(BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR} ${BTS_HOST_SOURCE_DIR}/../harness)
 foreach(_bts_domain IN LISTS BTS_HOST_DOMAINS)
   list(APPEND BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR}/${_bts_domain})
