@@ -784,14 +784,8 @@ function(bts_register_cpu_tests)
 endfunction()
 cmake_language(DEFER CALL bts_register_cpu_tests)
 
-# Test and demo code lives in native/harness, and host code is moving into domain
-# folders under native/host. Files include each other by bare name across all of
-# them, so every compiled bts target searches every one of these folders.
-set(BTS_HOST_DOMAINS python materials/openpbr baking gpu painting layers fill ui/panels ui/dialogs assets viewport materials/layering materials/native persistence io diagnostics platform ui/widgets)
-set(BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR} ${BTS_HOST_SOURCE_DIR}/../harness)
-foreach(_bts_domain IN LISTS BTS_HOST_DOMAINS)
-  list(APPEND BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR}/${_bts_domain})
-endforeach()
+# BTS_HOST_DOMAINS and BTS_SOURCE_INCLUDE_DIRS: the include path of every bts target.
+include(${BTS_HOST_SOURCE_DIR}/SourceIncludeDirs.cmake)
 function(bts_add_source_include_dirs)
   get_property(_bts_targets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
   foreach(_bts_target IN LISTS _bts_targets)

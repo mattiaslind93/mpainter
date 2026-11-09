@@ -14,18 +14,22 @@ How `native/` is organised while the restructure plan's phases 4 and 5 are under
 ## Includes
 
 Files include each other by bare name (`#include "Theme.hh"`) across all of these folders.
-`native/host/CMakeLists.txt` keeps the list of domain folders in `BTS_HOST_DOMAINS`. Every
-`bts-*` target searches `native/host`, `native/harness` and each listed domain folder.
+`native/host/SourceIncludeDirs.cmake` keeps the list of domain folders in `BTS_HOST_DOMAINS`
+and builds `BTS_SOURCE_INCLUDE_DIRS` from it. Every `bts-*` target searches `native/host`,
+`native/harness` and each listed domain folder. The standalone projects in
+`native/tests/*/CMakeLists.txt` include the same file, so they search the same folders.
 `scripts/verify/blender_surface.py` resolves includes the same way. No header name under
 `native/` matches a Blender header name, so the wider search path cannot shadow Blender.
 
 ## Moving files
 
 Use `python3 scripts/mp.py move <folder> --list <file> [--refs]`. It runs `git mv` and rewrites
-the `${BTS_HOST_SOURCE_DIR}/<file>` references in `native/host/CMakeLists.txt`. With `--refs`
-it also rewrites exact `native/host/<file>` paths in scripts and `"../host/<file>"` includes in
-tests. Add a new domain folder to `BTS_HOST_DOMAINS` in the same change, then rebuild and run
-the CPU check.
+the `${BTS_HOST_SOURCE_DIR}/<file>` references in `native/host/CMakeLists.txt` and the
+`../../host/<file>` paths in the standalone test projects. With `--refs` it also rewrites exact
+`native/host/<file>` paths in scripts and `"../host/<file>"` includes in tests. Add a new domain
+folder to `BTS_HOST_DOMAINS` in the same change, then rebuild and run the CPU check. Nothing
+here builds the standalone projects, so `mp check`'s `test-cmake-paths` gate checks that every
+source path they name exists.
 
 `mp move` refuses a file that a script, test or JSON file names, either by file name or by a
 quoted bare stem such as `'NativeMaterialImageVariant'`, because some verifiers build paths as

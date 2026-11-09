@@ -287,6 +287,8 @@ HOST_CMAKE = "native/host/CMakeLists.txt"
 MOVE_DESTINATIONS = re.compile(r"native/(harness|host/[a-z][a-z0-9_-]*(/[a-z][a-z0-9_-]*)?)\Z")
 REF_FILES = re.compile(r"(scripts|native)/.*\.(py|json|sh)\Z|native/tests/.*\.(cc|hh|inc)\Z")
 NAME_END = r"(?![A-Za-z0-9_.])"
+# Standalone CMake projects that compile host sources by relative path.
+TEST_CMAKE = re.compile(r"native/tests/[^/]+/CMakeLists\.txt")
 
 
 def name_references(root, names):
@@ -317,10 +319,11 @@ def name_references(root, names):
 def move_files(root, dest, sources, refs=False, allow_referenced=False):
     """git mv top-level native/host files into dest and repoint what names them.
 
-    Rewrites `${BTS_HOST_SOURCE_DIR}/<name>` in native/host/CMakeLists.txt. With refs,
-    also `native/host/<name>` in tracked Python, JSON and shell files and
-    `"../host/<name>"` includes in native/tests. Adding dest to BTS_HOST_DOMAINS
-    (or the harness include folder) is left to the caller, because it is a decision.
+    Rewrites `${BTS_HOST_SOURCE_DIR}/<name>` in native/host/CMakeLists.txt and
+    `../../host/<name>` in the standalone projects (native/tests/*/CMakeLists.txt). With
+    refs, also `native/host/<name>` in tracked Python, JSON and shell files and
+    `"../host/<name>"` includes in native/tests. Adding dest to BTS_HOST_DOMAINS in
+    native/host/SourceIncludeDirs.cmake is left to the caller, because it is a decision.
     Returns {"cmake": n, "refs": {file: n}}.
     """
     if not MOVE_DESTINATIONS.fullmatch(dest):
@@ -350,6 +353,16 @@ def move_files(root, dest, sources, refs=False, allow_referenced=False):
         cmake, n = pattern.subn(lambda m, name=name: "${BTS_HOST_SOURCE_DIR}/" + prefix + "/" + name, cmake)
         total += n
     rewritten = {}
+    for rel in sorted(r for r in tracked if TEST_CMAKE.fullmatch(r)):
+        content = (root / rel).read_text(encoding="utf-8")
+        count = 0
+        for name in names:
+            pattern = re.compile(r"\.\./\.\./host/" + re.escape(name) + NAME_END)
+            content, n = pattern.subn(lambda m, name=name: f"../../host/{prefix}/{name}", content)
+            count += n
+        if count:
+            (root / rel).write_text(content, encoding="utf-8")
+            total += count
     if refs:
         rules = [(re.compile(r"native/host/" + re.escape(n) + NAME_END), f"{dest}/{n}") for n in names]
         rules += [(re.compile(r'"\.\./host/' + re.escape(n) + '"'), f'"../{dest[len("native/"):]}/{n}"')
@@ -439,6 +452,21 @@ def add_spdx(path, comment):
         path.write_text(line + data, encoding="utf-8", errors="surrogateescape")
 
 
+def check_test_cmake_paths(root, files):
+    """Every relative source path and included file in the standalone native/tests/*/ projects
+    exists. Nothing builds them here, so a move that misses one would go unnoticed."""
+    hits = []
+    for rel in files:
+        if not TEST_CMAKE.fullmatch(rel):
+            continue
+        folder = (root / rel).parent
+        for number, line in enumerate((text(root, rel) or "").splitlines(), 1):
+            for path in re.findall(r"(?<![\w${}/.-])(\.\./[\w./-]+\.(?:cc|cpp|c|hh|h|cmake))(?![\w.])", line):
+                if not (folder / path).is_file():
+                    hits.append(f"{rel}:{number}: {path}")
+    return ("FAIL" if hits else "PASS", "standalone test projects name only existing sources", hits)
+
+
 def check_spdx(root, files):
     missing, pinned, _ = spdx_plan(root)
     summary = (f"{len(missing)} source files under native/ and scripts/ lack an SPDX line; "
@@ -471,6 +499,7 @@ CHECKS = {
     "quuid-reset": check_quuid,
     "shared-ptr-unique": check_shared_ptr_unique,
     "cmake-backslash": check_cmake_backslash,
+    "test-cmake-paths": check_test_cmake_paths,
     "test-includes": check_test_includes,
     "blender-boundary": check_blender_boundary,
     "blender-surface": check_blender_surface_doc,

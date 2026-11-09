@@ -303,6 +303,23 @@ class Move(unittest.TestCase):
         self.assertEqual((repo.root / "native/tests/brush_test.cc").read_text(),
                          '#include "../host/painting/Brush.hh"\n#include "../host/Other.hh"\n')
 
+    def test_move_rewrites_standalone_test_projects_and_the_gate_sees_stale_paths(self):
+        repo = self.repo()
+        repo.write("native/tests/brushes/CMakeLists.txt",
+                   "add_executable(t ../brush_test.cc ../../host/Other.cc ../../host/BrushJitter.cc)\n"
+                   "include(../../host/Missing.cmake)\n")
+        repo.git("add", "-A")
+        self.assertEqual(statuses(repo)["test-cmake-paths"][0], "FAIL")
+        repo.write("native/tests/brushes/CMakeLists.txt",
+                   "add_executable(t ../brush_test.cc ../../host/Other.cc ../../host/BrushJitter.cc)\n")
+        repo.git("add", "-A")
+        self.assertEqual(statuses(repo)["test-cmake-paths"][0], "PASS")
+        self.assertEqual(self.move(repo, "Other.cc", allow=False)[0], 0)
+        self.assertEqual((repo.root / "native/tests/brushes/CMakeLists.txt").read_text(),
+                         "add_executable(t ../brush_test.cc ../../host/painting/Other.cc ../../host/BrushJitter.cc)\n")
+        repo.git("add", "-A")
+        self.assertEqual(statuses(repo)["test-cmake-paths"][0], "PASS")
+
     def test_move_refuses_bad_input_and_changes_nothing(self):
         repo = self.repo()
         before = (repo.root / "native/host/CMakeLists.txt").read_text()

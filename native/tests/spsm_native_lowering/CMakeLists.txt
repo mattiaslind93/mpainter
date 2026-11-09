@@ -3,13 +3,14 @@ cmake_minimum_required(VERSION 3.20)
 project(bts_spsm_native_lowering LANGUAGES C CXX)
 include(CTest)
 find_package(Qt6 6.8 REQUIRED COMPONENTS Core Gui Widgets OpenGL)
+include(../../host/SourceIncludeDirs.cmake)
 add_subdirectory(../../spsm reader)
 add_subdirectory(../../spsm/semantic semantic)
 add_library(bts-spsm-native-lowering STATIC ../../host/SpsmMaterialImport.cc
-  ../../host/PaintPixels.cc ../../host/StrokeMetadata.cc
-  ../../host/StrokeHistory.cc ../../host/SurfacePathIO.cc)
+  ../../host/PaintPixels.cc ../../host/painting/StrokeMetadata.cc
+  ../../host/painting/StrokeHistory.cc ../../host/io/SurfacePathIO.cc)
 target_link_libraries(bts-spsm-native-lowering PUBLIC bts-spsm-semantic Qt6::Widgets Qt6::OpenGL)
-target_include_directories(bts-spsm-native-lowering PUBLIC ../../host)
+target_include_directories(bts-spsm-native-lowering PUBLIC ${BTS_SOURCE_INCLUDE_DIRS})
 add_executable(bts-spsm-native-lowering-tests ../spsm_native_lowering_test.cc)
 target_link_libraries(bts-spsm-native-lowering-tests PRIVATE bts-spsm-native-lowering)
 add_test(NAME spsm-native-lowering-boundaries COMMAND bts-spsm-native-lowering-tests)
@@ -29,7 +30,7 @@ endif()
 # Native import defaults are exercised without a Blender/GPU runtime.
 add_executable(bts-spsm-bitmap-options-tests ../spsm_bitmap_options_test.cc)
 target_link_libraries(bts-spsm-bitmap-options-tests PRIVATE Qt6::Widgets)
-target_include_directories(bts-spsm-bitmap-options-tests PRIVATE ../../host)
+target_include_directories(bts-spsm-bitmap-options-tests PRIVATE ${BTS_SOURCE_INCLUDE_DIRS})
 add_test(NAME spsm-native-import-defaults COMMAND bts-spsm-bitmap-options-tests)
 set_tests_properties(spsm-native-import-defaults PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
@@ -37,7 +38,7 @@ set_tests_properties(spsm-native-import-defaults PROPERTIES ENVIRONMENT "QT_QPA_
 # document evaluator or the CPU export path.
 add_executable(bts-spatial-filter-reference-tests ../diagnostic_spatial_filter_test.cc)
 target_compile_features(bts-spatial-filter-reference-tests PRIVATE cxx_std_20)
-target_include_directories(bts-spatial-filter-reference-tests PRIVATE ../../host)
+target_include_directories(bts-spatial-filter-reference-tests PRIVATE ${BTS_SOURCE_INCLUDE_DIRS})
 target_link_libraries(bts-spatial-filter-reference-tests PRIVATE Qt6::Core)
 add_test(NAME spatial-filter-reference COMMAND bts-spatial-filter-reference-tests)
 add_executable(bts-spatial-export-guard-tests ../native_export_guard_test.cc)
