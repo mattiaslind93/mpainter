@@ -47,7 +47,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/../harness/DerivedExportCpuDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/InputSpaceDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/SubsurfaceDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/SubsurfacePreviewIO.cc
+  ${BTS_HOST_SOURCE_DIR}/io/SubsurfacePreviewIO.cc
   ${BTS_HOST_SOURCE_DIR}/RenderController.cc
   ${BTS_HOST_SOURCE_DIR}/DisplayPostEffects.cc
   ${BTS_HOST_SOURCE_DIR}/ui/panels/DisplayPostPanel.cc
@@ -164,21 +164,21 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/AutoUnwrap.cc
   ${BTS_HOST_SOURCE_DIR}/MeshReplacement.cc
   ${BTS_HOST_SOURCE_DIR}/persistence/Recovery.cc
-  ${BTS_HOST_SOURCE_DIR}/ExportPadding.cc
+  ${BTS_HOST_SOURCE_DIR}/io/ExportPadding.cc
   ${BTS_HOST_SOURCE_DIR}/TextureExport.cc
   ${BTS_HOST_SOURCE_DIR}/ui/dialogs/TextureExportDialog.cc
   ${BTS_HOST_SOURCE_DIR}/SmartMaterial.cc
   ${BTS_HOST_SOURCE_DIR}/ui/panels/MeshMapsPanel.cc
   ${BTS_HOST_SOURCE_DIR}/baking/MeshBakeDialog.cc
-  ${BTS_HOST_SOURCE_DIR}/MeshMapImport.cc
+  ${BTS_HOST_SOURCE_DIR}/io/MeshMapImport.cc
   ${BTS_HOST_SOURCE_DIR}/MeshMapAssign.cc
-  ${BTS_HOST_SOURCE_DIR}/MeshMapIO.cc
+  ${BTS_HOST_SOURCE_DIR}/io/MeshMapIO.cc
   ${BTS_HOST_SOURCE_DIR}/baking/MeshBakeFilter.cc
   ${BTS_HOST_SOURCE_DIR}/MeshBaker.cc
   ${BTS_HOST_SOURCE_DIR}/AssetThumbnail.cc
   ${BTS_HOST_SOURCE_DIR}/AssetCatalog.cc
   ${BTS_HOST_SOURCE_DIR}/ResourceIO.cc
-  ${BTS_HOST_SOURCE_DIR}/ResourceImport.cc
+  ${BTS_HOST_SOURCE_DIR}/io/ResourceImport.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/FillTextureDemo.cc
   ${BTS_HOST_SOURCE_DIR}/FillTextureIO.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/FillSymmetryDemo.cc
@@ -186,7 +186,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/fill/FillPanel.cc
   ${BTS_HOST_SOURCE_DIR}/BitmapMask.cc
   ${BTS_HOST_SOURCE_DIR}/TexturePadding.cc
-  ${BTS_HOST_SOURCE_DIR}/SymmetryIO.cc
+  ${BTS_HOST_SOURCE_DIR}/io/SymmetryIO.cc
   ${BTS_HOST_SOURCE_DIR}/layers/LayerThumbnail.cc
   ${BTS_HOST_SOURCE_DIR}/EnvironmentResource.cc
   ${BTS_HOST_SOURCE_DIR}/ProjectIO.cc
@@ -207,7 +207,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/UsdMeshExport.cc
   ${BTS_HOST_SOURCE_DIR}/MeshExport.cc
   ${BTS_HOST_SOURCE_DIR}/ui/dialogs/MeshExportDialog.cc
-  ${BTS_HOST_SOURCE_DIR}/MeshImport.cc
+  ${BTS_HOST_SOURCE_DIR}/io/MeshImport.cc
   ${BTS_HOST_SOURCE_DIR}/ui/dialogs/NewProjectDialog.cc
   ${BTS_HOST_SOURCE_DIR}/main.cc
   ${BTS_HOST_SOURCE_DIR}/BlenderHost.cc
@@ -265,7 +265,7 @@ target_sources(bts-host PRIVATE
   ${BTS_HOST_SOURCE_DIR}/SpsmBitmapLowering.cc
   ${BTS_HOST_SOURCE_DIR}/SpsmMeshMapLowering.cc
   ${BTS_HOST_SOURCE_DIR}/SpsmSource.cc
-  ${BTS_HOST_SOURCE_DIR}/SpsmImportUi.cc)
+  ${BTS_HOST_SOURCE_DIR}/io/SpsmImportUi.cc)
 target_link_libraries(bts-host PRIVATE bts-spsm-semantic bts-spsm-bitmaps)
 add_executable(bts-spsm-bitmap-options-tests ${BTS_HOST_SOURCE_DIR}/../tests/spsm_bitmap_options_test.cc)
 target_compile_features(bts-spsm-bitmap-options-tests PRIVATE cxx_std_20)
@@ -273,7 +273,7 @@ target_link_libraries(bts-spsm-bitmap-options-tests PRIVATE Qt6::Widgets)
 target_include_directories(bts-spsm-bitmap-options-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 add_executable(bts-spsm-application-tests
   ${BTS_HOST_SOURCE_DIR}/../tests/spsm_application_test.cc
-  ${BTS_HOST_SOURCE_DIR}/SpsmImportUi.cc ${BTS_HOST_SOURCE_DIR}/AssetCatalog.cc)
+  ${BTS_HOST_SOURCE_DIR}/io/SpsmImportUi.cc ${BTS_HOST_SOURCE_DIR}/AssetCatalog.cc)
 target_link_libraries(bts-spsm-application-tests PRIVATE bts-export-config bts-spsm-semantic Qt6::Widgets)
 
 if(WITH_CPU_CHECK)
@@ -285,7 +285,7 @@ target_link_libraries(bts-host PRIVATE ${LIB} bf_io_wavefront_obj bf_io_alembic 
 target_link_libraries(bts-host PRIVATE bf::dependencies::optional::openimagedenoise)
 if(WITH_IO_FBX)
   target_link_libraries(bts-host PRIVATE bf_io_fbx)
-  set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/MeshImport.cc APPEND PROPERTY COMPILE_DEFINITIONS BTS_WITH_FBX)
+  set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/io/MeshImport.cc APPEND PROPERTY COMPILE_DEFINITIONS BTS_WITH_FBX)
 endif()
 add_dependencies(bts-host makesdna)
 if(WITH_BUILDINFO)
@@ -424,7 +424,7 @@ target_include_directories(bts-export-packing-tests PRIVATE ${BTS_HOST_SOURCE_DI
 target_compile_features(bts-export-packing-tests PRIVATE cxx_std_20)
 
 # Shared metadata parser is also linked by the pure TextureDocument test targets.
-add_library(bts-export-config STATIC ${BTS_HOST_SOURCE_DIR}/baking/SkewArchive.cc ${BTS_HOST_SOURCE_DIR}/Displacement.cc ${BTS_HOST_SOURCE_DIR}/CustomChannel.cc ${BTS_HOST_SOURCE_DIR}/PhysicalScale.cc ${BTS_HOST_SOURCE_DIR}/ExportConfiguration.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeArchive.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeTransfer.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc)
+add_library(bts-export-config STATIC ${BTS_HOST_SOURCE_DIR}/baking/SkewArchive.cc ${BTS_HOST_SOURCE_DIR}/Displacement.cc ${BTS_HOST_SOURCE_DIR}/CustomChannel.cc ${BTS_HOST_SOURCE_DIR}/PhysicalScale.cc ${BTS_HOST_SOURCE_DIR}/io/ExportConfiguration.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeArchive.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeTransfer.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc)
 target_include_directories(bts-export-config PUBLIC ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-export-config PUBLIC cxx_std_20)
 target_link_libraries(bts-export-config PUBLIC Qt6::Core)
@@ -660,7 +660,7 @@ add_executable(bts-material-projection-tests ${BTS_HOST_SOURCE_DIR}/../tests/mat
 target_include_directories(bts-material-projection-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-material-projection-tests PRIVATE cxx_std_20)
 
-target_sources(bts-export-config PRIVATE ${BTS_HOST_SOURCE_DIR}/SurfacePathIO.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeMetadata.cc)
+target_sources(bts-export-config PRIVATE ${BTS_HOST_SOURCE_DIR}/io/SurfacePathIO.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeMetadata.cc)
 target_sources(bts-export-config PRIVATE ${BTS_HOST_SOURCE_DIR}/painting/SmudgeStroke.cc)
 
 add_executable(bts-smudge-tests ${BTS_HOST_SOURCE_DIR}/../tests/smudge_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/painting/SmudgeStroke.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc)
@@ -786,7 +786,7 @@ cmake_language(DEFER CALL bts_register_cpu_tests)
 # Test and demo code lives in native/harness, and host code is moving into domain
 # folders under native/host. Files include each other by bare name across all of
 # them, so every compiled bts target searches every one of these folders.
-set(BTS_HOST_DOMAINS python materials/openpbr baking gpu painting layers fill ui/panels ui/dialogs assets viewport materials/layering materials/native persistence)
+set(BTS_HOST_DOMAINS python materials/openpbr baking gpu painting layers fill ui/panels ui/dialogs assets viewport materials/layering materials/native persistence io)
 set(BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR} ${BTS_HOST_SOURCE_DIR}/../harness)
 foreach(_bts_domain IN LISTS BTS_HOST_DOMAINS)
   list(APPEND BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR}/${_bts_domain})
@@ -1112,7 +1112,7 @@ if(WITH_MATERIALX)
   target_link_libraries(bts-host PRIVATE bts-openpbr-texture-package)
   target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/../harness/OpenPbrExportCpuTest.cc ${BTS_HOST_SOURCE_DIR}/materials/openpbr/OpenPbrMaterialImport.cc)
   set_source_files_properties(${BTS_HOST_SOURCE_DIR}/../harness/OpenPbrExportCpuTest.cc PROPERTIES INCLUDE_DIRECTORIES "$<TARGET_PROPERTY:MaterialXCore,INTERFACE_INCLUDE_DIRECTORIES>;$<TARGET_PROPERTY:MaterialXFormat,INTERFACE_INCLUDE_DIRECTORIES>")
-  set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/TextureExport.cc ${BTS_HOST_SOURCE_DIR}/ui/dialogs/TextureExportDialog.cc ${BTS_HOST_SOURCE_DIR}/../harness/ExportCpuDemo.cc ${BTS_HOST_SOURCE_DIR}/MeshImport.cc ${BTS_HOST_SOURCE_DIR}/main.cc APPEND PROPERTY COMPILE_DEFINITIONS BTS_WITH_MATERIALX)
+  set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/TextureExport.cc ${BTS_HOST_SOURCE_DIR}/ui/dialogs/TextureExportDialog.cc ${BTS_HOST_SOURCE_DIR}/../harness/ExportCpuDemo.cc ${BTS_HOST_SOURCE_DIR}/io/MeshImport.cc ${BTS_HOST_SOURCE_DIR}/main.cc APPEND PROPERTY COMPILE_DEFINITIONS BTS_WITH_MATERIALX)
 endif()
 
 # The Linux prebuilt monolithic USD library requires these shared libraries.
@@ -1350,7 +1350,7 @@ target_link_libraries(bts-resource-caps-tests PRIVATE bts-export-config Qt6::Gui
 add_dependencies(bts-cpu-tests bts-resource-caps-tests)
 
 # Sparse metadata tests use real page-key bounds and never allocate dense textures.
-add_executable(bts-texture-extent-tests ${BTS_HOST_SOURCE_DIR}/../tests/texture_extent_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeMetadata.cc ${BTS_HOST_SOURCE_DIR}/SurfacePathIO.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc)
+add_executable(bts-texture-extent-tests ${BTS_HOST_SOURCE_DIR}/../tests/texture_extent_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeMetadata.cc ${BTS_HOST_SOURCE_DIR}/io/SurfacePathIO.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc)
 target_include_directories(bts-texture-extent-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-texture-extent-tests PRIVATE cxx_std_20)
 target_compile_options(bts-texture-extent-tests PRIVATE "$<IF:$<CXX_COMPILER_ID:MSVC>,/UNDEBUG,-UNDEBUG>")
@@ -1561,7 +1561,7 @@ add_library(bts-spsm-native-lowering-cpu STATIC
   ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc
   ${BTS_HOST_SOURCE_DIR}/painting/StrokeMetadata.cc
   ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc
-  ${BTS_HOST_SOURCE_DIR}/SurfacePathIO.cc
+  ${BTS_HOST_SOURCE_DIR}/io/SurfacePathIO.cc
  )
 target_include_directories(bts-spsm-native-lowering-cpu PUBLIC ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-spsm-native-lowering-cpu PUBLIC cxx_std_20)
@@ -1699,7 +1699,7 @@ set_source_files_properties(${BTS_HOST_SOURCE_DIR}/../tests/asset_workspace_drop
 add_test(NAME asset-dragdrop-workspace COMMAND bts-host --cpu-asset-dragdrop-test ${CMAKE_BINARY_DIR}/asset-dragdrop-proof)
 set_tests_properties(asset-dragdrop-workspace PROPERTIES ENVIRONMENT "BTS_NO_BACKGROUND_GPU=1;QT_QPA_PLATFORM=offscreen;QT_QPA_OFFSCREEN_NO_GLX=1;XDG_CONFIG_HOME=${CMAKE_BINARY_DIR}/asset-dragdrop-proof/config;XDG_DATA_HOME=${CMAKE_BINARY_DIR}/asset-dragdrop-proof/data;XDG_CACHE_HOME=${CMAKE_BINARY_DIR}/asset-dragdrop-proof/cache")
 
-add_executable(bts-project-save-safety-tests ${BTS_HOST_SOURCE_DIR}/../tests/project_save_safety_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeMetadata.cc ${BTS_HOST_SOURCE_DIR}/SurfacePathIO.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc)
+add_executable(bts-project-save-safety-tests ${BTS_HOST_SOURCE_DIR}/../tests/project_save_safety_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeMetadata.cc ${BTS_HOST_SOURCE_DIR}/io/SurfacePathIO.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc)
 add_executable(bts-viewport-draw-guard-tests ${BTS_HOST_SOURCE_DIR}/../tests/viewport_draw_guard_test.cc)
 foreach(target bts-project-save-safety-tests bts-viewport-draw-guard-tests)
   target_include_directories(${target} PRIVATE ${BTS_HOST_SOURCE_DIR})
