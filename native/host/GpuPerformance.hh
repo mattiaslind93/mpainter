@@ -1,10 +1,34 @@
 #pragma once
 #include "Performance.hh"
 #include "GPU_host_metrics.hh"
+#include "GPU_storage_buffer.hh"
+#include "GPU_storage_buffer_poll.hh"
 #include <epoxy/gl.h>
 #include <array>
 namespace bts {
 // Query objects belong to Blender's GL context. Never wait for an unavailable result.
+#ifdef __APPLE__
+// A tiny storage snapshot carries Metal's asynchronous command completion event.
+// GPU timestamp metrics are unavailable here; never report CPU time as GPU time.
+class GpuPerformance {
+ blender::gpu::StorageBuf *completion_=nullptr;
+ bool pending_=false;
+ public:
+ explicit GpuPerformance(const char * = "gpu_render") {}
+ bool compute_ready(){
+   if(!pending_)return true;
+   unsigned int value=0;
+   if(!blender::GPU_storagebuf_read_if_ready(completion_,&value))return false;
+   pending_=false;return true;
+ }
+ void submitted(){
+   if(!completion_){unsigned int zero=0;completion_=blender::GPU_storagebuf_create_ex(sizeof(zero),&zero,blender::GPU_USAGE_DYNAMIC,"Frame completion");}
+   blender::GPU_storagebuf_sync_to_host(completion_);pending_=true;
+ }
+ void poll(){} void begin(){} void end(){}
+ void free(){if(completion_)blender::GPU_storagebuf_free(completion_);completion_=nullptr;pending_=false;}
+};
+#else
 class GpuPerformance {
  struct Slot{GLuint ids[2]{};bool pending=false;std::string flow;};
  std::string phase_;
@@ -18,5 +42,6 @@ class GpuPerformance {
  void end(){if(active_){glQueryCounter(active_->ids[1],GL_TIMESTAMP);active_->pending=true;active_=nullptr;}}
  void free(){if(previous_frame_){glDeleteSync(previous_frame_);previous_frame_=nullptr;}if(!performance::enabled())return;end();poll();for(auto &slot:slots_)if(slot.ids[0]){glDeleteQueries(2,slot.ids);slot={};}}
 };
+#endif
 inline QJsonObject gpu_transfer_snapshot(){using namespace blender::gpu::host_metrics;QJsonObject out;const char *names[]={"upload","readback","finish","mipmap"};for(int k=0;k<Count;++k)out[names[k]]=QJsonObject{{"calls",qint64(counters[k].calls.load())},{"bytes",qint64(counters[k].bytes.load())},{"cpu_wall_ms",counters[k].ns.load()/1e6}};return out;}
 }

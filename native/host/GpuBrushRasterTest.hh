@@ -42,12 +42,18 @@ inline int verify_gpu_brush_raster(){
   // Every row/column differs, including signed/HDR values and zero alpha.
   std::vector<float> pattern(std::size_t(width)*height*4);for(int y=0;y<height;++y)for(int x=0;x<width;++x){const auto at=(std::size_t(y)*width+x)*4;pattern[at]=float(x-width/2)/1024;pattern[at+1]=float(y)/512;pattern[at+2]=2.25f;pattern[at+3]=0;}
   GPU_texture_update(flat.get(),GPU_DATA_FLOAT,pattern.data());GPU_texture_clear(array.get(),GPU_DATA_FLOAT,expected);
-  GpuProjectReadback transfer;GLint previous_row=0;glGetIntegerv(GL_PACK_ROW_LENGTH,&previous_row);glPixelStorei(GL_PACK_ROW_LENGTH,173);
+  GpuProjectReadback transfer;
+#ifndef __APPLE__
+  GLint previous_row=0;glGetIntegerv(GL_PACK_ROW_LENGTH,&previous_row);glPixelStorei(GL_PACK_ROW_LENGTH,173);
+#endif
   transfer.submit(17,1001,flat.get(),0,0,0,width,height);
   transfer.submit(18,1002,array.get(),3,7,1,19,23);
   transfer.submit_native(19,1001,flat.get(),0,0,0,width,height);
   auto *writable=flat.release();if(!GpuProjectReadback::protect_for_write(&writable))throw std::runtime_error("Native project snapshot did not protect its source");flat.reset(writable);
+
+#ifndef __APPLE__
   GLint restored=0;glGetIntegerv(GL_PACK_ROW_LENGTH,&restored);glPixelStorei(GL_PACK_ROW_LENGTH,previous_row);if(restored!=173)throw std::runtime_error("Project readback changed pixel packing state");
+#endif
   // Queue a subsequent edit before collecting: saved pixels must remain the
   // submitted revision, including alpha=0 and unclamped signed/HDR values.
   const float changed[4]={1,1,1,1};GPU_texture_clear(flat.get(),GPU_DATA_FLOAT,changed);GPU_texture_clear(array.get(),GPU_DATA_FLOAT,changed);
@@ -97,11 +103,17 @@ inline int verify_gpu_brush_raster(){
   // create both textures first, then destroy the image-only middle slot.
   Image middle(GPU_texture_create_2d("BTS image-only lifetime",1,1,1,gpu::TextureFormat::SFLOAT_32_32_32_32,GPU_TEXTURE_USAGE_GENERAL,nullptr),GPU_texture_free);
   Image sides(GPU_texture_create_2d("BTS image range lifetime",1,1,1,gpu::TextureFormat::SFLOAT_32_32_32_32,GPU_TEXTURE_USAGE_GENERAL,nullptr),GPU_texture_free);
+
+#ifndef __APPLE__
   while(glGetError()!=GL_NO_ERROR){}
+#endif
   GPU_texture_image_bind(middle.get(),1);GPU_apply_state();middle.reset();
   GPU_texture_image_bind(sides.get(),0);GPU_texture_image_bind(sides.get(),2);GPU_apply_state();
+
+#ifndef __APPLE__
   if(glGetError()!=GL_NO_ERROR)throw std::runtime_error("Deleted image-only texture remained in the binding cache");
   GLint stale=0;glGetIntegeri_v(GL_IMAGE_BINDING_NAME,1,&stale);if(stale)throw std::runtime_error("Released image slot stayed bound");
+#endif
   GPU_texture_image_unbind(sides.get());GPU_apply_state();
   std::puts("BTS_GPU_IMAGE_LIFETIME_VERIFIED sampler_unbound=1 deleted_middle_slot=1 bind_range_valid=1");
  }

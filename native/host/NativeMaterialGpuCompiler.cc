@@ -1,4 +1,5 @@
 #include "NativeMaterialDependencies.hh"
+#include "GpuGeneratedSources.hh"
 #include "BLI_listbase.h"
 #include "NativeMaterialGpuCompiler.hh"
 #include "NativeMaterialMapping.hh"
@@ -43,6 +44,8 @@ void construct(void *data,GPUMaterial *material){
 }
 void codegen_impl(void *data,GPUMaterial *material,GPUCodegenOutput *output){
  using namespace gpu::shader;const auto &compilation=*static_cast<NativeMaterialCompilation *>(data);if(!compilation.error.empty())throw std::runtime_error(compilation.error);auto &info=*reinterpret_cast<ShaderCreateInfo *>(output->create_info);
+ // Generated source text is not scanned by Blender for built-in usage.
+ info.builtins_ |= BuiltinBits::GLOBAL_INVOCATION_ID;
  info.auto_resource_location(true).local_group_size(8,8).image(0,gpu::TextureFormat::SFLOAT_32_32_32_32,Qualifier::write,ImageReadWriteType::Float2D,"target").push_constant(Type::int_t,"selected_aov").push_constant(Type::int_t,"scalar_aov").push_constant(Type::float_t,"fixture_displacement_scale").storage_buf(0,Qualifier::read,"float4","native_parameters[]");
  if(compilation.surface_context){
   info.storage_buf(2,Qualifier::read,"float4","native_projection[]");
@@ -52,7 +55,7 @@ void codegen_impl(void *data,GPUMaterial *material,GPUCodegenOutput *output){
  info.vertex_inputs_.clear();info.vertex_out_interfaces_.clear();std::string attributes,initialize;int projection_domains=0;
  for(const auto &attribute:GPU_material_attributes(material)){const std::string_view name(attribute.name);if(name=="BTS_Coord_UV"||(name.empty()&&attribute.type!=CD_ORCO))projection_domains|=1;else if(name=="BTS_Geometry_Position")projection_domains|=2;else if(name=="BTS_Coord_Object")projection_domains|=4;else if(name=="BTS_Coord_Generated"||(name.empty()&&attribute.type==CD_ORCO))projection_domains|=8;attributes+=(attribute.type==CD_ORCO?"vec3 v":"vec4 v")+std::to_string(attribute.id)+";\n";initialize+="var_attrs.v"+std::to_string(attribute.id)+"="+attribute_value(attribute,compilation)+";\n";}
  for(auto *resources:{&info.batch_resources_,&info.pass_resources_,&info.geometry_resources_})for(auto &resource:*resources)resource.info_name="bts_native_nodetree";
- std::string types="struct Closure {float unused;};\n#define CLOSURE_DEFAULT Closure(0.0)\n"+info.typedef_source_generated;
+ std::string types="struct Closure {float unused;};\nClosure bts_closure_default(){Closure value;value.unused=0.0;return value;}\n#define CLOSURE_DEFAULT bts_closure_default()\n"+info.typedef_source_generated;
  if(!attributes.empty())types+="struct BtsAttributes {\n"+attributes+"} var_attrs;\n";
  // Only explicit parameter attributes and diagnostic fixture coordinates are accepted.
  // Other attribute names are rejected above; these adapters do not add volume support.
@@ -78,9 +81,9 @@ bool bts_context(ivec2 p){
  bts_object_location=object_to_world[3].xyz;
  bts_object=(world_to_object*vec4(bts_position,1)).xyz;
  bts_generated=(bts_object-bounds_min)/max(bounds_max-bounds_min,vec3(1e-20));
- bts_object_normal=normalize(transpose(mat3(object_to_world))*bts_normal);
+ bts_object_normal=normalize(transpose(mat3(object_to_world[0].xyz,object_to_world[1].xyz,object_to_world[2].xyz))*bts_normal);
  bts_mesh_ao=native_has_ao!=0?textureLod(native_mesh_ao,(vec2(p)+.5)/vec2(imageSize(target)),0.0).r:1.0;
- bts_displacement_scale=1.0/max(length(mat3(world_to_object)*bts_normal),1e-20);
+ bts_displacement_scale=1.0/max(length(mat3(world_to_object[0].xyz,world_to_object[1].xyz,world_to_object[2].xyz)*bts_normal),1e-20);
  bts_real_uv=bts_uv;bts_real_position=bts_position;bts_real_normal=bts_normal;bts_real_object=bts_object;bts_real_generated=bts_generated;bts_real_object_normal=bts_object_normal;
  return valid;
 }
@@ -130,13 +133,14 @@ void evaluate(){
  const auto token=evaluate.find("BTS_INITIALIZE_ATTRIBUTES");evaluate.replace(token,std::string("BTS_INITIALIZE_ATTRIBUTES").size(),initialize);
  info.compute_source("gpu_shader_compositor_main.glsl");
  info.generated_sources.append({"gpu_shader_compositor_eval.glsl",{"gpu_shader_compositor_store.glsl"},evaluate});
+ preprocess_hosted_sources(info);
  static_cast<NativeMaterialCompilation *>(data)->generated=types+generated+evaluate;
 }
 void codegen(void *data,GPUMaterial *material,GPUCodegenOutput *output){
  try{codegen_impl(data,material,output);}catch(const std::exception &error){
   // Do not unwind through Blender's C-style callback: its GPUMaterial has not
   // reached our RAII owner yet. Return a valid no-op pass, then reject it below.
-  static_cast<NativeMaterialCompilation *>(data)->error=error.what();using namespace gpu::shader;auto &info=*reinterpret_cast<ShaderCreateInfo *>(output->create_info);ShaderCreateInfo failed("mPainter unsupported native source");failed.local_group_size(1,1).compute_source("gpu_shader_compositor_main.glsl");failed.generated_sources.append({"gpu_shader_compositor_eval.glsl",{},"void evaluate(){}"});info=std::move(failed);
+  static_cast<NativeMaterialCompilation *>(data)->error=error.what();using namespace gpu::shader;auto &info=*reinterpret_cast<ShaderCreateInfo *>(output->create_info);ShaderCreateInfo failed("mPainter unsupported native source");failed.local_group_size(1,1).compute_source("gpu_shader_compositor_main.glsl");failed.generated_sources.append({"gpu_shader_compositor_eval.glsl",{},"void evaluate(){}\n"});info=std::move(failed);
  }
 }
 }

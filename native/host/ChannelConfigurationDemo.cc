@@ -13,7 +13,7 @@
 #include <QListWidget>
 #include <QMainWindow>
 #include <QMessageBox>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QTimer>
@@ -24,7 +24,7 @@ class Demo final:public QObject {
   QMainWindow *window;QString directory,mesh;std::function<bool()> busy;std::function<QJsonObject()> state;QTimer timer;int phase=0,ticks=0;QJsonArray captures;
   template<class T>T *get(const char *name){auto *value=window->findChild<T *>(name);if(!value)qFatal("Batch channel GUI control missing: %s",name);return value;}
   void command(const QString &code){get<QLineEdit>("pythonCommand")->setText("exec("+quote(code)+")");get<QPushButton>("executePythonCommand")->click();if(!get<QDockWidget>("pythonConsoleDock")->property("lastExecutionSucceeded").toBool())qFatal("Batch script failed: %s",qPrintable(get<QPlainTextEdit>("pythonOutput")->toPlainText()));}
-  void capture(const char *name){auto data=state();data["stage"]=name;captures.append(data);QFile proof(directory+"/channels.json");if(!proof.open(QIODevice::WriteOnly))qFatal("Cannot write batch proof");proof.write(QJsonDocument(QJsonObject{{"pid",QCoreApplication::applicationPid()},{"captures",captures}}).toJson());window->findChild<QOpenGLWidget *>()->grabFramebuffer().save(directory+"/"+name+"-viewport.png");window->grab().save(directory+"/"+name+"-workspace.png");}
+  void capture(const char *name){auto data=state();data["stage"]=name;captures.append(data);QFile proof(directory+"/channels.json");if(!proof.open(QIODevice::WriteOnly))qFatal("Cannot write batch proof");proof.write(QJsonDocument(QJsonObject{{"pid",QCoreApplication::applicationPid()},{"captures",captures}}).toJson());window->findChild<bts::ViewportWidget *>()->grabFramebuffer().save(directory+"/"+name+"-viewport.png");window->grab().save(directory+"/"+name+"-workspace.png");}
   void configure(bool cancel,bool all){
     QTimer::singleShot(30,this,[this,cancel,all]{
       auto *dialog=get<QDialog>("channelConfigurationDialog");
@@ -41,7 +41,7 @@ class Demo final:public QObject {
     });
     get<QAction>("configureChannels")->trigger();
   }
-  void advance(){if(++ticks>1000)qFatal("Batch channels demo timed out");auto *view=window->findChild<QOpenGLWidget *>();if(!view||!view->isValid()||busy())return;
+  void advance(){if(++ticks>1000)qFatal("Batch channels demo timed out");auto *view=window->findChild<bts::ViewportWidget *>();if(!view||!view->isValid()||busy())return;
     switch(phase++){
     case 0:get<QAction>("showPythonConsole")->trigger();command("import bts");break;
     case 1:command("bts.project.create("+quote(mesh)+",settings=bts.project.Settings(resolution=128,import_cameras=False))");break;

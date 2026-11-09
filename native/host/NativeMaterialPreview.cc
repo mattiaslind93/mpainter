@@ -1,3 +1,4 @@
+#include "GpuElapsedQuery.hh"
 #include "NativeMaterialPreview.hh"
 #include "BlenderHost.hh"
 #include "NativeMaterialGpuLibrary.hh"
@@ -36,8 +37,8 @@ struct NativeMaterialPreview::Impl {
   NativeMaterialGpuLibrary library;std::unique_ptr<NativeMaterialImageUpload> upload;
   std::shared_ptr<NativeMaterialGraph> graph;std::unique_ptr<GpuThumbnail> thumbnail;
   NativeMaterialImageUpload::Progress images;QJsonArray formats;
-  blender::gpu::Texture *target=nullptr;int stage=0;GLuint query=0;double compile_ms=0,compile_cpu_ms=0;
-  ~Gpu(){if(query)glDeleteQueries(1,&query);thumbnail.reset();if(target)blender::GPU_texture_free(target);library.clear();upload.reset();graph.reset();}
+  blender::gpu::Texture *target=nullptr;int stage=0;GpuElapsedQuery query;double compile_ms=0,compile_cpu_ms=0;
+  ~Gpu(){thumbnail.reset();if(target)blender::GPU_texture_free(target);library.clear();upload.reset();graph.reset();}
  };
  BlenderHost &host;Worker worker;QTimer timer;
  std::unique_ptr<Request> wanted,active;std::shared_future<std::shared_ptr<NativeMaterialGraph>> future;
@@ -71,8 +72,8 @@ struct NativeMaterialPreview::Impl {
     if(gpu->stage==0){gpu->library.install("preview","preview",gpu->graph);gpu->stage=1;return;}
     if(gpu->stage==1){QElapsedTimer compile;compile.start();const auto cpu=performance::thread_ms();gpu->library.prepare("preview",0);gpu->compile_ms=compile.nsecsElapsed()/1e6;gpu->compile_cpu_ms=performance::thread_ms()-cpu;gpu->stage=2;return;}
     if(gpu->stage==2){using namespace blender;constexpr int side=ThumbnailMetadata::side;gpu->target=GPU_texture_create_2d("Native Base Color preview",side,side,1,gpu::TextureFormat::SFLOAT_32_32_32_32,GPU_TEXTURE_USAGE_GENERAL,nullptr);if(!gpu->target)throw std::bad_alloc();gpu->stage=3;return;}
-    if(gpu->stage==3){glGenQueries(1,&gpu->query);glBeginQuery(GL_TIME_ELAPSED,gpu->query);{const auto end=qScopeGuard([]{glEndQuery(GL_TIME_ELAPSED);});gpu->library.render("preview",0,gpu->graph->description,gpu->target,gpu->library.default_context("preview"),{0,0,ThumbnailMetadata::side,ThumbnailMetadata::side});}gpu->thumbnail=std::make_unique<GpuThumbnail>();gpu->thumbnail->update({},{{gpu->target,ThumbnailMetadata::side,ThumbnailMetadata::side}},1);gpu->stage=4;return;}
-    gpu->thumbnail->poll();if(auto result=gpu->thumbnail->get()){GLuint64 elapsed=0;glGetQueryObjectui64v(gpu->query,GL_QUERY_RESULT,&elapsed);QJsonObject timing{{"image_formats",gpu->formats},{"compile_wall_ms",gpu->compile_ms},{"compile_cpu_ms",gpu->compile_cpu_ms},{"maximum_owner_step_ms",maximum_owner_ms},{"maximum_owner_step_cpu_ms",maximum_owner_cpu_ms},{"native_dispatch_gpu_ms",double(elapsed)/1e6},{"compiled_channels",int(gpu->library.statistics().programs)},{"uploaded_images",int(gpu->images.total)},{"transfer_budget_upper_bound_bytes",qint64(gpu->images.transfer_budget_bytes)}};completed.emplace(NativeMaterialPreviewResult{display_preview(*result),timing,*result});gpu.reset();}
+    if(gpu->stage==3){gpu->query.begin();{const auto end=qScopeGuard([&]{gpu->query.end();});gpu->library.render("preview",0,gpu->graph->description,gpu->target,gpu->library.default_context("preview"),{0,0,ThumbnailMetadata::side,ThumbnailMetadata::side});}gpu->thumbnail=std::make_unique<GpuThumbnail>();gpu->thumbnail->update({},{{gpu->target,ThumbnailMetadata::side,ThumbnailMetadata::side}},1);gpu->stage=4;return;}
+    gpu->thumbnail->poll();if(auto result=gpu->thumbnail->get()){const double elapsed=gpu->query.milliseconds();QJsonObject timing{{"image_formats",gpu->formats},{"compile_wall_ms",gpu->compile_ms},{"compile_cpu_ms",gpu->compile_cpu_ms},{"maximum_owner_step_ms",maximum_owner_ms},{"maximum_owner_step_cpu_ms",maximum_owner_cpu_ms},{"native_dispatch_gpu_ms",elapsed},{"compiled_channels",int(gpu->library.statistics().programs)},{"uploaded_images",int(gpu->images.total)},{"transfer_budget_upper_bound_bytes",qint64(gpu->images.transfer_budget_bytes)}};completed.emplace(NativeMaterialPreviewResult{display_preview(*result),timing,*result});gpu.reset();}
    });
    if(completed){completed->timings["maximum_owner_step_ms"]=maximum_owner_ms;completed->timings["maximum_owner_step_cpu_ms"]=maximum_owner_cpu_ms;active->promise.set_value(std::move(*completed));active.reset();}
   }catch(...){const auto error=std::current_exception();try{host.with_gpu([&]{gpu.reset();if(future.valid()){try{auto retired=future.get();future={};}catch(...){future={};}}});}catch(...){/* No GPU work was admitted before initialization. */}fail(active,error);}

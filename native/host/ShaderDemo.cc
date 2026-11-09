@@ -14,7 +14,7 @@
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMenu>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
 #include <QPushButton>
 #include <QTimer>
 #include <QToolButton>

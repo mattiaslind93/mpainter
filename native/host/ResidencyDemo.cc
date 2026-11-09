@@ -14,7 +14,7 @@
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMainWindow>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QSpinBox>
@@ -27,11 +27,11 @@ class Demo final:public QObject {
  QMainWindow *window;QString directory;std::function<bool()> busy;std::function<QJsonObject()> state,stats;QTimer timer;QElapsedTimer elapsed;int phase=0,ticks=0,set_index=0;bool coarse=false;QJsonArray captures;
  template<class T>T *get(const char *name){auto *v=window->findChild<T *>(name);if(!v)qFatal("Residency control missing: %s",name);return v;}
  void command(const QString &code){get<QLineEdit>("pythonCommand")->setText("exec("+quote(code)+")");get<QPushButton>("executePythonCommand")->click();if(!get<QDockWidget>("pythonConsoleDock")->property("lastExecutionSucceeded").toBool())qFatal("Residency script failed: %s",qPrintable(get<QPlainTextEdit>("pythonOutput")->toPlainText()));}
- void capture(const char *name,bool light=false){const qint64 measured_ms=elapsed.isValid()?elapsed.elapsed():0;auto value=light?QJsonObject{{"residency",stats()}}:state();value["stage"]=name;value["elapsed_ms"]=measured_ms;captures.append(value);QFile out(directory+"/residency.json");if(!out.open(QIODevice::WriteOnly))qFatal("Residency proof unavailable");out.write(QJsonDocument(QJsonObject{{"pid",QCoreApplication::applicationPid()},{"captures",captures}}).toJson());window->findChild<QOpenGLWidget *>()->grabFramebuffer().save(directory+"/"+name+".png");}
+ void capture(const char *name,bool light=false){const qint64 measured_ms=elapsed.isValid()?elapsed.elapsed():0;auto value=light?QJsonObject{{"residency",stats()}}:state();value["stage"]=name;value["elapsed_ms"]=measured_ms;captures.append(value);QFile out(directory+"/residency.json");if(!out.open(QIODevice::WriteOnly))qFatal("Residency proof unavailable");out.write(QJsonDocument(QJsonObject{{"pid",QCoreApplication::applicationPid()},{"captures",captures}}).toJson());window->findChild<bts::ViewportWidget *>()->grabFramebuffer().save(directory+"/"+name+".png");}
 
  void camera(int index){auto *c=get<QComboBox>("sceneCameraSelector");const int found=c->findText(QString("Camera%1").arg(index));if(found<0)qFatal("Residency imported camera missing");get<QListWidget>("textureSets")->setCurrentRow(index);c->setCurrentIndex(found);elapsed.restart();coarse=false;}
  void finish(){command("bts.project.close(discard=True)");timer.stop();QTimer::singleShot(100,qApp,&QCoreApplication::quit);}
- void advance(){if(++ticks>18000)qFatal("Residency demo timed out phase=%d",phase);auto *v=window->findChild<QOpenGLWidget *>();if(!v||!v->isValid()||(phase!=1&&busy()))return;
+ void advance(){if(++ticks>18000)qFatal("Residency demo timed out phase=%d",phase);auto *v=window->findChild<bts::ViewportWidget *>();if(!v||!v->isValid()||(phase!=1&&busy()))return;
   if(qEnvironmentVariableIsSet("BTS_RESIDENCY_RESTART")){QFile out(directory+"/restart.json");out.open(QIODevice::WriteOnly);out.write(QJsonDocument(QJsonObject{{"pid",QCoreApplication::applicationPid()},{"full_resolution",true}}).toJson());timer.stop();QTimer::singleShot(100,qApp,&QCoreApplication::quit);return;}
   const auto settled=[&]{return !stats().isEmpty()&&!stats()["refining"].toBool();};
   switch(phase){

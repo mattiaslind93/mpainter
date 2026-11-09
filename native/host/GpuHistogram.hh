@@ -7,7 +7,7 @@
 #include "GPU_state.hh"
 #include "GPU_storage_buffer.hh"
 #include "gpu_shader_create_info.hh"
-#include <epoxy/gl.h>
+#include "GpuReadbackFence.hh"
 #include <array>
 #include <map>
 #include <memory>
@@ -25,7 +25,7 @@ class GpuHistogram {
  struct Packet {Bins bins{};unsigned minimum=0xffffffffu,maximum=0;};
  struct Input {blender::gpu::Texture *below,*own,*mask;std::array<float,3> base{};std::array<int,2> enabled{},operands{};int channel=0,width=0,height=0;float constant=0;bool compare=true;int component=0;LevelCurve curve;blender::gpu::Texture *owners=nullptr,*selection=nullptr;int inclusion=0;};
  private:
- struct Entry {Buffer buffer{nullptr,blender::GPU_storagebuf_free};GLsync fence=nullptr;std::uint64_t revision=0,submitted=0;std::optional<HistogramMetadata> result;std::uint64_t ticket=0,submitted_ticket=0;~Entry(){if(fence)glDeleteSync(fence);}};
+ struct Entry {Buffer buffer{nullptr,blender::GPU_storagebuf_free};GpuReadbackFence fence;std::uint64_t revision=0,submitted=0;std::optional<HistogramMetadata> result;std::uint64_t ticket=0,submitted_ticket=0;};
  Shader shader_{nullptr,blender::GPU_shader_free};std::map<std::string,Entry> entries_;
  static blender::gpu::Shader *compile(){using namespace blender;using namespace gpu::shader;ShaderCreateInfo info("pyGPU_Shader");
   info.local_group_size(16,16).sampler(0,ImageType::Float2D,"below_img").sampler(1,ImageType::Float2D,"own_img").sampler(2,ImageType::Float2D,"mask_img").sampler(3,ImageType::Uint2D,"owners_img").sampler(4,ImageType::Uint2D,"selection_img")
@@ -48,14 +48,14 @@ void main(){ivec2 p=(2*ivec2(gl_LocalInvocationID.xy)+1)*size/32;
 })GLSL";
   return GPU_shader_create_from_info_python(reinterpret_cast<GPUShaderCreateInfo *>(&info));
  }
- void submit(Entry &entry){using namespace blender;if(entry.fence||entry.submitted==entry.revision)return;GPU_storagebuf_sync_to_host(entry.buffer.get());entry.fence=glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);if(!entry.fence)throw std::runtime_error("Histogram fence allocation failed");glFlush();entry.submitted=entry.revision;entry.submitted_ticket=entry.ticket;}
+ void submit(Entry &entry){using namespace blender;if(entry.fence||entry.submitted==entry.revision)return;entry.fence.submit(entry.buffer.get());entry.submitted=entry.revision;entry.submitted_ticket=entry.ticket;}
  public:
  std::uint64_t dispatches=0,readback_bytes=0,discarded=0;
  void prepare(){using namespace blender;if(!shader_)shader_=Shader(compile(),GPU_shader_free);if(!shader_)throw std::runtime_error("GPU histogram shader failed");}
  void update(const std::string &id,const Input &in,std::uint64_t ticket){using namespace blender;prepare();
   if(!entries_.contains(id)&&entries_.size()>=64){auto victim=entries_.end();for(auto i=entries_.begin();i!=entries_.end();++i)if(!i->second.fence&&(victim==entries_.end()||i->second.ticket<victim->second.ticket))victim=i;if(victim!=entries_.end())entries_.erase(victim);}
   auto &entry=entries_[id];if(!entry.buffer)entry.buffer=Buffer(GPU_storagebuf_create_ex(sizeof(Packet),nullptr,GPU_USAGE_DYNAMIC,"BTS async histogram"),GPU_storagebuf_free);if(!entry.buffer)throw std::bad_alloc();Packet initial;GPU_storagebuf_update(entry.buffer.get(),&initial);entry.ticket=ticket;GPU_memory_barrier(GPU_BARRIER_SHADER_STORAGE);GPU_shader_bind(shader_.get());GPU_texture_bind(in.below,0);GPU_texture_bind(in.own,1);GPU_texture_bind(in.mask,2);GPU_texture_bind(in.owners,3);GPU_texture_bind(in.selection,4);GPU_storagebuf_bind(entry.buffer.get(),0);GPU_shader_uniform_3fv(shader_.get(),"base_value",in.base.data());GPU_shader_uniform_2iv(shader_.get(),"enabled",in.enabled.data());GPU_shader_uniform_2iv(shader_.get(),"operands",in.operands.data());const int size[2]={in.width,in.height};GPU_shader_uniform_2iv(shader_.get(),"size",size);GPU_shader_uniform_1i(shader_.get(),"channel",in.channel);GPU_shader_uniform_1f(shader_.get(),"constant_value",in.constant);GPU_shader_uniform_1i(shader_.get(),"comparison_mode",in.compare);GPU_shader_uniform_1i(shader_.get(),"component",in.component);GPU_shader_uniform_1i(shader_.get(),"inclusion",in.inclusion);const float curve[4]={in.curve.input_low,in.curve.gamma,in.curve.input_high,in.curve.output_low};GPU_shader_uniform_4fv(shader_.get(),"curve",curve);GPU_shader_uniform_1f(shader_.get(),"output_high",in.curve.output_high);GPU_compute_dispatch(shader_.get(),1,1,1);GPU_memory_barrier(GPU_BARRIER_SHADER_STORAGE);GPU_storagebuf_unbind(entry.buffer.get());GPU_texture_unbind_all();GPU_shader_unbind();++entry.revision;++dispatches;submit(entry);}
- void poll(){using namespace blender;for(auto &[id,entry]:entries_){if(!entry.fence)continue;auto status=glClientWaitSync(entry.fence,0,0);if(status==GL_WAIT_FAILED)throw std::runtime_error("Histogram fence poll failed");if(status!=GL_ALREADY_SIGNALED&&status!=GL_CONDITION_SATISFIED)continue;glDeleteSync(entry.fence);entry.fence=nullptr;if(entry.submitted==entry.revision){Packet packet;GPU_storagebuf_read(entry.buffer.get(),&packet);const auto decode=[](unsigned u){return std::bit_cast<float>((u&0x80000000u)!=0u?u^0x80000000u:~u);};entry.result=HistogramMetadata{packet.bins,decode(packet.minimum),decode(packet.maximum),entry.submitted_ticket};readback_bytes+=sizeof(Packet);}else ++discarded;submit(entry);}}
+ void poll(){using namespace blender;for(auto &[id,entry]:entries_){if(!entry.fence)continue;Packet packet;if(!entry.fence.read(entry.buffer.get(),&packet,entry.submitted!=entry.revision))continue;if(entry.submitted==entry.revision){const auto decode=[](unsigned u){return std::bit_cast<float>((u&0x80000000u)!=0u?u^0x80000000u:~u);};entry.result=HistogramMetadata{packet.bins,decode(packet.minimum),decode(packet.maximum),entry.submitted_ticket};readback_bytes+=sizeof(Packet);}else ++discarded;submit(entry);}}
  bool pending()const{for(const auto &[id,e]:entries_)if(e.fence)return true;return false;}
  std::optional<HistogramMetadata> get(const std::string &id)const{auto i=entries_.find(id);return i==entries_.end()?std::nullopt:i->second.result;}
 };

@@ -72,13 +72,46 @@ adds Windows project-save handling, and extends the sequential Wine checks.
 `~/mpainter-work/REPORT-win2.md` records the follow-up's actual build, artifact
 and verification outcome; the scripts alone are not release evidence.
 
-## macOS arm64: viewport port required
+## macOS arm64
 
-The old `setup-macos.command` installed a Python prototype and PySide6. It did not build this native Blender/Qt host. The current host explicitly selects Blender's OpenGL backend and requests a Qt OpenGL 4.3 context. Blender 5.2 disables its OpenGL backend on Apple builds, and macOS does not supply OpenGL 4.3. Therefore a working native Mac package is **not currently feasible from this host code** without a Metal rendering/presentation integration port. No Mac machine was available in this session, and no Mac binary was built.
+The macOS build uses the Metal backend and a Qt RHI presentation bridge. It builds from the same source tree as Linux and Windows, with platform-specific code guarded by `#ifdef __APPLE__` and CMake `if(APPLE)` conditions.
 
-The arm64 CI job fetches official libraries and Qt, then reports this blocker explicitly. `Info.plist`, bundle identity, ICNS icon and a guarded DMG packaging script are prepared for the port. They do not establish a functioning `mPainter.app`. After the viewport is ported and validated, update the build guard and package runtime resources into the bundle before enabling DMG publication.
+### Prerequisites
 
-For a future unsigned reviewed build, Gatekeeper may require Finder > right-click the app > Open. Only for an app you trust, the quarantine attribute can be removed with `xattr -dr com.apple.quarantine /path/to/mPainter.app`. Neither instruction fixes the missing viewport implementation.
+- Xcode Command Line Tools or full Xcode
+- Qt 6.8.3 arm64 (including private GUI headers)
+- CMake 3.31+, Ninja, Python 3.11+
+- Assimp and HDF5 development packages (brew or manual)
+- Blender's official arm64 libraries (fetched by `make_update.py`)
+
+### Building
+
+```sh
+# Prepare Blender with macOS patches
+python3 scripts/prepare-blender.py ../build/blender
+cd ../build/blender
+python3 build_files/utils/make_update.py --no-blender
+cd -
+
+# Build the probe (diagnostic, headless Metal validation)
+python3 scripts/macos/build-probe.py --blender ../build/blender --build ../build/probe --qt "$QT_ROOT_DIR"
+scripts/macos/run-probe.sh ../build/probe ../probe-output
+
+# Build the editor
+scripts/macos/build-editor.sh  # Configure with BTS_MACOS_METAL_EDITOR=ON
+scripts/macos/bundle-editor.py --build ../build/editor --qt "$QT_ROOT_DIR" --output ../dist/mPainter.app
+scripts/macos/package-editor.py --app ../dist/mPainter.app --output ../dist
+```
+
+The Metal probe (`mpainter-metal-probe`) is a diagnostic target that validates GPU operations, brush raster parity, viewport rendering and Qt RHI bridge integration in headless mode. It is not the editor.
+
+The editor is built with `-DBTS_MACOS_METAL_EDITOR=ON` and links Qt Widgets. The bundle includes Blender's runtime resources, OIDN device plugins, and denoiser ML models.
+
+### Signing and notarization
+
+For distribution, sign the app bundle with your Developer ID and notarize with Apple's `notarytool`. For local testing, Gatekeeper may require Finder > right-click > Open. The quarantine attribute can be removed with `xattr -dr com.apple.quarantine /path/to/mPainter.app`.
+
+See [docs/macos-metal-port.md](macos-metal-port.md) for technical details of the Metal/Qt RHI integration.
 
 ## CI and publication
 

@@ -11,6 +11,14 @@ inline constexpr char hosted_resource_owner[]="pyGPU_Shader";
 // pin this known local namespace to literal storage before the source goes away.
 // Resource/socket names are already literals and generated source strings are owned.
 inline void stabilize_hosted_resource_owners(gpu::shader::ShaderCreateInfo &info){
+#ifdef __APPLE__
+ // MSL has no GLSL precise qualifier. The Metal compiler adapter removes it
+ // and disables contraction/fast math only for kernels that request it.
+ if(info.compute_source_generated.find("precise ")!=std::string::npos||
+    info.vertex_source_generated.find("precise ")!=std::string::npos||
+    info.fragment_source_generated.find("precise ")!=std::string::npos)
+  info.define("BTS_PRECISE_MATH");
+#endif
  for(auto *resources:{&info.pass_resources_,&info.batch_resources_,&info.geometry_resources_})
   for(auto &resource:*resources)resource.info_name=hosted_resource_owner;
  for(auto &variable:info.shared_variables_)variable.info_name=hosted_resource_owner;
@@ -22,7 +30,9 @@ inline gpu::shader::ShaderCreateInfo coverage_info(){
  .image(0,gpu::TextureFormat::SFLOAT_32_32_32_32,Qualifier::write,ImageReadWriteType::image2D,"flags_img")
  .push_constant(Type::int2_t,"origin").push_constant(Type::int2_t,"size");
  info.compute_source_generated=R"GLSL(
+#ifdef CREATE_INFO_RES_SHARED_VARS_pyGPU_Shader
 CREATE_INFO_RES_SHARED_VARS_pyGPU_Shader
+#endif
 void main(){
  ivec2 p=origin+ivec2(gl_GlobalInvocationID.xy);uint lane=gl_LocalInvocationIndex;
  present[lane]=all(lessThan(p,size))&&texelFetch(prefix_img,min(p,textureSize(prefix_img,0)-1),0).a>0?1u:0u;
@@ -43,7 +53,9 @@ inline gpu::shader::ShaderCreateInfo presence_info(){
  .image(0,gpu::TextureFormat::SFLOAT_32_32_32_32,Qualifier::read_write,ImageReadWriteType::image2D,"presence_img")
  .push_constant(Type::int_t,"first_tile");
  info.compute_source_generated=R"GLSL(
+#ifdef CREATE_INFO_RES_SHARED_VARS_pyGPU_Shader
 CREATE_INFO_RES_SHARED_VARS_pyGPU_Shader
+#endif
 void main(){
  uint lane=gl_LocalInvocationIndex;ivec2 size=textureSize(flags_img,0);uint total=uint(size.x*size.y);uint found=0u;
  for(uint i=lane;i<total;i+=256u)found|=texelFetch(flags_img,ivec2(int(i)%size.x,int(i)/size.x),0).r>0?1u:0u;

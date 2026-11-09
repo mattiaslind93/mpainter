@@ -1,0 +1,32 @@
+--- a/source/blender/gpu/metal/mtl_shader.mm
++++ b/source/blender/gpu/metal/mtl_shader.mm
+@@ -34,6 +34,8 @@
+ #include "mtl_debug.hh"
+ #include "mtl_pso_descriptor_state.hh"
+ #include "mtl_shader.hh"
++#include <atomic>
++#include <fstream>
+ #include "mtl_shader_generate.hh"
+ #include "mtl_shader_interface.hh"
+ #include "mtl_shader_log.hh"
+@@ -333,6 +335,11 @@
+
+     [library release];
+
++    if (std::getenv("MPAINTER_DEBUG_FAILED_SHADERS")) {
++      static std::atomic<unsigned> failure_index{0};
++      std::ofstream dump("metal-failed-" + std::to_string(failure_index++) + ".msl");
++      dump << processed_source;
++    }
+     MTLLogParser parser;
+     print_log({original_source}, [error_localized UTF8String], to_string(stage), true, &parser);
+   }
+--- a/source/blender/gpu/shaders/gpu_shader_msl_builtin.msl
++++ b/source/blender/gpu/shaders/gpu_shader_msl_builtin.msl
+@@ -158,3 +158,6 @@
+ #endif
+
+ #pragma blender dead_code_elimination on
++
++/* GLSL roundEven is Metal rint (nearest, ties to even), not round. */
++#define roundEven rint

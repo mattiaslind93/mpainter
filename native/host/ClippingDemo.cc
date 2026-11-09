@@ -16,7 +16,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QLineEdit>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
 #include <QPushButton>
 #include <QTimer>
 #include <QToolButton>
@@ -29,7 +29,7 @@ class ClipDemo final:public QObject {
  void number(const char *name,double value){auto *c=w->findChild<QDoubleSpinBox *>(name);if(!c)qFatal("Clipping number missing: %s",name);c->setValue(value);QMetaObject::invokeMethod(c,"editingFinished",Qt::DirectConnection);}
  void new_project(const QString &path){timer.stop();QTimer::singleShot(50,this,[]{if(auto *box=qobject_cast<QMessageBox *>(QApplication::activeModalWidget()))if(box->windowTitle()=="Unsaved project")box->button(QMessageBox::Discard)->click();});action("newProject");auto *d=w->findChild<QDialog *>("newProjectDialog");if(!d)qFatal("Clipping New missing");d->findChild<QLineEdit *>("meshPath")->setText(path);auto *r=d->findChild<QComboBox *>("documentResolution");r->setCurrentIndex(r->findData(resolution));d->findChild<QPushButton *>("createProject")->click();timer.start();}
  void zoom(double target){const double distance=state()["view"].toObject()["scene_distance"].toDouble();const QPointF p(v->width()/2.,v->height()/2.);QWheelEvent event(p,v->mapToGlobal(p.toPoint()),{},QPoint(0,qRound(-std::log(target/distance)/.0012)),Qt::NoButton,Qt::NoModifier,Qt::NoScrollPhase,false);QCoreApplication::sendEvent(v,&event);}
- void capture(const char *name){auto data=state();data["stage"]=name;auto *gl=qobject_cast<QOpenGLWidget *>(v);const auto image=capture_viewport_framebuffer(gl);data["center_rgb"]=image.pixelColor(image.width()/2,image.height()/2).name();captures.append(data);image.save(dir+"/"+name+".png");std::printf("BTS_CLIP %s %s\n",name,QJsonDocument(data["view"].toObject()).toJson(QJsonDocument::Compact).constData());std::fflush(stdout);}
+ void capture(const char *name){auto data=state();data["stage"]=name;auto *gl=qobject_cast<bts::ViewportWidget *>(v);const auto image=capture_viewport_framebuffer(gl);data["center_rgb"]=image.pixelColor(image.width()/2,image.height()/2).name();captures.append(data);image.save(dir+"/"+name+".png");std::printf("BTS_CLIP %s %s\n",name,QJsonDocument(data["view"].toObject()).toJson(QJsonDocument::Compact).constData());std::fflush(stdout);}
  void finish(const QString &file="clipping.json"){timer.stop();QFile out(dir+"/"+file);if(!out.open(QIODevice::WriteOnly))qFatal("Clipping proof unavailable");out.write(QJsonDocument(QJsonObject{{"pid",QCoreApplication::applicationPid()},{"captures",captures}}).toJson());out.close();QTimer::singleShot(100,qApp,&QCoreApplication::quit);}
  void preferences(int kind){
    timer.stop();auto *poll=new QTimer(this);int phase=0;

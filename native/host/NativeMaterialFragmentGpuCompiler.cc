@@ -1,3 +1,5 @@
+#include "GpuRasterState.hh"
+#include "GpuGeneratedSources.hh"
 #include "NativeSurfaceBasis.hh"
 #include "NativeMaterialFragmentGpuCompiler.hh"
 #include "NativeMaterialFragmentContext.hh"
@@ -168,6 +170,7 @@ void construct(void *data,GPUMaterial *material){
   const auto *uniform=GPU_material_uniform_attributes(material);require(!uniform||uniform->list.is_empty(),"Fragment phase1 uniform object/instancer attributes need a physical binding");
   const auto *layer=GPU_material_layer_attributes(material);require(!layer||layer->is_empty(),"Fragment phase1 view-layer attributes need a physical binding");
   std::string key="mPainter fragment-normal v7 unbiased-image-LOD retained-project-AO real-view actual-ORCO resident-object explicit-tangent UV-pixels raw-world;"+c.layout.uv_name+";N-Ni-Ng;"+std::to_string(c.count)+";tangent="+std::to_string(c.layout.tangent_stream);key+=";surface="+std::string(native_world_normal_surface_name(c.prepared.source->world_normal_surface_contract));if(c.diagnostic.object_matrices_context)key+=";stock-BOX-captured-model-v1";if(c.diagnostic.baked_ao_context)key+=";retained-project-AO-rasterUV-v1";if(c.diagnostic.view_context)key+=";real-view-two-float4-v1";if(c.layout.generated_stream)key+=";actual-ORCO-stream-v1";if(c.layout.resident_object_context)key+=";captured-owner-v1";if(c.layout.resident_raster_origin)key+=";resident-raster-origin-v1";if(c.layout.paired_physical_sides)key+=";physical-front-back-v1";
+  key+=";tangent-output="+std::to_string(c.layout.tangent_output);
   key+=";fill-projection-v1="+std::to_string(c.layout.fill_projection);
   for(const auto &a:GPU_material_attributes(material)){key+=';'+std::string(a.name)+':'+std::to_string(a.type)+':'+attribute(a,c);if(std::string_view(a.name).starts_with(native_mapping_attribute_prefix))c.diagnostic.mapping_rows=true;}
   const auto input_rows=std::max<std::uint64_t>(1,native_mapping_parameter_rows(c.count,c.diagnostic.mapping_rows));
@@ -180,6 +183,7 @@ void construct(void *data,GPUMaterial *material){
 void codegen_impl(Compilation &c,GPUMaterial *material,GPUCodegenOutput &output){
  using namespace gpu::shader;c.diagnostic.codegen_invoked=true;require(c.error.empty(),c.error);require(output.displacement.empty(),"Private Normal AOV unexpectedly generated displacement code");auto &info=*reinterpret_cast<ShaderCreateInfo *>(output.create_info);
  info.vertex_inputs_.clear();info.vertex_out_interfaces_.clear();
+ info.builtins_ |= BuiltinBits::FRONT_FACING;
  c.varying.smooth(Type::float2_t,"fragment_uv").smooth(Type::float3_t,"fragment_P").smooth(Type::float3_t,"fragment_N").smooth(Type::float3_t,"fragment_Ni").smooth(Type::float3_t,"fragment_Ng");
  if(c.diagnostic.baked_ao_context){
   c.varying.smooth(Type::float2_t,"fragment_raster_uv");int slot=0;
@@ -203,11 +207,18 @@ void codegen_impl(Compilation &c,GPUMaterial *material,GPUCodegenOutput &output)
  // Stock eevee_attributes_mesh_lib.glsl29-33: inverse-transpose, normalize
  // per vertex, then interpolate all four components without renormalizing.
  const std::string vertex="void main(){fragment_uv=authored_uv;fragment_P=world_P;"+std::string(c.diagnostic.baked_ao_context?native_baked_ao_vertex_assignment():std::string_view{})+std::string(c.layout.generated_stream?"fragment_generated=original_generated;":"")+std::string(c.layout.paired_physical_sides?"fragment_N=world_N*native_normal_side;fragment_Ni=world_Ni*native_normal_side;fragment_Ng=world_Ng*native_normal_side;":"fragment_N=world_N;fragment_Ni=world_Ni;fragment_Ng=world_Ng;")+std::string(c.layout.tangent_stream?(c.diagnostic.object_context?"fragment_tangent=vec4(safe_normalize(object_tangent.xyz*mat3(native_owner_world_to_object)),object_tangent.w);":"fragment_tangent=vec4(safe_normalize(object_tangent.xyz*native_world_to_object),object_tangent.w);"):"")+std::string(c.layout.resident_raster_origin?"gl_Position=vec4((raster_uv-native_raster_origin)*2.0-1.0,0,1);}":"gl_Position=vec4(raster_uv*2.0-1.0,0,1);}");
- info.vertex_source("gpu_shader_python_vert.glsl");info.generated_sources.append({"gpu_shader_python_vert.glsl",c.layout.tangent_stream?Vector<StringRefNull>{"gpu_shader_math_vector_safe_lib.glsl"}:Vector<StringRefNull>{},vertex});
+ // Metal emits resources in each stage wrapper, including resources unused by
+ // the vertex function. Supply the shared layouts there as well as in fragment.
+ Vector<StringRefNull> vertex_types;
+ if(c.diagnostic.normal_maps||c.diagnostic.object_context||c.diagnostic.object_matrices_context)vertex_types.append("draw_shader_shared.hh");
+ info.generated_sources.append({"gpu_shader_compositor_nodetree_type.glsl",vertex_types,info.typedef_source_generated});
+ Vector<StringRefNull> vertex_dependencies{"gpu_shader_compositor_nodetree_type.glsl"};
+ if(c.layout.tangent_stream)vertex_dependencies.append("gpu_shader_math_vector_safe_lib.glsl");
+ info.vertex_source("gpu_shader_python_vert.glsl");info.generated_sources.append({"gpu_shader_python_vert.glsl",vertex_dependencies,vertex});
  std::string fields,initialize;int projection_domains=0;
  for(const auto &a:GPU_material_attributes(material)){const std::string_view name(a.name);if(name=="BTS_Coord_UV"||(a.type!=CD_ORCO&&(name.empty()||name==c.layout.uv_name)))projection_domains|=1;else if(name=="BTS_Geometry_Position")projection_domains|=2;else if(name=="BTS_Coord_Object")projection_domains|=4;else if(name=="BTS_Coord_Generated"||(name.empty()&&a.type==CD_ORCO))projection_domains|=8;fields+=(a.type==CD_ORCO?"vec3 v":"vec4 v")+std::to_string(a.id)+";\n";initialize+="var_attrs.v"+std::to_string(a.id)+"="+attribute(a,c)+";\n";}
  for(auto *resources:{&info.batch_resources_,&info.pass_resources_,&info.geometry_resources_})for(auto &resource:*resources)resource.info_name="bts_fragment_normal";
- std::string types="struct Closure {float unused;};\n#define CLOSURE_DEFAULT Closure(0.0)\n"+info.typedef_source_generated;
+ std::string types="struct Closure {float unused;};\nClosure bts_closure_default(){Closure value;value.unused=0.0;return value;}\n#define CLOSURE_DEFAULT bts_closure_default()\n"+info.typedef_source_generated;
  if(!fields.empty())types+="struct BtsAttributes {"+fields+"} var_attrs;\n";
  types+="float derivative_scale_get(){return 1.0;}\nvec4 attr_load_color_post(vec4 v){return v;}\nfloat attr_load_temperature_post(float v){return v;}\nvec4 attr_load_uniform(vec4 v,uint hash){return v;}\n";
  // This pass rasterizes at the Texture Set resolution, with no EEVEE film scaling.
@@ -258,6 +269,7 @@ vec4 bts_fill_tangent(){
  }
  const std::string fragment=projected_tangent+functions+"\nvec3 fragment_result;bool fragment_has_normal;\nvoid fragment_aov(vec4 color,float value,float hash,out Closure dummy){dummy=CLOSURE_DEFAULT;if(floatBitsToUint(hash)=="+std::to_string(BLI_hash_string("BTS_Channel"))+"u){fragment_result=color.rgb;fragment_has_normal=true;}}\nClosure fragment_evaluate(){\n"+body+"\n}\nvoid main(){g_data.P=fragment_P;g_data.N=normalize(fragment_N);g_data.Ni=fragment_Ni;g_data.Ng=normalize(fragment_Ng);\n"+evaluate+tangent_output+"world_normal_out=vec4(fragment_result,coverage);}\n";
  info.fragment_source("gpu_shader_python_frag.glsl");info.generated_sources.append({"gpu_shader_python_frag.glsl",dependencies,fragment});c.diagnostic.generated=types+vertex+fragment;
+ preprocess_hosted_sources(info);
 }
 void codegen(void *data,GPUMaterial *material,GPUCodegenOutput *output){
  auto &c=*static_cast<Compilation *>(data);
@@ -267,8 +279,8 @@ void codegen(void *data,GPUMaterial *material,GPUCodegenOutput *output){
 }
 struct State {
  gpu::FrameBuffer *fb=GPU_framebuffer_active_get();GPUBlend blend=GPU_blend_get();GPUDepthTest depth=GPU_depth_test_get();GPUFaceCullTest cull=GPU_face_culling_get();GPUStencilTest stencil=GPU_stencil_test_get();GPUWriteMask write=GPU_write_mask_get();int viewport[4],scissor[4];GLint front=0;bool scissor_enabled=false,srgb=false;
- State(){GPU_apply_state();scissor_enabled=glIsEnabled(GL_SCISSOR_TEST);srgb=glIsEnabled(GL_FRAMEBUFFER_SRGB);GPU_viewport_size_get_i(viewport);GPU_scissor_get(scissor);glGetIntegerv(GL_FRONT_FACE,&front);}
- ~State(){if(fb)GPU_framebuffer_bind(fb);else GPU_framebuffer_restore();GPU_viewport(viewport[0],viewport[1],viewport[2],viewport[3]);GPU_scissor(scissor[0],scissor[1],scissor[2],scissor[3]);GPU_scissor_test(scissor_enabled);GPU_front_facing(front==GL_CW);GPU_blend(blend);GPU_depth_test(depth);GPU_face_culling(cull);GPU_stencil_test(stencil);GPU_write_mask(write);if(srgb)glEnable(GL_FRAMEBUFFER_SRGB);else glDisable(GL_FRAMEBUFFER_SRGB);}
+ State(){GPU_apply_state();scissor_enabled=bts::gpu_scissor_enabled();srgb=bts::gpu_framebuffer_srgb();GPU_viewport_size_get_i(viewport);GPU_scissor_get(scissor);front=bts::gpu_front_inverted();}
+ ~State(){if(fb)GPU_framebuffer_bind(fb);else GPU_framebuffer_restore();GPU_viewport(viewport[0],viewport[1],viewport[2],viewport[3]);GPU_scissor(scissor[0],scissor[1],scissor[2],scissor[3]);GPU_scissor_test(scissor_enabled);GPU_front_facing(bool(front));GPU_blend(blend);GPU_depth_test(depth);GPU_face_culling(cull);GPU_stencil_test(stencil);GPU_write_mask(write);bts::gpu_restore_framebuffer_srgb(srgb);}
 };
 }
 NativeFragmentDiagnostics inspect_native_fragment_source_context(const PreparedNativeFragmentNormal &prepared,const NativeFragmentLayout &layout){
@@ -363,7 +375,7 @@ NativeMaterialFragmentGpuGeometry::NativeMaterialFragmentGpuGeometry(std::shared
  // Existing immutable CPU geometry is already resident, so admit additional
  // staging/metadata only. IBO's documented no-copy optimization is not implemented.
  const auto staging=resource_sum(gpu_bytes,metadata);
- State state;GLint held_vao=0,held_array=0;glGetIntegerv(GL_VERTEX_ARRAY_BINDING,&held_vao);glGetIntegerv(GL_ARRAY_BUFFER_BINDING,&held_array);GLuint upload_vao=0;glGenVertexArrays(1,&upload_vao);require(upload_vao!=0,"Resident upload VAO allocation failed");glBindVertexArray(upload_vao);const auto restore_upload=qScopeGuard([&]{glBindVertexArray(held_vao);glBindBuffer(GL_ARRAY_BUFFER,held_array);glDeleteVertexArrays(1,&upload_vao);});
+ State state;GpuUploadBindings upload_bindings;
  s.source=std::move(source);s.streams.resize(streams.size());s.objects.reserve(objects.size());s.object_uploaded.resize(objects.size(),false);s.range_order.resize(ranges.size());s.tiles.reserve(ranges.size());
  // Blender's data_len is a primitive count: it multiplies by three for TRIS.
  // Passing the index count read three times beyond the retained source span.

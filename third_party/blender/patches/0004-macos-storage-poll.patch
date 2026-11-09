@@ -1,0 +1,73 @@
+--- a/source/blender/gpu/metal/mtl_storage_buffer.hh
++++ b/source/blender/gpu/metal/mtl_storage_buffer.hh
+@@ -61,6 +61,8 @@
+   /* Synchronization event for host reads. */
+   id<MTLSharedEvent> gpu_write_fence_ = nil;
+   uint64_t host_read_signal_value_ = 0;
++  // Immutable submitted revision, independent of the live buffer pool.
++  id<MTLBuffer> host_read_buffer_ = nil;
+
+  public:
+   MTLStorageBuf(size_t size, GPUUsageType usage, const char *name);
+@@ -80,6 +82,7 @@
+   void clear(uint32_t clear_value) override;
+   void copy_sub(VertBuf *src, uint dst_offset, uint src_offset, uint copy_size) override;
+   void read(void *data) override;
++  bool read_if_ready(void *data) override;
+   void async_flush_to_host() override;
+   void sync_as_indirect_buffer() override { /* No-Op. */ };
+
+--- a/source/blender/gpu/metal/mtl_storage_buffer.mm
++++ b/source/blender/gpu/metal/mtl_storage_buffer.mm
+@@ -83,6 +83,8 @@
+
+ MTLStorageBuf::~MTLStorageBuf()
+ {
++  [host_read_buffer_ release];
++  host_read_buffer_ = nil;
+   if (storage_source_ == MTL_STORAGE_BUF_TYPE_DEFAULT) {
+     if (metal_buffer_ != nullptr) {
+       metal_buffer_->free();
+@@ -379,10 +381,42 @@
+     [blit_encoder synchronizeResource:storage_buf_mtl];
+   }
+
++  [host_read_buffer_ release];
++  host_read_buffer_ = [ctx->device newBufferWithLength:size_in_bytes_
++                                             options:MTLResourceStorageModeShared];
++  BLI_assert(host_read_buffer_ != nil);
++  if (host_read_buffer_ == nil) {
++    return;
++  }
++  // Snapshot the submitted revision. Retaining a native allocation alone is
++  // insufficient: Blender's buffer pool can reuse it after update()/free().
++  id<MTLBlitCommandEncoder> snapshot_encoder =
++      ctx->main_command_buffer.ensure_begin_blit_encoder();
++  [snapshot_encoder copyFromBuffer:storage_buf_mtl
++                     sourceOffset:0
++                         toBuffer:host_read_buffer_
++                destinationOffset:0
++                             size:size_in_bytes_];
++
+   /* Encode event signal and flush command buffer to ensure GPU work is in the pipeline for future
+    * reads. */
+   ctx->main_command_buffer.encode_signal_event(gpu_write_fence_, ++host_read_signal_value_);
+   ctx->flush();
++}
++
++bool MTLStorageBuf::read_if_ready(void *data)
++{
++  // Owner-context polling only. async_flush_to_host already encoded the managed
++  // memory synchronization before the event. Never enqueue work or wait here.
++  if (data == nullptr || host_read_buffer_ == nil || gpu_write_fence_ == nil ||
++      host_read_signal_value_ == 0 ||
++      gpu_write_fence_.signaledValue < host_read_signal_value_) {
++    return false;
++  }
++  memcpy(data, [host_read_buffer_ contents], size_in_bytes_);
++  [host_read_buffer_ release];
++  host_read_buffer_ = nil;
++  return true;
+ }
+
+ void MTLStorageBuf::read(void *data)

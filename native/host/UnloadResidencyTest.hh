@@ -20,7 +20,10 @@ inline QJsonObject memory(){GPU_finish();
  malloc_trim(0);
 #endif
  QFile file("/proc/self/status");qint64 rss=0;if(file.open(QIODevice::ReadOnly))for(const auto &line:file.readAll().split('\n'))if(line.startsWith("VmRSS:"))rss=line.simplified().split(' ')[1].toLongLong()*1024;
- GLint total=0,available=0;if(epoxy_has_gl_extension("GL_NVX_gpu_memory_info")){glGetIntegerv(0x9048,&total);glGetIntegerv(0x9049,&available);}
+ int total=0,available=0;
+#ifndef __APPLE__
+ if(epoxy_has_gl_extension("GL_NVX_gpu_memory_info")){glGetIntegerv(0x9048,&total);glGetIntegerv(0x9049,&available);}
+#endif
  return {{"driver_device_used_bytes",qint64(total-available)*1024},{"driver_device_total_bytes",qint64(total)*1024},{"process_rss_bytes",rss},{"gpu_texture_bytes",qint64(gpu::host_texture_memory::live_bytes())}};
 }
 inline QByteArray topology(bNodeTree &tree){

@@ -1,0 +1,15 @@
+--- a/intern/ghost/intern/GHOST_ContextMTL.mm
++++ b/intern/ghost/intern/GHOST_ContextMTL.mm
+@@ -23,2 +23,4 @@
+ #include <cassert>
++#include <cstdio>
++#include <cstdlib>
+ #include <mutex>
+@@ -30,2 +32,7 @@
+ {
++#ifdef WITH_HEADLESS
++  /* Render workers and mPainter CLI diagnostics must never display a modal alert. */
++  fprintf(stderr, "%s", msg);
++  exit(1);
++#endif
+   @autoreleasepool {

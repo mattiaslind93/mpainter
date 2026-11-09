@@ -7,7 +7,7 @@
 #include "GPU_state.hh"
 #include "GPU_storage_buffer.hh"
 #include "gpu_shader_create_info.hh"
-#include <epoxy/gl.h>
+#include "GpuReadbackFence.hh"
 #include <map>
 #include <memory>
 #include <span>
@@ -19,14 +19,16 @@ class GpuRangeSummary {
  using Shader=std::unique_ptr<blender::gpu::Shader,decltype(&blender::GPU_shader_free)>;
  using Buffer=std::unique_ptr<blender::gpu::StorageBuf,decltype(&blender::GPU_storagebuf_free)>;
  struct Tile {Texture image{nullptr,blender::GPU_texture_free};int width=0,height=0;std::uint64_t version=0;blender::gpu::Texture *source=nullptr;};
- struct Entry {std::map<int,Tile> tiles;Buffer buffer{nullptr,blender::GPU_storagebuf_free};GLsync fence=nullptr;std::uint64_t revision=0,submitted=0,epoch=0,submitted_epoch=0;~Entry(){if(fence)glDeleteSync(fence);}};
+ struct Entry {std::map<int,Tile> tiles;Buffer buffer{nullptr,blender::GPU_storagebuf_free};GpuReadbackFence fence;std::uint64_t revision=0,submitted=0,epoch=0,submitted_epoch=0;};
  Shader chunks_{nullptr,blender::GPU_shader_free},reduce_{nullptr,blender::GPU_shader_free};std::map<std::uint32_t,Entry> entries_;
  static blender::gpu::Shader *compile_chunks(){using namespace blender;using namespace gpu::shader;ShaderCreateInfo info("pyGPU_Shader");
   info.local_group_size(16,16).shared_variable(Type::float4_t,"bounds[256]").sampler(0,ImageType::Float2D,"prefix_img")
   .image(0,gpu::TextureFormat::SFLOAT_32_32_32_32,Qualifier::write,ImageReadWriteType::image2D,"range_img")
   .push_constant(Type::int2_t,"chunk").push_constant(Type::int2_t,"size");
   info.compute_source_generated=R"GLSL(
+#ifdef CREATE_INFO_RES_SHARED_VARS_pyGPU_Shader
 CREATE_INFO_RES_SHARED_VARS_pyGPU_Shader
+#endif
 void main(){uint lane=gl_LocalInvocationIndex;vec4 range=vec4(3.402823e38,-3.402823e38,0,0);
  for(int y=0;y<16;y++)for(int x=0;x<16;x++){ivec2 p=chunk*256+ivec2(gl_LocalInvocationID.xy)+ivec2(x,y)*16;if(any(greaterThanEqual(p,size)))continue;
   vec4 ink=texelFetch(prefix_img,min(p,textureSize(prefix_img,0)-1),0);if(ink.a>0){float v=ink.r/ink.a;range.x=min(range.x,v);range.y=max(range.y,v);range.z=1;}}
@@ -39,7 +41,9 @@ void main(){uint lane=gl_LocalInvocationIndex;vec4 range=vec4(3.402823e38,-3.402
   info.local_group_size(256).shared_variable(Type::float4_t,"bounds[256]").sampler(0,ImageType::Float2D,"range_img")
   .storage_buf(0,Qualifier::read_write,"vec4","summary[]").push_constant(Type::int_t,"first_tile");
   info.compute_source_generated=R"GLSL(
+#ifdef CREATE_INFO_RES_SHARED_VARS_pyGPU_Shader
 CREATE_INFO_RES_SHARED_VARS_pyGPU_Shader
+#endif
 void main(){uint lane=gl_LocalInvocationIndex;ivec2 size=textureSize(range_img,0);vec4 range=vec4(3.402823e38,-3.402823e38,0,0);
  for(uint i=lane;i<uint(size.x*size.y);i+=256u){vec4 item=texelFetch(range_img,ivec2(int(i)%size.x,int(i)/size.x),0);range.x=min(range.x,item.x);range.y=max(range.y,item.y);range.z=max(range.z,item.z);}
  bounds[lane]=range;barrier();for(uint stride=128u;stride>0u;stride>>=1u){if(lane<stride){bounds[lane].x=min(bounds[lane].x,bounds[lane+stride].x);bounds[lane].y=max(bounds[lane].y,bounds[lane+stride].y);bounds[lane].z=max(bounds[lane].z,bounds[lane+stride].z);}barrier();}
@@ -52,7 +56,7 @@ void main(){uint lane=gl_LocalInvocationIndex;ivec2 size=textureSize(range_img,0
   if(!entry.buffer)throw std::runtime_error("GPU range metadata allocation failed");
   GPU_shader_bind(reduce_.get());GPU_storagebuf_bind(entry.buffer.get(),0);int first=1;
   for(const auto &[id,tile]:entry.tiles){GPU_texture_bind(tile.image.get(),0);GPU_shader_uniform_1i(reduce_.get(),"first_tile",first);first=0;GPU_compute_dispatch(reduce_.get(),1,1,1);GPU_memory_barrier(GPU_BARRIER_SHADER_STORAGE);}
-  GPU_storagebuf_unbind(entry.buffer.get());GPU_texture_unbind_all();GPU_shader_unbind();GPU_storagebuf_sync_to_host(entry.buffer.get());entry.fence=glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);if(!entry.fence)throw std::runtime_error("GPU range fence allocation failed");glFlush();entry.submitted=entry.revision;entry.submitted_epoch=entry.epoch;
+  GPU_storagebuf_unbind(entry.buffer.get());GPU_texture_unbind_all();GPU_shader_unbind();entry.fence.submit(entry.buffer.get());entry.submitted=entry.revision;entry.submitted_epoch=entry.epoch;
  }
  public:
  struct Source {int tile,width,height;blender::gpu::Texture *prefix;std::uint64_t version;std::set<int> dirty;};
@@ -72,8 +76,7 @@ void main(){uint lane=gl_LocalInvocationIndex;ivec2 size=textureSize(range_img,0
   if(changed)++entry.revision;submit(entry);
  }
  std::vector<Result> poll(){using namespace blender;performance::Scope timing("gpu_displacement_range_poll");std::vector<Result> results;
-  for(auto &[uid,entry]:entries_){if(!entry.fence)continue;const auto status=glClientWaitSync(entry.fence,0,0);if(status==GL_WAIT_FAILED)throw std::runtime_error("GPU range fence poll failed");if(status!=GL_ALREADY_SIGNALED&&status!=GL_CONDITION_SATISFIED)continue;
-   glDeleteSync(entry.fence);entry.fence=nullptr;if(entry.submitted==entry.revision){std::array<float,4> value{};GPU_storagebuf_read(entry.buffer.get(),value.data());readback_bytes+=16;results.push_back({uid,value[2]>0?value[0]:0,value[2]>0?value[1]:0,value[2]>0,entry.revision,entry.submitted_epoch});}else ++discarded;submit(entry);
+  for(auto &[uid,entry]:entries_){if(!entry.fence)continue;std::array<float,4> value{};if(!entry.fence.read(entry.buffer.get(),value.data(),entry.submitted!=entry.revision))continue;if(entry.submitted==entry.revision){readback_bytes+=16;results.push_back({uid,value[2]>0?value[0]:0,value[2]>0?value[1]:0,value[2]>0,entry.revision,entry.submitted_epoch});}else ++discarded;submit(entry);
   }return results;
  }
  bool pending()const{return std::any_of(entries_.begin(),entries_.end(),[](const auto &e){return bool(e.second.fence);});}

@@ -6,7 +6,7 @@
 #include "GPU_state.hh"
 #include "GPU_storage_buffer.hh"
 #include "gpu_shader_create_info.hh"
-#include <epoxy/gl.h>
+#include "GpuReadbackFence.hh"
 #include <memory>
 #include <algorithm>
 #include <cmath>
@@ -18,11 +18,11 @@ class GpuThumbnail {
  using Shader=std::unique_ptr<blender::gpu::Shader,decltype(&blender::GPU_shader_free)>;
  using Buffer=std::unique_ptr<blender::gpu::StorageBuf,decltype(&blender::GPU_storagebuf_free)>;
  Shader shader_{nullptr,blender::GPU_shader_free};Buffer buffer_{nullptr,blender::GPU_storagebuf_free};
- GLsync fence_=nullptr;std::uint64_t ticket_=0;std::optional<ThumbnailMetadata> result_;
+ GpuReadbackFence fence_;std::uint64_t ticket_=0;std::optional<ThumbnailMetadata> result_;
  public:
  struct Input {blender::gpu::Texture *image=nullptr;int width=0,height=0;};
- ~GpuThumbnail(){if(fence_)glDeleteSync(fence_);}
- bool pending()const{return fence_!=nullptr;}
+
+ bool pending()const{return bool(fence_);}
  std::optional<ThumbnailMetadata> get()const{return result_;}
  void update(const ThumbnailRequest &request,const std::vector<Input> &inputs,std::uint64_t ticket){
   using namespace blender;if(pending())throw std::logic_error("Thumbnail packet still in flight");
@@ -43,8 +43,8 @@ void main(){ivec2 p=ivec2(gl_GlobalInvocationID.xy);if(any(greaterThanEqual(p,iv
   ThumbnailMetadata clear;GPU_storagebuf_update(buffer_.get(),clear.pixels.data());GPU_shader_bind(shader_.get());GPU_storagebuf_bind(buffer_.get(),0);
   const int columns=std::max(1,int(std::ceil(std::sqrt(inputs.size()))));GPU_shader_uniform_1i(shader_.get(),"columns",columns);GPU_shader_uniform_1i(shader_.get(),"mask_mode",request.mask);
   for(int i=0;i<int(inputs.size());++i){const auto &in=inputs[i];if(!in.image)continue;GPU_texture_bind(in.image,0);const int size[2]={in.width,in.height};GPU_shader_uniform_2iv(shader_.get(),"source_size",size);GPU_shader_uniform_1i(shader_.get(),"tile_index",i);GPU_compute_dispatch(shader_.get(),6,6,1);}
-  GPU_memory_barrier(GPU_BARRIER_SHADER_STORAGE);GPU_storagebuf_unbind(buffer_.get());GPU_texture_unbind_all();GPU_shader_unbind();GPU_storagebuf_sync_to_host(buffer_.get());fence_=glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);if(!fence_)throw std::runtime_error("Thumbnail fence failed");glFlush();ticket_=ticket;
+  GPU_memory_barrier(GPU_BARRIER_SHADER_STORAGE);GPU_storagebuf_unbind(buffer_.get());GPU_texture_unbind_all();GPU_shader_unbind();fence_.submit(buffer_.get());ticket_=ticket;
  }
- void poll(){using namespace blender;if(!fence_)return;const auto state=glClientWaitSync(fence_,0,0);if(state==GL_WAIT_FAILED)throw std::runtime_error("Thumbnail fence poll failed");if(state!=GL_ALREADY_SIGNALED&&state!=GL_CONDITION_SATISFIED)return;glDeleteSync(fence_);fence_=nullptr;ThumbnailMetadata result;result.ticket=ticket_;GPU_storagebuf_read(buffer_.get(),result.pixels.data());result_=std::move(result);}
+ void poll(){using namespace blender;if(!fence_)return;ThumbnailMetadata result;result.ticket=ticket_;if(!fence_.read(buffer_.get(),result.pixels.data()))return;result_=std::move(result);}
 };
 }

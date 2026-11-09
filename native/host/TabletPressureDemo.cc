@@ -17,7 +17,7 @@
 #include <QTabletEvent>
 #include <QTimer>
 #include <QToolButton>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
 #include <QScreen>
 #include <QElapsedTimer>
 #include <memory>

@@ -12,7 +12,7 @@
 #include <QJsonDocument>
 #include <QLineEdit>
 #include <QMouseEvent>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
 #include <QPointingDevice>
 #include <QPushButton>
 #include <QTabletEvent>

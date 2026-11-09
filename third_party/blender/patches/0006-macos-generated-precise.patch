@@ -1,0 +1,15 @@
+--- a/source/blender/gpu/metal/mtl_shader.mm
++++ b/source/blender/gpu/metal/mtl_shader.mm
+@@ -270,6 +270,12 @@
+   bool hosted_precise_math = false;
+   for (const auto &define : info.defines_) {
+     hosted_precise_math |= define[0] == "BTS_PRECISE_MATH";
++  }
++  // Generated hosted shaders include margin, ribbon, fill and stack programs,
++  // not just the explicitly marked brush kernels. Detect their GLSL qualifier
++  // before preprocessing so every such program gets the same arithmetic rules.
++  for (const auto &source : info.generated_sources) {
++    hosted_precise_math |= source.content.find("precise ") != std::string::npos;
+   }
+   if (hosted_precise_math) {
+     // GLSL's local precise qualifier has no MSL spelling. These hosted

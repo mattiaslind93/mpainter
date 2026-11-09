@@ -166,7 +166,11 @@ FileDialog::FileDialog(QWidget *parent,const QString &caption,const QString &dir
  // between dialog hide and the caller's next paint.
  connect(this,&QDialog::accepted,this,[this]{for(const auto &file:selectedFiles()){const QFileInfo info(file);remember_folder_async(info.isDir()?info.absoluteFilePath():info.absolutePath());}});
 }
-FileDialog::~FileDialog(){cancel_browser_previews(this);if(!state_published_)publish_state();release_directory_listing();}
+FileDialog::~FileDialog(){detach_browser_controls(this);if(!state_published_)publish_state();release_directory_listing();}
+bool FileDialog::event(QEvent *event){
+ if(event&&event->type()==QEvent::DeferredDelete)detach_browser_controls(this);
+ return QFileDialog::event(event);
+}
 void FileDialog::publish_state(){state_published_=true;queue_state({saveState(),directory().absolutePath(),(viewMode()==QFileDialog::Detail?0:qMax(1,property("fileBrowserPresentation").toInt())),property("fileBrowserThumbnailSize").toInt()});}
 void FileDialog::hideEvent(QHideEvent *event){cancel_browser_previews(this);publish_state();QFileDialog::hideEvent(event);}
 void FileDialog::showEvent(QShowEvent *event){

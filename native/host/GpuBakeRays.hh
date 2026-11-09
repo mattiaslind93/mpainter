@@ -9,7 +9,9 @@
 #include "GPU_state.hh"
 #include "GPU_storage_buffer.hh"
 #include "gpu_shader_create_info.hh"
-#include <epoxy/gl.h>
+#ifndef __APPLE__
+# include <epoxy/gl.h>
+#endif
 #include <memory>
 #include <bit>
 #include <map>
@@ -50,14 +52,22 @@ inline std::vector<float> gpu_bake_cosine_occlusion(const std::vector<bake_bvh::
  }
  if(tris.size()>GPU_max_storage_buffer_size()/sizeof(tris[0]))throw std::length_error("GPU bake triangle/filter buffer exceeds driver limit");
  gpu::shader::ShaderCreateInfo info("pyGPU_Shader");
- info.typedef_source_generated="struct BakeNode {vec3 lower;uint escape;vec3 upper;uint triangle;};\nstruct BakeRayState {uint index;float distance;};\n";
+ // Match the 32-byte CPU Node: Metal float3 occupies 16 bytes, packed_float3
+ // occupies 12. Blender aliases packed_float3 to float3/vec3 on GLSL backends.
+ // BakeRayState is uint+float (8 bytes). PointVertex is vec4/uvec4 only.
+ info.typedef_source_generated="struct BakeNode {packed_float3 lower;uint escape;packed_float3 upper;uint triangle;};\nstruct BakeRayState {uint index;float distance;};\n";
  info.local_group_size(64,1).storage_buf(0,gpu::shader::Qualifier::read,"BakeNode","nodes[]").storage_buf(1,gpu::shader::Qualifier::read,"vec4","tris[]").storage_buf(2,gpu::shader::Qualifier::read,"vec4","rays[]").storage_buf(3,gpu::shader::Qualifier::write,"float","hits[]").storage_buf(4,gpu::shader::Qualifier::read_write,"BakeRayState","states[]").storage_buf(5,gpu::shader::Qualifier::read_write,"uint","unfinished[]").push_constant(gpu::shader::Type::int_t,"node_count").push_constant(gpu::shader::Type::int_t,"ray_count").push_constant(gpu::shader::Type::int_t,"reset_rays");
- info.compute_source_generated=filter?R"GLSL(
+ info.compute_source_generated=filter?(GPU_backend_get_type()==GPU_BACKEND_METAL?R"GLSL(
+#define BAKE_PRECISE precise
+#define BAKE_INVERSE(x) (1.0/(x))
+float bake_dot(vec3 a,vec3 b){precise float value=(a.x*b.x+a.y*b.y)+a.z*b.z;return value;}
+vec3 bake_cross(vec3 a,vec3 b){precise vec3 value=vec3(a.y*b.z-a.z*b.y,a.z*b.x-a.x*b.z,a.x*b.y-a.y*b.x);return value;}
+)GLSL":R"GLSL(
 #define BAKE_PRECISE precise
 #define BAKE_INVERSE(x) float(double(1.0)/double(x))
 float bake_dot(vec3 a,vec3 b){precise float value=(a.x*b.x+a.y*b.y)+a.z*b.z;return value;}
 vec3 bake_cross(vec3 a,vec3 b){precise vec3 value=vec3(a.y*b.z-a.z*b.y,a.z*b.x-a.x*b.z,a.x*b.y-a.y*b.x);return value;}
-)GLSL":"#define BAKE_PRECISE\n#define BAKE_INVERSE(x) (1.0/(x))\n#define bake_dot dot\n#define bake_cross cross\n";
+)GLSL"):"#define BAKE_PRECISE\n#define BAKE_INVERSE(x) (1.0/(x))\n#define bake_dot dot\n#define bake_cross cross\n";
  info.compute_source_generated+=R"GLSL(
 bool bounds_hit(BakeNode node,vec3 origin,vec3 direction,float distance){
  float lower=0.0,upper=distance;
@@ -133,9 +143,15 @@ void main(){
    GPU_shader_uniform_1i(shader.get(),"node_count",int(nodes.size()));GPU_shader_uniform_1i(shader.get(),"ray_count",count);GPU_shader_uniform_1i(shader.get(),"reset_rays",reset);
    GPU_compute_dispatch(shader.get(),unsigned((std::uint64_t(count)+63)/64),1,1);GPU_memory_barrier(GPU_BARRIER_SHADER_STORAGE);
    for(auto *buffer:{node_buf.get(),tri_buf.get(),ray_buf.get(),hit_buf.get(),state_buf.get(),counter_buf.get()})GPU_storagebuf_unbind(buffer);GPU_shader_unbind();GPU_storagebuf_sync_to_host(counter_buf.get());
+#ifdef __APPLE__
+   // Metal owns its command buffers; a GL fence cannot synchronize this backend.
+   // This synchronous bake already waits for every traversal slice on Linux.
+   GPU_finish();
+#else
    GLsync fence=glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);if(!fence)throw std::runtime_error("Bake BVH fence failed");
    const auto state=glClientWaitSync(fence,GL_SYNC_FLUSH_COMMANDS_BIT,10'000'000'000ULL);glDeleteSync(fence);
    if(state!=GL_ALREADY_SIGNALED&&state!=GL_CONDITION_SATISFIED)throw std::runtime_error("Bake BVH traversal slice fence timed out");
+#endif
    GPU_storagebuf_read(counter_buf.get(),unfinished.data());reset=false;if(statistics)++statistics->dispatches;
   }while(unfinished[0]);
   GPU_storagebuf_sync_to_host(hit_buf.get());

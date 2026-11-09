@@ -1,0 +1,14 @@
+--- a/source/blender/blenkernel/intern/appdir.cc
++++ b/source/blender/blenkernel/intern/appdir.cc
+@@ -214,2 +214,11 @@
+ {
++#ifdef __APPLE__
++  /* Explicit opt-in for isolated mPainter CLI tests; normal app paths are unchanged. */
++  if (const char *cache = std::getenv("MPAINTER_CACHE_DIR")) {
++    if (cache[0] == '/') {
++      BLI_strncpy(path, cache, path_maxncpy);
++      return;
++    }
++  }
++#endif
+   path[0] = '\0';

@@ -17,7 +17,7 @@
 #include <QListWidget>
 #include <QMouseEvent>
 #include <QKeyEvent>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
 #include <QPushButton>
 #include <QTimer>
 #include <QUuid>

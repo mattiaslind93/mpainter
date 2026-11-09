@@ -86,7 +86,7 @@
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMouseEvent>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
 #include <QPushButton>
 #include <QSlider>
 #include <QTimer>
@@ -115,7 +115,7 @@ class Demo final:public QObject {
   void start_monitor(){max_ping_ms=0;monitor_clock.start();monitor.start();}
   double stop_monitor(){monitor.stop();max_ping_ms=std::max(max_ping_ms,monitor_clock.nsecsElapsed()/1e6);return max_ping_ms;}
   void capture(const char *name){
-    mouse(QEvent::MouseMove,{-1000,-1000},Qt::NoButton,Qt::NoButton);viewport->repaint();if(auto *gl=qobject_cast<QOpenGLWidget *>(viewport))capture_viewport_framebuffer(gl).save(directory+"/"+name+"-framebuffer.png");
+    mouse(QEvent::MouseMove,{-1000,-1000},Qt::NoButton,Qt::NoButton);viewport->repaint();if(auto *gl=qobject_cast<bts::ViewportWidget *>(viewport))capture_viewport_framebuffer(gl).save(directory+"/"+name+"-framebuffer.png");
     auto data=state();auto *sets=workspace->findChild<QListWidget *>("textureSets");QJsonArray names;if(sets)for(int i=0;i<sets->count();++i)names.append(sets->item(i)->text());data["texture_sets"]=names;
     auto *empty=viewport->findChild<QLabel *>("emptyProjectMessage");data["empty_view_visible"]=empty&&empty->isVisible();data["empty_view_text"]=empty?empty->text():QString{};auto *empty_layers=workspace->findChild<QLabel *>("emptyLayersMessage");data["empty_layers_visible"]=empty_layers&&empty_layers->isVisible();data["stage"]=name;
     for(const auto *button:{"addPaintLayer","addFillLayer"}){auto *widget=workspace->findChild<QToolButton *>(button);data[QString(button)+"_enabled"]=widget&&widget->isEnabled();data[QString(button)+"_tooltip"]=widget?widget->toolTip():QString{};}
@@ -143,7 +143,7 @@ class Demo final:public QObject {
     if(state()["composite_pending"].toBool())return;
     timer.stop();roughness_ping_ms=stop_monitor();capture("roughness-after");if(auto *check=workspace->findChild<QAction *>("checkGuiComposite"))check->trigger();capture("reference-checked");finish();
   }
-  void finish(){timer.stop();if(!performance)capture("painted");auto *gl=qobject_cast<QOpenGLWidget *>(viewport);if(!gl)qFatal("GUI viewport is not a Qt OpenGL surface");const auto image=capture_viewport_framebuffer(gl);image.save(directory+(performance?"/final-framebuffer.png":"/painted-framebuffer.png"));qint64 magenta=0;for(int y=0;y<image.height();++y)for(int x=0;x<image.width();++x){const auto pixel=image.pixelColor(x,y);magenta+=pixel.red()>240&&pixel.green()<15&&pixel.blue()>240;}
+  void finish(){timer.stop();if(!performance)capture("painted");auto *gl=qobject_cast<bts::ViewportWidget *>(viewport);if(!gl)qFatal("GUI viewport is not a Qt OpenGL surface");const auto image=capture_viewport_framebuffer(gl);image.save(directory+(performance?"/final-framebuffer.png":"/painted-framebuffer.png"));qint64 magenta=0;for(int y=0;y<image.height();++y)for(int x=0;x<image.width();++x){const auto pixel=image.pixelColor(x,y);magenta+=pixel.red()>240&&pixel.green()<15&&pixel.blue()>240;}
     QJsonObject result{{"pid",QCoreApplication::applicationPid()},{"resolution",resolution},{"captures",captures},{"magenta_pixels",magenta},{"post_release_ping_ms",post_release_ms},{"performance",performance},{"mouse_moves",performance?60:8},{"roughness_value_changes",roughness_moves},{"stroke_max_ping_ms",stroke_ping_ms},{"roughness_max_ping_ms",roughness_ping_ms},{"roughness_release_ms",roughness_release_ms},{"roughness_release_value",release_value},{"roughness_release_undo_count",release_undo_count},{"padding_before_stroke",padding_before},{"padding_before_release",padding_before_release},{"input","File New QAction, dialog widgets, Add paint layer, Qt mouse events; uniform roughness slider press/valueChanged/release"}};
     QFile file(directory+"/gui-fixes.json");if(!file.open(QIODevice::WriteOnly))qFatal("GUI proof output missing");file.write(QJsonDocument(result).toJson());file.close();QTimer::singleShot(100,qApp,&QCoreApplication::quit);
   }

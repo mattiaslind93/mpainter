@@ -71,8 +71,14 @@
 #include <limits>
 #include <vector>
 
+#ifdef __APPLE__
+#include "MetalContextOwner.hh"
+#include "MetalRhiViewport.hh"
+#include <QPainter>
+#endif
 #include <epoxy/gl.h>
 #include "QtGpuSurface.hh"
+#include "GpuContextOwner.hh"
 #include <QCoreApplication>
 #include <QJsonArray>
 #include <QOpenGLContext>
@@ -142,9 +148,12 @@ namespace blender {void WM_init_gpu_hosted_shader_workers(GHOST_IContext *);}
 namespace bts {
 using namespace blender;
 
-class QtGhostContext final : public GHOST_Context {
+class QtGhostContext final : public GHOST_Context, public GpuContextOwner {
  public:
   explicit QtGhostContext(QtGpuSurface &surface) : GHOST_Context({}), surface_(surface) {}
+  GHOST_IContext *ghost_context() override { return this; }
+  GPUBackendType backend() const override { return GPU_BACKEND_OPENGL; }
+  void restore_external_state() override { gpu::GLContext::get()->restore_external_state(); }
 
   GHOST_TSuccess activateDrawingContext() override
   {
@@ -254,7 +263,13 @@ struct BlenderHost::Impl {
   QJsonObject last_tangent_shader_state;
   LensProjection lens;
   std::unique_ptr<QtGpuSurface> surface;
-  std::unique_ptr<QtGhostContext> ghost;
+  std::unique_ptr<GpuContextOwner> ghost;
+#ifdef __APPLE__
+  std::unique_ptr<MetalRhiViewport> metal_rhi;
+  QImage metal_frame;
+#endif
+  void restore_surface() { if(surface)surface->makeCurrent(); }
+
   RenderTarget scene_target;
   RenderTarget uv_target;
   EeveeCompletionSnapshot last_eevee_completion;
@@ -395,7 +410,7 @@ struct BlenderHost::Impl {
     if(enabled){
       s.sync_preview_background();
       if(!RE_engines_find("CYCLES"))throw std::runtime_error("Cycles is not registered");
-      if(!BPY_run_string_exec(s.context,nullptr,(std::string("force_cpu = ")+(force_cpu?"True":"False")+"\nprobe_defaults = "+(probe?"True":"False")+"\n"+R"PY(import bpy, os, cycles, _cycles
+      if(!BPY_run_string_exec(s.context,nullptr,(std::string("force_cpu = ")+(force_cpu?"True":"False")+"\nprobe_defaults = "+(probe?"True":"False")+"\n"+R"PY(import bpy, os, sys, cycles, _cycles
 # Blender starts without its own window; Qt supplies a real graphical viewport.
 _cycles.init(os.path.dirname(cycles.__file__), os.path.dirname(os.path.abspath(bpy.utils.user_resource('CONFIG', path=''))), False)
 p = bpy.context.preferences.addons['cycles'].preferences
@@ -404,7 +419,7 @@ backend = 'CPU'
 device_errors = []
 explicit_cpu = force_cpu or os.environ.get('BTS_CYCLES_DEVICE') == 'CPU'
 if not explicit_cpu:
-    for candidate in ('OPTIX', 'CUDA'):
+    for candidate in (('METAL',) if sys.platform == 'darwin' else ('OPTIX', 'CUDA')):
         try:
             p.compute_device_type = candidate
             devices = [d for d in p.get_devices_for_type(candidate) if d.type == candidate]
@@ -452,7 +467,7 @@ print('BTS_CYCLES_INPUT', bpy.context.scene.name, [(o.name, o.type, o.hide_rende
   void enter_gpu()
   {
     {performance::Scope timing("gpu_owner_context_enable");DRW_gpu_context_enable_ex(false);}
-    {performance::Scope timing("gpu_owner_external_state_restore");gpu::GLContext::get()->restore_external_state();}
+    {performance::Scope timing("gpu_owner_external_state_restore");ghost->restore_external_state();}
     {performance::Scope timing("gpu_owner_framebuffer_restore");GPU_framebuffer_restore();}
   }
 
@@ -476,7 +491,14 @@ BlenderHost::BlenderHost(const std::string &executable, const std::string &proje
 {
   auto &s = *impl_;
   std::vector<std::string> args = {
-      executable, "--background", "--factory-startup", "--disable-autoexec", "--gpu-backend", "opengl"};
+      executable, "--background", "--factory-startup", "--disable-autoexec", "--gpu-backend",
+#ifdef __APPLE__
+      "metal"
+#else
+      "opengl"
+#endif
+  };
+  if(qEnvironmentVariableIntValue("BTS_HOST_THREADS")>0){args.push_back("--threads");args.push_back(std::to_string(std::clamp(qEnvironmentVariableIntValue("BTS_HOST_THREADS"),1,6)));}
   if (!project.empty()) {
     args.push_back(project);
   }
@@ -1135,6 +1157,25 @@ void BlenderHost::release_bake_scratch(){with_gpu([&]{
  std::printf("BTS_BAKE_VRAM total_kib=%d free_before_kib=%d free_after_kib=%d reclaimed_cache_bytes=%llu\n",total,before_free,free,(unsigned long long)reclaimed);
 });}
 void BlenderHost::with_gpu(const std::function<void()> &fn){auto &s=*impl_;s.require_owner();if(s.phase!=Impl::Phase::GpuReady||s.drawing)throw std::logic_error("GPU bake rays require an idle viewport");s.enter_gpu();try{fn();DRW_gpu_context_disable_ex(false);}catch(...){DRW_gpu_context_disable_ex(false);throw;}}
+void BlenderHost::initialize_gpu_metal()
+{
+#ifdef __APPLE__
+  impl_->require_owner();
+  if(impl_->phase!=Impl::Phase::SceneReady)throw std::logic_error("Metal initialization requires scene-ready host");
+  impl_->ghost=std::make_unique<MetalContextOwner>();initialize_gpu_surface();
+#else
+  throw std::logic_error("Metal viewport is available only on macOS");
+#endif
+}
+QImage BlenderHost::viewport_image()const
+{
+  impl_->require_owner();
+#ifdef __APPLE__
+  return impl_->metal_frame;
+#else
+  return {};
+#endif
+}
 void BlenderHost::initialize_gpu(QOpenGLWidget &surface){impl_->surface=std::make_unique<QtGpuSurface>(surface);initialize_gpu_surface();}
 void BlenderHost::initialize_gpu(QOpenGLContext &context,QSurface &surface,unsigned framebuffer){impl_->surface=std::make_unique<QtGpuSurface>(context,surface,framebuffer);initialize_gpu_surface();}
 void BlenderHost::initialize_gpu(QOpenGLContext &context,QSurface &surface,std::function<unsigned()> framebuffer){impl_->require_owner();if(impl_->phase!=Impl::Phase::SceneReady)throw std::logic_error("GPU initialization requires scene-ready host");impl_->surface=std::make_unique<QtGpuSurface>(context,surface,std::move(framebuffer));initialize_gpu_surface();}
@@ -1150,24 +1191,30 @@ void BlenderHost::initialize_gpu_surface()
     throw std::logic_error("Blender initialized its GPU before the Qt host supplied a context");
   }
   const bool shader_workers=qEnvironmentVariableIntValue("BTS_HOSTED_SHADER_WORKERS")==1;
+#ifdef __APPLE__
+  install_metal_shared_contexts();
+#else
   install_shared_ghost_context(s.surface->context(),shader_workers);
   s.ghost = std::make_unique<QtGhostContext>(*s.surface);
+#endif
   U.shader_compilation_method = USER_SHADER_COMPILE_THREAD;
-  if (s.ghost->activateDrawingContext() != GHOST_kSuccess) {
+  if (s.ghost->ghost_context()->activateDrawingContext() != GHOST_kSuccess) {
     throw std::runtime_error("Could not activate Qt's OpenGL context");
   }
-  GPU_backend_type_selection_set(GPU_BACKEND_OPENGL);
-  if(shader_workers)WM_init_gpu_hosted_shader_workers(s.ghost.get());
-  else WM_init_gpu_hosted(s.ghost.get());
+  GPU_backend_type_selection_set(s.ghost->backend());
+  if(shader_workers)WM_init_gpu_hosted_shader_workers(s.ghost->ghost_context());
+  else WM_init_gpu_hosted(s.ghost->ghost_context());
   s.phase = Impl::Phase::GpuReady;
   s.renderer = GPU_platform_renderer();
-  s.surface->makeCurrent();
+  s.restore_surface();
+#ifndef __APPLE__
   if(qEnvironmentVariableIntValue("BTS_GL_DEBUG")==1){
     glEnable(GL_DEBUG_OUTPUT);glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback([](GLenum,GLenum type,GLuint id,GLenum,GLsizei,const GLchar *message,const void *){
       if(type==GL_DEBUG_TYPE_ERROR)std::fprintf(stderr,"BTS_GL_ERROR id=%u message=%s\n",id,message);
     },nullptr);
   }
+#endif
   // Texture-backed programs need Blender's draw-manager owner, not just Qt's
   // current GL context (which sufficed for the shader-only readback warmup).
   s.enter_gpu();
@@ -1183,11 +1230,14 @@ void BlenderHost::initialize_gpu_surface()
       const double elapsed=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-begin).count();
       std::printf("BTS_NATIVE_MIP_STARTUP format=%s shader_write=1 route=builtin-compute available=%d wall_ms=%.3f cpu_ms=%.3f\n",GPU_texture_format_name(format),bool(texture),elapsed,performance::thread_ms()-cpu);
     }
+#ifdef __APPLE__
+    s.metal_rhi=std::make_unique<MetalRhiViewport>();
+#endif
     s.inspection.initialize_gpu_programs();GpuProjectReadback::warmup();if(qEnvironmentVariableIsSet("BTS_NATIVE_MATERIAL_GPU_TEST"))verify_native_material_gpu_prototype(*s.main);DRW_gpu_context_disable_ex(false);}
   catch(...){DRW_gpu_context_disable_ex(false);throw;}
   s.arm_program_poll();
-  s.surface->makeCurrent();
-  std::printf("BTS_GPU_READY pid=%lld renderer=%s qt=%s shader_workers=%d presentation=GPU_blit\n",
+  s.restore_surface();
+  std::printf("BTS_GPU_READY pid=%lld renderer=%s qt=%s shader_workers=%d presentation=backend-owned\n",
               static_cast<long long>(QCoreApplication::applicationPid()), s.renderer.c_str(), qVersion(),
               shader_workers&&!GPU_use_main_context_workaround()?GPU_max_parallel_compilations():0);
   std::fflush(stdout);
@@ -1310,6 +1360,11 @@ double BlenderHost::draw(std::span<const ViewFrame> frames, int width, int heigh
       GPU_offscreen_unbind(s.uv_target.offscreen,true);
     }
     if(!defer_material_render&&(has_uv||prime_uv))s.uv_prime=false;
+#ifdef __APPLE__
+    s.metal_frame=QImage(width,height,QImage::Format_RGBA8888);
+    s.metal_frame.fill(QColor::fromRgbF(.10,.10,.11));
+    QPainter metal_composite(&s.metal_frame);
+#endif
     std::vector<GLint> source_fbos;
     source_fbos.reserve(frames.size());
     for (const ViewFrame &frame : frames) {
@@ -1398,9 +1453,17 @@ double BlenderHost::draw(std::span<const ViewFrame> frames, int width, int heigh
         auto triangle_frame=frame;triangle_frame.wire_source=&s.triangle_scene;
         s.triangle_overlay.draw(triangle_frame,depth,color);
       }
+#ifdef __APPLE__
+      // Native Metal target -> shared-device QRhi -> offscreen/raster widget.
+      // This readback is deliberately synchronous; direct swapchain presentation
+      // can replace it without changing BlenderHost's rendering or input logic.
+      auto image=s.metal_rhi->capture(GPU_offscreen_color_texture(target.offscreen));
+      metal_composite.drawImage(pane.x,pane.y,image.mirrored(false,true));
+#else
       GLint source_fbo = 0;
       glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &source_fbo);
       source_fbos.push_back(source_fbo);
+#endif
       GPU_offscreen_unbind(target.offscreen, true);
     }
     s.residency.finish_frame();
@@ -1409,7 +1472,8 @@ double BlenderHost::draw(std::span<const ViewFrame> frames, int width, int heigh
     s.performance.end();s.performance.submitted();
     DRW_gpu_context_disable_ex(false);
     gpu_active = false;
-    s.surface->makeCurrent();
+    s.restore_surface();
+#ifndef __APPLE__
     const GLuint target_fbo = s.surface->defaultFramebufferObject();
     glBindFramebuffer(GL_FRAMEBUFFER, target_fbo);
     glDrawBuffer(GL_COLOR_ATTACHMENT0);
@@ -1443,6 +1507,9 @@ double BlenderHost::draw(std::span<const ViewFrame> frames, int width, int heigh
     if(qEnvironmentVariableIsSet("BTS_OVERLAY_PROBE")){
       static int count=0;if(++count<=8){GLint viewport[4],fbo;glGetIntegerv(GL_VIEWPORT,viewport);glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING,&fbo);std::fprintf(stderr,"BTS_OVERLAY_GL viewport=%d,%d,%d,%d fbo=%d expected=%u cull=%d depth=%d stencil=%d blend=%d contours=%zu\n",viewport[0],viewport[1],viewport[2],viewport[3],fbo,target_fbo,int(glIsEnabled(GL_CULL_FACE)),int(glIsEnabled(GL_DEPTH_TEST)),int(glIsEnabled(GL_STENCIL_TEST)),int(glIsEnabled(GL_BLEND)),s.uv_summary.contours?s.uv_summary.contours->size():0);}
     }
+#else
+    metal_composite.end();
+#endif
     s.drawing = false;
     return std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
   }
@@ -1456,7 +1523,7 @@ double BlenderHost::draw(std::span<const ViewFrame> frames, int width, int heigh
       GPU_framebuffer_restore();
       DRW_gpu_context_disable_ex(false);
     }
-    s.surface->makeCurrent();
+    s.restore_surface();
     s.drawing = false;
     throw;
   }
@@ -1597,14 +1664,14 @@ SceneSnapshot BlenderHost::scene_snapshot(bool evaluated_subdivision)
     snapshot.preview_subdivision_levels=s.displacement_preview.material_levels();
     if (gpu_ready) {
       DRW_gpu_context_disable_ex(false);
-      s.surface->makeCurrent();
+      s.restore_surface();
     }
     return snapshot;
   }
   catch (...) {
     if (gpu_ready) {
       DRW_gpu_context_disable_ex(false);
-      s.surface->makeCurrent();
+      s.restore_surface();
     }
     throw;
   }
@@ -1854,6 +1921,9 @@ void BlenderHost::shutdown()
     GPU_finish();
     DRW_gpu_context_disable_ex(false);
   }
+#ifdef __APPLE__
+  s.metal_rhi.reset();s.metal_frame={};
+#endif
   WM_exit_ex(s.context, true, false);
   // WM_exit/GPU_exit joins compiler workers first. Their disposal never waits
   // on this GUI thread; retire the released Qt surfaces before dropping root.

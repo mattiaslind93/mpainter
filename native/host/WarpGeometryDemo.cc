@@ -12,7 +12,7 @@
 #include <QLineEdit>
 #include <QMainWindow>
 #include <QMouseEvent>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QTimer>
@@ -25,8 +25,8 @@ class Demo final:public QObject {
  void command(const QString &code){get<QLineEdit>("pythonCommand")->setText("exec("+quote(code)+")");get<QPushButton>("executePythonCommand")->click();if(!get<QDockWidget>("pythonConsoleDock")->property("lastExecutionSucceeded").toBool())qFatal("Warp geometry script failed: %s",qPrintable(get<QPlainTextEdit>("pythonOutput")->toPlainText()));}
  void capture(const char *name){if(qEnvironmentVariableIsSet("BTS_GPU_DENSE_ORACLE"))get<QAction>("checkGuiGpuStack")->trigger();auto data=state();data["stage"]=name;data["toggle_visible"]=get<QToolButton>("warpToGeometry")->isVisible();data["toggle_checked"]=get<QToolButton>("warpToGeometry")->isChecked();captures.append(data);QFile file(directory+"/warp-geometry.json");if(!file.open(QIODevice::WriteOnly))qFatal("Cannot write warp geometry proof");file.write(QJsonDocument(QJsonObject{{"pid",QCoreApplication::applicationPid()},{"captures",captures}}).toJson());window->setProperty("guiCapturePath",directory+"/"+name+"-viewport.png");get<QAction>("guiCaptureViewport")->trigger();}
  void move(double value){get<QDoubleSpinBox>("fill3d0_0")->setValue(value);}
- void view_edit(){auto *viewport=window->findChild<QOpenGLWidget *>();get<QComboBox>("warpSelectedPoint")->setCurrentIndex(0);const auto points=state()["warp_geometry"].toObject()["screen"].toArray();if(points.size()!=9)qFatal("Warp geometry expected 3x3 grid");const auto center=points[4].toArray();const QPointF point(center[0].toDouble(),center[1].toDouble());const auto send=[&](QEvent::Type type,QPointF at){QMouseEvent event(type,at,viewport->mapToGlobal(at.toPoint()),type==QEvent::MouseMove?Qt::NoButton:Qt::LeftButton,type==QEvent::MouseButtonRelease?Qt::NoButton:Qt::LeftButton,Qt::NoModifier);QCoreApplication::sendEvent(viewport,&event);};send(QEvent::MouseButtonPress,point);send(QEvent::MouseMove,point+QPointF(14,-5));send(QEvent::MouseButtonRelease,point+QPointF(14,-5));}
- void advance(){if(++ticks>1400)qFatal("Warp geometry demo timed out");auto *view=window->findChild<QOpenGLWidget *>();if(!view||!view->isValid()||(phase!=1&&busy()))return;
+ void view_edit(){auto *viewport=window->findChild<bts::ViewportWidget *>();get<QComboBox>("warpSelectedPoint")->setCurrentIndex(0);const auto points=state()["warp_geometry"].toObject()["screen"].toArray();if(points.size()!=9)qFatal("Warp geometry expected 3x3 grid");const auto center=points[4].toArray();const QPointF point(center[0].toDouble(),center[1].toDouble());const auto send=[&](QEvent::Type type,QPointF at){QMouseEvent event(type,at,viewport->mapToGlobal(at.toPoint()),type==QEvent::MouseMove?Qt::NoButton:Qt::LeftButton,type==QEvent::MouseButtonRelease?Qt::NoButton:Qt::LeftButton,Qt::NoModifier);QCoreApplication::sendEvent(viewport,&event);};send(QEvent::MouseButtonPress,point);send(QEvent::MouseMove,point+QPointF(14,-5));send(QEvent::MouseButtonRelease,point+QPointF(14,-5));}
+ void advance(){if(++ticks>1400)qFatal("Warp geometry demo timed out");auto *view=window->findChild<bts::ViewportWidget *>();if(!view||!view->isValid()||(phase!=1&&busy()))return;
   switch(phase++){
   case 0:get<QAction>("showPythonConsole")->trigger();command("import bts,pathlib\nroot=pathlib.Path("+quote(directory)+")\nC=bts.textureset.ChannelType");get<QAction>("newProject")->trigger();break;
   case 1:{auto *dialog=get<QDialog>("newProjectDialog");auto *preset=dialog->findChild<QComboBox *>("projectTemplate");preset->setCurrentIndex(preset->findData(":pbr"));dialog->findChild<QLineEdit *>("meshPath")->setText(directory+"/curved.obj");auto *size=dialog->findChild<QComboBox *>("documentResolution");size->setCurrentIndex(size->findData(128));dialog->findChild<QPushButton *>("createProject")->click();break;}

@@ -238,7 +238,8 @@
 #include <QMatrix4x4>
 #include <QMouseEvent>
 #include <QOpenGLContext>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
+#include "ViewportDemoCapture.hh"
 #include <QOffscreenSurface>
 #include <QOpenGLFramebufferObject>
 #include <QOpenGLPaintDevice>
@@ -263,12 +264,12 @@
 
 namespace {
 
-class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
+class Viewport final : public bts::ViewportWidget, public bts::ViewportCapture {
  public:
   std::function<void()> gpu_startup_ready;
   std::function<void(double)> environment_rotation_changed;
   explicit Viewport(bts::BlenderHost &host, QWidget *parent = nullptr)
-      : QOpenGLWidget(parent), host_(host)
+      : bts::ViewportWidget(parent), host_(host)
   {
     headless_surface_=qEnvironmentVariableIntValue("BTS_HEADLESS_WORKSPACE")==1&&QGuiApplication::platformName()=="offscreen";
     camera_.set_clipping(bts::load_viewport_clipping());
@@ -276,7 +277,9 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
     setFocusPolicy(Qt::StrongFocus);
     setMouseTracking(true);
     setAttribute(Qt::WA_TabletTracking,true);
-    QObject::connect(this,&QOpenGLWidget::frameSwapped,this,[]{bts::property_frame_done();});
+#ifndef __APPLE__
+    QObject::connect(this,&bts::ViewportWidget::frameSwapped,this,[]{bts::property_frame_done();});
+#endif
     setMinimumSize(400, 300);
     camera_selector_=new QComboBox(this);camera_selector_->setObjectName("sceneCameraSelector");camera_selector_->addItem("Default camera",0u);camera_selector_->hide();camera_selector_->setStyleSheet(bts::theme::qss("QComboBox{background:@Surface@;color:@Text@;border:1px solid @Border@;padding:2px;}"));connect(camera_selector_,&QComboBox::currentIndexChanged,this,[this](int index){choose_scene_camera(index);});camera_back_=new QPushButton(this);camera_back_->setObjectName("restoreSceneCamera");camera_back_->hide();camera_notice_=new QLabel("Scene cameras cannot be moved.",this);camera_notice_->setObjectName("sceneCameraNavigationNotice");camera_notice_->setStyleSheet(bts::theme::qss("background:@Surface@;color:@Text@;padding:2px"));camera_notice_->hide();connect(camera_back_,&QPushButton::clicked,this,[this]{if(last_imported_camera_){const int index=camera_selector_->findData(*last_imported_camera_);if(index>0)camera_selector_->setCurrentIndex(index);}});
 
@@ -294,12 +297,20 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
     close_native();
   }
 
-  QOpenGLContext *context()const{return headless_surface_?headless_context_.get():QOpenGLWidget::context();}
-  void makeCurrent(){if(headless_surface_){if(headless_context_)headless_context_->makeCurrent(headless_native_surface_.get());}else QOpenGLWidget::makeCurrent();}
-  void doneCurrent(){if(headless_surface_){if(headless_context_)headless_context_->doneCurrent();}else QOpenGLWidget::doneCurrent();}
+#ifdef __APPLE__
+  void makeCurrent() {}
+  void doneCurrent() {}
+  QImage capture_framebuffer() override { return metal_frame_; }
+  QImage grabFramebuffer() override { return metal_frame_; }
+  bool isValid() const override { return headless_gpu_ready_; }
+#else
+  QOpenGLContext *context()const{return headless_surface_?headless_context_.get():bts::ViewportWidget::context();}
+  void makeCurrent(){if(headless_surface_){if(headless_context_)headless_context_->makeCurrent(headless_native_surface_.get());}else bts::ViewportWidget::makeCurrent();}
+  void doneCurrent(){if(headless_surface_){if(headless_context_)headless_context_->doneCurrent();}else bts::ViewportWidget::doneCurrent();}
   QImage capture_framebuffer() override { return grabFramebuffer(); }
-  QImage grabFramebuffer(){if(!headless_surface_)return QOpenGLWidget::grabFramebuffer();makeCurrent();return headless_framebuffer_?headless_framebuffer_->toImage():QImage{};}
-  bool isValid()const{return headless_surface_?headless_context_&&headless_context_->isValid():QOpenGLWidget::isValid();}
+  QImage grabFramebuffer(){if(!headless_surface_)return bts::ViewportWidget::grabFramebuffer();makeCurrent();return headless_framebuffer_?headless_framebuffer_->toImage():QImage{};}
+  bool isValid()const{return headless_surface_?headless_context_&&headless_context_->isValid():bts::ViewportWidget::isValid();}
+#endif
   bts::EmptyProjectView *empty_project_view=nullptr;
   bool empty_project=false;
   void set_empty_project(bool empty){empty_project=empty;if(!empty_project_view)empty_project_view=new bts::EmptyProjectView(this);empty_project_view->setVisible(empty);if(empty)paint_enabled=false;update();}
@@ -971,7 +982,19 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
       if(qEnvironmentVariableIsSet("BTS_GPU_EARLY_PROJECT_TEST_MESH")&&!empty_project){setProperty("gpuProgramNonemptyWaits",property("gpuProgramNonemptyWaits").toULongLong()+1);setProperty("gpuProgramNonemptyWaitMonotonicMs",std::chrono::duration<double,std::milli>(bts::performance::Clock::now().time_since_epoch()).count());setProperty("gpuProgramNonemptyWaitFrame",frame_count);}
       timer_.start(16);event->accept();return; // No synthetic frame/frame_done.
     }
-    if(!headless_surface_){QOpenGLWidget::paintEvent(event);return;}
+#ifdef __APPLE__
+    if (!headless_gpu_ready_) {
+      try { host_.initialize_gpu_metal(); headless_gpu_ready_=true;
+        setProperty("headlessGpuReady",true); if(gpu_startup_ready)gpu_startup_ready(); }
+      catch(const std::exception &error){ qFatal("BTS_METAL_INIT_FAILED: %s",error.what()); }
+    }
+    render_frame();
+    QPainter painter(this);
+    painter.drawImage(rect(),metal_frame_);
+    bts::property_frame_done();event->accept();
+  }
+#else
+    if(!headless_surface_){bts::ViewportWidget::paintEvent(event);return;}
     if(!headless_context_){headless_context_=std::make_unique<QOpenGLContext>();headless_context_->setFormat(QSurfaceFormat::defaultFormat());if(!headless_context_->create())qFatal("HEADLESS Qt GL context unavailable");headless_native_surface_=std::make_unique<QOffscreenSurface>();headless_native_surface_->setFormat(headless_context_->format());headless_native_surface_->create();makeCurrent();}
     makeCurrent();const QSize size(qRound(width()*devicePixelRatioF()),qRound(height()*devicePixelRatioF()));if(!headless_framebuffer_||headless_framebuffer_->size()!=size){headless_framebuffer_=std::make_unique<QOpenGLFramebufferObject>(size,QOpenGLFramebufferObject::CombinedDepthStencil);if(!headless_framebuffer_->isValid())qFatal("HEADLESS framebuffer unavailable");}headless_framebuffer_->bind();if(!headless_gpu_ready_){host_.initialize_gpu(*headless_context_,*headless_native_surface_,[this]{return headless_framebuffer_->handle();});if(gpu_startup_ready)gpu_startup_ready();headless_gpu_ready_=true;setProperty("headlessGpuReady",true);}if(!headless_paint_device_){headless_paint_device_=std::make_unique<QOpenGLPaintDevice>(size);std::printf("BTS_HEADLESS_PAINT_DEVICE_CREATED width=%d height=%d\n",size.width(),size.height());}else if(headless_paint_device_->size()!=size)headless_paint_device_->setSize(size);headless_paint_device_->setDevicePixelRatio(devicePixelRatioF());paintGL();bts::property_frame_done();event->accept();
   }
@@ -989,7 +1012,9 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
     }
   }
 
-  void paintGL() override
+  void paintGL() override { render_frame(); }
+#endif
+  void render_frame()
   {
     if(property("bakeRenderingSuspended").toBool())return;
     draw_guard.run([&]{paint_frame();},[&](const QString &message){
@@ -1002,12 +1027,21 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
       QTimer::singleShot(0,this,[this,message]{if(draw_error)draw_error(message);});
     });
   }
+  void clear_viewport() {
+#ifdef __APPLE__
+    metal_frame_=QImage(size()*devicePixelRatioF(),QImage::Format_RGBA8888);
+    metal_frame_.setDevicePixelRatio(devicePixelRatioF());metal_frame_.fill(QColor(bts::theme::ViewportEdge));
+#else
+    auto *functions=context()->functions();const QColor backdrop(bts::theme::ViewportEdge);
+    functions->glClearColor(backdrop.redF(),backdrop.greenF(),backdrop.blueF(),1);functions->glClear(GL_COLOR_BUFFER_BIT);
+#endif
+  }
   void paint_frame()
   {
     bts::performance::Scope full_frame_timing("viewport_full_frame");
     bts::property_paint_begin();
     if(headless_surface_&&!headless_gpu_ready_)return;
-    if(empty_project){if(host_.texture_updates_pending())timer_.start(16);else timer_.stop();if(empty_project_view){const int panel_width=std::min(460,width()-24);empty_project_view->setGeometry((width()-panel_width)/2,(height()-110)/2,panel_width,110);empty_project_view->raise();}auto *functions=context()->functions();const QColor backdrop(bts::theme::ViewportEdge);functions->glClearColor(backdrop.redF(),backdrop.greenF(),backdrop.blueF(),1);functions->glClear(GL_COLOR_BUFFER_BIT);++frame_count;if(frame_done)frame_done(0);return;}
+    if(empty_project){if(host_.texture_updates_pending()||qEnvironmentVariableIsSet("BTS_TEST_CONTINUOUS_FRAMES"))timer_.start(16);else timer_.stop();if(empty_project_view){const int panel_width=std::min(460,width()-24);empty_project_view->setGeometry((width()-panel_width)/2,(height()-110)/2,panel_width,110);empty_project_view->raise();}clear_viewport();++frame_count;if(frame_done)frame_done(0);return;}
     if(shader_failed)return;
     if(prepare_frame)prepare_frame();
     position_camera_controls();position_paths_panel();
@@ -1044,11 +1078,17 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
       // Let Qt invalidate its cached GL bindings across the external renderer.
       // Creating a separate painter only afterwards leaves cached texture/VAO
       // state from the previous frame indistinguishable from Blender's state.
+#ifndef __APPLE__
       if(layouts_enabled_){overlay=headless_surface_?std::make_unique<QPainter>(headless_paint_device_.get()):std::make_unique<QPainter>(this);overlay->beginNativePainting();native_painting=true;}
+#endif
       host_.set_texture_interaction(painting_||(texture_interaction&&texture_interaction()));
       const bool material_pending=material_import_pending&&material_import_pending();
       last_ms = host_.draw(frames, w, h,material_pending);
       if(qEnvironmentVariableIsSet("BTS_OVERLAY_PROFILE")){const auto profile=host_.overlay_profile();setProperty("overlayTriangles",qulonglong(symmetry_scene?symmetry_scene->uv_triangles.size():0));for(auto i=profile.begin();i!=profile.end();++i)setProperty(i.key().toLatin1(),i.value().toVariant());}
+#ifdef __APPLE__
+      metal_frame_=host_.viewport_image();metal_frame_.setDevicePixelRatio(devicePixelRatioF());
+      if(layouts_enabled_)overlay=std::make_unique<QPainter>(&metal_frame_);
+#endif
       overlay_gpu_.begin();
       if(native_painting){overlay->endNativePainting();native_painting=false;}
       const auto failures=host_.shader_failures();
@@ -1279,7 +1319,7 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
     event->accept();
   }
 
-  void mouseDoubleClickEvent(QMouseEvent *event)override{bts::tablet::event(*event,tablet_contact_,tablet_dispatch_,input_pressure_);if(ignore_tablet_mouse(event)){event->accept();return;}if(path_active&&event->button()==Qt::LeftButton){if(path_drag)finish_path_drag(false);const auto hit=hit_path_detail(event->position());if(hit.vertex>=0){if(path_selected)path_selected(hit.id);selected_vertex=hit.vertex;if(path_vertex_selected)path_vertex_selected();for(const auto &path:paths)if(path->id==hit.id&&path_curve_action){path_curve_action(bts::PathCurveAction::Smooth,!path->points[hit.vertex].smooth);break;}}event->accept();return;}QOpenGLWidget::mouseDoubleClickEvent(event);}
+  void mouseDoubleClickEvent(QMouseEvent *event)override{bts::tablet::event(*event,tablet_contact_,tablet_dispatch_,input_pressure_);if(ignore_tablet_mouse(event)){event->accept();return;}if(path_active&&event->button()==Qt::LeftButton){if(path_drag)finish_path_drag(false);const auto hit=hit_path_detail(event->position());if(hit.vertex>=0){if(path_selected)path_selected(hit.id);selected_vertex=hit.vertex;if(path_vertex_selected)path_vertex_selected();for(const auto &path:paths)if(path->id==hit.id&&path_curve_action){path_curve_action(bts::PathCurveAction::Smooth,!path->points[hit.vertex].smooth);break;}}event->accept();return;}bts::ViewportWidget::mouseDoubleClickEvent(event);}
 
   void mouseMoveEvent(QMouseEvent *event) override
   {
@@ -1471,7 +1511,7 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
       event->accept();
       return;
     }
-    QOpenGLWidget::keyPressEvent(event);
+    bts::ViewportWidget::keyPressEvent(event);
   }
 
   void keyReleaseEvent(QKeyEvent *event)override {
@@ -1480,7 +1520,7 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
     if(event->key()==Qt::Key_V){clone_key=false;event->accept();return;}
     if(event->key()==Qt::Key_S){stencil_key=false;stencil_drag=Qt::NoButton;stencil_before.reset();event->accept();update();return;}
     if(event->key()==Qt::Key_N){stencil_ignore=false;event->accept();update();return;}
-    QOpenGLWidget::keyReleaseEvent(event);
+    bts::ViewportWidget::keyReleaseEvent(event);
   }
   void focusOutEvent(QFocusEvent *event) override
   {
@@ -1489,14 +1529,14 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
     tablet_contact_=false;clone_key=false;stencil_key=stencil_ignore=false;stencil_drag=Qt::NoButton;stencil_before.reset();
     end_paint(true);secondary_active_=false;
     end_gesture();
-    QOpenGLWidget::focusOutEvent(event);
+    bts::ViewportWidget::focusOutEvent(event);
   }
 
   void hideEvent(QHideEvent *event) override
   {
     fill_gizmo.finish(true);
     end_gesture();
-    QOpenGLWidget::hideEvent(event);
+    bts::ViewportWidget::hideEvent(event);
   }
 
   bool event(QEvent *event) override
@@ -1505,15 +1545,18 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
       fill_gizmo.finish(true);
       end_gesture();
     }
-    return QOpenGLWidget::event(event);
+    return bts::ViewportWidget::event(event);
   }
 
  private:
   bool headless_surface_=false,headless_gpu_ready_=false;
+  QImage metal_frame_;
+#ifndef __APPLE__
   std::unique_ptr<QOpenGLContext> headless_context_;
   std::unique_ptr<QOffscreenSurface> headless_native_surface_;
   std::unique_ptr<QOpenGLFramebufferObject> headless_framebuffer_;
   std::unique_ptr<QOpenGLPaintDevice> headless_paint_device_;
+#endif
   bts::GpuPerformance overlay_gpu_{"gpu_overlay"};
   bts::BlenderHost &host_;
   QTimer timer_;
@@ -2067,9 +2110,12 @@ int main(int argc, char **argv)
   std::setvbuf(stdout,nullptr,_IOLBF,BUFSIZ);std::setvbuf(stderr,nullptr,_IOLBF,BUFSIZ);
 #endif
   const bool cpu_only_test=bts::cpu_test_arguments(argc,argv);
+#ifndef __APPLE__
   if(!cpu_only_test)QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+#endif
   QCoreApplication::setAttribute(Qt::AA_CompressHighFrequencyEvents);
   QCoreApplication::setAttribute(Qt::AA_CompressTabletEvents);
+#ifndef __APPLE__
   QSurfaceFormat format;
   format.setRenderableType(QSurfaceFormat::OpenGL);
   format.setVersion(4, 3);
@@ -2081,10 +2127,19 @@ int main(int argc, char **argv)
   format.setAlphaBufferSize(8);
   format.setDepthBufferSize(24);
   QSurfaceFormat::setDefaultFormat(format);
+#endif
   if(!cpu_only_test)bts::tablet::configure_xwayland_coordinates();
   bts::initialize_numeric_locale();
   bts::configure_portable_fonts(argv[0]);
   bts::ProfileApplication app(argc, argv);
+  // Offscreen acceptance must never touch native macOS preferences.
+  if(QGuiApplication::platformName()=="offscreen"){
+    const auto config=qEnvironmentVariable("XDG_CONFIG_HOME");
+    if(config.isEmpty())qFatal("Offscreen editor requires an isolated XDG_CONFIG_HOME");
+    QSettings::setDefaultFormat(QSettings::IniFormat);
+    QSettings::setPath(QSettings::IniFormat,QSettings::UserScope,config);
+    QSettings::setPath(QSettings::IniFormat,QSettings::SystemScope,config);
+  }
   // Qt adopts the user's locale. Blender shader code generation requires decimal dots.
   std::setlocale(LC_NUMERIC, "C");
   const bool numeric_locale_invalid=std::strcmp(std::localeconv()->decimal_point,".")!=0;
@@ -4797,7 +4852,7 @@ bts::FileDialog::prepare_directory_thread();workspace->set_fill_color_spaces(bts
         viewport->cursor_visible_=false;viewport->update();sets_after_frame=viewport->frame_count+1;return;
       }
       const auto rendered = viewport->grabFramebuffer();
-      const auto presented = window->screen()->grabWindow(window->winId());
+      const auto presented = QGuiApplication::platformName()=="offscreen" ? QPixmap::fromImage(bts::capture_demo_window(window.get(),viewport)) : window->screen()->grabWindow(window->winId());
       rendered.save(directory + "/" + stage + "-viewport.png");
       presented.save(directory + "/" + stage + "-window.png");
       const QPoint origin = viewport->mapTo(window.get(), QPoint{});
@@ -6092,6 +6147,9 @@ bts::FileDialog::prepare_directory_thread();workspace->set_fill_color_spaces(bts
           const int encoding=sets_stage-2;const QString label=(export_padding_demo?QStringList{"none","infinite","transparent","default","diffusion"}:packing_demo?QStringList{"reference","orm","remapped","constants"}:QStringList{"png8","png16","exr16","exr32"}).at(encoding);const auto output=directory+"/"+label;QDir().mkpath(output);bool configured=false;QTimer poll;poll.setInterval(100);
           QObject::connect(&poll,&QTimer::timeout,workspace,[&]{auto *dialog=workspace->findChild<QDialog *>("textureExportDialog");if(!dialog)return;
             if(!configured){configured=true;
+              // The default Studio template has fixed EXR encodings. This
+              // four-format regression explicitly exercises Document channels.
+              if(parser.isSet("export-demo"))dialog->findChild<QComboBox *>("exportPreset")->setCurrentIndex(0);
               if(naming_demo&&encoding==0){dialog->findChild<QPushButton *>("duplicateExportPreset")->click();if(dialog->findChild<QComboBox *>("exportPreset")->currentIndex()!=0)qFatal("Editing a template must not select it");auto *name=dialog->findChild<QLineEdit *>("exportPresetName");name->setText("BTS_reference_tokens");QMetaObject::invokeMethod(name,"editingFinished",Qt::DirectConnection);auto *table=dialog->findChild<QTableWidget *>("exportOutputNames");for(int c=0;c<8;++c)table->item(c,0)->setText(c==0?"$mesh/$textureSet_BaseColor":"$mesh_$textureSet_$channel");dialog->findChild<QComboBox *>("exportPreset")->setCurrentIndex(dialog->findChild<QComboBox *>("exportPreset")->findText("BTS_reference_tokens"));dialog->findChild<QTabWidget *>("exportTabs")->setCurrentIndex(1);dialog->grab().save(directory+"/tokens-template.png");dialog->findChild<QTabWidget *>("exportTabs")->setCurrentIndex(0);}
               if(packing_demo&&encoding>0){if(encoding==1){dialog->findChild<QPushButton *>("newPackedExportPreset")->click();auto *name=dialog->findChild<QLineEdit *>("exportPresetName");name->setText("BTS_packed_test");QMetaObject::invokeMethod(name,"editingFinished",Qt::DirectConnection);dialog->findChild<QComboBox *>("exportPreset")->setCurrentIndex(dialog->findChild<QComboBox *>("exportPreset")->findText("BTS_packed_test"));}else{auto *list=dialog->findChild<QListWidget *>("exportPresets");list->setCurrentItem(list->findItems("BTS_packed_test",Qt::MatchExactly).front());}auto *name=dialog->findChild<QLineEdit *>("exportPackedName");if(encoding==2){name->setText("$textureSet_MRO");dialog->findChild<QComboBox *>("exportPackedR")->setCurrentIndex(2);dialog->findChild<QComboBox *>("exportPackedG")->setCurrentIndex(0);dialog->findChild<QComboBox *>("exportPackedB")->setCurrentIndex(1);}if(encoding==3){name->setText("$textureSet_Test");dialog->findChild<QComboBox *>("exportPackedR")->setCurrentIndex(4);dialog->findChild<QComboBox *>("exportPackedG")->setCurrentIndex(6);dialog->findChild<QComboBox *>("exportPackedB")->setCurrentIndex(5);}dialog->findChild<QTabWidget *>("exportTabs")->setCurrentIndex(1);dialog->grab().save(directory+"/"+label+"-mapping.png");dialog->findChild<QTabWidget *>("exportTabs")->setCurrentIndex(0);}
               auto *sets=dialog->findChild<QListWidget *>("exportTextureSets");sets->item(0)->setCheckState(size_demo||export_padding_demo?Qt::Checked:Qt::Unchecked);if(export_padding_demo){sets->item(1)->setCheckState(Qt::Unchecked);auto *size=dialog->findChild<QComboBox *>("exportSize");size->setCurrentIndex(size->findData(256));auto *padding=dialog->findChild<QComboBox *>("exportPadding");padding->setCurrentIndex(encoding);auto *width=dialog->findChild<QSpinBox *>("exportPaddingWidth");width->setValue(16);if(width->isEnabled()!=(encoding>=2))qFatal("Wrong padding width enablement");}
@@ -6991,7 +7049,7 @@ bts::FileDialog::prepare_directory_thread();workspace->set_fill_color_spaces(bts
           case 1: workspace->roughness_control()->setValue(1);drag(bts::ViewKind::Scene,{.28,.40},{.18,.04});break;
           case 2: workspace->findChild<QDoubleSpinBox *>("brushSize")->setValue(30);drag(bts::ViewKind::Scene,{.28,.56},{.18,.04});break;
           case 3: workspace->findChild<QToolButton *>("brushChannel2")->click();workspace->metallic_control()->setValue(1);workspace->findChild<QDoubleSpinBox *>("brushSize")->setValue(10);break;
-          case 4: drag(bts::ViewKind::Scene,{.28,.34},{.18,.02});break;
+          case 4: drag(bts::ViewKind::Scene,{.28,.46},{.18,.02});break;
           case 5: send_key(*viewport,Qt::Key_M);send_key(*viewport,Qt::Key_C);send_key(*viewport,Qt::Key_C);break;
           case 6: workspace->findChild<QAction *>("undoDocument")->trigger();break;
           case 7: workspace->findChild<QAction *>("redoDocument")->trigger();break;
@@ -7020,6 +7078,12 @@ bts::FileDialog::prepare_directory_thread();workspace->set_fill_color_spaces(bts
             try{open_document(directory+"/missing.blend");qFatal("Missing project accepted");}catch(const std::exception &){}
             if(document->to_json()!=before)qFatal("Invalid Open changed the document");
             open_document(directory+"/painted.blend");
+            if(qEnvironmentVariableIsSet("BTS_METAL_ROUNDTRIP_STABILITY")){
+              const auto stored=document->to_json();
+              save_document(directory+"/repacked.blend");open_document(directory+"/repacked.blend");
+              if(document->to_json()!=stored)qFatal("Stored GPU pixels changed on a second save/open");
+              std::puts("BTS_STORED_GPU_ROUNDTRIP_EXACT");
+            }
             if(undo_action->isEnabled()||redo_action->isEnabled()||brush.diameter!=10)qFatal("Open retained session history or brush size");
             workspace->texture_sets()->setCurrentRow(1);break;
           }

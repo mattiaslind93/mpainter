@@ -10,7 +10,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QLineEdit>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
 #include <QPushButton>
 #include <QTimer>
 #include <QCheckBox>

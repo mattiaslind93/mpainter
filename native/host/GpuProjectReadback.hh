@@ -1,4 +1,7 @@
 #pragma once
+#ifdef __APPLE__
+#include "GpuProjectReadbackMetal.hh"
+#else
 #include "Performance.hh"
 #include "TextureMemory.hh"
 #include "GPU_texture.hh"
@@ -180,3 +183,5 @@ void main(){ivec2 p=ivec2(gl_GlobalInvocationID.xy);if(any(greaterThanEqual(p,ca
  const std::vector<Image> &images()const{return images_;}
 };
 }
+
+#endif

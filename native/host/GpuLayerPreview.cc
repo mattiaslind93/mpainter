@@ -162,7 +162,10 @@ vec4 paint_sample(sampler2D image,ivec2 p,ivec2 output_size){
   precise vec4 term=texelFetch(image,clamp(first+ivec2(x,y),ivec2(0),size-1),0)*weight-correction;precise vec4 next=sum+term;correction=(next-sum)-term;sum=next;
  }return sum;
 }
+// MSL wraps these functions as class members, where redeclaration is illegal.
+#ifndef GPU_METAL
 vec4 generator_map_sample(sampler2D image,vec2 uv,bool linear_filter);
+#endif
 vec4 generator_input_sample(sampler2D image,vec2 uv,bool filtering,bool anchored,vec4 options){
  if(!anchored)return generator_map_sample(image,uv,filtering);
  if(options.w==0)return vec4(0);
@@ -1981,9 +1984,11 @@ void main(){vec3 v=world_point-projection_offset,p=vec3(dot(rotation_x,v),dot(ro
  // test; interactive production never waits for timer or texture readbacks.
  if(std::getenv("BTS_GPU_WARP_TIMING")){
   auto sample=set;sample.texture_resolution=1024;auto &layer=sample.layers.front();layer.fill.physical=false;layer.fill.offset3={};layer.fill.rotation3={};layer.fill.scale3={1,1,1};layer.fill.scale={1,1};layer.fill.offset={};layer.fill.rotation=0;layer.fill.texture=resource;layer.fill.atom=false;layer.fill.filtering=1;layer.fill.backface_culling=false;layer.fill.warp_geometry.reset();auto grid=std::make_shared<WarpGrid>();grid->move(4,{.1,-.56,.04});layer.fill.warp=grid;
+#ifndef __APPLE__
   GpuLayerPreview measured;auto image=texture("BTS Warp timing",1024,1024,gpu::TextureFormat::SFLOAT_16_16_16_16);GLuint queries[2];glGenQueries(2,queries);benchmark_stack=true;
   for(int operation=0;operation<4;++operation){if(operation==2)layer.opacity[0]=.5;if(operation==3){auto changed=std::make_shared<WarpGrid>(*grid);changed->move(4,{.13,-.54,.06});layer.fill.warp=changed;}measured.begin_frame();const auto start=performance::Clock::now();glQueryCounter(queries[0],GL_TIMESTAMP);if(measured.update(sample,0,image.get())!=GpuPreviewUpdate::Updated)throw std::runtime_error("Warp timing unexpectedly deferred");const double cpu_ms=performance::ms(start);glQueryCounter(queries[1],GL_TIMESTAMP);GLuint64 begin,end;glGetQueryObjectui64v(queries[1],GL_QUERY_RESULT,&end);glGetQueryObjectui64v(queries[0],GL_QUERY_RESULT,&begin);std::printf("BTS_GPU_WARP_TIMING size=1024 operation=%s cpu_submit_ms=%.3f gpu_ms=%.3f test_query_wait_ms=%.3f\n",std::array{"initial","unchanged","opacity","control-point"}[operation],cpu_ms,double(end-begin)/1e6,performance::ms(start)-cpu_ms);}
   benchmark_stack=false;glDeleteQueries(2,queries);
+#endif
  }
  const int warp_layer_cases=cases-warp_case_begin;
  // Warp mask sources use the same GPU solver and one shared prefix per tile.

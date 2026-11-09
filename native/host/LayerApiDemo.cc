@@ -11,7 +11,7 @@
 #include <QJsonDocument>
 #include <QLineEdit>
 #include <QMainWindow>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QTimer>
@@ -21,8 +21,8 @@ class Demo:public QObject {
  QMainWindow *window;QString directory,mesh;std::function<bool()> busy;std::function<QJsonObject()> state;QTimer timer;int phase=0,ticks=0;QJsonArray captures;
  template<class T>T *get(const char *name){auto *value=window->findChild<T *>(name);if(!value)qFatal("Layer API GUI control missing: %s",name);return value;}
  void command(const QString &code){get<QLineEdit>("pythonCommand")->setText("exec("+quoted(code)+")");get<QPushButton>("executePythonCommand")->click();if(!get<QDockWidget>("pythonConsoleDock")->property("lastExecutionSucceeded").toBool())qFatal("Layer API script failed: %s",qPrintable(get<QPlainTextEdit>("pythonOutput")->toPlainText()));}
- void capture(const char *name){auto data=state();data["stage"]=name;captures.append(data);QFile proof(directory+"/layer-api.json");if(!proof.open(QIODevice::WriteOnly))qFatal("Cannot write layer API proof");proof.write(QJsonDocument(QJsonObject{{"pid",QCoreApplication::applicationPid()},{"captures",captures}}).toJson());auto *view=window->findChild<QOpenGLWidget *>();view->grabFramebuffer().save(directory+"/"+name+"-viewport.png");window->grab().save(directory+"/"+name+"-workspace.png");}
- void advance(){if(++ticks>1600)qFatal("Layer API demo timed out");auto *view=window->findChild<QOpenGLWidget *>();if(!view||!view->isValid()||busy())return;
+ void capture(const char *name){auto data=state();data["stage"]=name;captures.append(data);QFile proof(directory+"/layer-api.json");if(!proof.open(QIODevice::WriteOnly))qFatal("Cannot write layer API proof");proof.write(QJsonDocument(QJsonObject{{"pid",QCoreApplication::applicationPid()},{"captures",captures}}).toJson());auto *view=window->findChild<bts::ViewportWidget *>();view->grabFramebuffer().save(directory+"/"+name+"-viewport.png");window->grab().save(directory+"/"+name+"-workspace.png");}
+ void advance(){if(++ticks>1600)qFatal("Layer API demo timed out");auto *view=window->findChild<bts::ViewportWidget *>();if(!view||!view->isValid()||busy())return;
  switch(phase++){
  case 0:get<QAction>("showPythonConsole")->trigger();command("import bts, json, pathlib, os");break;
  case 1:command("root = pathlib.Path("+quoted(directory)+")\nC=bts.textureset.ChannelType\nP=bts.layerstack.InsertPosition\nS=bts.layerstack.NodeStack\nbts.project.create("+quoted(mesh)+", settings=bts.project.Settings(resolution=256, import_cameras=False))\nsets=bts.textureset.all_texture_sets()\nassert len(sets)==2\nstack=sets[0]['id']; other=sets[1]['id']\nbts.textureset.set_active_stack(stack)\nchanged=[]\ndef on_stack(event): changed.append(event.texture_set)\nbts.event.DISPATCHER.connect_strong(bts.event.LayerStacksModelDataChanged,on_stack)");break;

@@ -38,7 +38,7 @@ template<class ColorContext> ArchivedVectorMath archived_vector_math_fixture(Col
  if(result.current.bytes!=result.legacy.bytes||result.current.hash()!=result.legacy.hash())throw std::runtime_error("Legacy capability fixture changed encoded source bytes");
  if(!QFile::rename(original,original+".hidden")||QFile::exists(original))throw std::runtime_error("Cannot hide owned Vector Math source fixture");result.original_hidden=true;
  result.current_graph=hydrate_native_material_resource(result.current,cancel);result.legacy_graph=hydrate_native_material_resource(result.legacy,cancel);
- const auto rows=[](const auto &d){return native_material_description_json(d)["parameters"];};
+ const auto rows=[](const auto &d){return native_material_description_json(d).value("parameters");};
  if(rows(result.current_graph->description)!=rows(archive.description)||rows(result.legacy_graph->description)!=rows(legacy))throw std::runtime_error("Actual native archive hydration changed current/legacy policy");
  for(const auto &channel:result.legacy_graph->channels)if(channel.tree)for(const auto &node:channel.tree->nodes)if(STREQ(node.idname,"ShaderNodeAttribute")&&node.storage&&std::string_view(static_cast<const NodeShaderAttribute *>(node.storage)->name).starts_with(native_mapping_attribute_prefix))throw std::runtime_error("Legacy source received a new runtime Mapping adapter");
  result.current_height.emplace(prepare_native_material_height_resource(result.current,{},cancel));result.legacy_height.emplace(prepare_native_material_height_resource(result.legacy,{},cancel));result.cross_layout_height.emplace(prepare_native_material_height_resource(result.current,{},cancel));

@@ -25,7 +25,22 @@ class AlembicDemo final:public QObject {
  void advance(){if(stage>2&&state()["composite_pending"].toBool())return;switch(stage++){
  case 0:action("newProject");break;
  case 1:{auto *d=w->findChild<QDialog *>("newProjectDialog");if(!d)qFatal("Alembic New missing");d->findChild<QPushButton *>("selectMesh")->click();break;}
- case 2:{auto *picker=w->findChild<QFileDialog *>("meshFilePicker");if(!picker||!picker->nameFilters().join(' ').contains("*.abc"))qFatal("Alembic file filter missing");picker->selectFile(mesh);QMetaObject::invokeMethod(picker,"accept",Qt::DirectConnection);auto *d=w->findChild<QDialog *>("newProjectDialog");auto *size=d->findChild<QComboBox *>("documentResolution");size->setCurrentIndex(size->findData(resolution));d->findChild<QPushButton *>("createProject")->click();break;}
+ case 2:{
+  auto *picker=w->findChild<QFileDialog *>("meshFilePicker");
+  if(!picker||!picker->nameFilters().join(' ').contains("*.abc"))qFatal("Alembic file filter missing");
+  // A visible Qt chooser can keep its focused filename editor unchanged when
+  // selectFile() updates the model. Enter the fixture exactly as an artist can.
+  auto *filename=picker->findChild<QLineEdit *>("fileNameEdit");
+  if(!filename)qFatal("Alembic filename editor missing");
+  filename->setText(QFileInfo(mesh).absoluteFilePath());
+  if(!QMetaObject::invokeMethod(picker,"accept",Qt::DirectConnection)||picker->result()!=QDialog::Accepted)
+   qFatal("Alembic fixture selection failed");
+  auto *dialog=w->findChild<QDialog *>("newProjectDialog");
+  auto *size=dialog->findChild<QComboBox *>("documentResolution");
+  size->setCurrentIndex(size->findData(resolution));
+  dialog->findChild<QPushButton *>("createProject")->click();
+  break;
+ }
  case 3:if(!state()["has_document"].toBool())qFatal("Alembic New failed");capture("created");w->findChild<QToolButton *>("addPaintLayer")->click();break;
  case 4:capture("empty");stroke();break;
  case 5:capture("painted");action("guiDisplacementSave");break;

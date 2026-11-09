@@ -646,7 +646,7 @@ struct Lower {
   }
   PreparedSpsm run() {
     for (std::size_t i = 0; i < ir.layers.size(); ++i) {
-      const auto admitted=used,diagnostics=result.diagnostics.size();
+      const auto admitted=used;const auto diagnostics=result.diagnostics.size();
       const auto &l = ir.layers[i];
       if (l.group)
         continue;

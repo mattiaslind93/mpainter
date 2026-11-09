@@ -1,3 +1,12 @@
+option(BTS_MACOS_METAL_PROBE "Build the headless macOS Metal diagnostic instead of the editor" OFF)
+option(BTS_MACOS_METAL_EDITOR "Build the Metal editor alongside diagnostics" OFF)
+if(BTS_MACOS_METAL_PROBE)
+  include("${BTS_HOST_SOURCE_DIR}/../macos/CMakeLists.txt")
+  if(NOT BTS_MACOS_METAL_EDITOR)
+    return()
+  endif()
+endif()
+
 find_package(Qt6 6.8.3 EXACT REQUIRED COMPONENTS Widgets OpenGLWidgets Network)
 find_package(assimp CONFIG REQUIRED)
 
@@ -228,6 +237,21 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/UvView.cc
   ${BTS_HOST_SOURCE_DIR}/UvView.hh
 )
+if(APPLE)
+  get_target_property(_host_sources bts-host SOURCES)
+  list(REMOVE_ITEM _host_sources ${BTS_HOST_SOURCE_DIR}/QtSharedContext.cc)
+  set_property(TARGET bts-host PROPERTY SOURCES "${_host_sources}")
+  qt6_wrap_cpp(_viewport_moc ${BTS_HOST_SOURCE_DIR}/ViewportWidget.hh OPTIONS -D__APPLE__)
+  target_sources(bts-host PRIVATE ${_viewport_moc}
+    ${BTS_HOST_SOURCE_DIR}/../macos/MetalContextOwner.mm
+    ${BTS_HOST_SOURCE_DIR}/../macos/MetalSharedContext.mm
+    ${BTS_HOST_SOURCE_DIR}/../macos/MetalRhiViewport.mm)
+  target_include_directories(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/../macos
+    ${CMAKE_SOURCE_DIR}/source/blender/gpu/metal)
+  target_compile_options(bts-host PRIVATE -mmacosx-version-min=12.0)
+  target_link_options(bts-host PRIVATE -mmacosx-version-min=12.0
+    "LINKER:-force_load,${FREETYPE_LIBRARY_RELEASE}" "LINKER:-unexported_symbol,_FT_*")
+endif()
 set_source_files_properties(${BTS_HOST_SOURCE_DIR}/BlendAssetLibrary.cc PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/source/blender/asset_system")
 # Immutable geometry owner captures real ObjectInfos using stock draw resource sync.
 set_property(SOURCE
@@ -259,6 +283,7 @@ target_compile_features(bts-host PRIVATE cxx_std_20)
 add_subdirectory(${BTS_HOST_SOURCE_DIR}/../spsm ${CMAKE_CURRENT_BINARY_DIR}/spsm-reader)
 add_subdirectory(${BTS_HOST_SOURCE_DIR}/../spsm/semantic ${CMAKE_CURRENT_BINARY_DIR}/spsm-semantic)
 add_subdirectory(${BTS_HOST_SOURCE_DIR}/../spsm/bitmaps ${CMAKE_CURRENT_BINARY_DIR}/spsm-bitmaps)
+set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/../tests/spsm_bitmap_lowering_test.cc APPEND PROPERTY INCLUDE_DIRECTORIES "${LZ4_INCLUDE_DIR}")
 target_sources(bts-host PRIVATE
   ${BTS_HOST_SOURCE_DIR}/SpsmMaterialImport.cc
   ${BTS_HOST_SOURCE_DIR}/SpsmBitmapTexture.cc
@@ -1359,14 +1384,6 @@ set_source_files_properties(${BTS_HOST_SOURCE_DIR}/../tests/ordinary_color_sourc
 # Source-level include properties bypass CMake's usual filtering of compiler
 # implicit paths. Re-adding /usr/include as -isystem breaks GCC include_next.
 get_target_property(BTS_HDF5_FIXTURE_INCLUDES bts-hdf5 INTERFACE_INCLUDE_DIRECTORIES)
-# The lowering fixture this file pulls in includes <lz4.h> as well as <hdf5.h>,
-# and lz4 belongs to the bitmaps library alone, so it is not on bts-host's own
-# include path. Where lz4 is built from the pinned source there is no system
-# copy to fall back on, which is where the Windows build stopped.
-get_target_property(BTS_LZ4_FIXTURE_INCLUDES bts-lz4-usage INTERFACE_INCLUDE_DIRECTORIES)
-if(BTS_LZ4_FIXTURE_INCLUDES)
-  list(APPEND BTS_HDF5_FIXTURE_INCLUDES ${BTS_LZ4_FIXTURE_INCLUDES})
-endif()
 list(REMOVE_ITEM BTS_HDF5_FIXTURE_INCLUDES ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES})
 target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/../tests/spsm_bitmap_color_test.cc)
 set_source_files_properties(${BTS_HOST_SOURCE_DIR}/../tests/spsm_bitmap_color_test.cc
@@ -1444,15 +1461,9 @@ add_executable(bts-file-browser-native-check EXCLUDE_FROM_ALL ${SRC} ${BTS_HOST_
 # BLO thumbnail reads share Blender's real creator symbols and complete target
 # dependency closure. ${LIB} is mutable in included CMake files; do not reuse its
 # late value here or guess a subset of static libraries.
-# TARGET_PROPERTY hands back the property's raw text, and generator
-# expressions inside that text are not evaluated again, so they would be
-# written into the build graph verbatim: Blender's pinned Windows libraries
-# arrive as per-config expressions, and ninja refuses a whole graph over one
-# unexpanded dollar. GENEX_EVAL evaluates what comes back, and does nothing
-# where there is nothing to evaluate.
-target_include_directories(bts-file-browser-native-check PRIVATE $<GENEX_EVAL:$<TARGET_PROPERTY:bts-host,INCLUDE_DIRECTORIES>>)
-target_compile_definitions(bts-file-browser-native-check PRIVATE $<GENEX_EVAL:$<TARGET_PROPERTY:bts-host,COMPILE_DEFINITIONS>>)
-target_link_options(bts-file-browser-native-check PRIVATE $<GENEX_EVAL:$<TARGET_PROPERTY:bts-host,LINK_OPTIONS>>)
+target_include_directories(bts-file-browser-native-check PRIVATE $<TARGET_PROPERTY:bts-host,INCLUDE_DIRECTORIES>)
+target_compile_definitions(bts-file-browser-native-check PRIVATE $<TARGET_PROPERTY:bts-host,COMPILE_DEFINITIONS>)
+target_link_options(bts-file-browser-native-check PRIVATE $<TARGET_PROPERTY:bts-host,LINK_OPTIONS>)
 get_target_property(_bts_browser_link_flags bts-host LINK_FLAGS)
 if(_bts_browser_link_flags)
   set_target_properties(bts-file-browser-native-check PROPERTIES LINK_FLAGS "${_bts_browser_link_flags}")
@@ -1467,7 +1478,7 @@ target_compile_features(bts-file-browser-native-check PRIVATE cxx_std_20)
 # that are deliberately absent from Release blenlib).
 set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/../tests/file_browser_native_test.cc
   APPEND PROPERTY COMPILE_OPTIONS "$<IF:$<CXX_COMPILER_ID:MSVC>,/UNDEBUG,-UNDEBUG>")
-target_link_libraries(bts-file-browser-native-check PRIVATE $<GENEX_EVAL:$<TARGET_PROPERTY:bts-host,LINK_LIBRARIES>>)
+target_link_libraries(bts-file-browser-native-check PRIVATE $<TARGET_PROPERTY:bts-host,LINK_LIBRARIES>)
 
 # This fixture-aware check deliberately stays outside verify-cpu.py's no-args
 # bts-*-tests glob. CTest supplies explicit pinned fixtures and isolated paths.
