@@ -113,8 +113,8 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/painting/StrokeReproject.cc
   ${BTS_HOST_SOURCE_DIR}/painting/StrokeIO.cc
   ${BTS_HOST_SOURCE_DIR}/TextureSetReassignment.cc
-  ${BTS_HOST_SOURCE_DIR}/ProjectTemplate.cc
-  ${BTS_HOST_SOURCE_DIR}/ProjectConfiguration.cc
+  ${BTS_HOST_SOURCE_DIR}/persistence/ProjectTemplate.cc
+  ${BTS_HOST_SOURCE_DIR}/persistence/ProjectConfiguration.cc
   ${BTS_HOST_SOURCE_DIR}/ui/panels/UnitsPanel.cc
   ${BTS_HOST_SOURCE_DIR}/PhysicalScaleSource.cc
   ${BTS_HOST_SOURCE_DIR}/UsdScene.cc
@@ -163,7 +163,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/SceneBridge.cc
   ${BTS_HOST_SOURCE_DIR}/AutoUnwrap.cc
   ${BTS_HOST_SOURCE_DIR}/MeshReplacement.cc
-  ${BTS_HOST_SOURCE_DIR}/Recovery.cc
+  ${BTS_HOST_SOURCE_DIR}/persistence/Recovery.cc
   ${BTS_HOST_SOURCE_DIR}/ExportPadding.cc
   ${BTS_HOST_SOURCE_DIR}/TextureExport.cc
   ${BTS_HOST_SOURCE_DIR}/ui/dialogs/TextureExportDialog.cc
@@ -491,7 +491,7 @@ target_include_directories(bts-set-assignment-tests PRIVATE ${BTS_HOST_SOURCE_DI
 target_compile_features(bts-set-assignment-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-set-assignment-tests PRIVATE Qt6::Core)
 
-add_executable(bts-project-template-tests ${BTS_HOST_SOURCE_DIR}/../tests/project_template_test.cc ${BTS_HOST_SOURCE_DIR}/ProjectTemplate.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-project-template-tests ${BTS_HOST_SOURCE_DIR}/../tests/project_template_test.cc ${BTS_HOST_SOURCE_DIR}/persistence/ProjectTemplate.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
 target_link_libraries(bts-project-template-tests PRIVATE bts-export-config)
 
 add_executable(bts-fragment-tangents-tests ${BTS_HOST_SOURCE_DIR}/../tests/fragment_tangents_test.cc)
@@ -786,7 +786,7 @@ cmake_language(DEFER CALL bts_register_cpu_tests)
 # Test and demo code lives in native/harness, and host code is moving into domain
 # folders under native/host. Files include each other by bare name across all of
 # them, so every compiled bts target searches every one of these folders.
-set(BTS_HOST_DOMAINS python materials/openpbr baking gpu painting layers fill ui/panels ui/dialogs assets viewport materials/layering materials/native)
+set(BTS_HOST_DOMAINS python materials/openpbr baking gpu painting layers fill ui/panels ui/dialogs assets viewport materials/layering materials/native persistence)
 set(BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR} ${BTS_HOST_SOURCE_DIR}/../harness)
 foreach(_bts_domain IN LISTS BTS_HOST_DOMAINS)
   list(APPEND BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR}/${_bts_domain})
@@ -1058,7 +1058,7 @@ target_compile_features(bts-openpbr-parameter-tests PRIVATE cxx_std_20)
 target_compile_options(bts-openpbr-parameter-tests PRIVATE -UNDEBUG)
 add_dependencies(bts-cpu-tests bts-openpbr-parameter-tests)
 
-add_executable(bts-project-template-shader-tests ${BTS_HOST_SOURCE_DIR}/../tests/project_template_shader_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc ${BTS_HOST_SOURCE_DIR}/ProjectTemplate.cc)
+add_executable(bts-project-template-shader-tests ${BTS_HOST_SOURCE_DIR}/../tests/project_template_shader_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc ${BTS_HOST_SOURCE_DIR}/persistence/ProjectTemplate.cc)
 target_include_directories(bts-project-template-shader-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_link_libraries(bts-project-template-shader-tests PRIVATE bts-export-config Qt6::Core)
 target_compile_features(bts-project-template-shader-tests PRIVATE cxx_std_20)
@@ -1342,7 +1342,7 @@ add_dependencies(bts-cpu-tests bts-texture-set-selection-ui-tests)
 add_executable(bts-resource-caps-tests
   ${BTS_HOST_SOURCE_DIR}/../tests/resource_caps_test.cc
   ${BTS_HOST_SOURCE_DIR}/AssetCatalog.cc
-  ${BTS_HOST_SOURCE_DIR}/ProjectTemplate.cc)
+  ${BTS_HOST_SOURCE_DIR}/persistence/ProjectTemplate.cc)
 target_include_directories(bts-resource-caps-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-resource-caps-tests PRIVATE cxx_std_20)
 target_compile_options(bts-resource-caps-tests PRIVATE "$<IF:$<CXX_COMPILER_ID:MSVC>,/UNDEBUG,-UNDEBUG>")
@@ -1399,8 +1399,8 @@ set_source_files_properties(${BTS_HOST_SOURCE_DIR}/../tests/spsm_bitmap_color_te
 target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialHeightResource.cc)
 target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialHeightProject.cc)
 target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialHeightContext.cc)
-target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/PendingProjectGpu.cc)
-target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/ProjectOpenJob.cc)
+target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/persistence/PendingProjectGpu.cc)
+target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/persistence/ProjectOpenJob.cc)
 add_executable(bts-native-height-policy-tests ${BTS_HOST_SOURCE_DIR}/../tests/native_height_policy_test.cc)
 target_include_directories(bts-native-height-policy-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-native-height-policy-tests PRIVATE cxx_std_20)
