@@ -36,7 +36,7 @@ function_allowlist = {
     'GpuLayerPreview.cc': ['GpuLayerPreview::self_test('],
 }
 calls = 0
-for path in host.rglob('*'):
+for path in [*host.rglob('*'), *(root / 'native/harness').rglob('*')]:
     if path.suffix not in ('.cc', '.hh'):
         continue
     source = path.read_text()

@@ -41,6 +41,7 @@ HEADER_BYTES = 4096
 # exclusion below also matches. Order does not matter; there is no overlap.
 OWNED_ROOTS = {
     "native/host/": "native-host",
+    "native/harness/": "native-harness",
     "native/tests/": "native-tests",
     "native/spsm/": "native-spsm",
     "native/sbsar_metadata/": "native-sbsar-metadata",

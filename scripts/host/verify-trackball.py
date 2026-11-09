@@ -19,7 +19,7 @@ def sha(path):
  with pathlib.Path(path).open('rb') as f:return hashlib.file_digest(f,'sha256').hexdigest()
 assert sha(binary)==a.expected_binary_sha256
 assert sha(environment)=='48505ffc80c0ca026775c77621b5a85a4c44b0fb7819ddadfa9e7bc6f5732031'
-source_hashes={str(p.relative_to(source)):sha(p) for p in sorted((source/'native/host').rglob('*')) if p.is_file()}
+source_hashes={str(p.relative_to(source)):sha(p) for p in sorted([*(source/'native/host').rglob('*'),*(source/'native/harness').rglob('*')]) if p.is_file()}
 for name in ['scripts/host/verify-trackball.py','scripts/host/private_gpu_gui.py','native/tests/fixtures/single_tile.obj']:
  source_hashes[name]=sha(source/name)
 def guard():

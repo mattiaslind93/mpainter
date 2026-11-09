@@ -13,7 +13,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-OWNED = ("native/host", "native/tests")
+OWNED = ("native/host", "native/harness", "native/tests")
 FLAT = {"iterdir", "listdir", "scandir"}
 
 

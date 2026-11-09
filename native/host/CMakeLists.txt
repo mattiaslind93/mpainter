@@ -15,101 +15,101 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_BRANDING_RESOURCES}
   ${BTS_HOST_SOURCE_DIR}/Branding.cc
   ${BTS_HOST_SOURCE_DIR}/Theme.cc
-  ${BTS_HOST_SOURCE_DIR}/BakeSourceCpuDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/BakeSourceCpuDemo.cc
   ${BTS_HOST_SOURCE_DIR}/ViewportHeadlessDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/TextureImportCpuDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/TextureImportDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/TextureImportCpuDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/TextureImportDemo.cc
   ${BTS_HOST_SOURCE_DIR}/TextureLoadController.cc
-  ${BTS_HOST_SOURCE_DIR}/ViewportIdleDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/AutomationPlanCpuDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/ViewportIdleDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/AutomationPlanCpuDemo.cc
   ${BTS_HOST_SOURCE_DIR}/AutomationExportPlan.cc
   ${BTS_HOST_SOURCE_DIR}/AutomationJobs.cc
-  ${BTS_HOST_SOURCE_DIR}/AutomationDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/ExtensionCpuDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/AutomationDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/ExtensionCpuDemo.cc
   ${BTS_HOST_SOURCE_DIR}/LayerApi.cc
   ${BTS_HOST_SOURCE_DIR}/LinearColorTransform.cc
-  ${BTS_HOST_SOURCE_DIR}/LayerApiDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/LayerApiDemo.cc
   ${BTS_HOST_SOURCE_DIR}/ChannelConfiguration.cc
-  ${BTS_HOST_SOURCE_DIR}/HardSurfaceDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/ChannelConfigurationDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/HardSurfaceDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/ChannelConfigurationDemo.cc
   ${BTS_HOST_SOURCE_DIR}/ChannelConfigurationDialog.cc
   ${BTS_HOST_SOURCE_DIR}/PythonUi.cc
   ${BTS_HOST_SOURCE_DIR}/PythonConsole.cc
   ${BTS_FILE_BROWSER_WIDGET_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/FileBrowserNativeThumbnails.cc
   ${BTS_HOST_SOURCE_DIR}/QtSharedContext.cc
-  ${BTS_HOST_SOURCE_DIR}/RenderModeDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/RenderModeDemo.cc
   ${BTS_HOST_SOURCE_DIR}/FlattenExport.cc
-  ${BTS_HOST_SOURCE_DIR}/FlattenDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/FlattenDemo.cc
   ${BTS_HOST_SOURCE_DIR}/FlattenLayer.cc
   ${BTS_HOST_SOURCE_DIR}/FlattenLayerDialog.cc
-  ${BTS_HOST_SOURCE_DIR}/DerivedExportDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/DerivedExportCpuDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/InputSpaceDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/SubsurfaceDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/DerivedExportDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/DerivedExportCpuDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/InputSpaceDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/SubsurfaceDemo.cc
   ${BTS_HOST_SOURCE_DIR}/SubsurfacePreviewIO.cc
   ${BTS_HOST_SOURCE_DIR}/RenderController.cc
   ${BTS_HOST_SOURCE_DIR}/DisplayPostEffects.cc
   ${BTS_HOST_SOURCE_DIR}/DisplayPostPanel.cc
-  ${BTS_HOST_SOURCE_DIR}/DisplayPostDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/DisplayPostDemo.cc
   ${BTS_HOST_SOURCE_DIR}/ShaderController.cc
   ${BTS_HOST_SOURCE_DIR}/OpenPbrPanel.cc
-  ${BTS_HOST_SOURCE_DIR}/ShaderDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/InspectionDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/ShaderDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/InspectionDemo.cc
   ${BTS_HOST_SOURCE_DIR}/ResourceMonitor.cc
-  ${BTS_HOST_SOURCE_DIR}/ResourceMonitorDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/AutoBakeDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/ResourceMonitorDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/AutoBakeDemo.cc
   ${BTS_HOST_SOURCE_DIR}/AutoBakeEngine.cc
-  ${BTS_HOST_SOURCE_DIR}/SkewDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/SkewDemo.cc
   ${BTS_HOST_SOURCE_DIR}/SkewController.cc
   ${BTS_HOST_SOURCE_DIR}/SkewPanel.cc
   ${BTS_HOST_SOURCE_DIR}/SkewGeometry.cc
   ${BTS_HOST_SOURCE_DIR}/SkewBakeEngine.cc
   ${BTS_HOST_SOURCE_DIR}/SkewIO.cc
-  ${BTS_HOST_SOURCE_DIR}/ResidencyDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/ResidencyDemo.cc
   ${BTS_HOST_SOURCE_DIR}/ViewportResidency.cc
   ${BTS_HOST_SOURCE_DIR}/GpuLayerPreview.cc
-  ${BTS_HOST_SOURCE_DIR}/PerformanceDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/AePersistenceDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/PropertyPerformanceDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/StrokeSplineDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/PerformanceDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/AePersistenceDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/PropertyPerformanceDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/StrokeSplineDemo.cc
   ${BTS_HOST_SOURCE_DIR}/WarpPanel.cc
   ${BTS_HOST_SOURCE_DIR}/WarpEditor.cc
-  ${BTS_HOST_SOURCE_DIR}/WarpGeometryDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/WarpDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/ImageSequenceDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/SkewBakeCpuDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/ClippingDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/WarpGeometryDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/WarpDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/ImageSequenceDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/SkewBakeCpuDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/ClippingDemo.cc
   ${BTS_HOST_SOURCE_DIR}/Preferences.cc
-  ${BTS_HOST_SOURCE_DIR}/FillChannelsDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/SpatialModeDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/PlanarDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/FilledPathDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/RibbonDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/FillChannelsDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/SpatialModeDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/PlanarDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/FilledPathDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/RibbonDemo.cc
   ${BTS_HOST_SOURCE_DIR}/RibbonPanel.cc
   ${BTS_HOST_SOURCE_DIR}/OverlayScroll.cc
   ${BTS_HOST_SOURCE_DIR}/PanelScrolling.cc
-  ${BTS_HOST_SOURCE_DIR}/ScrollDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/AlembicDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/JpegExportCpuDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/ExportDepthCpuDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/RequestedFeaturesProof.cc
-  ${BTS_HOST_SOURCE_DIR}/ExportCpuDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/SignedDisplacementDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/DisplacementDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/ScrollDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/AlembicDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/JpegExportCpuDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/ExportDepthCpuDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/RequestedFeaturesProof.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/ExportCpuDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/SignedDisplacementDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/DisplacementDemo.cc
   ${BTS_HOST_SOURCE_DIR}/DisplacementPanel.cc
   ${BTS_HOST_SOURCE_DIR}/DisplacementPreview.cc
   ${BTS_HOST_SOURCE_DIR}/NativeCompositeJob.cc
   ${BTS_HOST_SOURCE_DIR}/NativeCyclesImages.cc
   ${BTS_HOST_SOURCE_DIR}/ColorPicker.cc
-  ${BTS_HOST_SOURCE_DIR}/ColorPickerDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/LightingDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/BakeFixDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/LayerEditDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/ColorPickerDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/LightingDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/BakeFixDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/LayerEditDemo.cc
   ${BTS_HOST_SOURCE_DIR}/GuiFixDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../tests/material_layering_ui_artist_test.cc
-  ${BTS_HOST_SOURCE_DIR}/TabletPressureDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/TabletPerformanceDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/TabletPressureDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/TabletPerformanceDemo.cc
   ${BTS_HOST_SOURCE_DIR}/StrokeReproject.cc
   ${BTS_HOST_SOURCE_DIR}/StrokeIO.cc
   ${BTS_HOST_SOURCE_DIR}/TextureSetReassignment.cc
@@ -127,17 +127,17 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/BlendMaterial.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialPanel.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialPanelTest.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialInspectionDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialGpuProgramTest.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialStackTest.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialInspectionDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialGpuProgramTest.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialStackTest.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialGpuLibrary.cc
   ${BTS_HOST_SOURCE_DIR}/ShaderTreeCache.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialGpuProgram.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialGpuCompiler.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialFragmentBumpTest.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialFragmentBumpTest.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialFragmentGpuCompiler.cc
   ${BTS_HOST_SOURCE_DIR}/NativeFragmentGeometry.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialFragmentGpuTest.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialFragmentGpuTest.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialGpuPrototype.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialContext.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialImagePanel.cc
@@ -179,9 +179,9 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/AssetCatalog.cc
   ${BTS_HOST_SOURCE_DIR}/ResourceIO.cc
   ${BTS_HOST_SOURCE_DIR}/ResourceImport.cc
-  ${BTS_HOST_SOURCE_DIR}/FillTextureDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/FillTextureDemo.cc
   ${BTS_HOST_SOURCE_DIR}/FillTextureIO.cc
-  ${BTS_HOST_SOURCE_DIR}/FillSymmetryDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/FillSymmetryDemo.cc
   ${BTS_HOST_SOURCE_DIR}/FillSymmetryPanel.cc
   ${BTS_HOST_SOURCE_DIR}/FillPanel.cc
   ${BTS_HOST_SOURCE_DIR}/BitmapMask.cc
@@ -202,7 +202,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc
   ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc
   ${BTS_HOST_SOURCE_DIR}/NewProjectProfile.cc
-  ${BTS_HOST_SOURCE_DIR}/MeshExportDemo.cc
+  ${BTS_HOST_SOURCE_DIR}/../harness/MeshExportDemo.cc
   ${BTS_HOST_SOURCE_DIR}/UsdTextureBindings.cc
   ${BTS_HOST_SOURCE_DIR}/UsdMeshExport.cc
   ${BTS_HOST_SOURCE_DIR}/MeshExport.cc
@@ -232,7 +232,7 @@ set_source_files_properties(${BTS_HOST_SOURCE_DIR}/BlendAssetLibrary.cc PROPERTI
 # Immutable geometry owner captures real ObjectInfos using stock draw resource sync.
 set_property(SOURCE
   ${BTS_HOST_SOURCE_DIR}/NativeFragmentGeometry.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialInspectionDemo.cc APPEND PROPERTY
+  ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialInspectionDemo.cc APPEND PROPERTY
   INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/source/blender/draw/intern")
 # The explicit generated-source diagnostic uses the real EEVEE amendment.
 set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/ViewportHeadlessDemo.cc APPEND PROPERTY
@@ -241,7 +241,7 @@ set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/ViewportHeadlessDemo.cc APPEND PROPER
     "${CMAKE_SOURCE_DIR}/source/blender/draw/intern")
 # Explicit fragment Normal Map bindings consume the real ObjectInfos layout.
 set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/NativeMaterialFragmentGpuCompiler.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialFragmentGpuTest.cc APPEND PROPERTY
+  ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialFragmentGpuTest.cc APPEND PROPERTY
   INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/source/blender/draw/intern")
 set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/EeveeCompletionSnapshot.cc APPEND PROPERTY
   INCLUDE_DIRECTORIES
@@ -783,6 +783,22 @@ function(bts_register_cpu_tests)
 endfunction()
 cmake_language(DEFER CALL bts_register_cpu_tests)
 
+# Test and demo code lives in native/harness and includes host headers by bare name,
+# and host code includes harness headers the same way, so every compiled bts target
+# searches both folders.
+function(bts_add_source_include_dirs)
+  get_property(_bts_targets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
+  foreach(_bts_target IN LISTS _bts_targets)
+    if(_bts_target MATCHES "^bts-")
+      get_target_property(_bts_type ${_bts_target} TYPE)
+      if(_bts_type MATCHES "^(EXECUTABLE|STATIC_LIBRARY|SHARED_LIBRARY|MODULE_LIBRARY|OBJECT_LIBRARY)$")
+        target_include_directories(${_bts_target} PRIVATE ${BTS_HOST_SOURCE_DIR} ${BTS_HOST_SOURCE_DIR}/../harness)
+      endif()
+    endif()
+  endforeach()
+endfunction()
+cmake_language(DEFER CALL bts_add_source_include_dirs)
+
 target_link_libraries(bts-host PRIVATE assimp::assimp bf::dependencies::optional::usd bf::dependencies::optional::tbb bf::dependencies::optional::python)
 
 # Real image encoding joins the CPU assertions; this host path never initializes OpenGL.
@@ -1089,9 +1105,9 @@ if(WITH_MATERIALX)
   add_library(bts-openpbr-texture-package STATIC ${BTS_HOST_SOURCE_DIR}/OpenPbrTexturePackage.cc)
   target_link_libraries(bts-openpbr-texture-package PUBLIC bts-export-config bts-openpbr-materialx bts-openpbr-usd Qt6::Core)
   target_link_libraries(bts-host PRIVATE bts-openpbr-texture-package)
-  target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/OpenPbrExportCpuTest.cc ${BTS_HOST_SOURCE_DIR}/OpenPbrMaterialImport.cc)
-  set_source_files_properties(${BTS_HOST_SOURCE_DIR}/OpenPbrExportCpuTest.cc PROPERTIES INCLUDE_DIRECTORIES "$<TARGET_PROPERTY:MaterialXCore,INTERFACE_INCLUDE_DIRECTORIES>;$<TARGET_PROPERTY:MaterialXFormat,INTERFACE_INCLUDE_DIRECTORIES>")
-  set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/TextureExport.cc ${BTS_HOST_SOURCE_DIR}/TextureExportDialog.cc ${BTS_HOST_SOURCE_DIR}/ExportCpuDemo.cc ${BTS_HOST_SOURCE_DIR}/MeshImport.cc ${BTS_HOST_SOURCE_DIR}/main.cc APPEND PROPERTY COMPILE_DEFINITIONS BTS_WITH_MATERIALX)
+  target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/../harness/OpenPbrExportCpuTest.cc ${BTS_HOST_SOURCE_DIR}/OpenPbrMaterialImport.cc)
+  set_source_files_properties(${BTS_HOST_SOURCE_DIR}/../harness/OpenPbrExportCpuTest.cc PROPERTIES INCLUDE_DIRECTORIES "$<TARGET_PROPERTY:MaterialXCore,INTERFACE_INCLUDE_DIRECTORIES>;$<TARGET_PROPERTY:MaterialXFormat,INTERFACE_INCLUDE_DIRECTORIES>")
+  set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/TextureExport.cc ${BTS_HOST_SOURCE_DIR}/TextureExportDialog.cc ${BTS_HOST_SOURCE_DIR}/../harness/ExportCpuDemo.cc ${BTS_HOST_SOURCE_DIR}/MeshImport.cc ${BTS_HOST_SOURCE_DIR}/main.cc APPEND PROPERTY COMPILE_DEFINITIONS BTS_WITH_MATERIALX)
 endif()
 
 # The Linux prebuilt monolithic USD library requires these shared libraries.
@@ -1176,7 +1192,7 @@ target_compile_features(bts-temporary-ink-tests PRIVATE cxx_std_20)
 target_compile_options(bts-temporary-ink-tests PRIVATE -UNDEBUG)
 add_dependencies(bts-cpu-tests bts-temporary-ink-tests)
 
-target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/StrokeTargetPerformanceDemo.cc)
+target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/../harness/StrokeTargetPerformanceDemo.cc)
 
 add_executable(bts-brush-bounds-tests ${BTS_HOST_SOURCE_DIR}/../tests/brush_bounds_test.cc)
 target_include_directories(bts-brush-bounds-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
@@ -1185,7 +1201,7 @@ target_compile_options(bts-brush-bounds-tests PRIVATE -UNDEBUG)
 target_link_libraries(bts-brush-bounds-tests PRIVATE bts-export-config Qt6::Core)
 add_dependencies(bts-cpu-tests bts-brush-bounds-tests)
 
-target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/MaskFillGpuDemo.cc)
+target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/../harness/MaskFillGpuDemo.cc)
 
 add_executable(bts-numeric-locale-tests ${BTS_HOST_SOURCE_DIR}/../tests/numeric_locale_test.cc ${BTS_HOST_SOURCE_DIR}/DisplacementPanel.cc)
 target_include_directories(bts-numeric-locale-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
@@ -1557,7 +1573,7 @@ if(BTS_SPMSK_FIXTURE_DIR)
   "${CMAKE_CURRENT_BINARY_DIR}/spmsk-empty-material-fixtures" "${BTS_SPMSK_FIXTURE_DIR}")
 endif()
 
-target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/SmartMaskNativeProof.cc)
+target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/../harness/SmartMaskNativeProof.cc)
 
 # Standalone mask generators use a synthetic Group owner. Exercise actual embedded
 # image resource reading without Blender globals or color interpretation.
