@@ -219,14 +219,14 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/WorkspaceShell.cc
   ${BTS_HOST_SOURCE_DIR}/WorkspaceShell.hh
   ${BTS_HOST_SOURCE_DIR}/ViewLayout.hh
-  ${BTS_HOST_SOURCE_DIR}/OrbitCamera.cc
-  ${BTS_HOST_SOURCE_DIR}/OrbitCamera.hh
+  ${BTS_HOST_SOURCE_DIR}/viewport/OrbitCamera.cc
+  ${BTS_HOST_SOURCE_DIR}/viewport/OrbitCamera.hh
   ${BTS_HOST_SOURCE_DIR}/SceneTriangleOverlay.cc
-  ${BTS_HOST_SOURCE_DIR}/UvGpuOverlay.cc
-  ${BTS_HOST_SOURCE_DIR}/UvPreview.cc
-  ${BTS_HOST_SOURCE_DIR}/UvPreview.hh
-  ${BTS_HOST_SOURCE_DIR}/UvView.cc
-  ${BTS_HOST_SOURCE_DIR}/UvView.hh
+  ${BTS_HOST_SOURCE_DIR}/viewport/UvGpuOverlay.cc
+  ${BTS_HOST_SOURCE_DIR}/viewport/UvPreview.cc
+  ${BTS_HOST_SOURCE_DIR}/viewport/UvPreview.hh
+  ${BTS_HOST_SOURCE_DIR}/viewport/UvView.cc
+  ${BTS_HOST_SOURCE_DIR}/viewport/UvView.hh
 )
 set_source_files_properties(${BTS_HOST_SOURCE_DIR}/BlendAssetLibrary.cc PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/source/blender/asset_system")
 # Immutable geometry owner captures real ObjectInfos using stock draw resource sync.
@@ -474,7 +474,7 @@ target_include_directories(bts-history-codec-tests PRIVATE ${BTS_HOST_SOURCE_DIR
 target_compile_features(bts-history-codec-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-history-codec-tests PRIVATE Qt6::Core ZLIB::ZLIB)
 
-add_executable(bts-uv-view-tests ${BTS_HOST_SOURCE_DIR}/../tests/uv_view_test.cc ${BTS_HOST_SOURCE_DIR}/UvView.cc)
+add_executable(bts-uv-view-tests ${BTS_HOST_SOURCE_DIR}/../tests/uv_view_test.cc ${BTS_HOST_SOURCE_DIR}/viewport/UvView.cc)
 target_include_directories(bts-uv-view-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-uv-view-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-uv-view-tests PRIVATE Qt6::Widgets)
@@ -498,14 +498,14 @@ add_executable(bts-fragment-tangents-tests ${BTS_HOST_SOURCE_DIR}/../tests/fragm
 target_include_directories(bts-fragment-tangents-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-fragment-tangents-tests PRIVATE cxx_std_20)
 
-add_executable(bts-trackball-tests ${BTS_HOST_SOURCE_DIR}/../tests/trackball_test.cc ${BTS_HOST_SOURCE_DIR}/OrbitCamera.cc)
+add_executable(bts-trackball-tests ${BTS_HOST_SOURCE_DIR}/../tests/trackball_test.cc ${BTS_HOST_SOURCE_DIR}/viewport/OrbitCamera.cc)
 target_include_directories(bts-trackball-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-trackball-tests PRIVATE cxx_std_20)
 target_compile_options(bts-trackball-tests PRIVATE -UNDEBUG)
 target_link_libraries(bts-trackball-tests PRIVATE Qt6::Gui)
 add_test(NAME bts-trackball COMMAND bts-trackball-tests)
 
-add_executable(bts-camera-pose-tests ${BTS_HOST_SOURCE_DIR}/../tests/camera_pose_test.cc ${BTS_HOST_SOURCE_DIR}/OrbitCamera.cc)
+add_executable(bts-camera-pose-tests ${BTS_HOST_SOURCE_DIR}/../tests/camera_pose_test.cc ${BTS_HOST_SOURCE_DIR}/viewport/OrbitCamera.cc)
 target_include_directories(bts-camera-pose-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-camera-pose-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-camera-pose-tests PRIVATE Qt6::Gui)
@@ -786,7 +786,7 @@ cmake_language(DEFER CALL bts_register_cpu_tests)
 # Test and demo code lives in native/harness, and host code is moving into domain
 # folders under native/host. Files include each other by bare name across all of
 # them, so every compiled bts target searches every one of these folders.
-set(BTS_HOST_DOMAINS python materials/openpbr baking gpu painting layers fill ui/panels ui/dialogs assets)
+set(BTS_HOST_DOMAINS python materials/openpbr baking gpu painting layers fill ui/panels ui/dialogs assets viewport)
 set(BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR} ${BTS_HOST_SOURCE_DIR}/../harness)
 foreach(_bts_domain IN LISTS BTS_HOST_DOMAINS)
   list(APPEND BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR}/${_bts_domain})
@@ -944,7 +944,7 @@ target_link_libraries(bts-material-layering-tests PRIVATE Qt6::Core)
 add_executable(bts-material-layering-document-tests ${BTS_HOST_SOURCE_DIR}/../tests/material_layering_document_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc ${BTS_HOST_SOURCE_DIR}/MaterialLayerParameterIO.cc)
 target_link_libraries(bts-material-layering-document-tests PRIVATE bts-export-config)
 
-add_executable(bts-symmetry-intersection-tests ${BTS_HOST_SOURCE_DIR}/../tests/symmetry_intersection_test.cc ${BTS_HOST_SOURCE_DIR}/OrbitCamera.cc)
+add_executable(bts-symmetry-intersection-tests ${BTS_HOST_SOURCE_DIR}/../tests/symmetry_intersection_test.cc ${BTS_HOST_SOURCE_DIR}/viewport/OrbitCamera.cc)
 target_include_directories(bts-symmetry-intersection-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_link_libraries(bts-symmetry-intersection-tests PRIVATE Qt6::Gui)
 target_compile_features(bts-symmetry-intersection-tests PRIVATE cxx_std_20)
