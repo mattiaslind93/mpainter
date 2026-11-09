@@ -9,7 +9,7 @@ for name,folder in [('XDG_CONFIG_HOME','config'),('XDG_DATA_HOME','data'),('XDG_
 if not a.existing:
  with(out/'run.log').open('w')as log:subprocess.run(['bash',str(root/'scripts/host/run-host.sh'),'--workspace','--gui-fix-demo',str(out),'--gui-fix-mesh',str(root/'native/tests/fixtures/single_tile.obj'),'--gui-fix-resolution','128','--library-dir',str(out/'studio-library'),'--autosave-seconds','3600'],env=env,stdout=log,stderr=subprocess.STDOUT,timeout=150,check=True)
 for source in [*(root/'native/host').rglob('*'), *(root/'native/harness').rglob('*')]:
- if source.suffix in ('.cc','.hh') and 'Demo'not in source.name:
+ if source.suffix in ('.cc','.hh','.inc') and 'Demo'not in source.name:
   assert 'new QDoubleSpinBox'not in source.read_text(),source
 d=json.loads((out/'numeric-workspace.json').read_text());assert d['system_locale']=='sv_SE'and d['ui_locale']=='C'and d['comma_value']==.25 and d['decimal']=='.';assert not d['shader_failures'];assert len(d['numbers'])>100
 for name in ['brushSize','toolbarBrushFlow','brushSpacing','brushMinimumFlow','lazyMouseDistance']:

@@ -10,8 +10,9 @@ import re
 root = Path(__file__).resolve().parents[2]
 failures = []
 sources = [*(root / 'native/host').rglob('*'), *(root / 'native/harness').rglob('*')]
+# .inc files are source fragments split out of .cc files (main.cc's Viewport, for one).
 for path in sources:
-    if path.suffix not in ('.cc', '.hh') or path.name == 'Theme.hh':
+    if path.suffix not in ('.cc', '.hh', '.inc') or path.name == 'Theme.hh':
         continue
     if 'Demo' in path.name or 'Test' in path.name:
         continue
@@ -30,7 +31,7 @@ for name, alias in re.findall(r'inline constexpr auto (\w+) = (\w+);', source):
 # Theme.hh also carries non-color QSS tokens, such as the shared control radius.
 metrics = dict(re.findall(r'inline constexpr auto (\w+) = "([^"#][^"]*)";', source))
 for path in sources:
-    if path.suffix not in ('.cc', '.hh'):
+    if path.suffix not in ('.cc', '.hh', '.inc'):
         continue
     for token in re.findall(r'@([A-Za-z]+)@', path.read_text()):
         if token not in colors and token not in metrics:

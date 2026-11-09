@@ -139,7 +139,7 @@ leaves the release build.
 | `BTS_GPU_BAKE_BVH_TEST` | native/harness | `ViewportHeadlessDemo.cc` |
 | `BTS_GPU_BRUSH_AUTHORING` | native/host | `main.cc` |
 | `BTS_GPU_DENSE_ORACLE` | native/harness, native/host | `WarpDemo.cc`, `WarpGeometryDemo.cc`, `MaterialInspection.cc` |
-| `BTS_GPU_EARLY_PROJECT_TEST_MESH` | native/host, native/tests | `main.cc`, `GpuProgramWarmupDiagnostic.hh` |
+| `BTS_GPU_EARLY_PROJECT_TEST_MESH` | native/host, native/tests | `main.cc`, `MainViewport.inc`, `GpuProgramWarmupDiagnostic.hh` |
 | `BTS_GPU_FILL_COVERAGE_TEST` | native/host | `GpuLayerPreview.cc` |
 | `BTS_GPU_FILL_DETAILS` | native/host | `MaterialInspection.cc` |
 | `BTS_GPU_NEIGHBORHOOD_FILTER_TEST` | native/harness | `ViewportHeadlessDemo.cc` |
@@ -156,10 +156,10 @@ leaves the release build.
 | `BTS_GPU_WARP_TIMING` | native/host | `GpuLayerPreview.cc` |
 | `BTS_GUI_PERFORMANCE` | native/harness | `GuiFixDemo.cc` |
 | `BTS_HARD_UNWRAP_DEMO` | native/harness, native/host | `HardSurfaceDemo.cc`, `main.cc`, `PythonConsole.cc` |
-| `BTS_HEADLESS_WORKSPACE` | native/harness, native/host, native/tests | `PainterWorkflowDemo.hh`, `main.cc`, `GpuProgramWarmupDiagnostic.hh` |
+| `BTS_HEADLESS_WORKSPACE` | native/harness, native/host, native/tests | `PainterWorkflowDemo.hh`, `main.cc`, `MainViewport.inc`, `GpuProgramWarmupDiagnostic.hh` |
 | `BTS_HEIGHT_8K_IMPORT_TEST` | native/harness | `TextureImportCpuDemo.cc` |
 | `BTS_HEIGHT_NEUTRAL_DEMO` | native/harness, native/host, native/tests | `GuiFixDemo.cc`, `main.cc`, `native_height_policy_artist_test.cc` |
-| `BTS_HOSTED_SHADER_WORKERS` | native/host, native/tests | `BlenderHost.cc`, `GpuLayerPreview.cc`, `main.cc`, `GpuProgramWarmupDiagnostic.hh` and 4 more |
+| `BTS_HOSTED_SHADER_WORKERS` | native/host, native/tests | `BlenderHost.cc`, `GpuLayerPreview.cc`, `main.cc`, `MainViewport.inc` and 5 more |
 | `BTS_IDLE_DEMO_DIR` | native/harness, native/host | `ViewportIdleDemo.cc`, `PythonConsole.cc` |
 | `BTS_IMAGE_SEQUENCE_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `main.cc` |
 | `BTS_INSPECTION_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `main.cc` |
@@ -252,7 +252,7 @@ leaves the release build.
 | `BTS_ORDERED_PRODUCTION_SHA` | native/tests | `ordered_raw_rgb_gpu_test.cc` |
 | `BTS_ORDERED_RESUME_CASES` | native/tests | `ordered_raw_rgb_gpu_test.cc` |
 | `BTS_OVERLAY_PROBE` | native/host | `BlenderHost.cc` |
-| `BTS_OVERLAY_PROFILE` | native/harness, native/host | `GuiFixDemo.cc`, `BlenderHost.cc`, `SceneTriangleOverlay.cc`, `main.cc` |
+| `BTS_OVERLAY_PROFILE` | native/harness, native/host | `GuiFixDemo.cc`, `BlenderHost.cc`, `SceneTriangleOverlay.cc`, `MainViewport.inc` |
 | `BTS_OVERLAY_SELF_TEST_DIR` | native/host | `UvGpuOverlay.cc` |
 | `BTS_OVERLAY_TRIANGLE_PROFILE` | native/harness | `OverlayPerformanceDemo.hh` |
 | `BTS_PAINTER_WORKFLOW_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `main.cc` |
@@ -340,7 +340,7 @@ leaves the release build.
 | `BTS_SPSM_MASK_BITMAP_POLICY` | native/harness | `SpsmDemo.hh` |
 | `BTS_STROKE_PROFILE_PROJECT` | native/harness | `StrokeTargetPerformanceDemo.cc` |
 | `BTS_STROKE_SPLINE_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `main.cc` |
-| `BTS_STROKE_TARGET_PROFILE` | native/harness, native/host | `GuiFixDemo.cc`, `SurfaceBrush.cc`, `main.cc` |
+| `BTS_STROKE_TARGET_PROFILE` | native/harness, native/host | `GuiFixDemo.cc`, `SurfaceBrush.cc`, `main.cc`, `MainViewport.inc` |
 | `BTS_STROKE_TARGET_SMUDGE` | native/harness | `StrokeTargetPerformanceDemo.cc` |
 | `BTS_STUDIO_EXPORT_ONLY` | native/harness | `ExportCpuDemo.cc` |
 | `BTS_SUBSURFACE_DEMO` | native/harness | `GuiFixDemo.cc` |
@@ -356,7 +356,7 @@ leaves the release build.
 | `BTS_TEMPLATE_DIR` | native/host | `ProjectTemplate.cc` |
 | `BTS_TEMPLATE_SHADER_DEMO` | native/harness | `GuiFixDemo.cc` |
 | `BTS_TEMPORARY_INK_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `main.cc` |
-| `BTS_TEST_CONTINUOUS_FRAMES` | native/host | `main.cc` |
+| `BTS_TEST_CONTINUOUS_FRAMES` | native/host | `MainViewport.inc` |
 | `BTS_TEST_LINEAR_INPUT` | native/host | `main.cc` |
 | `BTS_TEST_OUTPUT` | native/tests | `blend_library_browser_test.cc` |
 | `BTS_TEXTURE_IMPORT_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `main.cc` |

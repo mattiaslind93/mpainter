@@ -38,7 +38,7 @@ function_allowlist = {
 }
 calls = 0
 for path in [*host.rglob('*'), *(root / 'native/harness').rglob('*')]:
-    if path.suffix not in ('.cc', '.hh'):
+    if path.suffix not in ('.cc', '.hh', '.inc'):
         continue
     source = path.read_text()
     code = masked(source)
