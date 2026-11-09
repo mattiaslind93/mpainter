@@ -110,8 +110,8 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/../tests/material_layering_ui_artist_test.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/TabletPressureDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/TabletPerformanceDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/StrokeReproject.cc
-  ${BTS_HOST_SOURCE_DIR}/StrokeIO.cc
+  ${BTS_HOST_SOURCE_DIR}/painting/StrokeReproject.cc
+  ${BTS_HOST_SOURCE_DIR}/painting/StrokeIO.cc
   ${BTS_HOST_SOURCE_DIR}/TextureSetReassignment.cc
   ${BTS_HOST_SOURCE_DIR}/ProjectTemplate.cc
   ${BTS_HOST_SOURCE_DIR}/ProjectConfiguration.cc
@@ -424,7 +424,7 @@ target_include_directories(bts-export-packing-tests PRIVATE ${BTS_HOST_SOURCE_DI
 target_compile_features(bts-export-packing-tests PRIVATE cxx_std_20)
 
 # Shared metadata parser is also linked by the pure TextureDocument test targets.
-add_library(bts-export-config STATIC ${BTS_HOST_SOURCE_DIR}/baking/SkewArchive.cc ${BTS_HOST_SOURCE_DIR}/Displacement.cc ${BTS_HOST_SOURCE_DIR}/CustomChannel.cc ${BTS_HOST_SOURCE_DIR}/PhysicalScale.cc ${BTS_HOST_SOURCE_DIR}/ExportConfiguration.cc ${BTS_HOST_SOURCE_DIR}/StrokeArchive.cc ${BTS_HOST_SOURCE_DIR}/StrokeTransfer.cc ${BTS_HOST_SOURCE_DIR}/StrokeHistory.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc)
+add_library(bts-export-config STATIC ${BTS_HOST_SOURCE_DIR}/baking/SkewArchive.cc ${BTS_HOST_SOURCE_DIR}/Displacement.cc ${BTS_HOST_SOURCE_DIR}/CustomChannel.cc ${BTS_HOST_SOURCE_DIR}/PhysicalScale.cc ${BTS_HOST_SOURCE_DIR}/ExportConfiguration.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeArchive.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeTransfer.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc)
 target_include_directories(bts-export-config PUBLIC ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-export-config PUBLIC cxx_std_20)
 target_link_libraries(bts-export-config PUBLIC Qt6::Core)
@@ -660,14 +660,14 @@ add_executable(bts-material-projection-tests ${BTS_HOST_SOURCE_DIR}/../tests/mat
 target_include_directories(bts-material-projection-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-material-projection-tests PRIVATE cxx_std_20)
 
-target_sources(bts-export-config PRIVATE ${BTS_HOST_SOURCE_DIR}/SurfacePathIO.cc ${BTS_HOST_SOURCE_DIR}/StrokeMetadata.cc)
-target_sources(bts-export-config PRIVATE ${BTS_HOST_SOURCE_DIR}/SmudgeStroke.cc)
+target_sources(bts-export-config PRIVATE ${BTS_HOST_SOURCE_DIR}/SurfacePathIO.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeMetadata.cc)
+target_sources(bts-export-config PRIVATE ${BTS_HOST_SOURCE_DIR}/painting/SmudgeStroke.cc)
 
-add_executable(bts-smudge-tests ${BTS_HOST_SOURCE_DIR}/../tests/smudge_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/SmudgeStroke.cc ${BTS_HOST_SOURCE_DIR}/StrokeHistory.cc)
+add_executable(bts-smudge-tests ${BTS_HOST_SOURCE_DIR}/../tests/smudge_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/painting/SmudgeStroke.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc)
 target_include_directories(bts-smudge-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-smudge-tests PRIVATE cxx_std_20)
 
-add_executable(bts-clone-tests ${BTS_HOST_SOURCE_DIR}/../tests/clone_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/SmudgeStroke.cc ${BTS_HOST_SOURCE_DIR}/StrokeHistory.cc)
+add_executable(bts-clone-tests ${BTS_HOST_SOURCE_DIR}/../tests/clone_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/painting/SmudgeStroke.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc)
 target_include_directories(bts-clone-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-clone-tests PRIVATE cxx_std_20)
 
@@ -679,7 +679,7 @@ add_executable(bts-dynamic-stroke-tests ${BTS_HOST_SOURCE_DIR}/../tests/dynamic_
 target_include_directories(bts-dynamic-stroke-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-dynamic-stroke-tests PRIVATE cxx_std_20)
 
-add_executable(bts-surface-path-tests ${BTS_HOST_SOURCE_DIR}/../tests/surface_path_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/StrokeHistory.cc)
+add_executable(bts-surface-path-tests ${BTS_HOST_SOURCE_DIR}/../tests/surface_path_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc)
 target_include_directories(bts-surface-path-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-surface-path-tests PRIVATE cxx_std_20)
 
@@ -786,7 +786,7 @@ cmake_language(DEFER CALL bts_register_cpu_tests)
 # Test and demo code lives in native/harness, and host code is moving into domain
 # folders under native/host. Files include each other by bare name across all of
 # them, so every compiled bts target searches every one of these folders.
-set(BTS_HOST_DOMAINS python materials/openpbr baking gpu)
+set(BTS_HOST_DOMAINS python materials/openpbr baking gpu painting)
 set(BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR} ${BTS_HOST_SOURCE_DIR}/../harness)
 foreach(_bts_domain IN LISTS BTS_HOST_DOMAINS)
   list(APPEND BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR}/${_bts_domain})
@@ -1032,7 +1032,7 @@ endforeach()
 add_executable(bts-history-memory-tests
   ${BTS_HOST_SOURCE_DIR}/../tests/history_memory_test.cc
   ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc
-  ${BTS_HOST_SOURCE_DIR}/SmudgeStroke.cc)
+  ${BTS_HOST_SOURCE_DIR}/painting/SmudgeStroke.cc)
 target_link_libraries(bts-history-memory-tests PRIVATE bts-export-config)
 target_compile_options(bts-history-memory-tests PRIVATE -UNDEBUG)
 add_dependencies(bts-cpu-tests bts-history-memory-tests)
@@ -1350,7 +1350,7 @@ target_link_libraries(bts-resource-caps-tests PRIVATE bts-export-config Qt6::Gui
 add_dependencies(bts-cpu-tests bts-resource-caps-tests)
 
 # Sparse metadata tests use real page-key bounds and never allocate dense textures.
-add_executable(bts-texture-extent-tests ${BTS_HOST_SOURCE_DIR}/../tests/texture_extent_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/StrokeMetadata.cc ${BTS_HOST_SOURCE_DIR}/SurfacePathIO.cc ${BTS_HOST_SOURCE_DIR}/StrokeHistory.cc)
+add_executable(bts-texture-extent-tests ${BTS_HOST_SOURCE_DIR}/../tests/texture_extent_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeMetadata.cc ${BTS_HOST_SOURCE_DIR}/SurfacePathIO.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc)
 target_include_directories(bts-texture-extent-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-texture-extent-tests PRIVATE cxx_std_20)
 target_compile_options(bts-texture-extent-tests PRIVATE "$<IF:$<CXX_COMPILER_ID:MSVC>,/UNDEBUG,-UNDEBUG>")
@@ -1559,8 +1559,8 @@ endforeach()
 add_library(bts-spsm-native-lowering-cpu STATIC
   ${BTS_HOST_SOURCE_DIR}/SpsmMaterialImport.cc
   ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc
-  ${BTS_HOST_SOURCE_DIR}/StrokeMetadata.cc
-  ${BTS_HOST_SOURCE_DIR}/StrokeHistory.cc
+  ${BTS_HOST_SOURCE_DIR}/painting/StrokeMetadata.cc
+  ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc
   ${BTS_HOST_SOURCE_DIR}/SurfacePathIO.cc
  )
 target_include_directories(bts-spsm-native-lowering-cpu PUBLIC ${BTS_HOST_SOURCE_DIR})
@@ -1607,7 +1607,7 @@ add_test(NAME brush-presets-complete-codec COMMAND bts-brush-preset-tests)
 add_test(NAME brush-presets-user-catalog COMMAND bts-brush-preset-catalog-tests)
 
 # One GPU owner handles both Shelf brush thumbnails and the property swatch.
-target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/BrushPresetThumbnailJobs.cc)
+target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/painting/BrushPresetThumbnailJobs.cc)
 add_executable(bts-brush-preset-thumbnail-stroke-tests ${BTS_HOST_SOURCE_DIR}/../tests/brush_preset_thumbnail_stroke_test.cc)
 target_include_directories(bts-brush-preset-thumbnail-stroke-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-brush-preset-thumbnail-stroke-tests PRIVATE cxx_std_20)
@@ -1699,7 +1699,7 @@ set_source_files_properties(${BTS_HOST_SOURCE_DIR}/../tests/asset_workspace_drop
 add_test(NAME asset-dragdrop-workspace COMMAND bts-host --cpu-asset-dragdrop-test ${CMAKE_BINARY_DIR}/asset-dragdrop-proof)
 set_tests_properties(asset-dragdrop-workspace PROPERTIES ENVIRONMENT "BTS_NO_BACKGROUND_GPU=1;QT_QPA_PLATFORM=offscreen;QT_QPA_OFFSCREEN_NO_GLX=1;XDG_CONFIG_HOME=${CMAKE_BINARY_DIR}/asset-dragdrop-proof/config;XDG_DATA_HOME=${CMAKE_BINARY_DIR}/asset-dragdrop-proof/data;XDG_CACHE_HOME=${CMAKE_BINARY_DIR}/asset-dragdrop-proof/cache")
 
-add_executable(bts-project-save-safety-tests ${BTS_HOST_SOURCE_DIR}/../tests/project_save_safety_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/StrokeMetadata.cc ${BTS_HOST_SOURCE_DIR}/SurfacePathIO.cc ${BTS_HOST_SOURCE_DIR}/StrokeHistory.cc)
+add_executable(bts-project-save-safety-tests ${BTS_HOST_SOURCE_DIR}/../tests/project_save_safety_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeMetadata.cc ${BTS_HOST_SOURCE_DIR}/SurfacePathIO.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc)
 add_executable(bts-viewport-draw-guard-tests ${BTS_HOST_SOURCE_DIR}/../tests/viewport_draw_guard_test.cc)
 foreach(target bts-project-save-safety-tests bts-viewport-draw-guard-tests)
   target_include_directories(${target} PRIVATE ${BTS_HOST_SOURCE_DIR})
