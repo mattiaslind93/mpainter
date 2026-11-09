@@ -31,6 +31,7 @@ VERSION_FIELD = re.compile(
     r"(?:CFBundle(?:Short)?Version(?:String)?</key>\s*<string>|\"(?:File|Product)Version\",\s*\"|"
     r"release version=\"|mPainter-)(\d+\.\d+\.\d+[\w.-]*)")
 PINNED_CLANG = "21.1.8"
+TOOL_TESTS = ("scripts/tests/", "scripts/verify/tests/")
 
 
 class UsageError(Exception):
@@ -103,6 +104,8 @@ def grep(root, files, pattern):
 def check_version(root, files):
     version = read_version(root)
     spelled = re.compile(rf"(?<![\w.]){re.escape(version)}(?![\w.])")
+    # The tests of mp itself spell versions as fixtures; nothing ships from there.
+    files = [f for f in files if not f.startswith(TOOL_TESTS)]
     hits = grep(root, [f for f in files if f.startswith(VERSIONED_FILES) and f != "pyproject.toml"], spelled)
     for rel in files:
         if rel.startswith("packaging/") or rel.endswith(".py"):

@@ -37,7 +37,9 @@ def tracked(root):
 
 def resolve(name, including, files):
     folder = including.rsplit("/", 1)[0]
-    for base in (folder, "native/host", "native", ""):
+    # The same search order the build uses: the includer's folder, then the include
+    # path every bts target gets (native/host and native/harness).
+    for base in (folder, "native/host", "native/harness", "native", ""):
         candidate = os.path.normpath(f"{base}/{name}" if base else name).replace(os.sep, "/")
         if candidate in files:
             return candidate

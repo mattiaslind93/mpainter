@@ -84,6 +84,13 @@ class BlenderSurface(unittest.TestCase):
         self.assertEqual(fixture.run("--write", "../outside.md")[0], 2)
         self.assertFalse((fixture.root.parent / "outside.md").exists())
 
+    def test_harness_headers_resolve_like_the_build(self):
+        fixture = Fixture(self, {"native/host/A.cc": '#include "XDemo.hh"\n#include "BKE_main.hh"\n',
+                                 "native/harness/XDemo.hh": '#include "A.hh"\n', "native/host/A.hh": ""})
+        _, others, includers = bs.classify(fixture.root)
+        self.assertEqual(others, {})
+        self.assertEqual(sorted(includers), ["native/host/A.cc"])
+
     def test_deterministic(self):
         fixture = Fixture(self, FILES)
         self.assertEqual(bs.render(*bs.classify(fixture.root)), bs.render(*bs.classify(fixture.root)))

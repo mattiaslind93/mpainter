@@ -119,6 +119,11 @@ class Checks(unittest.TestCase):
         self.assertEqual(result["test-includes"], ("FAIL", ["native/host/Panel.cc:1"]))
         self.assertEqual(result["blender-boundary"], ("WARN", ["native/host/Blend.cc"]))
 
+    def test_version_in_tool_tests_is_allowed(self):
+        repo = Repo(self, {"scripts/tests/test_x.py": "PYPROJECT = 'version = \"0.9.2\"'\n",
+                           "scripts/verify/tests/test_y.py": "name = 'mPainter-0.9.0-alpha-x64'\n"})
+        self.assertEqual(statuses(repo)["version"], ("PASS", []))
+
     def test_version_in_docs_and_other_versions_are_allowed(self):
         repo = Repo(self, {"docs/history/REPORT.md": "Shipped 0.9.2\n", "REPORT-x.md": "0.9.2\n",
                            "native/host/Qt.cc": 'const char *qt = "6.8.3"; const char *b = "10.9.21";\n'})
