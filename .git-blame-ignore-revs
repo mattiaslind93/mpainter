@@ -1,0 +1,5 @@
+# Commits that only reformat code. Use with:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# style: format owned C++ sources with Blender's clang-format
+8a83a5dd8608a73ac205379fab618de8c69b79ae
