@@ -31,6 +31,7 @@ class Repo:
         self.git("init", "-q", "-b", "main")
         self.write("pyproject.toml", PYPROJECT)
         self.write("scripts/verify/blender_surface.py", (HERE.parent / "verify/blender_surface.py").read_text())
+        self.write("scripts/verify/bts_variables.py", (HERE.parent / "verify/bts_variables.py").read_text())
         for rel, content in (files or {}).items():
             self.write(rel, content)
         self.git("add", "-A")
@@ -142,6 +143,26 @@ class Checks(unittest.TestCase):
         repo.write("native/host/B.cc", '#include "WM_api.hh"\n')
         repo.git("add", "-A")
         self.assertEqual(statuses(repo)["blender-surface"][0], "FAIL")
+
+    def test_docs_writes_both_pages_and_the_gate_tracks_them(self):
+        repo = Repo(self, {
+            "native/host/A.cc": 'auto a = std::getenv("BTS_ALPHA_DEMO"); bool b = qEnvironmentVariableIsSet("BTS_BETA");\n',
+            "native/harness/D.cc": 'auto q = qgetenv("BTS_ALPHA_DEMO"); auto s = "BTS_NOT_READ";\n'})
+        self.assertEqual(statuses(repo)["bts-variables"][0], "UNAVAILABLE")
+        self.assertEqual(repo.mp("docs", "--check")[0], 1)
+        code, out, _ = repo.mp("docs")
+        self.assertEqual(code, 0, out)
+        self.assertIn("wrote docs/architecture/bts-variables.md", out)
+        page = (repo.root / "docs/architecture/bts-variables.md").read_text()
+        self.assertIn("| `BTS_ALPHA_DEMO` | native/harness, native/host | `D.cc`, `A.cc` |", page)
+        self.assertIn("`BTS_BETA`", page)
+        self.assertNotIn("BTS_NOT_READ", page)
+        self.assertEqual(repo.mp("docs", "--check")[:2], (0, "generated docs are current\n"))
+        repo.git("add", "-A")
+        self.assertEqual(statuses(repo)["bts-variables"][0], "PASS")
+        repo.write("native/host/B.cc", 'auto c = getenv("BTS_GAMMA");\n')
+        repo.git("add", "-A")
+        self.assertEqual(statuses(repo)["bts-variables"][0], "FAIL")
 
     def test_blender_gates_are_unavailable_without_the_generator(self):
         repo = Repo(self)

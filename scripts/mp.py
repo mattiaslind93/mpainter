@@ -5,6 +5,7 @@
   mp version bump X.Y.Z      set the version in pyproject.toml and add a CHANGELOG.md heading
   mp check [--only NAME]     fast source gates; see CHECKS below
   mp doctor                  report which local tools are present, without changing anything
+  mp docs [--check]          regenerate docs/blender-surface.md and docs/architecture/bts-variables.md
   mp brief --output PATH ... write a worker brief with every required field
 
 Not here yet (later phases of the restructure plan): build, package, test, release.
@@ -143,11 +144,16 @@ def check_test_includes(root, files):
 
 def blender_surface(root):
     """scripts/verify/blender_surface.py of the checked tree, or None."""
-    path = root / "scripts/verify/blender_surface.py"
+    return verify_module(root, "blender_surface")
+
+
+def verify_module(root, name):
+    """scripts/verify/<name>.py of the checked tree, or None."""
+    path = root / f"scripts/verify/{name}.py"
     if not path.is_file() or path.is_symlink():
         return None
     import importlib.util
-    spec = importlib.util.spec_from_file_location("blender_surface", path)
+    spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
     # mp check must not write into the tree it checks, not even a __pycache__.
     previous, sys.dont_write_bytecode = sys.dont_write_bytecode, True
@@ -182,6 +188,51 @@ def check_blender_surface_doc(root, files):
             else "docs/blender-surface.md is stale; run scripts/verify/blender_surface.py --write", [])
 
 
+# Generated pages: path, generator module, and how to render from that module.
+GENERATED_DOCS = {
+    "docs/blender-surface.md": ("blender_surface", lambda m, root: m.render(*m.classify(root))),
+    "docs/architecture/bts-variables.md": ("bts_variables", lambda m, root: m.render(m.classify(root))),
+}
+
+
+def generated_docs(root):
+    """{path: expected text or None when its generator is missing}"""
+    result = {}
+    for rel, (name, render) in GENERATED_DOCS.items():
+        module = verify_module(root, name)
+        result[rel] = None if module is None else render(module, root)
+    return result
+
+
+def check_bts_variables_doc(root, files):
+    expected = generated_docs(root)["docs/architecture/bts-variables.md"]
+    doc = root / "docs/architecture/bts-variables.md"
+    if expected is None:
+        return ("UNAVAILABLE", "scripts/verify/bts_variables.py is missing", [])
+    if not doc.is_file():
+        return ("UNAVAILABLE", "docs/architecture/bts-variables.md has not been generated yet", [])
+    current = doc.read_text(encoding="utf-8") == expected
+    return ("PASS" if current else "FAIL", "docs/architecture/bts-variables.md matches the code" if current
+            else "docs/architecture/bts-variables.md is stale; run python3 scripts/mp.py docs", [])
+
+
+def write_docs(root, check_only):
+    stale = []
+    for rel, text in generated_docs(root).items():
+        if text is None:
+            raise UsageError(f"the generator for {rel} is missing")
+        path = root / rel
+        if path.is_symlink() or any(p.is_symlink() for p in path.parents if root in p.parents):
+            raise UsageError(f"{rel} goes through a symlink")
+        if path.is_file() and path.read_text(encoding="utf-8") == text:
+            continue
+        stale.append(rel)
+        if not check_only:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(text, encoding="utf-8")
+    return stale
+
+
 def check_agent_docs(root, files):
     checker = root / "scripts/verify/check_agent_docs.py"
     if not checker.is_file():
@@ -210,6 +261,7 @@ CHECKS = {
     "test-includes": check_test_includes,
     "blender-boundary": check_blender_boundary,
     "blender-surface": check_blender_surface_doc,
+    "bts-variables": check_bts_variables_doc,
     "agent-docs": check_agent_docs,
     "unpushed": check_unpushed,
 }
@@ -314,6 +366,8 @@ def main(argv=None, root=ROOT, out=sys.stdout):
     check = sub.add_parser("check")
     check.add_argument("--only")
     sub.add_parser("doctor")
+    docs = sub.add_parser("docs")
+    docs.add_argument("--check", action="store_true")
     brief = sub.add_parser("brief")
     for name in ("output", "goal", "platform", "base", "worktree", "proof", "report"):
         brief.add_argument(f"--{name}", required=name == "output", default="")
@@ -347,6 +401,13 @@ def main(argv=None, root=ROOT, out=sys.stdout):
             for name, status, detail in rows:
                 print(f"{status:11} {name}: {detail}", file=out)
             return 1 if any(status in ("MISSING", "WRONG") for _, status, _ in rows) else 0
+        if args.command == "docs":
+            stale = write_docs(root, args.check)
+            for rel in stale:
+                print(f"{'stale' if args.check else 'wrote'} {rel}", file=out)
+            if not stale:
+                print("generated docs are current", file=out)
+            return 1 if args.check and stale else 0
         if args.command == "brief":
             print(f"wrote {write_brief(root, args)}", file=out)
             return 0
