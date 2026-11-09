@@ -53,7 +53,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/DisplayPostPanel.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/DisplayPostDemo.cc
   ${BTS_HOST_SOURCE_DIR}/ShaderController.cc
-  ${BTS_HOST_SOURCE_DIR}/OpenPbrPanel.cc
+  ${BTS_HOST_SOURCE_DIR}/materials/openpbr/OpenPbrPanel.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/ShaderDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/InspectionDemo.cc
   ${BTS_HOST_SOURCE_DIR}/ResourceMonitor.cc
@@ -196,7 +196,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/MaterialLayerShader.cc
   ${BTS_HOST_SOURCE_DIR}/MaterialLayeringSources.cc
   ${BTS_HOST_SOURCE_DIR}/MaterialLayeringSourceSnapshots.cc
-  ${BTS_HOST_SOURCE_DIR}/OpenPbrShader.cc
+  ${BTS_HOST_SOURCE_DIR}/materials/openpbr/OpenPbrShader.cc
   ${BTS_HOST_SOURCE_DIR}/MaterialInspection.cc
   ${BTS_HOST_SOURCE_DIR}/NativeWorldNormalShader.cc
   ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc
@@ -786,7 +786,7 @@ cmake_language(DEFER CALL bts_register_cpu_tests)
 # Test and demo code lives in native/harness, and host code is moving into domain
 # folders under native/host. Files include each other by bare name across all of
 # them, so every compiled bts target searches every one of these folders.
-set(BTS_HOST_DOMAINS python)
+set(BTS_HOST_DOMAINS python materials/openpbr)
 set(BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR} ${BTS_HOST_SOURCE_DIR}/../harness)
 foreach(_bts_domain IN LISTS BTS_HOST_DOMAINS)
   list(APPEND BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR}/${_bts_domain})
@@ -1076,7 +1076,7 @@ if(WITH_MATERIALX)
   file(READ ${BTS_HOST_SOURCE_DIR}/openpbr/open_pbr_surface.mtlx BTS_OPENPBR_XML)
   file(READ ${BTS_HOST_SOURCE_DIR}/openpbr/LICENSE BTS_OPENPBR_LICENSE)
   configure_file(${BTS_HOST_SOURCE_DIR}/OpenPbrReferenceData.hh.in ${CMAKE_CURRENT_BINARY_DIR}/OpenPbrReferenceData.hh @ONLY)
-  add_library(bts-openpbr-materialx STATIC ${BTS_HOST_SOURCE_DIR}/OpenPbrMaterialX.cc)
+  add_library(bts-openpbr-materialx STATIC ${BTS_HOST_SOURCE_DIR}/materials/openpbr/OpenPbrMaterialX.cc)
   target_include_directories(bts-openpbr-materialx PUBLIC ${BTS_HOST_SOURCE_DIR} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
   target_compile_features(bts-openpbr-materialx PUBLIC cxx_std_20)
   target_link_libraries(bts-openpbr-materialx PUBLIC Qt6::Core PRIVATE MaterialXCore MaterialXFormat)
@@ -1086,7 +1086,7 @@ if(WITH_MATERIALX)
   target_compile_options(bts-openpbr-materialx-tests PRIVATE -UNDEBUG)
   target_compile_definitions(bts-openpbr-materialx-tests PRIVATE BTS_MATERIALX_BASE="${MATERIALX_BASE_DIR}")
   add_dependencies(bts-cpu-tests bts-openpbr-materialx-tests)
-  add_library(bts-openpbr-usd STATIC ${BTS_HOST_SOURCE_DIR}/OpenPbrUsd.cc ${BTS_HOST_SOURCE_DIR}/OpenPbrUsdImport.cc ${BTS_HOST_SOURCE_DIR}/OpenPbrUsdResources.cc)
+  add_library(bts-openpbr-usd STATIC ${BTS_HOST_SOURCE_DIR}/materials/openpbr/OpenPbrUsd.cc ${BTS_HOST_SOURCE_DIR}/materials/openpbr/OpenPbrUsdImport.cc ${BTS_HOST_SOURCE_DIR}/materials/openpbr/OpenPbrUsdResources.cc)
   target_include_directories(bts-openpbr-usd PUBLIC ${BTS_HOST_SOURCE_DIR})
   target_compile_features(bts-openpbr-usd PRIVATE cxx_std_20)
   target_compile_definitions(bts-openpbr-usd PRIVATE QT_NO_KEYWORDS)
@@ -1107,10 +1107,10 @@ if(WITH_MATERIALX)
   add_dependencies(bts-cpu-tests bts-openpbr-usd-resource-tests)
 
 
-  add_library(bts-openpbr-texture-package STATIC ${BTS_HOST_SOURCE_DIR}/OpenPbrTexturePackage.cc)
+  add_library(bts-openpbr-texture-package STATIC ${BTS_HOST_SOURCE_DIR}/materials/openpbr/OpenPbrTexturePackage.cc)
   target_link_libraries(bts-openpbr-texture-package PUBLIC bts-export-config bts-openpbr-materialx bts-openpbr-usd Qt6::Core)
   target_link_libraries(bts-host PRIVATE bts-openpbr-texture-package)
-  target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/../harness/OpenPbrExportCpuTest.cc ${BTS_HOST_SOURCE_DIR}/OpenPbrMaterialImport.cc)
+  target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/../harness/OpenPbrExportCpuTest.cc ${BTS_HOST_SOURCE_DIR}/materials/openpbr/OpenPbrMaterialImport.cc)
   set_source_files_properties(${BTS_HOST_SOURCE_DIR}/../harness/OpenPbrExportCpuTest.cc PROPERTIES INCLUDE_DIRECTORIES "$<TARGET_PROPERTY:MaterialXCore,INTERFACE_INCLUDE_DIRECTORIES>;$<TARGET_PROPERTY:MaterialXFormat,INTERFACE_INCLUDE_DIRECTORIES>")
   set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/TextureExport.cc ${BTS_HOST_SOURCE_DIR}/TextureExportDialog.cc ${BTS_HOST_SOURCE_DIR}/../harness/ExportCpuDemo.cc ${BTS_HOST_SOURCE_DIR}/MeshImport.cc ${BTS_HOST_SOURCE_DIR}/main.cc APPEND PROPERTY COMPILE_DEFINITIONS BTS_WITH_MATERIALX)
 endif()
