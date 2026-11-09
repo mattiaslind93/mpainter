@@ -50,7 +50,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/SubsurfacePreviewIO.cc
   ${BTS_HOST_SOURCE_DIR}/RenderController.cc
   ${BTS_HOST_SOURCE_DIR}/DisplayPostEffects.cc
-  ${BTS_HOST_SOURCE_DIR}/DisplayPostPanel.cc
+  ${BTS_HOST_SOURCE_DIR}/ui/panels/DisplayPostPanel.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/DisplayPostDemo.cc
   ${BTS_HOST_SOURCE_DIR}/ShaderController.cc
   ${BTS_HOST_SOURCE_DIR}/materials/openpbr/OpenPbrPanel.cc
@@ -73,7 +73,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/../harness/AePersistenceDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/PropertyPerformanceDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/StrokeSplineDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/WarpPanel.cc
+  ${BTS_HOST_SOURCE_DIR}/ui/panels/WarpPanel.cc
   ${BTS_HOST_SOURCE_DIR}/WarpEditor.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/WarpGeometryDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/WarpDemo.cc
@@ -86,7 +86,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/../harness/PlanarDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/FilledPathDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/RibbonDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/RibbonPanel.cc
+  ${BTS_HOST_SOURCE_DIR}/ui/panels/RibbonPanel.cc
   ${BTS_HOST_SOURCE_DIR}/OverlayScroll.cc
   ${BTS_HOST_SOURCE_DIR}/PanelScrolling.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/ScrollDemo.cc
@@ -97,7 +97,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/../harness/ExportCpuDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/SignedDisplacementDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/DisplacementDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/DisplacementPanel.cc
+  ${BTS_HOST_SOURCE_DIR}/ui/panels/DisplacementPanel.cc
   ${BTS_HOST_SOURCE_DIR}/DisplacementPreview.cc
   ${BTS_HOST_SOURCE_DIR}/NativeCompositeJob.cc
   ${BTS_HOST_SOURCE_DIR}/NativeCyclesImages.cc
@@ -115,17 +115,17 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/TextureSetReassignment.cc
   ${BTS_HOST_SOURCE_DIR}/ProjectTemplate.cc
   ${BTS_HOST_SOURCE_DIR}/ProjectConfiguration.cc
-  ${BTS_HOST_SOURCE_DIR}/UnitsPanel.cc
+  ${BTS_HOST_SOURCE_DIR}/ui/panels/UnitsPanel.cc
   ${BTS_HOST_SOURCE_DIR}/PhysicalScaleSource.cc
   ${BTS_HOST_SOURCE_DIR}/UsdScene.cc
-  ${BTS_HOST_SOURCE_DIR}/UsdScenePanel.cc
+  ${BTS_HOST_SOURCE_DIR}/ui/panels/UsdScenePanel.cc
   ${BTS_HOST_SOURCE_DIR}/BlendAssetLibrary.cc
   ${BTS_HOST_SOURCE_DIR}/BlendAssetBrowser.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialPreview.cc
   ${BTS_HOST_SOURCE_DIR}/SmartMaskThumbnailJobs.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialPreviewImages.cc
   ${BTS_HOST_SOURCE_DIR}/BlendMaterial.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialPanel.cc
+  ${BTS_HOST_SOURCE_DIR}/ui/panels/NativeMaterialPanel.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialPanelTest.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialInspectionDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialGpuProgramTest.cc
@@ -159,7 +159,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialGraph.cc
   ${BTS_HOST_SOURCE_DIR}/BlendMaterialDialog.cc
   ${BTS_HOST_SOURCE_DIR}/BlendLibrary.cc
-  ${BTS_HOST_SOURCE_DIR}/BlendLibraryPanel.cc
+  ${BTS_HOST_SOURCE_DIR}/ui/panels/BlendLibraryPanel.cc
   ${BTS_HOST_SOURCE_DIR}/SceneBridge.cc
   ${BTS_HOST_SOURCE_DIR}/AutoUnwrap.cc
   ${BTS_HOST_SOURCE_DIR}/MeshReplacement.cc
@@ -168,7 +168,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/TextureExport.cc
   ${BTS_HOST_SOURCE_DIR}/TextureExportDialog.cc
   ${BTS_HOST_SOURCE_DIR}/SmartMaterial.cc
-  ${BTS_HOST_SOURCE_DIR}/MeshMapsPanel.cc
+  ${BTS_HOST_SOURCE_DIR}/ui/panels/MeshMapsPanel.cc
   ${BTS_HOST_SOURCE_DIR}/baking/MeshBakeDialog.cc
   ${BTS_HOST_SOURCE_DIR}/MeshMapImport.cc
   ${BTS_HOST_SOURCE_DIR}/MeshMapAssign.cc
@@ -786,7 +786,7 @@ cmake_language(DEFER CALL bts_register_cpu_tests)
 # Test and demo code lives in native/harness, and host code is moving into domain
 # folders under native/host. Files include each other by bare name across all of
 # them, so every compiled bts target searches every one of these folders.
-set(BTS_HOST_DOMAINS python materials/openpbr baking gpu painting layers fill)
+set(BTS_HOST_DOMAINS python materials/openpbr baking gpu painting layers fill ui/panels)
 set(BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR} ${BTS_HOST_SOURCE_DIR}/../harness)
 foreach(_bts_domain IN LISTS BTS_HOST_DOMAINS)
   list(APPEND BTS_SOURCE_INCLUDE_DIRS ${BTS_HOST_SOURCE_DIR}/${_bts_domain})
@@ -1208,7 +1208,7 @@ add_dependencies(bts-cpu-tests bts-brush-bounds-tests)
 
 target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/../harness/MaskFillGpuDemo.cc)
 
-add_executable(bts-numeric-locale-tests ${BTS_HOST_SOURCE_DIR}/../tests/numeric_locale_test.cc ${BTS_HOST_SOURCE_DIR}/DisplacementPanel.cc)
+add_executable(bts-numeric-locale-tests ${BTS_HOST_SOURCE_DIR}/../tests/numeric_locale_test.cc ${BTS_HOST_SOURCE_DIR}/ui/panels/DisplacementPanel.cc)
 target_include_directories(bts-numeric-locale-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-numeric-locale-tests PRIVATE cxx_std_20)
 target_compile_options(bts-numeric-locale-tests PRIVATE -UNDEBUG)
@@ -1434,7 +1434,7 @@ add_dependencies(bts-cpu-tests bts-material-layering-authoring-tests)
 # Declaration-default admission needs the node declaration translation header.
 set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/MaterialLayerParameterSurface.cc APPEND PROPERTY
   INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/source/blender/blentranslation")
-target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/MaterialLayerParameterImportJob.cc ${BTS_HOST_SOURCE_DIR}/MaterialLayerParameterReadback.cc ${BTS_HOST_SOURCE_DIR}/MaterialLayerParameterSurface.cc ${BTS_HOST_SOURCE_DIR}/MaterialLayerParameterIO.cc ${BTS_HOST_SOURCE_DIR}/MaterialLayeringPanel.cc ${BTS_HOST_SOURCE_DIR}/MaterialLayeringUi.cc ${BTS_HOST_SOURCE_DIR}/../tests/material_layering_panel_test.cc ${BTS_HOST_SOURCE_DIR}/../tests/shader_controller_target_test.cc ${BTS_HOST_SOURCE_DIR}/../tests/material_layering_source_pixels_test.cc)
+target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/MaterialLayerParameterImportJob.cc ${BTS_HOST_SOURCE_DIR}/MaterialLayerParameterReadback.cc ${BTS_HOST_SOURCE_DIR}/MaterialLayerParameterSurface.cc ${BTS_HOST_SOURCE_DIR}/MaterialLayerParameterIO.cc ${BTS_HOST_SOURCE_DIR}/ui/panels/MaterialLayeringPanel.cc ${BTS_HOST_SOURCE_DIR}/MaterialLayeringUi.cc ${BTS_HOST_SOURCE_DIR}/../tests/material_layering_panel_test.cc ${BTS_HOST_SOURCE_DIR}/../tests/shader_controller_target_test.cc ${BTS_HOST_SOURCE_DIR}/../tests/material_layering_source_pixels_test.cc)
 
 # Keep the opaque loader probe on the real Cycles ABI and flags.
 if(TARGET bf_intern_cycles)
