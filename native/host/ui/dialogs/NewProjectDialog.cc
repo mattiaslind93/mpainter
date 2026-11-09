@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "TextureExtentChoices.hh"
 #include "NewProjectDialog.hh"
 #include "ProjectTemplate.hh"

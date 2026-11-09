@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Linked ColorRamp overrides affect the runtime copy, never the source archive.
 {
  std::unique_ptr<Main,decltype(&BKE_main_free)> owner(BKE_main_new(),BKE_main_free);

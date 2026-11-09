@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Height policy's two test actors on a fully rebuilt immutable production snapshot.
 
 This module does not refresh production objects or replay fork patches.  It uses

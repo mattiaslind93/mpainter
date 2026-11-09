@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #ifdef BTS_NATIVE_DISPLACEMENT_ONLY
 #include "MeshBaker.hh"
 #include "CLG_log.h"

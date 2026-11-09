@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native clipping reproduction and live app-global Viewport preferences."""
 from parity_test_environment import private_display
 import argparse,json,os,shutil,subprocess,re

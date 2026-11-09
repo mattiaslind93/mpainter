@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Explicit test actor, included in the existing private artist namespace.
 // Requires the separately reviewed SurfaceGraphSnapshot/Observation overlay.
 class SurfaceArtist final:public QObject {

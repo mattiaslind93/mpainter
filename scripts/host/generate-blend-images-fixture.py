@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Small private two-tile image material; originals are never artist files."""
 import bpy,json,sys
 from pathlib import Path

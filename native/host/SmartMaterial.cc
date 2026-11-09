@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "SmartMaterial.hh"
 namespace bts {
 // Legacy descriptors must not recreate a removed bundled material recipe.

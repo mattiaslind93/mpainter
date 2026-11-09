@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "GPU_host_texture_memory.hh"
 #include "ViewportResidency.hh"
 #include "NativeGpuImages.hh"

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "SkewGeometry.hh"
 #include "BLI_kdopbvh.hh"
 #include "BLI_math_geom.h"

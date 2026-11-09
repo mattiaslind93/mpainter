@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """GUI-New bake defaults, live disabled reasons, native maps, Undo and saved preferences."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess

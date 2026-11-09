@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Private CPU native index/cache + six explicit-library input regressions.
 Run inside the build container, with nice -n19. Does not create a GL context.
 """

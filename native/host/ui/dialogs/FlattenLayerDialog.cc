@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "FlattenLayerDialog.hh"
 #include "FillTextureIO.hh"
 #include "ImageSequence.hh"

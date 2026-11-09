@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Blender background fixture: run with --python this.py -- /path/material.blend."""
 import sys
 import bpy

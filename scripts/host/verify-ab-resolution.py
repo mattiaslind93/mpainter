@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Ten-minute native RTX run, full-resolution frame log and external VRAM pressure."""
 import argparse
 import os

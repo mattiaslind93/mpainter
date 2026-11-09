@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Verify close latency, helper semantics and persistence using a private Qt stage."""
 import argparse
 import json

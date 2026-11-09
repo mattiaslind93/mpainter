@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Install checksum-verified NVIDIA CUDA compiler resources under the BTS workspace."""
 import argparse,filecmp,hashlib,json,os,shutil,tarfile,urllib.request
 from pathlib import Path

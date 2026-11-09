@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Explicit owner-context backend diagnostics; no artist map/Normal UI.
 #include "MaterialLayeringSourcesGpuTap.hh"
 #include "MaterialLayeringCyclesSourceProbe.hh"

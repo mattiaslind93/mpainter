@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Headless /proc fixtures: protect real sessions, permit isolated test processes."""
 import tempfile
 from pathlib import Path

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Generate and render an isolated source-build fixture, without user preferences."""
 import argparse
 import hashlib

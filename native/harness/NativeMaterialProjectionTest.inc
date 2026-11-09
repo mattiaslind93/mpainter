@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 QJsonObject projection_report;
 {
  const auto saved_context=context;const auto saved_points=points;const auto restore=qScopeGuard([&]{context=saved_context;points=saved_points;std::memcpy(packed.data(),points.data(),surface_bytes);GPU_texture_update(surface.get(),GPU_DATA_UINT,packed.data());});

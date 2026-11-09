@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Apply the reviewed host patch series to the pinned local Blender checkout.
 
 Replay overlapping patches in a private file tree before touching the checkout.

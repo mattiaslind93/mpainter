@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include "PythonConsole.hh"

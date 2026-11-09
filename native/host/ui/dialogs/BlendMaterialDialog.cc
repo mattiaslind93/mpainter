@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "LongOperationCancel.hh"
 #include "Theme.hh"
 #include "BlendMaterialDialog.hh"

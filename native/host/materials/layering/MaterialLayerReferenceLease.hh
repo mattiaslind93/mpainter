@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Explicit diagnostic ownership of three canonical inputs. No ordinary caller
 // acquires this lease; without a live record the shader attach path is unchanged.

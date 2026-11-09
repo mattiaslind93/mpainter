@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Initialized CPU-owner fixture: real encoded files, workers and source archives.
 // No sampler, uploader, GPU object or shader program is created.

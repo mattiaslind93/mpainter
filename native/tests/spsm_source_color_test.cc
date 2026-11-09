@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma push_macro("main")
 #undef main
 #define main spsm_source_bitmap_previous_main

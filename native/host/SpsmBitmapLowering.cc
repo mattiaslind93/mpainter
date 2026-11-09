@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "SpsmBitmapLowering.hh"
 #include "ResourceAvailability.hh"
 #include "SpsmBitmapFields.hh"

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Sparse curved mouse/pen input, immediate tail and frame-independent raster proof."""
 from parity_test_environment import private_display
 import argparse,json,math,os,re,subprocess

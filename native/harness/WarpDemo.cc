@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "WarpDemo.hh"
 #include "WarpIO.hh"
 #include <QAction>

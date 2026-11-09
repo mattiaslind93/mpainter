@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "SurfacePathIO.hh"
 #include <QJsonArray>
 #include "RibbonIO.hh"

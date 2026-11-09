@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "NativeMaterialHostQueueDemo.hh"
 #include "BlenderHost.hh"
 #include "NativeMaterialSourceLoader.hh"

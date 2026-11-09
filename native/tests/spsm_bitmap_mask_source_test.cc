@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #define main spsm_previous_source_bitmap_main
 #include "spsm_source_bitmap_test.cc"
 #undef main

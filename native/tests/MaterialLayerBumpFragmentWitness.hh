@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Test-only EEVEE fragment witness. It NEVER evaluates Bump through compute.
 // Retain the actual Surface and Principled first branch; temporarily replace

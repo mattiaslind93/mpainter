@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Exercise the production artist callbacks, frame queue and history unchanged.
 // A test-only call bridge links either exact baseline or exact fixed diff code;
 // the production artist callbacks, queues and history remain identical.

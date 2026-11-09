@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Compare the export-only C++ conversion against Mattias's Blender/NumPy reference. Requires NumPy and SciPy."""
 import sys,types,contextlib,io,subprocess,json,argparse,os
 from pathlib import Path

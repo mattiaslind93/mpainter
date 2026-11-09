@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Relink a read-only host build with the HDR rotation regression driver.
 
 Usage: BUILD_DIR OUTPUT_DIR DRIVER_SOURCE [current]

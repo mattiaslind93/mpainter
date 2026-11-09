@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "ColorPickerDemo.hh"
 #include "ColorPicker.hh"
 #include <QAction>

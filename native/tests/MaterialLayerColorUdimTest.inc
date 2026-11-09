@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Real original EXRs, native OCIO/owned nodes, PartialWrite and source-hidden
 // disk Open. Explicit diagnostic CPU tests; no interactive compositor or GL.
 QJsonObject verify_linear_color_udim_carriers(){

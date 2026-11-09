@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Observe two fresh EEVEE sampling terminals through normal product redraws.
 
 This verifies copied postdraw state and a later Paint, never a GPU fence,

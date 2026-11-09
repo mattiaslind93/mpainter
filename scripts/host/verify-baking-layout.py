@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Offscreen 1024/1920 painting vs baking layout captures."""
 from parity_test_environment import private_display
 import argparse,json,os,subprocess

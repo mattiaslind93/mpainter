@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """CPU-only stale-proof admission checks; no Blender, GPU or large files."""
 import importlib.util
 import json

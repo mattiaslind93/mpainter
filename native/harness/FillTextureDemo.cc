@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "FillTextureDemo.hh"
 #include <QAction>
 #include <QApplication>

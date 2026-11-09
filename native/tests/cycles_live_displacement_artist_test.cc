@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "CyclesLiveDisplacementArtist.hh"
 #include "CyclesLiveDisplacementProbe.hh"
 // Complete Qt headers precede Blender/AT/GPU headers (no QtWidgets umbrella).

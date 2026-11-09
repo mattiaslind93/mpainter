@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "NativeMaterialSourcePolicy.hh"
 #include "NativeMaterialGpuCompiler.hh"
 #include "NativeWorldNormalObjectContext.hh"

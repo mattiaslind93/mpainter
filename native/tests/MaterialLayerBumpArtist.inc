@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Included only by the shipped PD149 actor TU, inside its private namespace.
 class BumpArtist final:public QObject {
  using Vector=pd149_bump_test::Vector;

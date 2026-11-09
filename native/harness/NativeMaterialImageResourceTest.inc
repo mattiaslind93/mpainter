@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Three independently owned material Mains share a single concurrent decode.
 {
  const auto root=qEnvironmentVariable("BTS_RESOURCE_CACHE");QDir().mkpath(root);QTemporaryDir folder(root+"/shared-image-XXXXXX");require(folder.isValid(),"Native shared source fixture directory missing");const auto file=folder.filePath("shared-4096.png");QImage image(4096,4096,QImage::Format_RGBA8888);image.fill(QColor(64,128,192));require(image.save(file),"Cannot create native shared image fixture");

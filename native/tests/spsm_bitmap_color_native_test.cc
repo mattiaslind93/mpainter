@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include <QCoreApplication>
 // Reuse only source-inspection/context helpers; never execute the old oracle.
 #pragma push_macro("main")

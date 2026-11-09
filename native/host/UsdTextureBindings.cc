@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "UsdTextureBindings.hh"
 #include "TextureExport.hh"
 #include <QDir>

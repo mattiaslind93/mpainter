@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Test-only: compile with the exact reviewed Cycles blender/image.cpp flags.
 #include "MaterialLayeringCyclesSourceProbe.hh"
 #include "blender/image.h"

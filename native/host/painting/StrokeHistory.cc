@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "StrokeHistory.hh"
 #include "ResourceAvailability.hh"
 #include "PaintRecipe.hh"

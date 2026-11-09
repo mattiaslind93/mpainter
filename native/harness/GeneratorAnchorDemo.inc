@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
         const auto generator_consumer=[&]{select_content_anchor_demo(anchor_demo_consumer,anchor_demo_fill,document->set(snapshot.materials[0].session_id).layers.back().mask.has_value());update_inspection(document->set(snapshot.materials[0].session_id).selected_mask?bts::InspectionMode::Mask:bts::InspectionMode::Material);};
         const auto source=[&](int slot){auto *field=workspace->findChild<QComboBox *>(QString("generatorAnchorSource%1").arg(slot));const int index=field->findData(anchor_demo_point.toString());if(index<1)qFatal("Generator anchor source missing");field->setCurrentIndex(index);};
         const auto source_channel=[&](int value){auto *field=workspace->findChild<QComboBox *>("generatorAnchorChannel0");const int index=field->findData(value);if(index<0)qFatal("Generator anchor channel missing");field->setCurrentIndex(index);};

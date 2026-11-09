@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Approved mPainter branding on an owned Xvfb / RTX session, never the desktop."""
 import argparse,json,os,statistics,subprocess,hashlib
 from pathlib import Path

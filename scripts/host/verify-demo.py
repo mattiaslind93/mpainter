@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Run the real host, inspect its process tree, and compare presented EEVEE frames."""
 import argparse
 import json

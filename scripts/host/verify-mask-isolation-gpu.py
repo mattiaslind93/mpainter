@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Real Alt-click mask isolation, GPU pixels, paint/Undo and packed reopen."""
 import argparse,json,os,re,subprocess
 from pathlib import Path

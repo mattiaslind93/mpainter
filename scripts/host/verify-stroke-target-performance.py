@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Qt widget paint/mask timings on two real imported UDIM planes; no desktop input."""
 from parity_test_environment import private_display
 import argparse,json,math,os,re,subprocess

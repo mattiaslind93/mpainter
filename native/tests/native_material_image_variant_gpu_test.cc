@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #define BTS_IMAGE_VARIANT_NO_MAIN
 #include "native_material_image_variant_test.cc"
 #include "NativeMaterialGpuProgram.hh"

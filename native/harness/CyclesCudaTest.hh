@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // CUDA and OptiX must each render without CPU fallback or a Qt/OpenGL viewport.
 namespace bts {

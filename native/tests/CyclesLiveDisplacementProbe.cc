@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Test-only: compile with the exact frozen Cycles blender/session.cpp command.
 #include "CyclesLiveDisplacementProbe.hh"
 #include <Python.h>

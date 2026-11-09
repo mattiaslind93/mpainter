@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Pure admission tests; never compile or launch Blender/Cycles."""
 import copy
 import importlib.util

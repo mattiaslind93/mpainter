@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Pure CPU transport checks over the actual archived Blender payload. The
 // initialized availability fixture separately verifies real Image provenance.

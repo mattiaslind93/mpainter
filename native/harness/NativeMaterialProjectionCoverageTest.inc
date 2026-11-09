@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 {
  auto *tree=make_tree("BTS_Coord_UV");NativeMaterialGpuProgram program(*tree,0,0);std::uint64_t checks=0;
  // Longitude seams, near-poles and the explicitly defined zero-radius center.

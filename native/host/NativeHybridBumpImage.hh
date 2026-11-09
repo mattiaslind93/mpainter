@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 #include "BKE_idprop.hh"
 #include "DNA_image_types.h"

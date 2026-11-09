@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Private fixture, generated before the host process starts."""
 import bpy,json,sys
 from pathlib import Path

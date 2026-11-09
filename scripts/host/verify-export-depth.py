@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """U: real GUI per-output encoding choices, headers and packed project roundtrip."""
 from parity_test_environment import private_display
 import argparse,json,os,struct,subprocess

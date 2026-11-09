@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 namespace bts::gpu_warp {
 // Same bounded Hermite projection contract as WarpGrid::project. Only the

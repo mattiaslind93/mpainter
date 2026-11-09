@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Included in MapsArtist. Reuses its actual File/Shelf/Undo/Save/cold workflow.
 // These explicit correctness readbacks are never part of the product export.
  bool parameter_mode_=qEnvironmentVariableIsSet("BTS_PD149_PARAMETER_PACKAGE");

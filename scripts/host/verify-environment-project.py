@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Fresh host restores a custom environment from packed bytes after its source/cache are hidden."""
 import argparse,hashlib,json,os,subprocess,time
 from pathlib import Path

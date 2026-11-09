@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Exercise cache creation and eye release on an owned GPU display.
 
 Respects the existing no-background-GPU and active-session guards. Run only

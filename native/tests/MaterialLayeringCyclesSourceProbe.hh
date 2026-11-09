@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Test-only opaque ABI boundary: its TU uses the exact frozen Cycles image.cpp
 // command, never host/Qt flags. Image must remain alive until the probe retires.

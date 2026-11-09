@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // One shader dispatch selects object transforms by the packed texel owner ID.
 {
  const auto saved=context;const auto original=points;const auto restore=qScopeGuard([&]{context=saved;points=original;std::memcpy(packed.data(),points.data(),surface_bytes);GPU_texture_update(surface.get(),GPU_DATA_UINT,packed.data());});

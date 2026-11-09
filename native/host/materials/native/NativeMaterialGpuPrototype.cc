@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "NativeMaterialBundleRoundtrip.hh"
 #include "NativeMaterialImageUpload.hh"
 #include "NativeMaterialResource.hh"

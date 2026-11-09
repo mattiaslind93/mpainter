@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Bounded native New-project proof; run inside bts-build."""
 import argparse
 import hashlib

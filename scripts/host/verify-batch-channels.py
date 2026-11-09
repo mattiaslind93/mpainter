@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """PD142: native channel dialog, cancellation, scope, single-step Undo and packed Open."""
 from parity_test_environment import private_display
 import argparse,json,os,shutil,subprocess

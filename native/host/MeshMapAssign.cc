@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "MeshMapImport.hh"
 namespace bts {
 std::vector<std::string> assign_utility_maps(TextureDocument &document,

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 import importlib.util,os,re,subprocess,sys,tempfile,time
 from pathlib import Path
 root=Path(__file__).resolve().parents[2]

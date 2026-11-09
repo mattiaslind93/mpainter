@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Explicit read-only Blender catalog browser, previews, shared preset and packed Open."""
 import argparse,hashlib,json,os,re,struct,subprocess
 from pathlib import Path

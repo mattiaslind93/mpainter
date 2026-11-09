@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Compares the running version with the newest published release and reports an
 // update only when one is genuinely newer. One public request, no identifiers

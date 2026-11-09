@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "MaterialLayeringGpuTap.hh" // Native GPU headers precede QWidget/GL widget headers.
 #include "MaterialLayeringSourcesGpuTap.hh"
 #include "GpuPerformance.hh"

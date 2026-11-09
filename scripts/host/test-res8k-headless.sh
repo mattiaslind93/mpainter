@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 set -euo pipefail
 # Invoke inside distrobox bts-build. One private X server and one 128px project.
 root=${BTS_ROOT:-/mnt/mpainter-phase1}

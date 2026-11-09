@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Measure raw float Pointiness bakes against the exact exported Cycles surface."""
 import json
 import pathlib

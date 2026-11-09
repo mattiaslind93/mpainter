@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Own retained Add/Multiply graphs, shared fanout, binary-exact operands; no images."""
 import bpy
 import json

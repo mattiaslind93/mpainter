@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Named settings validated on the pinned native RNA; see docs/user-startup-environment.md.
 R"profile({
   "shading": {

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
       // Diagnostic state only; included at the beginning of the GUI state
       // callback, before other explicit actor branches. No interactive work.
       if(qEnvironmentVariableIsSet("BTS_BJ_PROJECTION_UI")){

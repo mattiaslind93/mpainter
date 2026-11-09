@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Run on graphical Linux HOST, evdev installed: kernel→Wayland→XWayland→Qt→paint.
 Adds a virtual tablet after startup, removes it, then creates another tablet.
 Physical Wacom/replug/suspend remain a separate Mattias acceptance test.

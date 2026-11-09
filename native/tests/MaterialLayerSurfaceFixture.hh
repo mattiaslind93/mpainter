@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Test-only portable fixture, consumed later through the REAL product Import.
 // No Main/Image/GPU/document is created or changed here; only fresh package IO.

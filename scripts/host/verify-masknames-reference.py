@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Compile/render the read-only mfPainter source, then compare all ten masks.
 
 Run in bts-build under xvfb-run and run-parity-headless.sh. All generated

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Real Qt drag events: nesting, root extraction, collapsed and multi-selection."""
 from parity_test_environment import private_display
 import argparse,json,os,subprocess

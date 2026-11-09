@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native PD-121 object-space Edge Length approximation, with original-source checks."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess

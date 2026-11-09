@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native double-click naming, cancellation, document history and packed roundtrip."""
 import argparse,json,os,subprocess
 from pathlib import Path

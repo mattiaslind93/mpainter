@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Private coherent actual-host Cycles live-image regression; no desktop input."""
 import argparse, concurrent.futures, hashlib, json, os, re, shlex, subprocess, shutil, sys
 import resource

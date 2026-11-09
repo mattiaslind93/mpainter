@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 {
  set=TextureSet{};set.texture_resolution=512;set.precision.fill(ChannelPrecision::RGB32F);set.precision[4]=ChannelPrecision::L32F;set.ao_channel=true;set.users[0].allocated=set.users[0].present=true;set.users[0].precision=ChannelPrecision::L32F;set.displacement.channel=set.displacement.allocated=true;set.displacement.precision=ChannelPrecision::L32F;
  auto &producer=set.layers.front();producer.kind=LayerKind::Fill;producer.visible=false;producer.channels.fill(false);producer.opacity.fill(0);producer.ao_enabled=false;producer.values.base_color={.2,.4,.6,1};producer.values.metallic=.3;producer.values.roughness=.7;producer.values.bump=-.25;producer.values.ambient_occlusion=.4;producer.displacement.value=-.002;producer.users[0].value=2.25;producer.mask=LayerMask{};producer.mask->background=0;

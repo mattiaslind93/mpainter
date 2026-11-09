@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Baseline mask edit -> fresh native host -> mask edit and save. Run inside bts-build."""
 import argparse
 import json

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "OpenPbrShader.hh"
 #include "OpenPbrCompatibility.hh"
 #include "SceneSnapshot.hh"

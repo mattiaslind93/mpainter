@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Deliberately identical node graphs with different external parameter layouts.
 // Without a hosted pass key, the second program reuses the first binding index.
 QJsonArray binding_cases;

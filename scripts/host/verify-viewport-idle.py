@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Full workspace idle profile on a PRIVATE Xvfb display; never artist input.
 
 Software rendering measures Qt idle scheduling, not RTX viewport throughput.

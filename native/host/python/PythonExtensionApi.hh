@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 namespace bts {
 inline constexpr const char *python_extension_api_source = R"BTS_EXT(

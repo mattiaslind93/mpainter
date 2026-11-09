@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Real stencil gestures, GPU brush masking and packed project roundtrip."""
 import argparse,json,os,re,subprocess,signal
 from pathlib import Path

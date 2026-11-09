@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Explicit private native BK proof. Never attaches a window to the desktop."""
 from pathlib import Path
 import argparse,hashlib,json,os,struct,subprocess,time,zlib

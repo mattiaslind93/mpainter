@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Admission negatives only; no native fixture, shader or UI runtime claim."""
 import copy
 import importlib.util

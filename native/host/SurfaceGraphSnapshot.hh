@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Test diagnostic values only. No native identity is encoded as an address.
 #include <array>

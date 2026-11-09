@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Existing no-GL dispatcher fixture: real originals, snapshot writer and cold
 // reader. No compositor/readback; assertions stay active after Blender headers.
 int verify_raw_udim_original_carriers(){

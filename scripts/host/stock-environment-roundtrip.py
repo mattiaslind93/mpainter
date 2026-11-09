@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Validate and resave a packed custom environment with unmodified Blender."""
 import bpy,hashlib,json,sys
 from pathlib import Path

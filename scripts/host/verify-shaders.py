@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Real Qt shader identity/parameters/history, ordinary Blender nodes and packed roundtrip."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess

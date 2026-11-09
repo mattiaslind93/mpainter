@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Multichannel material projection gestures, GPU authoring and packed roundtrip."""
 import argparse,json,os,re,subprocess,signal
 from pathlib import Path

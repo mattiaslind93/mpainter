@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """List which tracked C/C++ files mPainter owns and may format.
 
 The list comes from git, not from the disk: `git ls-tree -r -z` at one commit.

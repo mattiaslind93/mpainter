@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Show the actual embedded JL01 previews, not loose authoring render files."""
 import argparse
 import base64

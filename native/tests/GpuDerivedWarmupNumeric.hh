@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Diagnostic only: actual compiled derived programs, both formats and targets.
 // Binary-fraction inputs make destination-half rounding exact without changing

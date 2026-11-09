@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Called with real decoded originals and an untouched compatible target. No GL.
 QJsonObject verify_linear_color_udim_package(const MaterialLayerParameters &value,const TextureSet &target,const MaterialParameterDecoder &decoder,const MaterialParameterProcessor &processor,const MaterialParameterTargetValidator &native_gate){
  const auto json=material_layer_parameters_json(value);assert(json["version"]==2&&json["source_members_version"]==4);

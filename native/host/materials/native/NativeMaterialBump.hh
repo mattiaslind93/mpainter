@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 #include "BKE_node.hh"
 #include "BLI_string.h"

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Explicit GPUPass lifecycle/query/shared-compute diagnostic. This replaces the
 // test pass's codegen base with static compute info: no material appearance or

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // A titled group inside the Properties panel: a heading that folds the group
 // away, the controls under it, and the spacing the interface guide gives a

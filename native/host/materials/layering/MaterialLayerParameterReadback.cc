@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "MaterialLayerParameterReadback.hh"
 #include "MaterialLayerParameterIO.hh"
 #include "MaterialLayeringSourceSnapshots.hh"

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Fixture tests for scripts/mp.py. Every test uses its own temporary git repository."""
 
 import importlib.util

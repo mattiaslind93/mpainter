@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Real Qt/RTX overlay profile on an authorized copy, owned Xvfb only."""
 import argparse,json,math,os,statistics,subprocess
 from pathlib import Path

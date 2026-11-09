@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "BLI_listbase.h"
 #include "NativeMaterialGpuProgram.hh"
 #include "NativeMaterialGraph.hh"

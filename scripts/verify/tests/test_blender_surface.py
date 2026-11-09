@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Fixture tests for scripts/verify/blender_surface.py."""
 
 import contextlib

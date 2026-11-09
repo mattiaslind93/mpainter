@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Keep existing worker ownership/cache/original-source regressions mandatory.
 #define main spsm_existing_source_test_main
 #include "spsm_source_test.cc"

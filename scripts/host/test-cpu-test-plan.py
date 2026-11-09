@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """CPU-only selection/generation regressions. Never starts an app or renderer."""
 import json
 import os

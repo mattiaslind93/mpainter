@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Normalize build metadata and use neutral color-space display names.
 
 Interoperability aliases remain unchanged so imported files keep their color meaning.

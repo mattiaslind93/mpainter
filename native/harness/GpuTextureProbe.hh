@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 #include "GPU_compute.hh"
 #include "GPU_shader.hh"

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Read the explicitly curated CMake CPU target group, never scan executables."""
 import json
 from pathlib import Path

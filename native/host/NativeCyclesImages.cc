@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "NativeCyclesImages.hh"
 #include "NativeCyclesImageCache.hh"
 #include "NativeCyclesPublication.hh"

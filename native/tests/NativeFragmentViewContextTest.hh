@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // CPU admission and the exact production queue/scheduler, without a GPU owner.
 #include "NativeMaterialContext.hh"

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Focused normal-image CPU/GPU tests against immutable native link inputs.
 
 The default CPU suite never creates a GPU context. The optional GPU suite uses

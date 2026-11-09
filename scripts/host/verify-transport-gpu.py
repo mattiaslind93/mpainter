@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native Clone/Smudge controls, Undo, packed reopen and GPU-only authoring.
 The process logger is permitted; all Blender/Qt owner markers must share one PID.
 """

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Small metadata-admission negatives; no compiler, Blender, or GPU execution."""
 import copy
 import importlib.util

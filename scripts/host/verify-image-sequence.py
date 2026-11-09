@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native UDIM grouping from one file, per-channel tile match and packed Open."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess

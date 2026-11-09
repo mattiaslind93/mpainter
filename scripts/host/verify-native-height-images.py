@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Private explicit image Raw Height actor; runtime only, never builds/installs.
 
 Invoke inside bts-build with nice19 after a coherent approved actor build.

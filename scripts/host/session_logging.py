@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Timestamped stdout/stderr tee; bounded logs, retaining active session files."""
 import argparse
 from datetime import datetime

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Own synthetic PD149 three-set fixture; no user source or Blender dependency."""
 from pathlib import Path
 

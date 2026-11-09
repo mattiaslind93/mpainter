@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Build and verify explicit native UV Base Color browser previews.
 
 Run inside the compiler container. Supply a frozen host link snapshot, SDK data,

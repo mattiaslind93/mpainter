@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native W regression, invisible Qt workspace on the RTX offscreen surface.
 
 All sources are synthetic and all preferences/recovery/cache paths are isolated.

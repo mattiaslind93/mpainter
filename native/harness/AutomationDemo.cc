@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "ViewportDemoCapture.hh"
 #include "PythonConsole.hh"
 #include <QAction>

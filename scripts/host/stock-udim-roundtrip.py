@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Validate ordinary packed UDIM shaders in the unmodified Blender baseline."""
 import bpy
 import json

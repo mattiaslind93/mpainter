@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native planar fill, culling/transform controls, independent Texture Sets and packed Open."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess

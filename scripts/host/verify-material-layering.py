@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Run the shipped PD149 uniform UI actor on an already-built matching host."""
 import argparse
 import hashlib

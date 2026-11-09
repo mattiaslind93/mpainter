@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "OrderedRawRgbFixture.hh"
 #include "OrdinaryColorSource.hh"
 #include "TextureLoadController.hh"

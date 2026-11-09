@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """BO real Shelf/editor acceptance, followed by an independent process restart.
 
 Run inside bts-build with nice -n 19. Each phase owns a private Xvfb/EGL

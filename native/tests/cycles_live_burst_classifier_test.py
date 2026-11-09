@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Synthetic burst admission only; no Qt/Blender initialization or GPU IO."""
 import copy
 import importlib.util

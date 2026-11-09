@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "MeshBakeFilter.hh"
 #include "IMB_imbuf.hh"
 #include "IMB_imbuf_types.hh"

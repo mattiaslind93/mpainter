@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Test-only reference retained from the pre-BVH GPU implementation.
 #pragma once
 #include "DisplacementBake.hh"

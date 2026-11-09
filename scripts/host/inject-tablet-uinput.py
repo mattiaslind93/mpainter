@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Controlled Linux kernel tablet injection for verify-tablet-xi2.py.
 Run on the graphical host (evdev required). A temporary virtual device is removed
 on close. This does not read, grab or change the physical Wacom device.

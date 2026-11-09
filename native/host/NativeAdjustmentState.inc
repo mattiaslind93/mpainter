@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
       // Read-only state for the explicit BM actor. Pixel diagnostics are never
       // requested by its pointer handler or by ordinary per-frame snapshots.
       if(qEnvironmentVariableIsSet("BTS_BM_ADJUSTMENT_DEMO")){

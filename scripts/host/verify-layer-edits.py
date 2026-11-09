@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Real 2048px GUI layer edits: responsive preview, exact finalize and persistence."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess

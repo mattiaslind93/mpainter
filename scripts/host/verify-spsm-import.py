@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Direct original-source SPSM import via artist controls, history and packed Open."""
 import argparse
 import hashlib

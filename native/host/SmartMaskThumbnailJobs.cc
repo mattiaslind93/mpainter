@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "Theme.hh"
 #include <epoxy/gl.h>
 #include "SmartMaskThumbnailJobs.hh"

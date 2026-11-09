@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "NativeMaterialGraph.hh"
 #include "NativeMaterialBump.hh"
 #include "NativeMaterialAmbient.hh"

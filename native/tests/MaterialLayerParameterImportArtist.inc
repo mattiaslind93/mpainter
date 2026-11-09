@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Product Import uses its real button, folder chooser and OwnerWorkerJob. The
 // older diagnostic publication profile remains an independent control.
  bool import_ui_=qEnvironmentVariableIsSet("BTS_PD149_PARAMETER_IMPORT");

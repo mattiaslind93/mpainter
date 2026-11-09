@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Real Quick Mask gestures, GPU overlay and packed project isolation."""
 import argparse,json,os,re,subprocess,signal
 from pathlib import Path

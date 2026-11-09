@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Native-only persistence adapter. Keep Blender sharing types out of the
 // model/UI-facing MaterialLayeringSources.hh.

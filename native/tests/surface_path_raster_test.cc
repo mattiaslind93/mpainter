@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "SurfacePathRaster.hh"
 #include "PaintRecording.hh"
 #ifdef NDEBUG

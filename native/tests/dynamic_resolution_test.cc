@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "PaintPixels.hh"
 #include "TextureExtent.hh"
 #include "TextureDocument.hh"

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Test-only native publication of the portable values. No interactive Import.
  bool roundtrip_=qEnvironmentVariableIsSet("BTS_PD149_PARAMETER_RECONSTRUCT")||qEnvironmentVariableIsSet("BTS_PD149_PARAMETER_IMPORT");
  bool roundtrip_producer_=qEnvironmentVariableIsSet("BTS_PD149_PARAMETER_ROUNDTRIP_PRODUCER");

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Invoked by CTest after building bts-file-browser-native-check. Linux native
 # thumbnails use XDG_CACHE_HOME; every writable application path is private.
 foreach(required BROWSER_EXECUTABLE BROWSER_BLEND BROWSER_OCIO BROWSER_OUTPUT_PARENT)

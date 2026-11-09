@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Retain the existing strict raw bitmap/scalar-Levels fixture builders.
 #pragma push_macro("main")
 #undef main

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Repeat only the unchanged six-second actor against one new full integration."""
 import argparse
 import json

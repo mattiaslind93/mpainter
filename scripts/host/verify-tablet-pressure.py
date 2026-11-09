@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """V: full Qt viewport path, pressure/flow, button loss, master ordering and batching.
 Synthetic events verify app routing; they do not certify a physical Wacom/driver.
 """

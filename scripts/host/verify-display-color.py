@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native GPU color/tone post effects, all exposed parameters, history and packed settings."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess

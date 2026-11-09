@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "QuickMask.hh"
 #include "QuickMaskOverlay.hh"
 #include <cassert>

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Build a target-qualified native include closure against frozen host inputs.
 
 The snapshot must include the exact source HEAD, host commands and VALID Ninja

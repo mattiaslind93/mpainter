@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Run the real Qt/embedded-Python regression without a desktop or GPU context.
 
 Reuse the built host objects, replacing only main in a private executable. Neither

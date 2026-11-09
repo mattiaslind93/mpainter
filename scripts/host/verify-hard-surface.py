@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """PD143 native hard-surface projection: measured boundary alignment, distortion and preservation."""
 from parity_test_environment import private_display
 import argparse,json,math,os,subprocess

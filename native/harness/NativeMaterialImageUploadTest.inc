@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // First GPU residency is packetized before a native source can be activated.
 {
  std::unique_ptr<Main,decltype(&BKE_main_free)> owner(BKE_main_new(),BKE_main_free);

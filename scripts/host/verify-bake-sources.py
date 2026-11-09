@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native Alembic/USD high-poly, custom cage, frame and unit regression."""
 import argparse,json,os,subprocess
 from pathlib import Path

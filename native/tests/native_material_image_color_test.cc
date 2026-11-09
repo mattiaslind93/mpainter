@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Independent resource-pool regression. This executable creates no GPU context.
 #include <QCoreApplication>
 #include <QCryptographicHash>

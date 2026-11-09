@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Permanent synthetic native CPU regression. Caller supplies the initialized
 // application/host on its owner thread; this helper constructs neither.

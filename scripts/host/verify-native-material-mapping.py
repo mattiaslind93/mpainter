@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Build a coherent private host ABI and verify linked Mapping without desktop input.
 
 By default every native translation unit is rebuilt. A verified complete Ninja

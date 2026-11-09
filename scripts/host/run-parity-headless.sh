@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Invoke inside bts-build, as a child of: env -u WAYLAND_DISPLAY xvfb-run -a
 set -euo pipefail
 unset WAYLAND_DISPLAY

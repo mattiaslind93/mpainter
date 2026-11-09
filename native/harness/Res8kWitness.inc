@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Explicit low-resolution fixtures for the headless dropdown/shelf proof.
 if (parser.isSet("gui-fix-demo") && workspace && qEnvironmentVariableIsSet("BTS_RES8K_DEMO")) {
   const auto add = [&](const char *name, std::function<void()> run) {

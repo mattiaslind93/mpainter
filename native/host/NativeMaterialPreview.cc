@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "NativeMaterialPreview.hh"
 #include "BlenderHost.hh"
 #include "NativeMaterialGpuLibrary.hh"

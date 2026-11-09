@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Headless interchange uses the production codecs and evaluator. No Blender linkage.
 #include "AssetCatalog.hh"
 #include "BuiltinSmartMasks.hh"

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Direct Program diagnostic only: exercise Blender's actual tiled image node.
 // This does not broaden the production single-image preparation admission.
 {

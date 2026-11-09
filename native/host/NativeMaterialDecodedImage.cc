@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "NativeMaterialDecodedImage.hh"
 #include "NativeMaterialImageSource.hh"
 #include "ResourceAvailability.hh"

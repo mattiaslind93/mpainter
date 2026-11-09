@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Apply the reviewed, idempotent Qt 6.8.3 dialog persistence patch."""
 import argparse
 from pathlib import Path

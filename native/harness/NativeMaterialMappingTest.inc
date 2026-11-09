@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Exact unadapted-source identity and an independent CPU Euler XYZ oracle.
 QJsonObject mapping_report;
 {

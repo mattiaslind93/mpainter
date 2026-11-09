@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "InlineNameDelegate.hh"
 #include "RenameCommand.hh"
 #include <QApplication>

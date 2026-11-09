@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 {
  // Content anchors expose a channel-local prefix before their marker. The raw
  // cache is independent of parent visibility, mix, mask and enabled channels.

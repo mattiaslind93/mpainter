@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native sRGB authoring / scene-linear storage and one-gesture color history."""
 from parity_test_environment import private_display
 import argparse

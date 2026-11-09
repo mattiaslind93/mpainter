@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Guard the real workspace save path against duplicate full serialization."""
 from pathlib import Path
 root = Path(__file__).resolve().parents[2]

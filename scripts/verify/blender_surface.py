@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Generate docs/blender-surface.md: which Blender headers mPainter's own code includes.
 
   python3 scripts/verify/blender_surface.py --root . --write docs/blender-surface.md

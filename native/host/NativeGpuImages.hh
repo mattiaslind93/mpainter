@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 #include "BKE_image.hh"
 #include "BKE_image_gpu_override.hh"

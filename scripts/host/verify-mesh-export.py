@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Exercise native File/Export Mesh, preserved polygons, triangulation and generated UVs."""
 from parity_test_environment import private_display
 import argparse,collections,json,math,os,re,subprocess

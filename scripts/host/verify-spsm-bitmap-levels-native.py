@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Build/run the isolated real Wood Darken native GPU and packed Open oracle.
 
 The required snapshot contains host-commands.json and immutable local host link

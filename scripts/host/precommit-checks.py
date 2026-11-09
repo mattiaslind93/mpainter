@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Mandatory native inline naming check; runs CPU-only UI tests when an interactive GPU app (bts-host/blender) is active."""
 import json
 import os

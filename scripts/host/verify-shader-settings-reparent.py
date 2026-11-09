@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """CPU-only real ShaderController/WorkspaceShell ownership regression.
 
 Use an immutable native-ABI-compatible host snapshot. Only ShaderController and

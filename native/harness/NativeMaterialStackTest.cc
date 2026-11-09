@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "NativeMaterialStackTest.hh"
 #include "NativeMaterialGraph.hh"
 #include "GpuLayerPreview.hh"

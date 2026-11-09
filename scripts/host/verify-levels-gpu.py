@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native Levels GPU histogram and Auto, controls, Undo and packed reopen."""
 import argparse,json,os,re,subprocess
 from pathlib import Path

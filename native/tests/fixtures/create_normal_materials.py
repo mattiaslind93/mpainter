@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Run Blender in background with --python this.py -- OUTPUT_DIRECTORY."""
 import json
 import math

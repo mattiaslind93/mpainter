@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "DerivedExportCpuDemo.hh"
 #include "ExportConfiguration.hh"
 #include "NativeCompositeJob.hh"

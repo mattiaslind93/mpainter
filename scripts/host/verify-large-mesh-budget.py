@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """BC: generated 5.12M triangle OBJ -> real native New project -> UV/EEVEE, no windows."""
 import argparse,json,os,re,subprocess,time
 from pathlib import Path

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 QJsonObject polynomial_report;
 {
  for(auto &point:points){point.position={.2f,.3f,.4f};point.normal={.6f,0,.8f};point.footprint=0;point.valid=true;}upload_projection_points();

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Real private-prefix admission regression; no BTS/Qt app or desktop input.
 
 Run explicitly inside bts-build, nice19, with a new private build output path.

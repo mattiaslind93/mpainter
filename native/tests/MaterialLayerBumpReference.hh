@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Independent planar geometry oracle for the fragment-only Bump witness.
 // Input positions are evaluated world-space geometry, not assumed unit UV axes.

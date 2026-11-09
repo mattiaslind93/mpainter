@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """File New: portable constant OpenPBR import, source retention, template precedence."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Same registered state test, now exercising every derived slot, not just two.
 void ten_outputs_required(){
  bts::GpuProgramWarmup state{10};std::array<std::unique_ptr<Job>,10> jobs;

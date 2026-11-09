@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Actual BM menus and Smudge/Clone input on an owned two-tile fixture.
 
 No CPU image sampling/composition and no product mutation hook. Explicit GPU

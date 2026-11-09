@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "OpenPbrTexturePackage.hh"
 #include "OpenPbrMaterialX.hh"
 #include "OpenPbrUsd.hh"

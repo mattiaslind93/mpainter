@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Reject new literal UI hex colors outside the shared theme.
 
 Diagnostic pixel fixtures, material/channel data, and branding vector assets are

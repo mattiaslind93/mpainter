@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Exercise the real asynchronous workspace Save and autosave paths offscreen."""
 import argparse,json,os,re,subprocess
 from pathlib import Path

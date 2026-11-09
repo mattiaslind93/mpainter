@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Compare presented UV colors to canonical GPU channel samples; private offscreen GL."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess

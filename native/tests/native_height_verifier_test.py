@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """CPU-only admission negatives; no compiler, native process or GPU is started."""
 import copy
 import json

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Register of the BTS_* environment variables that mPainter's native code reads.
 
 Imported by scripts/mp.py (`mp docs` writes docs/architecture/bts-variables.md,

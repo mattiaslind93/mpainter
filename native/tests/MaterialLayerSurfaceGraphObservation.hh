@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 #include "SurfaceGraphSnapshot.hh"
 #include "DNA_node_types.h"

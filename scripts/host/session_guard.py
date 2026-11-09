@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Protect an interactive user's BTS session from GUI demos and input injection."""
 import os
 from pathlib import Path

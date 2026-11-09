@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Exercise the shipped profile's fail-closed packet check without running its CLI."""
 import ast
 import copy

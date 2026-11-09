@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Keep legacy verification commands on the caller's private Xvfb display."""
 import os
 from pathlib import Path

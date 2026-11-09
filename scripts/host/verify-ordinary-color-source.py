@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Exercise ordinary Color request/install guards using real worker image decoding.
 
 Only a driver and LayerApi are linked against immutable, ABI-matching host

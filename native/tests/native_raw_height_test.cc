@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Phase-one scalar-function proof only: no native Bump-response/UI policy.
 #include "BlenderHost.hh"
 #include "NativeMaterialRawHeightFixture.hh"

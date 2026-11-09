@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Verify that the endurance watchdog can stop only its isolated test process."""
 import os,signal,tempfile,importlib.util
 from pathlib import Path

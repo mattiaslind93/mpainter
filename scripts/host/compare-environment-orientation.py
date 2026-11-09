@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Compare native headless HDR renders, keep theme backgrounds out of the metric.
 
 Requires NumPy, Pillow and SciPy. See verify-environment-orientation.py for the

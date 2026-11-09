@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "FillChannelsDemo.hh"
 #include "GuiFileSelection.hh"
 #include <QAction>

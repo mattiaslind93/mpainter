@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "StrokeTargetPerformanceDemo.hh"
 #include "Performance.hh"
 #include "GpuPerformance.hh"

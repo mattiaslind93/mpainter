@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Replace only GuiFixDemo.cc.o in the coherent ordinary host. All project,
 // policy, candidate publication and history callbacks are production main.
 #include <QtCore>

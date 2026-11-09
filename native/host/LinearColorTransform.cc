@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "LinearColorTransform.hh"
 #include "IMB_colormanagement.hh"
 #include <QCoreApplication>

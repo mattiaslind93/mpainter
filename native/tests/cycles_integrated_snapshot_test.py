@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Small synthetic snapshot admission checks; no real build, fork or GPU IO."""
 import json
 import os

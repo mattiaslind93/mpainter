@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include <QtCore>
 #include "ProjectOpenJob.hh"
 #include "BlenderHost.hh"

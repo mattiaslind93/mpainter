@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Explicit startup diagnostic only; never changes ordinary draw/compile callers.
 #include "BlenderHost.hh"

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // The existing five-source backend suite remains mandatory in this runner.
 #pragma push_macro("main")
 #undef main

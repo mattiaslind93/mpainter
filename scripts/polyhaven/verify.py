@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Validate shipped bytes, native graph closure and bounded UI receipts."""
 import argparse, base64, hashlib, json, math, struct
 from pathlib import Path

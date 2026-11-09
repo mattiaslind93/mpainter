@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native .blend object/collection New, packed Open, reimport and picker cancellation."""
 from parity_test_environment import private_display
 import argparse,hashlib,json,os,re,subprocess

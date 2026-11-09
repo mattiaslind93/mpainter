@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Production dark UI proof on private native GPU surfaces, never the desktop."""
 import argparse, hashlib, json, os, re, signal, subprocess, sys
 from pathlib import Path

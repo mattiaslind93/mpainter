@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "TextureSetResidency.hh"
 #include "MaskEffectContext.hh"
 #include "NativeWorldNormalObjectContext.hh"

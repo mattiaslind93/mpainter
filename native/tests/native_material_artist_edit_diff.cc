@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Give the exact included implementation its own symbol. It cannot accidentally
 // resolve to a weak inline copy from another host object in either executable.
 #define layer_edit_channels native_artist_exact_diff_implementation

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """mPainter native preset <-> stock Blender shader groups, bridge schema 1.
 
 Run with blender -b --python ... -- create CATALOG OUTPUT.blend --repo REPO

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // CPU metadata/ownership fixtures only. No GPU resource, context or fake texture.
 #include "NativeMaterialBakedAoContext.hh"

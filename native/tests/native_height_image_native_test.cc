@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Private diagnostic actor; native/GPU execution requires a coherent approved build.
 // Reuse the established owner fixture and actual product Save/Open boundaries.
 #define BTS_HEIGHT_POLICY_NO_MAIN

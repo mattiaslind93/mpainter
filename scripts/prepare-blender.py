@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Fetch the pinned upstream release and apply the mPainter host integration."""
 import argparse, pathlib, subprocess
 PIN = 'fbe6228777e7d9afefcd61a413844e790ae75db7'

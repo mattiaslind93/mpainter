@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
     if(parser.isSet("gui-fix-demo")&&workspace&&qEnvironmentVariableIsSet("BTS_UV_TEXTURE_DEMO")){
       auto *probe=new QAction(workspace);probe->setObjectName("guiUvTextureProbe");QObject::connect(probe,&QAction::triggered,workspace,[&]{
         const auto &set=document->set(snapshot.materials[selected_material].session_id);const int channel=workspace->property("uvProofChannel").toInt();QJsonArray values;workspace->setProperty("uvDocumentState",document->edit_state());const auto summary=host.uv_preview_summary();workspace->setProperty("uvContourCount",summary.contours?int(summary.contours->size()):0);if(!workspace->property("uvProofVisible").toBool()){workspace->setProperty("uvTextureProbe",values);return;}

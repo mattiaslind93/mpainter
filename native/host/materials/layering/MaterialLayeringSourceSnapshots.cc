@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include <QtCore>
 #include "MaterialLayeringSourceSnapshots.hh"
 #include "MaterialLayeringSourceColorProcessor.hh"

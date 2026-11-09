@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "NumericLocale.hh"
 #include "WorkspaceShell.hh"
 #include <QApplication>

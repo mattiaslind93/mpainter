@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "NativeMaterialImageJobs.hh"
 #include "NativeMaterialAsset.hh"
 #include "NativeMaterialImageDependencies.hh"

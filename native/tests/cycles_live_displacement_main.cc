@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Dedicated test actor only: ordinary production main and all production
 // objects remain unchanged. No existing/default/controlled actor is replaced.
 #include "CyclesLiveDisplacementArtist.hh"

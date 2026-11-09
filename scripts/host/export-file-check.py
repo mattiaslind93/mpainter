@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Independent PNG/OpenEXR header and uncompressed scanline reader for export proofs."""
 import struct
 import zlib

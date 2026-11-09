@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Real EXR originals + shared decoder, without GL or a CPU mask compositor.
 // The independent mask formula describes the exported R/alpha1 payload itself.
 QJsonObject verify_material_parameter_package(){

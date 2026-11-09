@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 #include "FillProjection.hh"
 // Independent analytic diagnostic formulas. No product projection/sampler or

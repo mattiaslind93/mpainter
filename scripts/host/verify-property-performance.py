@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Property event-to-visible latency and per-stage native composite timings."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess,statistics

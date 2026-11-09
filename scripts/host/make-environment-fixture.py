@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Create a small original HDR fixture with asymmetric colored area lights in stock Blender."""
 import bpy,math,sys
 from pathlib import Path

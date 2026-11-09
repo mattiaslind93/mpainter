@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Private native content-anchor creation, channel extraction, navigation and packed Open."""
 import argparse,json,os,re,subprocess,struct,zlib
 from pathlib import Path

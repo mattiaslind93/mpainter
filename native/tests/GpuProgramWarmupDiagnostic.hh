@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Explicit opt-in diagnostic; ordinary startup never constructs this object.
 #include "BlenderHost.hh"

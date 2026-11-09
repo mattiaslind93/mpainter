@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "NativeExportGuard.hh"
 #include <cassert>
 using namespace bts;

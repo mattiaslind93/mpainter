@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Detached native image replacement proof using coherent frozen native inputs.
 
 Run in the build container at nice 19. No GPU context is created by the CPU

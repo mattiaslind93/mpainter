@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Per-usage OCIO conversion from original packed bytes, real GUI and GPU compositing."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess,math

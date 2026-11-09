@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Real offscreen Qt channel controls, GPU storage retirement and packed history."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess

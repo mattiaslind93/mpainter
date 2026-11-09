@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include <epoxy/gl.h>
 #include "Theme.hh"
 #include "BrushPresetThumbnailJobs.hh"

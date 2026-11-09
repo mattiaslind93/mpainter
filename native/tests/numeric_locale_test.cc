@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "NumericLocale.hh"
 #include "FilterPanel.hh"
 #include "LevelsPanel.hh"

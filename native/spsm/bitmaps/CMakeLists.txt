@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 cmake_minimum_required(VERSION 3.20)
 # The version built from source when the system has no lz4. Matches what the
 # macOS dependency tree already compiles, so every platform ships the same lz4.

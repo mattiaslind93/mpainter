@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Strict runtime-only boundary for the single default-observation-only-v2 cohort.
 
 Does not build, rewrite the frozen builder/manifests, or configure sampler RNA.

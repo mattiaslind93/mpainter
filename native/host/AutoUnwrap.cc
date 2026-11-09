@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "ResourceAvailability.hh"
 #include "AutoUnwrap.hh"
 #include <QComboBox>

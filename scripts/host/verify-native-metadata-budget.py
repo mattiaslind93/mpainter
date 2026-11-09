@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Run native scene metadata and recovery regressions without a GPU context.
 
 Reuse the built host objects, replacing only main in a private executable. Neither

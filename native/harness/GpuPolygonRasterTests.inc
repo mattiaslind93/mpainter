@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Included only by the explicit owner-context GPU self-test. Production bucket
 // rendering never reads pixel data back or invokes this CPU oracle.
 {

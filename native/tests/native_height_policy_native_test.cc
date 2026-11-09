@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include <QCoreApplication>
 // Owner/Open acceptance for the optional authored scalar policy. No layer CPU
 // compositor is used. The phase-one independent scalar oracles remain intact.

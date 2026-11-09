@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "ShaderControllerTargetTest.hh"
 #include "ShaderController.hh"
 #include "WorkspaceShell.hh"

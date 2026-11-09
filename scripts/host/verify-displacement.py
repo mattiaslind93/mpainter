@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Real File-New Displacement/Bump preview, original-source invariants and Save/Open."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess

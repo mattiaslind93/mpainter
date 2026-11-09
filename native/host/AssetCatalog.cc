@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "BuiltinPolyHaven.hh"
 #include "SmartMaterialPreset.hh"
 #include "ResourceAvailability.hh"

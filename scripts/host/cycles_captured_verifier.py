@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """The single six-second captured-revision follow-up; no production overrides."""
 import concurrent.futures
 import importlib.util

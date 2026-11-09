@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native fill textures through file and Shelf, UV transforms, Atom, triplanar and packed Open."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess

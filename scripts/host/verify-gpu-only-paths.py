@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Fail closed when the CPU composite worker escapes explicit export/oracles."""
 from pathlib import Path
 import re

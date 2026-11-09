@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "NativeMaterialContext.hh"
 #include "BKE_main.hh"
 #include "BKE_material.hh"

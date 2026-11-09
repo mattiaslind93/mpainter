@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "NativeMaterialImagePanel.hh"
 #include "NativeMaterialImageRefresh.hh"
 #include <QComboBox>

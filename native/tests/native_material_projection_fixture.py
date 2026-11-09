@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Owned BJ source: linked-coordinate native graphs, raw H, bitmap uniform.
 
 Run only with the approved background Blender and private application paths.

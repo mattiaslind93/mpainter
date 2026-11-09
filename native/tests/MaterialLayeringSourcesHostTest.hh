@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Test-only real Host integration. Requires the separately admitted persistence-v3
 // headers/production cohort; this file does not implement or enable map UI.

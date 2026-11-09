@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // CPU source/owner admission only; no shader evaluation or GPU allocation.
 #include "NativeFragmentRetainedImageContextTest.hh"

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Verify real Host Save/Open, saved source graphs and cancelled source Open.
 
 Run inside the host's build environment with an already-built matching binary.

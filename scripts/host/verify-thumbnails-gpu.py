@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """GPU source/mask thumbnails plus native Compare/Undo/project regression."""
 import argparse,json,re,runpy,sys
 from pathlib import Path

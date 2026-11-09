@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Explicit, lossy shader graph -> native texture input export. Blender background only.
 
 Import bake_socket() for a specific graph socket, or use:

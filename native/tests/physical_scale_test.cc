@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "PhysicalScale.hh"
 #include "FillProjection.hh"
 #include "SceneSnapshot.hh"

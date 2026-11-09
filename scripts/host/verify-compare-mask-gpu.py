@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native material-channel Compare masks through GPU prefixes, controls and packed reopen."""
 import argparse,json,os,re,subprocess
 from pathlib import Path

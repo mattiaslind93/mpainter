@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Private native folder capture, portable preset import/export, reuse and project roundtrip."""
 import argparse,json,os,re,struct,subprocess,zlib
 from pathlib import Path

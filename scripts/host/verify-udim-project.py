@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Packed UDIM -> stock Blender -> fresh native host, with no external HDRI."""
 import argparse,json,os,subprocess,time
 from pathlib import Path

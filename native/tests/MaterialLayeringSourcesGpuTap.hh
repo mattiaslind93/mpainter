@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Private source-binding diagnostic only. A distinct type avoids changing the
 // already-shipped GpuTap definition or recompiling its unrelated consumers.

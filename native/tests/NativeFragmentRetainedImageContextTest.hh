@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Initialized CPU-owner fixture. No GPU objects, uploaders or programs are created.
 #include "NativeHeightImageFixture.hh"

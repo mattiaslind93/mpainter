@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Read explicit artist-selected libraries in a detached native Main, without OpenGL."""
 import argparse,json,os,subprocess
 from pathlib import Path

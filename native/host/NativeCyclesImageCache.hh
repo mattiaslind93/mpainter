@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Declaration mirrored by the narrowly scoped pinned-Blender fork patch 0035.
 namespace blender {

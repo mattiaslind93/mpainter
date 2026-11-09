@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 #include "ResourceAvailability.hh"
 #if defined(__linux__) || defined(__APPLE__)

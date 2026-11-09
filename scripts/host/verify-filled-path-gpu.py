@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """GPU filled contours: native controls, exact CPU oracle and packed Undo/Open."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess

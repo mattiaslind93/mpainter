@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Check phase-one proofs, benchmark coverage and saved Cycles Pointiness parity."""
 import argparse
 from array import array

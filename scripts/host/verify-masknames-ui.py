@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Capture the actual ten-card shelf on the caller's private Xvfb display."""
 import argparse
 import ctypes

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Reproducible offline proof. Run inside distrobox bts-build; never a desktop display.
 set -euo pipefail
 test -f /run/.containerenv

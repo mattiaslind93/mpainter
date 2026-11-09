@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native Blender shader-node codegen on a private offscreen GPU context."""
 import argparse,json,os,subprocess,re
 from pathlib import Path

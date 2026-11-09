@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Host entrypoint. Every Blender/app execution uses bts-build and its own Xvfb.
 set -euo pipefail
 material_root="${MPAINTER_TEST_ROOT:-/mnt/mpainter-phase1}"

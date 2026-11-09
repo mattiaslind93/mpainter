@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "NativeMaterialPreparationStatus.hh"
 #include "NativeMaterialPreview.hh"
 #include "BakeSource.hh"

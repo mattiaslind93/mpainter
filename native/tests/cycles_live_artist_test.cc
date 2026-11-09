@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Compile production main unchanged, replacing only its optional demo driver.
 #define main cycles_live_production_main
 #define start_gui_fix_demo start_cycles_live_artist_demo

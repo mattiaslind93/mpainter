@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Private native Blender images -> shared Shelf preset -> GPU fill / packed Open."""
 import argparse,hashlib,json,os,re,subprocess
 from pathlib import Path

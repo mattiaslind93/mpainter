@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Bake linear RGBE thumbnail lighting from the bundled, unrotated Studio HDR.
 
 Run with numpy, Pillow and opencv-python-headless. Rotation belongs to the

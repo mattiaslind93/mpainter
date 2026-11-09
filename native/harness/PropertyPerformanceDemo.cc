@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "PropertyPerformanceDemo.hh"
 #include "GuiFileSelection.hh"
 #include "PropertyLatency.hh"

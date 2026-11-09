@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Real GUI export of signed displacement and both native preview subdivisions."""
 from parity_test_environment import private_display
 import argparse,json,math,os,re,subprocess

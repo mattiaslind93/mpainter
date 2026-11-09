@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Test only: SAME canonical Principled, with independently computed uniform
 // Color*AO/Metal/Rough constants. No Emission, view branch or scene changes.

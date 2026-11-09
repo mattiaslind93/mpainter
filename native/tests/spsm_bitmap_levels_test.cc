@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Keep the complete existing bitmap safety suite in this same native runner.
 #pragma push_macro("main")
 #undef main

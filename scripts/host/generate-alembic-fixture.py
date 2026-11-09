@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Run with stock Blender --background --python SCRIPT -- OUTPUT_DIR."""
 import bpy,sys
 from pathlib import Path

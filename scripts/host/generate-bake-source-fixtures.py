@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Real OBJ / Alembic / USDC exports, shared two-UDIM mesh and animated sources."""
 import bpy,sys,math
 from pathlib import Path

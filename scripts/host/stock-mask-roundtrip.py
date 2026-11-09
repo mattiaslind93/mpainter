@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Stock Blender proof for a packed scalar mask; run on the separate baseline executable."""
 import array
 import bpy

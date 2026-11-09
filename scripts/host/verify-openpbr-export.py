@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native OpenPBR naming/EXR32 MaterialX bundle and exact Classic pixel regression."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess,zipfile,xml.etree.ElementTree as ET

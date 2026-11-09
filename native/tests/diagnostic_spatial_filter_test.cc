@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "DiagnosticSpatialFilter.hh"
 #include <cstdio>
 #include <functional>

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "AmbientOcclusion.hh"
 namespace bts {
 BakedAoSample sample_baked_ao(const TextureSet &set, double u, double v, int tile)

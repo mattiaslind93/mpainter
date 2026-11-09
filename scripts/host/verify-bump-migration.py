@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Actual schema45 native image/metadata migration, edit, save and fresh reopen."""
 from parity_test_environment import private_display
 import argparse

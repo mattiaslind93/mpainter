@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Pure Qt metadata boundary: usable by catalog/project readers without linking
 // native graph/GPU objects. Source resolution remains in the worker backend.

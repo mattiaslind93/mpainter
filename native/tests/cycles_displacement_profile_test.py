@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Small displacement-profile admission negatives; mocked compiler, no GPU IO."""
 import copy
 import json

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
       // Explicit AW workspace actor only. No mutation or normal-frame readback.
       if(qEnvironmentVariableIsSet("BTS_AW_HEIGHT_IMAGE_UI")){
         if(auto *choice=workspace->findChild<QComboBox *>("nativeHeightPolicy"))state["height_control_text"]=choice->currentText();

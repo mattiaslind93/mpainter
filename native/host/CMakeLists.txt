@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 find_package(Qt6 6.8.3 EXACT REQUIRED COMPONENTS Widgets OpenGLWidgets Network)
 find_package(assimp CONFIG REQUIRED)
 

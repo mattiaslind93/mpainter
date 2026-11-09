@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Distinct owned LINEAR Color UDIM family. RawUdimFilter's graph bytes and
 // provenance remain unchanged; only its strict standard-node builder is reused.
 struct ColorUdimProvenance {std::shared_ptr<const FillTexture> source;bool encoded=false;};

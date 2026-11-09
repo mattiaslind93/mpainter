@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 set -euo pipefail
 # Run inside bts-build. One private X server, one small GPU workload at a time.
 root=/mnt/mpainter-phase1

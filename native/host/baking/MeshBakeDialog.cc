@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "LongOperationCancel.hh"
 #include "TextureExtentChoices.hh"
 #include "GPU_capabilities.hh"

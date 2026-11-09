@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Actual common Fill producer and the same bounded capture used by Flatten.
 // Explicit diagnostic CPU source-sampler parity plus independent constant
 // signed/HDR expectation; no CPU composition or interactive fallback. The

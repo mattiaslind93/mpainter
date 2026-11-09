@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Explicit AW test metadata. No GPU probes during edits or ordinary snapshots.
       if(qEnvironmentVariableIsSet("BTS_AW_VECTOR_UI")||qEnvironmentVariableIsSet("BTS_AW_REAL_UI")||qEnvironmentVariableIsSet("BTS_NATIVE_WORLD_NORMAL_UI")){
         state["redo_count"]=int(redo_history.size());state["document_path"]=document_path;

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 namespace {
 int verify_shelf_navigation(WorkspaceShell &shell,const TextureSet &set,const QString &directory,const int &applications){
  AssetCatalog catalog(directory+"/library");QImage image(8,8,QImage::Format_RGB32);image.fill(QColor("#668899"));QByteArray png;QBuffer buffer(&png);buffer.open(QIODevice::WriteOnly);if(!image.save(&buffer,"PNG"))qFatal("Shelf fixture encoding failed");

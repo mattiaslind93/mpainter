@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Own Blender source fixture: two separately linked vector group inputs."""
 import bpy
 import os

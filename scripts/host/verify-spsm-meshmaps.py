@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Compile/run SPSM mesh-map CPU/worker/native GPU proofs against frozen host libraries.
 
 Only private objects/executables are written. GPU contexts run only with --suite gpu.

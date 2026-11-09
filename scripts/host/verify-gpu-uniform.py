@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """GPU broadcast/reference checks and visible color updates before drag release."""
 import argparse,json,os,re,subprocess
 from pathlib import Path

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "OrbitCamera.hh"
 #include <QVector4D>
 #include <cassert>

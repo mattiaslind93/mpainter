@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 #include <QtCore/qfloat16.h>
 #include "MaterialValues.hh"

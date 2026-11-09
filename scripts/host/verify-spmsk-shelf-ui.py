@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Explicit SPMSK Resource Import, pointer-null User Shelf, packed Open proof.
 
 Run only in the coordinated native GPU lane. This script never clears or primes

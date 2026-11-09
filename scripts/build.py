@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Configure and build the native host with upstream precompiled libraries."""
 import argparse, collections, os, pathlib, platform, re, shutil, subprocess
 p=argparse.ArgumentParser()

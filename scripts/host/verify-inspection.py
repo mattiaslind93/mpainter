@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native C/B/M and both viewport menus: unlit data, shared selection, frozen document/cameras."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess

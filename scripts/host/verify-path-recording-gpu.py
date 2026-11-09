@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """GPU-recorded polygon and editable brush paths; private native Qt workspace."""
 import argparse,json,os,re,subprocess
 from pathlib import Path

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Immutable source/binary admission for the private Cycles regression runner."""
 import hashlib
 import json

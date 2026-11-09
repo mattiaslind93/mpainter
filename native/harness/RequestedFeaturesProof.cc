@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "RequestedFeaturesProof.hh"
 #include "AssetCatalog.hh"
 #include "AssetCategories.hh"

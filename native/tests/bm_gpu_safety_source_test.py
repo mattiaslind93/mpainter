@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Source-only regression checks; BM GPU implementation remains pending."""
 from pathlib import Path
 import runpy

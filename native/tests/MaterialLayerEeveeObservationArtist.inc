@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // External future actor. No viewport update(), renderer setting writes, GPU
 // readback or worker polling. The timer observes normal product scheduling.
 class EeveeObservationArtist final:public QObject {

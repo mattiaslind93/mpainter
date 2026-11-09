@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "MaskEffectContext.hh"
 #include "BumpPrecision.hh"
 #include "EvaluationScope.hh"

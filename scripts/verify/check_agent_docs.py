@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Check that the paths and commands named in every AGENTS.md exist, and that every CLAUDE.md is only `@AGENTS.md`.
 
 The documents are data. This script reads them and looks up files and CMake targets.

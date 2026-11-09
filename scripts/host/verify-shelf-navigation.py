@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Offscreen production Qt Shelf widgets; no Blender scene or display connection."""
 import argparse,json,os,subprocess
 from pathlib import Path

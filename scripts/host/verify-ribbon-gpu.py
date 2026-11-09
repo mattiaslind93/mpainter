@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native continuous ribbon images, path edits, mapping controls, Undo and portable .blend Open."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess

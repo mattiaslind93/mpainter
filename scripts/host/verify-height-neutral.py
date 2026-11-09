@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Fixed artist Bump midgray, selectable displacement neutral, native GPU/history/Open."""
 import argparse,json,os,re,struct,subprocess
 from pathlib import Path

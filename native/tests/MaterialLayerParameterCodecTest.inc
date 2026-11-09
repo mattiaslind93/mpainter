@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Pure syntax/identity codec tests. Encoded-image/decoder/relocation cases run in
 // the host source-pixels fixture, not through fake image bytes here.
 void verify_material_parameter_codec(){

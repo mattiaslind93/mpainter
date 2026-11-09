@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
  // Internal authoring-program group; no scheduler, public Host API or shader change.
  using Prepared=std::unique_ptr<blender::GPUHostedShaderCompilation,decltype(&blender::GPU_shader_hosted_compilation_free)>;
  using PreparedOwner=GpuPreparedProgramOwner<blender::gpu::shader::StageInterfaceInfo,Prepared>;

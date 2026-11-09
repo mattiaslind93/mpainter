@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Guard smart-mask UI paths against accidental synchronous CPU rasterization."""
 from pathlib import Path
 root = Path(__file__).resolve().parents[2]

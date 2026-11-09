@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "ShaderController.hh"
 #include "TextureDocument.hh"
 #include "WorkspaceShell.hh"

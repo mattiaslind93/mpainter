@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native EEVEE depth-driven DOF and GPU glare, retained settings, no authored-data edits."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess

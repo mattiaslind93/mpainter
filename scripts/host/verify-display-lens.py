@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native GPU lens distortion and inverse picking; no changes to authored 2D maps."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess,math

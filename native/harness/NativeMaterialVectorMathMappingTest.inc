@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // The retained native expression executes first. The independent oracle applies
 // Add/Multiply to each original owner/domain coordinate, THEN authored POINT.
 QJsonObject vector_math_report;

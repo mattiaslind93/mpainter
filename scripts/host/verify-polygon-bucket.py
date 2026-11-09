@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Private GUI object/UV-island bucket, channels, Ctrl/masks, Undo and packed Open."""
 import argparse,json,os,subprocess,struct
 from pathlib import Path

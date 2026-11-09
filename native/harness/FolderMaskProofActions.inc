@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Explicit diagnostic fixture; normal Folder edits still use the production callbacks.
     if(parser.isSet("gui-fix-demo")&&workspace&&qEnvironmentVariableIsSet("BTS_BK_FOLDER_MASK")){
       const auto directory=parser.value("gui-fix-demo");const auto project_directory=qEnvironmentVariable("BTS_BK_PROJECT_DIR",directory);

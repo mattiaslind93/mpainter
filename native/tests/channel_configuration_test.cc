@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "ChannelConfiguration.hh"
 #include "TextureMemory.hh"
 #include <cassert>

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Runtime-only real Crafty5/mClay artist acceptance. No build or source mutation.
 
 Root must approve the frozen host and release the private GPU lane separately.

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Shared fill/mask widgets and deterministic mask mapping; isolated offscreen Qt."""
 import argparse,json,os,subprocess
 from pathlib import Path

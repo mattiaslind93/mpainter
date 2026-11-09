@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "MaterialLayerParameterSurface.hh"
 #include "SceneSnapshot.hh"
 #include "BKE_lib_id.hh"

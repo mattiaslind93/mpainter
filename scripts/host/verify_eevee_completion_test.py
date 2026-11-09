@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Small value-only verifier tests; no native app or renderer is started."""
 import copy
 import importlib.util

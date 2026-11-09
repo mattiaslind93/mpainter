@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Explicit maps-color-udim diagnostic only; included after the existing actors.
 // It uses the shipped owner callbacks. No default startup/artist work is added.
 class ColorUdimArtist final:public QObject {

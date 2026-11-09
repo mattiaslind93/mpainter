@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "MeshMapImport.hh"
 #include "TextureImportCpuDemo.hh"
 #include "TextureLoadController.hh"

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "WarpGrid.hh"
 #include "WarpIO.hh"
 #include "SpatialProjection.hh"

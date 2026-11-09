@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // CPU-only effective Painter surface admission and immutable source witnesses.
 #include "NativeMaterialFragmentNormalFixture.hh"

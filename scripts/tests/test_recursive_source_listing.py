@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Scripts must list owned source folders recursively.
 
 The restructure plan moves native/host into domain subfolders. A script that

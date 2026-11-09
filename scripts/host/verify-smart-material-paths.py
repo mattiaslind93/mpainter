@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """No dense CPU map masks in the interactive smart-material application path."""
 from pathlib import Path
 root=Path(__file__).resolve().parents[2]

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // CPU admission, source controls and actual captured BOX matrix payload only.
 #include "NativeFragmentRetainedImageContextTest.hh"

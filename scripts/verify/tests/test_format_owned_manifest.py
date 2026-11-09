@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Fixture tests for scripts/verify/format_owned_manifest.py.
 
 Every test builds its own git repository in a temporary folder. Nothing here

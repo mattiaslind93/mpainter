@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """PD-141 portable Principled compatibility subset; explicitly not BSDF conformance."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess

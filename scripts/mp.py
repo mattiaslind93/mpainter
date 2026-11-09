@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """mp: mPainter's developer command (platform-neutral subset).
 
   mp version                 print the version from pyproject.toml

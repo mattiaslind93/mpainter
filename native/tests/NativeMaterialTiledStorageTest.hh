@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // CPU tests of the exact planner/transaction/cache used by the native uploader.
 // OwnerModel is ordinary metadata, never a fabricated GPU handle or texture.

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Run in background Blender, one material/process. Original CC0 starter shaders."""
 import bpy, json, math, sys
 from pathlib import Path

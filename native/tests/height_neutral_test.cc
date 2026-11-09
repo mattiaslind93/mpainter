@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "BrushSettings.hh"
 #include "BumpPrecision.hh"
 #include "HeightNeutralResourceUnit.hh"

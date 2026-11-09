@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "TextureDocument.hh"
 #include "StrokeArchive.hh"
 #include "MaskPreset.hh"

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Own VectorMath extra-POINT warm UI and two independent source-hidden cold children.
 
 Run inside bts-build at nice19 against a frozen host. Fixture generation is a

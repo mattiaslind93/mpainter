@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native half of the Blender roundtrip proof. Run inside bts-build/xvfb-run.
 
 Consumes actual Cycles socket bakes from scripts/blender/verify_presets.py.

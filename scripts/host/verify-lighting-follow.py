@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native world/view lighting comparison, explicit project setting and legacy Open."""
 from parity_test_environment import private_display
 import argparse

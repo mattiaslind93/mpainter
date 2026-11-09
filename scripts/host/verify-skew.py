@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native New -> nonmodal baking -> skew tools -> true Normal rebake -> packed reopen."""
 from parity_test_environment import private_display
 import argparse,hashlib,json,math,os,re,struct,subprocess

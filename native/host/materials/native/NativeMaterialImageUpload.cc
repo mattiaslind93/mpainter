@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "NativeMaterialImageUpload.hh"
 #include "NativeMaterialImageResource.hh"
 #include "NativeMaterialTiledStorage.hh"

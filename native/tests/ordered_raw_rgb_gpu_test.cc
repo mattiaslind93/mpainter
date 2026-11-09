@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "OrderedRawRgbFixture.hh"
 #include "BlenderHost.hh"
 #include "GpuLayerPreview.hh"

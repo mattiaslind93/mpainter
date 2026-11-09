@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "Displacement.hh"
 namespace bts {
 void displacement_import_range(DisplacementSettings &settings, const FillTexture &texture)

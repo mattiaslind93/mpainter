@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Build a separate native regression from existing host objects; never rebuild the host.
 
 Run inside the normal build environment, after coordinating a build slot:

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
  {
   TextureSet model;model.texture_resolution=128;model.precision.fill(ChannelPrecision::RGB32F);
   auto &source=model.layers.front();source.kind=LayerKind::Fill;source.visible=false;source.channels.fill(false);source.values.base_color={.2,.4,.6,1};const auto source_id=source.id;

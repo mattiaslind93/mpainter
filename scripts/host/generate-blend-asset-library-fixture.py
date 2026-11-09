@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Read-only Asset Library fixture; no default library configuration is touched."""
 import bpy,json,os,sys
 from pathlib import Path

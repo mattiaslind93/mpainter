@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Test-only fixture and metadata hooks. Apply/edit/Bake/Undo/persistence remain
 // the production callbacks; no CPU mask stack runs from this UI diagnostic.
     if(parser.isSet("gui-fix-demo")&&workspace&&qEnvironmentVariableIsSet("BTS_BN_SMART_MASK")){

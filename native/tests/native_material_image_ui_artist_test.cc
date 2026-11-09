@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Linked in place of GuiFixDemo.cc; calls the real separately compiled main.
 #include "GuiFixDemo.hh"
 #include "NativeMaterialImagePanel.hh"

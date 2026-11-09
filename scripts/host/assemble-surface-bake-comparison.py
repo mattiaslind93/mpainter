@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Compose measured images; never synthesize or retouch bake output."""
 import pathlib,sys,json,subprocess
 import numpy as np

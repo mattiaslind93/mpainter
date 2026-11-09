@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "MaterialLayeringUi.hh"
 #include "MaterialLayerUdim.hh"
 #include "FileDialogs.hh"

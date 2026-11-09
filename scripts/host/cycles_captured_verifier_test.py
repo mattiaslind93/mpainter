@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Pure admission negatives; never starts a compiler, Qt or native executable."""
 import copy
 import hashlib

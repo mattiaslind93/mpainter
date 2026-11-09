@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Independent native neighborhood kernels and witnessed cached edit/undo on a private RTX surface.
 Run inside bts-build after reserving the GPU lane; this is not a whole-material CPU oracle.
 """

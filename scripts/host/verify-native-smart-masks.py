@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """BN native mask UI and separate packed cold Open on an owned GPU display."""
 import argparse
 import hashlib

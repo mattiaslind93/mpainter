@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """AA native Qt benchmark on a private offscreen RTX surface, never the desktop."""
 import argparse,json,math,os,re,statistics,subprocess
 from pathlib import Path

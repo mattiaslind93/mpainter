@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """sv_SE whole-workspace numeric display and comma input, private offscreen only."""
 import argparse,json,os,re,subprocess
 from pathlib import Path

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Real content/mask Paint effect gestures with GPU prefixes and packed reopen."""
 import argparse,json,os,re,subprocess
 from pathlib import Path

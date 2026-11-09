@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Native-only, narrowly admitted processor family; no image/GPU/global context.
 #include "MaterialLayeringSourceSnapshots.hh"

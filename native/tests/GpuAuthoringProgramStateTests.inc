@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 namespace {
 void fourteen_authoring_outputs_and_failure_drain(){
  bts::GpuProgramWarmup state(14);std::array<bool,14> pending{},complete{},good{};int submitted=0,polled=0;

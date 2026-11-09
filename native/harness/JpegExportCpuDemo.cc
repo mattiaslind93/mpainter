@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "JpegExportCpuDemo.hh"
 #include "TextureExport.hh"
 #include "ExportConfiguration.hh"

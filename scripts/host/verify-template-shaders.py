@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """File-New compatibility preset and real Save-As-Template/Browse roundtrip, own paths."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess

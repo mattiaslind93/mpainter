@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Run with Blender --background --threads 6 --python this.py -- fixtures|reference DIR.
 References use the exact evaluated/displaced triangles exported by mPainter's proof.
 No render window or interactive UI is created.

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Run after opening the generated base .blend with blender -b (CPU, two threads)."""
 import argparse
 import json

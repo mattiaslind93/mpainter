@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Pending native GPU integration: include from an explicit diagnostic owner only.
 #include "GpuBakeRays.hh"

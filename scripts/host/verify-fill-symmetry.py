@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """PD144 real Properties/toolbar edits, native texture samples, masks and packed projects."""
 from parity_test_environment import private_display
 import argparse,json,os,subprocess

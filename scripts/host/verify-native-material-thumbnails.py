@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Exercise authored/native Shelf previews and a fresh, source-free packed Open."""
 import argparse
 import json

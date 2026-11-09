@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Compile/run the CPU SPSM atomic bitmap and ordered mask Fill/Levels lowering against existing native host libraries.
 
 Only private objects/executables are written. No host build or GPU context runs.

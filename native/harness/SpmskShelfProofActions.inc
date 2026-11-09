@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Explicit test-only metadata/fixture actions. Import, Shelf application, typed
 // editing, Undo, Save and Open use the existing production callbacks.
     if(parser.isSet("gui-fix-demo")&&workspace&&qEnvironmentVariableIsSet("BTS_BN_SPMSK_UI")){

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Critical causal gate: later sampling cannot justify an earlier raw capture."""
 import ast
 import copy

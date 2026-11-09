@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
  // A full update may retire a thumbnail query, then defer on a source upload.
  // Its physical outputs and revision plan must be retired together: otherwise
  // the next thumbnail treats a freed prefix as current and throws map::at.

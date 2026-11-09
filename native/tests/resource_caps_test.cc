@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "AssetCatalog.hh"
 #include "BlendLibraryPreferences.hh"
 #include "MaterialLayering.hh"

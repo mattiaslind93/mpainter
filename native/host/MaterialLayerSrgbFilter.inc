@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Private standard-node codec. Included after Builder, never a separate TU.
 // Same coordinate/interpolation graph for runtime AP1 and saved raw encoding.
 // Only saved encoding has the admitted OCIO moncurve before the four-way mix.

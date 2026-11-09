@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Phase-one authored FLOAT Height proof; no UI or persistent policy activation.
 
 Run inside the compiler container with an immutable, matching host snapshot.

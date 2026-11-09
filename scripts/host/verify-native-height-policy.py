@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Repeatable native authored-Height acceptance; coordinate CPU/GPU slots first.
 
 Run inside the existing compiler container. A full matching integrated snapshot

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 set -euo pipefail
 ulimit -c 0
 # Inside bts-build only. Small fixtures, one process/GPU workload at a time.

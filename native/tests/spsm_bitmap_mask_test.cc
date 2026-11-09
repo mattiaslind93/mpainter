@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #define main spsm_existing_joint_test_main
 #include "spsm_bitmap_levels_test.cc"
 #undef main

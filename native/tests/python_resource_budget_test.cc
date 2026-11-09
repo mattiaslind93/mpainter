@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Link this driver with the host's native objects/libraries, replacing main.cc.o.
 // It uses actual Qt widgets and embedded CPython; no Blender GPU or desktop window.
 #define PY_SSIZE_T_CLEAN

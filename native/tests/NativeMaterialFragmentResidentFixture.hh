@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Gated diagnostic fixture only: actual privately owned mesh capture, then stock
 // worker preparation after all source Mesh/Main pointers are destroyed.

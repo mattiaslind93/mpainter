@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include <QVarLengthArray>
 #include "ResourceAvailability.hh"
 #include "TextureExtent.hh"

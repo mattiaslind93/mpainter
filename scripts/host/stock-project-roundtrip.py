@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Run with the unmodified Blender baseline, never as an application worker."""
 import array
 import bpy

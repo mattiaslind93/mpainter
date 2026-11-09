@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "NativeMaterialFill.hh"
 #include "NativeMaterialBindings.hh"
 #include "NativeMaterialApply.hh"

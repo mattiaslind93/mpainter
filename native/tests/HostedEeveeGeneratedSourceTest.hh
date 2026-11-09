@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Explicit generated-EEVEE-source ownership prerequisite only. No ordinary
 // EEVEE async policy, material appearance, Main/image-free or latency claim.

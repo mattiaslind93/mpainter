@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Explicit RETAINED-pass Image/Group compiler-source ownership diagnostic.
 // No renderer/Image binding, zero-ref orphan/GC, UI Cancel or latency claim.

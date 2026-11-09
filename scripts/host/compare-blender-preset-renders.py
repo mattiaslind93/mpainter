@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Assemble the real-mesh stock Blender renders; keep them distinct from UV proofs."""
 import argparse
 import json

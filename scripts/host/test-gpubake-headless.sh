@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 set -euo pipefail
 # Invoke inside distrobox bts-build. Run one test/benchmark at a time.
 root="${BTS_ROOT:-/mnt/mpainter-phase1}"

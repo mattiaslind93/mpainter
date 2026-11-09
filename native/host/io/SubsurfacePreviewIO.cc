@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "SubsurfacePreviewIO.hh"
 #include "BKE_idprop.hh"
 #include "DNA_scene_types.h"

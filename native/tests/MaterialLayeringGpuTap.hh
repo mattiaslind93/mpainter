@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Diagnostic only. Compile copies of actual connected artist outputs, never a
 // second weight graph. All construction/use/destruction is on Host's GPU owner.

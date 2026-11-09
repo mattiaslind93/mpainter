@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Runtime-only BJ real Fill-controls / packed mapping UI proof.
 
 Use the owner's frozen coherent host after explicit GPU-lane release. This script

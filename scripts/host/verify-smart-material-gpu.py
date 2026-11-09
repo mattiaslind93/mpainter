@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Private offscreen smart-material Shelf/drop/undo/packed-project GPU regression."""
 import argparse,json,os,re,subprocess
 from pathlib import Path

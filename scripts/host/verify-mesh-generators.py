@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Private native generator controls, real asynchronous map replacement and GPU parity."""
 import argparse,json,math,os,re,struct,subprocess,zlib
 from pathlib import Path

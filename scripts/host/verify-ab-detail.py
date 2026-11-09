@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Actual 4K EEVEE displacement-bump detail on geometry with only eight vertices."""
 import argparse,json,re,subprocess
 from pathlib import Path

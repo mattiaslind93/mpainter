@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Stock Blender edit -> fresh same-process Qt host -> edit/save proof. Run in bts-build."""
 import argparse
 import json

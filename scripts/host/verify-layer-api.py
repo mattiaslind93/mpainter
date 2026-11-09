@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """PD140: real console edits, viewport buffers, native Undo and packed projects."""
 from parity_test_environment import private_display
 import argparse,json,os,shutil,subprocess

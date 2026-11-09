@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Prepared AX acceptance: actual pointer checkbox + live Alt drags + fresh prefs cold.
 Run only after root approves the frozen host and reserves the private RTX lane.
 DPR2/imported-camera math remain focused CPU evidence unless separately run here.

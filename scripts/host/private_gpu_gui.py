@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Owned Xvfb + NVIDIA EGL presentation; never connects windows to the desktop."""
 from contextlib import contextmanager
 from pathlib import Path

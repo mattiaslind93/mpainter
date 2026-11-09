@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Own native .blend source for object/collection append verification."""
 import bpy, json, sys
 from pathlib import Path

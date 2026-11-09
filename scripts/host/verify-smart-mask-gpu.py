@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Offscreen smart-mask creation, sparse merge, Ctrl-replace, undo and packed reopen."""
 import argparse,json,os,subprocess,re
 from pathlib import Path

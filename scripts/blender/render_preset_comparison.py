@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Render the real JL01 mesh in stock Blender, comparing native fields and shader trees."""
 import argparse
 import base64

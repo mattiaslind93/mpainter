@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // The original Mapping executes in Blender; this oracle independently evaluates
 // its pinned four formulas, then the separate authored POINT transform.
 QJsonObject upstream_report;

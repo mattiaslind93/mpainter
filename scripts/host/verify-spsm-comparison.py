@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Private RTX proof for four original SPSM materials, five bakes and real OBJ/FBX New.
 Run inside bts-build after reserving the GPU lane. No proprietary graph evaluation.
 """

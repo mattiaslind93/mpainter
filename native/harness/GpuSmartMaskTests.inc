@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Runs only inside the explicit private production-GPU self_test. No authored
 // document, UI event, export or interactive thumbnail calls the CPU oracle here.
 {

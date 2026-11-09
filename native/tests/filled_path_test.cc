@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "FilledPathRaster.hh"
 #include "SurfacePathIO.hh"
 #include <cassert>

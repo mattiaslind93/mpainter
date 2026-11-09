@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Pure artifact/progress-boundary tests; synthetic oldProbe is not a9ad2 claim."""
 import copy
 import importlib.util

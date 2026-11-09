@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Exact old/new LayerEditDiff through the production artist callback/frame path.
 
 Compile one production-main driver, then link separate tiny old/new diff bridges.

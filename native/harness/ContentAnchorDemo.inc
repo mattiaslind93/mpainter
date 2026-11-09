@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
         const auto select_content_anchor_demo=[&](QUuid parent,QUuid effect,bool mask){
           auto *list=workspace->layer_stack();for(int row=0;row<list->count();++row)if(QUuid(list->item(row)->data(Qt::UserRole).toString())==parent&&list->item(row)->data(Qt::UserRole+10).toString().isEmpty()){
             list->scrollToItem(list->item(row));list->setCurrentRow(row);const auto index=list->model()->index(row,0);const auto rect=list->visualRect(index);const QPoint p=mask?bts::layer_mask_rect(index,rect).center():QPoint(bts::layer_thumbnail_x(index,rect)+12,rect.center().y());send_mouse_event(*list->viewport(),QEvent::MouseButtonPress,p,Qt::LeftButton,Qt::LeftButton,Qt::NoModifier);send_mouse_event(*list->viewport(),QEvent::MouseButtonRelease,p,Qt::LeftButton,Qt::NoButton,Qt::NoModifier);break;

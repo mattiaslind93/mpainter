@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "ProjectFileSafety.hh"
 #include "PackedFileLimit.hh"
 #include "SanitizeReadback.hh"

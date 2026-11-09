@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Admit only the reviewed, selective0037 displacement prototype.
 
 The ordinary runner and its full36-patch baseline admission stay unchanged.

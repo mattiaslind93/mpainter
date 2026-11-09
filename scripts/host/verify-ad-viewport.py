@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Offscreen viewport stroke p95 at 4K and 8K, plus the embedded UV preview edit."""
 import argparse
 import json

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Real Mode actions, shared settings/camera, render tabs and packed Cycles quality."""
 from parity_test_environment import private_display
 import argparse,copy,json,os,re,subprocess

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Real image overwrite -> separate Shelf/project refresh -> immutable Undo and packed reopen."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess

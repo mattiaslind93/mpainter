@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "SpsmBitmapTexture.hh"
 #include "BLI_math_half.hh"
 #include "IMB_colormanagement.hh"

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Build a coherent private native ABI against an immutable Blender snapshot.
 
 Run inside the compiler container with nice -n19. No artist build inputs are used.

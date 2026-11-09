@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 namespace bts::gpu_projection {
 // The CPU projection contracts are PlanarProjection/SpatialProjection/FillProjection.

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 set -euo pipefail
 # Run inside bts-build; keep this sequential with other GPU tests and packaging.
 root="${BTS_ROOT:-/mnt/mpainter-phase1}"

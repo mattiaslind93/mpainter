@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Run focused branding, theme and bundled-asset regression checks after building them."""
 import argparse,os,pathlib,subprocess,tempfile
 p=argparse.ArgumentParser();p.add_argument('--build-dir',required=True,type=pathlib.Path);a=p.parse_args()

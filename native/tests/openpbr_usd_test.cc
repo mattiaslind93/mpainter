@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "OpenPbrMaterialX.hh"
 #include "OpenPbrUsd.hh"
 #include "OpenPbrUsdImport.hh"

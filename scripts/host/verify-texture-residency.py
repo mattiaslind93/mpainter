@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """AB: fixed full-resolution residency, memory warnings, native navigation and pixel retention."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess

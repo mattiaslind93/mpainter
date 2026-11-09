@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Fresh-process canonical BM archive and GPU publication proof; private display only."""
 import argparse
 import hashlib

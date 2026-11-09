@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """GPU compositor: vignette affects 3D only, retained values, UI undo and packed Save/Open."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess

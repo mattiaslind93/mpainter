@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "NativeJsonProperty.hh"
 #include "DisplayPostEffects.hh"
 #include <QJsonDocument>

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Actual workspace retained-image Height controls. Native fresh cold is separate."""
 import argparse
 import hashlib

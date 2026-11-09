@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """All active fill-channel resources, raw decoding, independent Undo and packed Open."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess

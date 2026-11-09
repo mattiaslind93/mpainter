@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Run native CPU assertions and real headless image-export regression (no OpenGL)."""
 import argparse,json,os,subprocess,sys
 from pathlib import Path

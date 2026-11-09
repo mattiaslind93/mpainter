@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Draft CPU cases in the existing native dispatcher. No GL/pixel compositor.
 int verify_srgb_processor_structure(){
  namespace OCIO=OCIO_NAMESPACE;int rejected=0;

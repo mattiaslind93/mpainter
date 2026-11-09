@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Ctrl switches ink mid-stroke without mutating either selected color."""
 from parity_test_environment import private_display
 import argparse,json,os,subprocess

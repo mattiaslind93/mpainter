@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Actual Blender GPU compute vs CPU oracle, plus real property gestures and packed reopen."""
 import argparse,json,os,re,subprocess,sys
 from pathlib import Path

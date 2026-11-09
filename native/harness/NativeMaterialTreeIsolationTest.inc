@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Hold one private Main inside an update callback, then update another Main.
 // A process-global recursion guard used to silently skip the second update.
 {

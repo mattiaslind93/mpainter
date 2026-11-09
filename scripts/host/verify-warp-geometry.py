@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """PD145: native whole-grid BVH fit, authoring retention and packed persistence."""
 from parity_test_environment import private_display
 import argparse,json,math,os,re,subprocess

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Included beside other explicit actor actions in main.cc; dependencies belong
 // in main's include list. No product mapping mutation is introduced here.
     if(parser.isSet("gui-fix-demo")&&workspace&&qEnvironmentVariableIsSet("BTS_BJ_PROJECTION_UI")){

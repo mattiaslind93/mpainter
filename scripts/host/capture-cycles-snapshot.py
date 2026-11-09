@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Attest a completed full artist build in an existing independent snapshot.
 
 Run after the actual build confirmation and full CPU suite succeed. The input

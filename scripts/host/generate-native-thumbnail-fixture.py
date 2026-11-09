@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Known authored pixels and a linked graph whose socket default is misleading."""
 import bpy, sys
 from pathlib import Path

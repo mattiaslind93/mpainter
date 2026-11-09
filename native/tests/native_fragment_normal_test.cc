@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Thin standalone entry for the same permanent native CPU graph regression.
 #include "BlenderHost.hh"
 #include "NativeMaterialFragmentNormalGraphTest.hh"

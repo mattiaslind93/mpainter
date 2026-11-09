@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "PolyHavenPreparation.hh"
 #include "TextureResidencyMemory.hh"
 #include "GPU_host_texture_memory.hh"

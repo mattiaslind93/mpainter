@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "NativeMaterialParameters.hh"
 #define layer_edit_channels native_edit_diff_under_test
 #include "LayerEditDiff.hh"

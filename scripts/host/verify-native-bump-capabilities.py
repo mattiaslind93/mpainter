@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Build and verify native Bump capabilities without scalar approximations.
 
 Run inside the compiler container. Supply a frozen host link snapshot, SDK data,

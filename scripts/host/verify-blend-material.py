@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native explicit material library -> Shelf -> GPU Fill and source-free packed Open."""
 from parity_test_environment import private_display
 import argparse,hashlib,json,os,re,struct,subprocess

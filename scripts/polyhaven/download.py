@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Review/fetch public Poly Haven API metadata and checksum-pinned source maps, serially."""
 import argparse, hashlib, json, time, urllib.request, urllib.error
 from pathlib import Path

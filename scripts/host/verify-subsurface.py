@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native EEVEE/Cycles subsurface, independent controls, unlit UV and packed project state."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess

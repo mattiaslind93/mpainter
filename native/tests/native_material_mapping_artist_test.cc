@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Actual artist Mapping widgets, frame queue and Undo/Redo; production main is unchanged.
 #define main bts_native_artist_main
 #define start_gui_fix_demo start_native_mapping_artist_demo

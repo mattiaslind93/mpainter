@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Exercise real Qt row clicks across three sets, all inspectors and native state."""
 import argparse
 import json

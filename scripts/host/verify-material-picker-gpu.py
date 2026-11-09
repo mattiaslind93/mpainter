@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native unlit GPU material picker, channel precision and async packet."""
 import argparse,json,os,re,subprocess
 from pathlib import Path

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Synthetic source/parent/build admission; mocked compiler, no preprocessing/GPU."""
 import json
 from pathlib import Path

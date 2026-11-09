@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Real Wood raw RGB/source Levels/named OCIO -> native GPU and cold packed Open.
 
 Requires the verified target-qualified CPU overlay from verify-spsm-color-bitmaps.

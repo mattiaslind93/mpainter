@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include <QStandardPaths>
 #include "NativeMaterialSourceFiles.hh"
 #include "NativeMaterialImageSourceReference.hh"

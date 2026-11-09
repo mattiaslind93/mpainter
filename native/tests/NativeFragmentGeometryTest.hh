@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Source-only focused native regression; register only in a coherent CPU owner.
 // No host/GUI/GPU context is created here. Caller has initialized Blender + Qt.

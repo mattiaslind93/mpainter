@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Compose honest live-Painter/native-reference comparison artifacts.
 
 Uses saved screenshots and native renderer output, never synthesizes Painter

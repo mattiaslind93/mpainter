@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native USDC/USDZ mesh engine probe; textured Painter preset is a separate step."""
 from parity_test_environment import private_display
 import argparse,json,os,re,struct,subprocess,zipfile

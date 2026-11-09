@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 set -euo pipefail
 # Run with distrobox enter bts-build. One bounded GUI/GPU process at a time.
 test -f /run/.containerenv

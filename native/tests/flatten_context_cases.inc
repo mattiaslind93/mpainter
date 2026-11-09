@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
  {
   TextureSet set;set.texture_resolution=128;set.precision.fill(ChannelPrecision::RGB32F);set.precision[4]=ChannelPrecision::L32F;
   auto &external=set.layers.front();external.kind=LayerKind::Fill;external.visible=false;external.values.base_color={.2,.4,.6,1};LevelsEffect point;point.kind=ContentEffectKind::Anchor;point.anchor_name="Outside group";external.effects={point};MaskEffect mask_point;mask_point.kind=MaskEffectKind::Anchor;mask_point.anchor_name="Outside mask";external.mask=LayerMask{};external.mask->background=.35;external.mask->effects={mask_point};

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Run native preview, name, template and marker resource regressions.
 
 Reuse the built host objects, replacing only main in a private executable. Neither

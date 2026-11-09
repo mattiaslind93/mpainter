@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Pure fixture/predecessor admission for the explicit BJ runtime wrapper.
 
 No Blender, Qt, application caches, source loading or rendering is involved.

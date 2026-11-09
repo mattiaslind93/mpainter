@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Queued native tablet/mouse input versus the identical unbatched polyline."""
 from parity_test_environment import private_display
 import argparse

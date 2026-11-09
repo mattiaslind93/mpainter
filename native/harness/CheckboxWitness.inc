@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
     if(parser.isSet("gui-fix-demo")&&workspace&&qEnvironmentVariableIsSet("BTS_CHECKBOX_DEMO")){
       const auto add=[&](const char *name,std::function<void()> fn){auto *action=new QAction(workspace);action->setObjectName(name);QObject::connect(action,&QAction::triggered,workspace,std::move(fn));};
       add("checkboxPrepare",[&]{

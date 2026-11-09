@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Admission of a fully rebuilt, independently frozen native/fork integration.
 
 This never applies patches or compiles production translation units. The build

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "MeshReplacement.hh"
 #include "TextureDocument.hh"
 #include "BKE_collection.hh"

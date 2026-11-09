@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Initialized CPU fixture for immutable encoded UDIM ownership and transport.
 // Unit A deliberately creates no native uploader, sampler or GPU program.

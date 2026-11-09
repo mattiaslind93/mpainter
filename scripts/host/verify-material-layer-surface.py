@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Explicit uniform EEVEE surface baseline: four real phases, strict ROI equality.
 
 Source-only until separately admitted with the matching SurfaceGraph overlay.

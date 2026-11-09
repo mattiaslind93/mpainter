@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Painter-style five-map USD preset, native material graph, self-contained package and Open."""
 from parity_test_environment import private_display
 import argparse,copy,json,os,re,struct,subprocess,zipfile

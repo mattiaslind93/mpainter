@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #define main existing_height_policy_full_main
 #include "native_height_policy_native_test.cc"
 #undef main

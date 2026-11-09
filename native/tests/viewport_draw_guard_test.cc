@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "ViewportDrawGuard.hh"
 #include <QApplication>
 #include <QLabel>

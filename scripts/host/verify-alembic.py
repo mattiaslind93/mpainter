@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native Alembic New, painting, independent .blend Open and layer-preserving reimport."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess

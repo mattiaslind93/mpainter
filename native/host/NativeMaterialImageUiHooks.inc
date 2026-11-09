@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Workspace-owner callbacks, included once in main beside texture-loader setup.
 // Workers receive only copied immutable assets/descriptions, never these locals.
 const auto initialize_native_image_ui=[&]{

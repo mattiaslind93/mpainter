@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Build an isolated native host overlay; verify GPU Flatten then standard Export.
 
 Run with nice -n19 inside the build container. --compile-only / --run-only lets

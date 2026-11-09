@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Compile one patched QtWidgets TU and relink into a private validation stage.
 
 Existing Qt build artifacts/source are read-only inputs. This never invokes an

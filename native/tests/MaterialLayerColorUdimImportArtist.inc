@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Explicit Color-v2 product Import mode; all file/paint/reference work stays
 // in the original Color actor. No test work on its default diagnostic route.
  bool product_import_=qEnvironmentVariableIsSet("BTS_PD149_COLOR_PACKAGE_IMPORT");

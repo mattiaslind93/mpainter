@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "AePersistenceDemo.hh"
 #include "Performance.hh"
 #include "ColorPicker.hh"

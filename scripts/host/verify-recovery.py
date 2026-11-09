@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Kill only our own native Qt/Blender PID during an actual .blend@ write; verify both complete files."""
 import argparse,atexit,hashlib,json,os,signal,subprocess,time
 from pathlib import Path

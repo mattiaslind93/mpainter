@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Ten GUI workflows with opt-in thread CPU, asynchronous GPU queries and transfer counters."""
 import argparse,json,os,re,statistics,subprocess
 from contextlib import nullcontext

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Report stylesheet sizes that are not on the scale in docs/design/ui.md.
 
 Colors already have check-theme-colors.py. This is the same idea for the rest:

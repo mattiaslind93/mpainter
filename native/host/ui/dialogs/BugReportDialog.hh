@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // A plain report box: the user writes what happened and presses Send. The
 // message goes to a small endpoint on the product site, which is what holds the

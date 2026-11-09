@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Native GUI converted preset plus native ImBuf verification of all 16-bit samples."""
 from parity_test_environment import private_display
 import argparse,json,os,re,subprocess

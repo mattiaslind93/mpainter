@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Standard-node raw UDIM fanout. Reuses per-file immutable Image aliases.
 std::shared_ptr<const FillTexture> udim_filter_source(bNodeTree &tree,const std::string &prefix){
  auto *n=bke::node_find_node_by_name(tree,prefix+"Representation");

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "EvaluationScope.hh"
 #include "StrokeMetadata.hh"
 #include "TextureMemory.hh"

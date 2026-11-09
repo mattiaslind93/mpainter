@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """AB signed UDIM/alpha import, actual GPU image, undo and packed-project regression."""
 import argparse
 import json

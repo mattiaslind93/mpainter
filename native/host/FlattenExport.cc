@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "FlattenExport.hh"
 #include "FlattenLayer.hh"
 #include "ExportNaming.hh"

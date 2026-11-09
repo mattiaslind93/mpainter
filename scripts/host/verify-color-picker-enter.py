@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Actual ColorPicker CPU regression against immutable native link inputs."""
 import argparse
 import hashlib

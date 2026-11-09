@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Tests for scripts/verify/check_agent_docs.py, run against throwaway repository trees."""
 import ast
 import contextlib

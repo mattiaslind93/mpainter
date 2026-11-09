@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "TextureSetResidency.hh"
 #include "HistoryPageStorage.hh"
 #include "TextureResidencyMemory.hh"

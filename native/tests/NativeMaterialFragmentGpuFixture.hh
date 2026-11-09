@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 #include "NativeMaterialFragmentNormalFixture.hh"
 namespace bts::native_fragment_gpu_test {

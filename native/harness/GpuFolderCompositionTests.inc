@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Executed only by the explicit private production-GPU self_test.
  {
   GpuLayerPreview folders;auto output=texture("BTS Folder algebra",128,128,gpu::TextureFormat::SFLOAT_32_32_32_32);int folder_cases=0;

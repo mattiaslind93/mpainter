@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "SpsmReader.hh"
 #include "../host/ResourceAvailability.hh"
 #include <hdf5.h>

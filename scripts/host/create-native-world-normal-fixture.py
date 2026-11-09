@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Own image-free native Bump and flat sources plus a unique-UV two-UDIM mesh.
 
 Run only in the approved background Blender fixture process, with an absolute
