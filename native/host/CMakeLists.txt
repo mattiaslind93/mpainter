@@ -117,7 +117,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/persistence/ProjectTemplate.cc
   ${BTS_HOST_SOURCE_DIR}/persistence/ProjectConfiguration.cc
   ${BTS_HOST_SOURCE_DIR}/ui/panels/UnitsPanel.cc
-  ${BTS_HOST_SOURCE_DIR}/PhysicalScaleSource.cc
+  ${BTS_HOST_SOURCE_DIR}/fill/PhysicalScaleSource.cc
   ${BTS_HOST_SOURCE_DIR}/io/UsdScene.cc
   ${BTS_HOST_SOURCE_DIR}/ui/panels/UsdScenePanel.cc
   ${BTS_HOST_SOURCE_DIR}/BlendAssetLibrary.cc
@@ -425,7 +425,7 @@ target_include_directories(bts-export-packing-tests PRIVATE ${BTS_HOST_SOURCE_DI
 target_compile_features(bts-export-packing-tests PRIVATE cxx_std_20)
 
 # Shared metadata parser is also linked by the pure TextureDocument test targets.
-add_library(bts-export-config STATIC ${BTS_HOST_SOURCE_DIR}/baking/SkewArchive.cc ${BTS_HOST_SOURCE_DIR}/Displacement.cc ${BTS_HOST_SOURCE_DIR}/layers/CustomChannel.cc ${BTS_HOST_SOURCE_DIR}/PhysicalScale.cc ${BTS_HOST_SOURCE_DIR}/io/ExportConfiguration.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeArchive.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeTransfer.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc)
+add_library(bts-export-config STATIC ${BTS_HOST_SOURCE_DIR}/baking/SkewArchive.cc ${BTS_HOST_SOURCE_DIR}/Displacement.cc ${BTS_HOST_SOURCE_DIR}/layers/CustomChannel.cc ${BTS_HOST_SOURCE_DIR}/fill/PhysicalScale.cc ${BTS_HOST_SOURCE_DIR}/io/ExportConfiguration.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeArchive.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeTransfer.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc)
 target_include_directories(bts-export-config PUBLIC ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-export-config PUBLIC cxx_std_20)
 target_link_libraries(bts-export-config PUBLIC Qt6::Core)
@@ -527,7 +527,7 @@ target_compile_definitions(bts-usd-scene-tests PRIVATE QT_NO_KEYWORDS BTS_USD_TE
 target_link_libraries(bts-usd-scene-tests PRIVATE Qt6::Core bf::dependencies::optional::usd bf::dependencies::optional::tbb bf::dependencies::optional::python)
 setup_platform_linker_libs(bts-usd-scene-tests)
 
-add_executable(bts-physical-scale-tests ${BTS_HOST_SOURCE_DIR}/../tests/physical_scale_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc ${BTS_HOST_SOURCE_DIR}/PhysicalScaleSource.cc ${BTS_HOST_SOURCE_DIR}/PhysicalScale.cc ${BTS_HOST_SOURCE_DIR}/io/UsdScene.cc)
+add_executable(bts-physical-scale-tests ${BTS_HOST_SOURCE_DIR}/../tests/physical_scale_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc ${BTS_HOST_SOURCE_DIR}/fill/PhysicalScaleSource.cc ${BTS_HOST_SOURCE_DIR}/fill/PhysicalScale.cc ${BTS_HOST_SOURCE_DIR}/io/UsdScene.cc)
 target_include_directories(bts-physical-scale-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-physical-scale-tests PRIVATE cxx_std_20)
 target_compile_definitions(bts-physical-scale-tests PRIVATE QT_NO_KEYWORDS BTS_PHYSICAL_USD_FIXTURE="${BTS_HOST_SOURCE_DIR}/../tests/fixtures/usd_scene_contract.usda" BTS_PHYSICAL_TEST_ROOT="${CMAKE_BINARY_DIR}")
