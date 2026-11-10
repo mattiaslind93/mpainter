@@ -97,7 +97,7 @@ class ManifestTests(unittest.TestCase):
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("compiled source " + relative)
                 sources[relative] = module.sha256(path)
-            source = root / "native/host/NativeCyclesImages.cc"
+            source = root / "native/host/blender/NativeCyclesImages.cc"
             patches = {}
             for name in ("0035-hosted-live-image-cache.patch", "0036-cycles-live-image-reload.patch"):
                 path = root / "native/patches" / name

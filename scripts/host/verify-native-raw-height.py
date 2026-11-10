@@ -32,7 +32,7 @@ def digest(path):
  with path.open('rb')as stream:
   for block in iter(lambda:stream.read(1024*1024),b''):result.update(block)
  return result.hexdigest()
-sources=('native/host/NativeMaterialGraph.cc','native/host/materials/native/NativeMaterialRawHeight.hh','native/tests/NativeMaterialRawHeightFixture.hh','native/tests/native_raw_height_test.cc')
+sources=('native/host/blender/NativeMaterialGraph.cc','native/host/materials/native/NativeMaterialRawHeight.hh','native/tests/NativeMaterialRawHeightFixture.hh','native/tests/native_raw_height_test.cc')
 def source_contract():return {name:digest(repo/name)for name in(*sources,'scripts/host/verify-native-raw-height.py')}
 source_hashes=source_contract()
 env=dict(os.environ,CCACHE_DIR=str(bts/'build/ccache'))
@@ -41,7 +41,7 @@ if not a.run_only:
  # No host layout/schema/header is modified by phase one. A snapshot older
  # than other merged features must not accidentally mix different consumers.
  changed=set(subprocess.check_output(['git','diff','--name-only',baseline,'--','native/host'],cwd=repo,text=True).splitlines())
- if changed-{'native/host/NativeMaterialGraph.cc','native/host/materials/native/NativeMaterialRawHeight.hh'}:
+ if changed-{'native/host/blender/NativeMaterialGraph.cc','native/host/materials/native/NativeMaterialRawHeight.hh'}:
   raise SystemExit('Snapshot native baseline differs beyond phase one; supply a matching fresh immutable host')
  commands=json.loads((snapshot/'host-commands.json').read_text());native=[]
  for command in commands:

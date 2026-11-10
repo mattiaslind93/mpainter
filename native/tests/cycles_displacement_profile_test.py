@@ -76,7 +76,7 @@ class DisplacementAdmissionTests(unittest.TestCase):
                         {**overlay, "native/host/main.cc": {}}):
                 with self.assertRaises(ValueError):
                     integrated.validate(snapshot, repo, bad, integrated.DISPLACEMENT_PROFILE)
-            for target in (repo / "native/host/NativeCyclesImages.cc", snapshot / "lib/libproduction.a",
+            for target in (repo / "native/host/blender/NativeCyclesImages.cc", snapshot / "lib/libproduction.a",
                            snapshot / "integration-blender/include/live.hh", repo / "native/tests/cycles_live_displacement_artist_test.cc"):
                 raw = target.read_bytes(); target.write_bytes(raw + b"changed")
                 with self.assertRaises(ValueError, msg=str(target)):

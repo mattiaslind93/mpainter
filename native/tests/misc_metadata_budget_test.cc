@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <QtWidgets>
 // Exercise the native PreviewImage span helper without exposing a test-only API.
-#include "../host/BlendMaterial.cc"
+#include "../host/blender/BlendMaterial.cc"
 #include "ProjectTemplate.hh"
 #include "GeometryMask.hh"
 #include "MeshBakeDialog.hh"

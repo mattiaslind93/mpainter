@@ -107,7 +107,7 @@ class Admission(unittest.TestCase):
         self.rejects(lambda: self.receipt.update(profile='default'))
         self.rejects(lambda: self.manifest.update(profile='controlled-fixed-sampling-v1'))
         self.rejects(lambda: self.receipt['parents'].pop())
-        self.rejects(lambda: self.receipt['sources'].update({'native/host/BlenderHost.cc': 'foreign'}))
+        self.rejects(lambda: self.receipt['sources'].update({'native/host/blender/BlenderHost.cc': 'foreign'}))
 
     def test_exact_flags_and_extra_object_rejected(self):
         self.rejects(lambda: self.receipt['compiled_test_units']['probe']['command'].append('-DBTS_BA_CONTROLLED_PROFILE_TEST=1'))

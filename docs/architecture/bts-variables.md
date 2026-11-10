@@ -64,7 +64,7 @@ leaves the release build.
 | `BTS_BJ_PROJECTION_UI` | native/harness, native/host | `GuiFixDemo.cc`, `HarnessDispatch.hh`, `NativeMaterialProjectionProofActions.inc`, `NativeCyclesImages.cc` and 2 more |
 | `BTS_BK_BITMAP` | native/harness | `FolderMaskDemo.hh` |
 | `BTS_BK_COLD` | native/harness | `FolderMaskDemo.hh` |
-| `BTS_BK_FOLDER_MASK` | native/harness, native/host | `FolderMaskProofActions.inc`, `GuiFixDemo.cc`, `SessionDemoActions.inc`, `NativeCyclesImages.cc` and 2 more |
+| `BTS_BK_FOLDER_MASK` | native/harness, native/host | `FolderMaskProofActions.inc`, `GuiFixDemo.cc`, `SessionDemoActions.inc`, `WorkspaceViewport.inc` and 2 more |
 | `BTS_BK_PROJECT_DIR` | native/harness | `FolderMaskDemo.hh`, `FolderMaskProofActions.inc` |
 | `BTS_BLEND_ASSET_BROWSER_DEMO` | native/harness | `GuiFixDemo.cc` |
 | `BTS_BLEND_ASSET_ROOT` | native/harness | `BlendAssetLibraryDemo.hh` |
@@ -75,7 +75,7 @@ leaves the release build.
 | `BTS_BLEND_MATERIAL_SOURCE` | native/harness, native/tests | `BlendImagesDemo.hh`, `BlendMaterialDemo.hh`, `native_height_policy_artist_test.cc`, `native_material_artist_edit_test.cc` and 1 more |
 | `BTS_BL_BAKE_SAMPLES_TEST` | native/harness | `GpuBakeRayDemo.hh` |
 | `BTS_BM_ADJUSTMENT_COLD` | native/harness | `ViewportHeadlessDemo.cc` |
-| `BTS_BM_ADJUSTMENT_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `GpuLayerPreview.cc`, `NativeCyclesImages.cc`, `WorkspaceMenus.inc` and 5 more |
+| `BTS_BM_ADJUSTMENT_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceMenus.inc`, `WorkspaceStrokes.inc`, `WorkspaceWindow.inc` and 5 more |
 | `BTS_BM_ADJUSTMENT_EXPECTED` | native/harness | `AdjustmentPaintColdProof.hh` |
 | `BTS_BM_GPU_ADJUSTMENT_TEST` | native/harness, native/host | `ViewportHeadlessDemo.cc`, `GpuLayerPreview.cc` |
 | `BTS_BN_PRECISION_DIAG` | native/harness | `GpuSmartMaskTests.inc` |

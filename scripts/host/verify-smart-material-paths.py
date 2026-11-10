@@ -21,7 +21,7 @@ callback=compact(statement(main_source(root),'callbacks.create_smart_material'))
 assert 'host.begin_material_preset(' in callback and 'host.poll_material_preset()' in callback
 assert 'AssetCatalog::prepare_user(' in callback and 'assets.add_prepared(' in callback
 for forbidden in ('write_material_preset(', 'read_material_preset(', 'assets.add('):assert forbidden not in callback, ('UI material-preset work',forbidden)
-inspection=with_sections(root,'native/host/MaterialInspection.cc')
+inspection=with_sections(root,'native/host/blender/MaterialInspection.cc')
 baked=inspection.split('void baked_image(',1)[1].split('\n}',1)[0]
 assert 'native_generated_image(&main,resolution,height,' in compact(baked),'Baked-map inspection must allocate the baked map dimensions'
 print('Material presets: bundled recipe disabled; GPU capture, async publication, no CPU layered thumbnails')

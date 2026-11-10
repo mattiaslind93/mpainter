@@ -94,7 +94,7 @@ if not a.run_only and not a.integrated_snapshot:
  udim_case=compile(template,repo/'native/tests/cycles_live_udim_artist_test.cc','cycles-live-udim-case')if a.udim else None
  extra_template=next(v for v in native if v[v.index('-c')+1].endswith('/ordinary_color_source_test.cc'))
  extra=compile(extra_template,repo/'native/tests/spsm_bitmap_color_test.cc','source-color-cpu')
- bridge=compile(template,repo/'native/host/NativeCyclesImages.cc','native-cycles-images')
+ bridge=compile(template,repo/'native/host/blender/NativeCyclesImages.cc','native-cycles-images')
  cache_test=compile(template,repo/'native/tests/cycles_image_cache_test.cc','cycles-cache-cpu')
  fork_objects={}
  for old,(args,source)in fork_sources.items():fork_objects[old]=compile(args,source,'fork-'+source.parent.name+'-'+source.name)

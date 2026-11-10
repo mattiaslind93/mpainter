@@ -68,8 +68,8 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/baking/SkewBakeEngine.cc
   ${BTS_HOST_SOURCE_DIR}/baking/SkewIO.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/ResidencyDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/ViewportResidency.cc
-  ${BTS_HOST_SOURCE_DIR}/GpuLayerPreview.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/ViewportResidency.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/GpuLayerPreview.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/PerformanceDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/AePersistenceDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/PropertyPerformanceDemo.cc
@@ -100,9 +100,9 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/../harness/DisplacementDemo.cc
   ${BTS_HOST_SOURCE_DIR}/ui/panels/DisplacementPanel.cc
   ${BTS_HOST_SOURCE_DIR}/blender/DisplacementPreview.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeCompositeJob.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeCyclesImages.cc
-  ${BTS_HOST_SOURCE_DIR}/ColorPicker.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/NativeCompositeJob.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/NativeCyclesImages.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/ColorPicker.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/ColorPickerDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/LightingDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/BakeFixDemo.cc
@@ -122,10 +122,10 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/ui/panels/UsdScenePanel.cc
   ${BTS_HOST_SOURCE_DIR}/blender/BlendAssetLibrary.cc
   ${BTS_HOST_SOURCE_DIR}/BlendAssetBrowser.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialPreview.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/NativeMaterialPreview.cc
   ${BTS_HOST_SOURCE_DIR}/assets/SmartMaskThumbnailJobs.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialPreviewImages.cc
-  ${BTS_HOST_SOURCE_DIR}/BlendMaterial.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/NativeMaterialPreviewImages.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/BlendMaterial.cc
   ${BTS_HOST_SOURCE_DIR}/ui/panels/NativeMaterialPanel.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialPanelTest.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialInspectionDemo.cc
@@ -144,12 +144,12 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialImagePanel.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialImageJobs.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialImageUi.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialImageBindings.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialImageVariant.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialSourceFiles.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialResource.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialArchive.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialDecodedImage.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/NativeMaterialImageBindings.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/NativeMaterialImageVariant.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/NativeMaterialSourceFiles.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/NativeMaterialResource.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/NativeMaterialArchive.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/NativeMaterialDecodedImage.cc
   ${BTS_HOST_SOURCE_DIR}/blender/NativeMaterialImages.cc
   ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialImageUpload.cc
   ${BTS_HOST_SOURCE_DIR}/blender/NativeMaterialImageResource.cc
@@ -157,7 +157,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialSourceLoader.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialHostQueueDemo.cc
   ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialSharedGpuImages.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialGraph.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/NativeMaterialGraph.cc
   ${BTS_HOST_SOURCE_DIR}/ui/dialogs/BlendMaterialDialog.cc
   ${BTS_HOST_SOURCE_DIR}/blender/BlendLibrary.cc
   ${BTS_HOST_SOURCE_DIR}/ui/panels/BlendLibraryPanel.cc
@@ -166,7 +166,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/blender/MeshReplacement.cc
   ${BTS_HOST_SOURCE_DIR}/persistence/Recovery.cc
   ${BTS_HOST_SOURCE_DIR}/io/ExportPadding.cc
-  ${BTS_HOST_SOURCE_DIR}/TextureExport.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/TextureExport.cc
   ${BTS_HOST_SOURCE_DIR}/ui/dialogs/TextureExportDialog.cc
   ${BTS_HOST_SOURCE_DIR}/SmartMaterial.cc
   ${BTS_HOST_SOURCE_DIR}/ui/panels/MeshMapsPanel.cc
@@ -175,13 +175,13 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/baking/MeshMapAssign.cc
   ${BTS_HOST_SOURCE_DIR}/io/MeshMapIO.cc
   ${BTS_HOST_SOURCE_DIR}/baking/MeshBakeFilter.cc
-  ${BTS_HOST_SOURCE_DIR}/MeshBaker.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/MeshBaker.cc
   ${BTS_HOST_SOURCE_DIR}/blender/AssetThumbnail.cc
   ${BTS_HOST_SOURCE_DIR}/AssetCatalog.cc
-  ${BTS_HOST_SOURCE_DIR}/ResourceIO.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/ResourceIO.cc
   ${BTS_HOST_SOURCE_DIR}/io/ResourceImport.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/FillTextureDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/FillTextureIO.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/FillTextureIO.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/FillSymmetryDemo.cc
   ${BTS_HOST_SOURCE_DIR}/fill/FillSymmetryPanel.cc
   ${BTS_HOST_SOURCE_DIR}/fill/FillPanel.cc
@@ -190,7 +190,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/io/SymmetryIO.cc
   ${BTS_HOST_SOURCE_DIR}/layers/LayerThumbnail.cc
   ${BTS_HOST_SOURCE_DIR}/blender/EnvironmentResource.cc
-  ${BTS_HOST_SOURCE_DIR}/ProjectIO.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/ProjectIO.cc
   ${BTS_HOST_SOURCE_DIR}/blender/SurfaceBrush.cc
   ${BTS_HOST_SOURCE_DIR}/layers/AmbientOcclusion.cc
   ${BTS_HOST_SOURCE_DIR}/layers/NormalMix.cc
@@ -198,7 +198,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/materials/layering/MaterialLayeringSources.cc
   ${BTS_HOST_SOURCE_DIR}/materials/layering/MaterialLayeringSourceSnapshots.cc
   ${BTS_HOST_SOURCE_DIR}/materials/openpbr/OpenPbrShader.cc
-  ${BTS_HOST_SOURCE_DIR}/MaterialInspection.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/MaterialInspection.cc
   ${BTS_HOST_SOURCE_DIR}/blender/NativeWorldNormalShader.cc
   ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc
   ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc
@@ -206,12 +206,12 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/../harness/MeshExportDemo.cc
   ${BTS_HOST_SOURCE_DIR}/blender/UsdTextureBindings.cc
   ${BTS_HOST_SOURCE_DIR}/blender/UsdMeshExport.cc
-  ${BTS_HOST_SOURCE_DIR}/MeshExport.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/MeshExport.cc
   ${BTS_HOST_SOURCE_DIR}/ui/dialogs/MeshExportDialog.cc
   ${BTS_HOST_SOURCE_DIR}/io/MeshImport.cc
   ${BTS_HOST_SOURCE_DIR}/ui/dialogs/NewProjectDialog.cc
   ${BTS_HOST_SOURCE_DIR}/main.cc
-  ${BTS_HOST_SOURCE_DIR}/BlenderHost.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/BlenderHost.cc
   ${BTS_HOST_SOURCE_DIR}/blender/EeveeCompletionSnapshot.cc
   ${BTS_HOST_SOURCE_DIR}/blender/SurfaceGraphSnapshot.cc
   ${BTS_HOST_SOURCE_DIR}/BlenderHost.hh
@@ -262,10 +262,10 @@ add_subdirectory(${BTS_HOST_SOURCE_DIR}/../spsm/semantic ${CMAKE_CURRENT_BINARY_
 add_subdirectory(${BTS_HOST_SOURCE_DIR}/../spsm/bitmaps ${CMAKE_CURRENT_BINARY_DIR}/spsm-bitmaps)
 target_sources(bts-host PRIVATE
   ${BTS_HOST_SOURCE_DIR}/SpsmMaterialImport.cc
-  ${BTS_HOST_SOURCE_DIR}/SpsmBitmapTexture.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/SpsmBitmapTexture.cc
   ${BTS_HOST_SOURCE_DIR}/SpsmBitmapLowering.cc
   ${BTS_HOST_SOURCE_DIR}/SpsmMeshMapLowering.cc
-  ${BTS_HOST_SOURCE_DIR}/SpsmSource.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/SpsmSource.cc
   ${BTS_HOST_SOURCE_DIR}/io/SpsmImportUi.cc)
 target_link_libraries(bts-host PRIVATE bts-spsm-semantic bts-spsm-bitmaps)
 add_executable(bts-spsm-bitmap-options-tests ${BTS_HOST_SOURCE_DIR}/../tests/spsm_bitmap_options_test.cc)
@@ -760,7 +760,7 @@ target_compile_features(bts-warp-grid-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-warp-grid-tests PRIVATE Qt6::Core)
 
 add_executable(bts-warp-editor-tests ${BTS_HOST_SOURCE_DIR}/../tests/warp_editor_test.cc
-  ${BTS_HOST_SOURCE_DIR}/ui/widgets/WarpEditor.cc ${BTS_HOST_SOURCE_DIR}/ColorPicker.cc)
+  ${BTS_HOST_SOURCE_DIR}/ui/widgets/WarpEditor.cc ${BTS_HOST_SOURCE_DIR}/blender/ColorPicker.cc)
 target_include_directories(bts-warp-editor-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-warp-editor-tests PRIVATE cxx_std_20)
 target_compile_definitions(bts-warp-editor-tests PRIVATE BTS_STANDALONE_COLOR_PICKER)
@@ -1107,7 +1107,7 @@ if(WITH_MATERIALX)
   target_link_libraries(bts-host PRIVATE bts-openpbr-texture-package)
   target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/../harness/OpenPbrExportCpuTest.cc ${BTS_HOST_SOURCE_DIR}/materials/openpbr/OpenPbrMaterialImport.cc)
   set_source_files_properties(${BTS_HOST_SOURCE_DIR}/../harness/OpenPbrExportCpuTest.cc PROPERTIES INCLUDE_DIRECTORIES "$<TARGET_PROPERTY:MaterialXCore,INTERFACE_INCLUDE_DIRECTORIES>;$<TARGET_PROPERTY:MaterialXFormat,INTERFACE_INCLUDE_DIRECTORIES>")
-  set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/TextureExport.cc ${BTS_HOST_SOURCE_DIR}/ui/dialogs/TextureExportDialog.cc ${BTS_HOST_SOURCE_DIR}/../harness/ExportCpuDemo.cc ${BTS_HOST_SOURCE_DIR}/io/MeshImport.cc ${BTS_HOST_SOURCE_DIR}/main.cc APPEND PROPERTY COMPILE_DEFINITIONS BTS_WITH_MATERIALX)
+  set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/blender/TextureExport.cc ${BTS_HOST_SOURCE_DIR}/ui/dialogs/TextureExportDialog.cc ${BTS_HOST_SOURCE_DIR}/../harness/ExportCpuDemo.cc ${BTS_HOST_SOURCE_DIR}/io/MeshImport.cc ${BTS_HOST_SOURCE_DIR}/main.cc APPEND PROPERTY COMPILE_DEFINITIONS BTS_WITH_MATERIALX)
 endif()
 
 # The Linux prebuilt monolithic USD library requires these shared libraries.
@@ -1632,7 +1632,7 @@ add_test(NAME reference-image-data-cpu COMMAND bts-reference-image-data-tests)
 
 add_executable(bts-reference-image-tests
   ${BTS_HOST_SOURCE_DIR}/../tests/reference_image_test.cc
-  ${BTS_HOST_SOURCE_DIR}/ColorPicker.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/ColorPicker.cc
   ${BTS_HOST_SOURCE_DIR}/app/Preferences.cc
   ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
 target_include_directories(bts-reference-image-tests PRIVATE ${BTS_HOST_SOURCE_DIR})

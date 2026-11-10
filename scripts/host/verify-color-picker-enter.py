@@ -16,6 +16,9 @@ p.add_argument("--baseline", action="store_true", help="Prove the old exact sour
 a = p.parse_args()
 repo = Path(__file__).resolve().parents[2]
 bts = repo.parent
+import sys
+sys.path.insert(0, str(repo / "scripts/host"))
+from main_source import host_file, host_rel_at  # host files live in domain folders
 snapshot, generated, out = a.snapshot.resolve(), a.generated_headers.resolve(), a.output.resolve()
 if not out.is_relative_to(bts / "build") or out.is_relative_to(snapshot) or out.is_relative_to(bts / "build/host"):
     raise ValueError("Use an independent private build output")
@@ -34,7 +37,8 @@ def digest(path):
 
 
 def compilation(name):
-    return next(shlex.split(c) for c in commands if " -c " in c and c.split(" -c ")[-1].strip().endswith("/native/host/" + name))
+    # By name: sources sit in domain folders and the harness, and moved since the snapshot.
+    return next(shlex.split(c) for c in commands if " -c " in c and c.split(" -c ")[-1].strip().endswith("/" + name))
 
 
 def call(args, label):
@@ -43,10 +47,10 @@ def call(args, label):
         subprocess.run(["nice", "-n", "19", *args], cwd=snapshot, env=env, stdout=log, stderr=subprocess.STDOUT, check=True)
 
 
-sources = {"ColorPicker.cc": repo / "native/host/ColorPicker.cc", "NativeMaterialPanelTest.cc": repo / "native/harness/NativeMaterialPanelTest.cc", "main.cc": repo / "native/tests/color_picker_enter_test.cc"}
+sources = {"ColorPicker.cc": host_file(repo, "ColorPicker.cc"), "NativeMaterialPanelTest.cc": repo / "native/harness/NativeMaterialPanelTest.cc", "main.cc": repo / "native/tests/color_picker_enter_test.cc"}
 if a.baseline:
     baseline = json.loads((snapshot / "snapshot.json").read_text())["source_head"]
-    original = subprocess.check_output(["git", "show", baseline + ":native/host/ColorPicker.cc"], cwd=repo)
+    original = subprocess.check_output(["git", "show", baseline + ":" + host_rel_at(repo, baseline, "ColorPicker.cc")], cwd=repo)
     sources["ColorPicker.cc"] = out / "ColorPicker-baseline.cc"
     sources["ColorPicker.cc"].write_bytes(original)
 source_hashes = {str(v): digest(v) for v in (*sources.values(), repo / "native/host/ColorPicker.hh", repo / "native/harness/ColorPickerTest.hh")}

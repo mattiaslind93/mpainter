@@ -71,7 +71,7 @@ def host_rel_at(root, rev, name):
 
 def with_sections(root, rel):
     """rel's text with every `#include "Name.inc"` it holds replaced by that file, recursively.
-    A big file such as native/host/MaterialInspection.cc keeps its code in .inc sections it
+    A big file such as native/host/blender/MaterialInspection.cc keeps its code in .inc sections it
     includes in place; verifiers that read the file's code as text read this instead."""
     root = Path(root)
     found = {}

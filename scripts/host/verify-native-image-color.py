@@ -39,10 +39,10 @@ sources = ['native/host/blender/NativeMaterialImageResource.cc', 'native/host/bl
 if a.suite == 'gpu':
     if a.baseline or a.runtime_baseline or a.sanitize:
         raise RuntimeError('Use CPU suite for baseline/sanitizers')
-    sources += ['native/host/NativeMaterialResource.cc', 'native/host/NativeMaterialArchive.cc',
-                'native/host/BlendMaterial.cc']
-if (root / 'native/host/NativeMaterialDecodedImage.cc').is_file():
-    sources.append('native/host/NativeMaterialDecodedImage.cc')
+    sources += ['native/host/blender/NativeMaterialResource.cc', 'native/host/blender/NativeMaterialArchive.cc',
+                'native/host/blender/BlendMaterial.cc']
+if (root / 'native/host/blender/NativeMaterialDecodedImage.cc').is_file():
+    sources.append('native/host/blender/NativeMaterialDecodedImage.cc')
 flags = ['-fsanitize=address,undefined', '-fno-omit-frame-pointer'] if a.sanitize else []
 objects, compiles = [], []
 for source in sources:
