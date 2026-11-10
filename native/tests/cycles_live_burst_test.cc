@@ -1,12 +1,12 @@
 // QtCore first, then epoxy/GPU headers before the fixture pulls QOpenGLWidget.
 #include <QtCore>
-#include "../host/GpuProjectReadback.hh"
+#include "../host/blender/GpuProjectReadback.hh"
 // Include once, replacing the ordinary UDIM case object in this executable.
 // The sole fixture-source overlay is its friend declaration. Its own timer is
 // stopped synchronously below, before any event-loop delivery is possible.
 #include "cycles_live_udim_artist_test.cc"
 #include "CyclesLiveBurst.hh"
-#include "../host/PropertyLatency.hh"
+#include "../host/diagnostics/PropertyLatency.hh"
 #include "BKE_image_hosted.hh"
 #include "BKE_image_gpu_override.hh"
 #include <QCryptographicHash>

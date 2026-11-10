@@ -4,9 +4,9 @@ How `native/` is organised while the restructure plan's phases 4 and 5 are under
 
 | Folder | What lives there |
 |---|---|
-| `native/host/` | The application, compiled into `bts-host`. The top level holds only `CMakeLists.txt`, `SourceIncludeDirs.cmake`, `AGENTS.md` and the seven files the sha-pinned live-render tests include by `../host/` path: `main.cc`, `BlenderHost.hh`, `ColorPicker.hh`, `GpuProjectReadback.hh`, `PropertyLatency.hh`, `TextureDocument.hh`, `ViewportDemoCapture.hh`. |
+| `native/host/` | The application, compiled into `bts-host`. The top level holds only `CMakeLists.txt`, `SourceIncludeDirs.cmake` and `AGENTS.md` (with its `CLAUDE.md`); `main.cc` is in `app/`. |
 | `native/host/<domain>/` | Domain folders: `app/`, `assets/`, `baking/`, `blender/`, `diagnostics/`, `document/`, `fill/`, `gpu/`, `io/`, `layers/`, `materials/layering/`, `materials/native/`, `materials/openpbr/`, `painting/`, `persistence/`, `platform/`, `python/`, `spsm-import/`, `ui/dialogs/`, `ui/panels/`, `ui/shell/`, `ui/theme/`, `ui/widgets/`, `viewport/`. Still to come from the plan: `materials/common/`. |
-| `native/host/blender/` | The only folder allowed to include Blender headers (plan rule 7). Every native/host file that includes them is here, except `main.cc` and `GpuProjectReadback.hh` (pinned test includes). A file whose `.cc` includes Blender sits here while its header, which does not, stays in its domain. The files still outside are harness and test code; `mp check`'s `blender-boundary` ratchet counts them. |
+| `native/host/blender/` | The only folder allowed to include Blender headers (plan rule 7). Every native/host file that includes them is here, except `app/main.cc`. A file whose `.cc` includes Blender sits here while its header, which does not, stays in its domain. The files still outside are harness and test code; `mp check`'s `blender-boundary` ratchet counts them. |
 | `native/host/openpbr/` | Vendored OpenPBR resources (Apache-2.0), not our code. |
 | `native/harness/` | Test, demo and proof code (`*Demo`, `*Test`, `*Proof`, `*Fixture`, `*Witness`, ...). Still compiled into `bts-host`, because `main()` calls it. |
 | `native/tests/` | Test programs and their fixtures. |

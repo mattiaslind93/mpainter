@@ -95,7 +95,7 @@ class BurstSnapshotTests(unittest.TestCase):
             self.assertIsNone(overlay['native/tests/CyclesLiveBurst.hh']['original_sha256'])
             self.assertEqual(admitted['kind'], 'full-native-fork-integration')
             for bad in ({}, {key: value for key, value in overlay.items() if key != burst.FIXTURE},
-                        {**overlay, 'native/host/main.cc': {}}):
+                        {**overlay, 'native/host/app/main.cc': {}}):
                 with self.assertRaises(ValueError):
                     burst.validate_overlay(snapshot, repo, bad)
             with self.assertRaises(ValueError):

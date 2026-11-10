@@ -75,7 +75,7 @@ binary = a.binary.resolve()
 assert sha(binary) == a.expect_binary, 'Frozen coherent binary changed'
 manifest_path = a.source_manifest.resolve()
 manifest = json.loads(manifest_path.read_text())['files']
-required = {'native/host/main.cc', 'native/harness/GuiFixDemo.cc',
+required = {'native/host/app/main.cc', 'native/harness/GuiFixDemo.cc',
             'native/harness/NativeMaterialProjectionDemo.hh',
             'native/harness/NativeMaterialProjectionProofActions.inc',
             'native/harness/NativeMaterialProjectionWitness.hh',

@@ -117,7 +117,7 @@ if not a.build_only:
   assert hashlib.sha256(source.read_bytes()).hexdigest()==source_sha
  proof['source_unchanged']=True;proof['source_sha256']=source_sha;proof['baseline_zero_invalidation_stale_gpu_reproduced']=True
  proof['baseline_ref']=a.baseline_ref
- proof['production_main_sha256']=hashlib.sha256((repo/'native/host/main.cc').read_bytes()).hexdigest()
+ proof['production_main_sha256']=hashlib.sha256((repo/'native/host/app/main.cc').read_bytes()).hexdigest()
  proof['fixed_diff_header_sha256']=hashlib.sha256(host_file(repo,'LayerEditDiff.hh').read_bytes()).hexdigest()
  proof['unique_exact_diff_implementation_symbol']=True
 

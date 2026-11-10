@@ -21,7 +21,7 @@
 #include <QTimer>
 #include <QToolButton>
 #include "../host/platform/NumericLocale.hh"
-#include "../host/GpuProjectReadback.hh"
+#include "../host/blender/GpuProjectReadback.hh"
 #include "BKE_global.hh"
 #include "BKE_main.hh"
 #include "BKE_image.hh"
@@ -34,7 +34,7 @@
 #include "DNA_node_types.h"
 #include "IMB_imbuf_types.hh"
 #include "GPU_texture.hh"
-#include "../host/ViewportDemoCapture.hh"
+#include "../host/viewport/ViewportDemoCapture.hh"
 #include <cmath>
 #include <cstdio>
 #include <cstring>

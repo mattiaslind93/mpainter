@@ -1,6 +1,6 @@
 #pragma once
-#include "../host/BlenderHost.hh"
-#include "../host/TextureDocument.hh"
+#include "../host/blender/BlenderHost.hh"
+#include "../host/document/TextureDocument.hh"
 #include <QJsonObject>
 #include <QString>
 #include <functional>

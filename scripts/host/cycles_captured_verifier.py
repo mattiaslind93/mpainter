@@ -141,7 +141,7 @@ def build(snapshot, repo, out, history_root, jobs):
     sources = integrated.validate_overlay_copy(out, admitted, overlay, burst=True)
     commands = json.loads((snapshot / 'host-commands.json').read_text())
     templates = [shlex.split(c) for c in commands if ' -c ' in c]
-    template = next(c for c in templates if c[c.index('-c') + 1].endswith('/native/host/main.cc'))
+    template = next(c for c in templates if c[c.index('-c') + 1].endswith('/native/host/app/main.cc'))
     native_root = template[template.index('-c') + 1].split('/native/', 1)[0] + '/native'
     env = dict(os.environ, CCACHE_DIR=str(repo.parent / 'build/ccache'))
     def call(args, label):

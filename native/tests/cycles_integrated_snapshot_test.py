@@ -115,7 +115,7 @@ class IntegratedSnapshotTests(unittest.TestCase):
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(text)
             return path
-        sources = ["host/main.cc", "host/NativeCyclesImages.cc", "host/Example.hh", "host/Example.inl",
+        sources = ["host/app/main.cc", "host/NativeCyclesImages.cc", "host/Example.hh", "host/Example.inl",
                    "tests/cycles_live_artist_test.cc", "tests/cycles_live_udim_artist_main.cc",
                    "tests/cycles_live_udim_artist_test.cc", "tests/cycles_image_cache_test.cc"]
         for name in sources:
@@ -133,7 +133,7 @@ class IntegratedSnapshotTests(unittest.TestCase):
             write(build / name, "completed production " + name)
             write(snapshot / name, "completed production " + name)
         commands = [f"c++ -I{repo}/native/host -I{fork}/include -I{build} -DNDEBUG -o {obj} -c {repo}/native/host/{name}"
-                    for obj, name in ((main, "main.cc"), (bridge, "NativeCyclesImages.cc"))]
+                    for obj, name in ((main, "app/main.cc"), (bridge, "NativeCyclesImages.cc"))]
         if cycles:
             commands.append(f"c++ -DCYCLES_EXACT_ABI=1 -DNDEBUG -I{fork}/include -isystem {fork}/lib/linux_x64/embree/include -I{build} -o cycles/session.cpp.o -c {fork}/intern/cycles/blender/session.cpp")
         metadata_commands = []
@@ -151,7 +151,7 @@ class IntegratedSnapshotTests(unittest.TestCase):
         script = f"-Wl,--version-script={fork}/source/creator/symbols_unix.map" if metadata else ""
         commands += [f": && c++ {script} -o bin/bts-host {main} {bridge} {metadata_object} {archive} {sdk} && :"]
         write(snapshot / "host-commands.json", json.dumps(commands))
-        deps = "".join(f"{obj}: #deps 4, deps mtime 1 (VALID)\n    {repo}/native/host/{name}\n    {fork}/include/live.hh\n    {build}/generated.hh\n    {repo}/native/host/Example.inl\n" for obj, name in ((main, "main.cc"), (bridge, "NativeCyclesImages.cc")))
+        deps = "".join(f"{obj}: #deps 4, deps mtime 1 (VALID)\n    {repo}/native/host/{name}\n    {fork}/include/live.hh\n    {build}/generated.hh\n    {repo}/native/host/Example.inl\n" for obj, name in ((main, "app/main.cc"), (bridge, "NativeCyclesImages.cc")))
         write(snapshot / "native-deps.txt", deps)
         write(snapshot / "snapshot.json", json.dumps({"source_head": "tested-integration", "source_build": str(build)}))
         write(snapshot / "bin/5.2/resource.txt", "runtime")
@@ -383,7 +383,7 @@ class IntegratedSnapshotTests(unittest.TestCase):
             overlay = integrated.controlled_overlay(snapshot, repo)
             admitted = integrated.validate(snapshot, repo, overlay)
             for bad in ({}, {key: value for key, value in overlay.items() if not key.endswith(".hh")},
-                        {**overlay, "native/host/main.cc": {"sha256": sha256(repo / "native/host/main.cc")}}):
+                        {**overlay, "native/host/app/main.cc": {"sha256": sha256(repo / "native/host/app/main.cc")}}):
                 with self.assertRaises(ValueError):
                     integrated.validate(snapshot, repo, bad)
             output = root / "controlled"

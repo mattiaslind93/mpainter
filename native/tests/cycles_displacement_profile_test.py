@@ -73,7 +73,7 @@ class DisplacementAdmissionTests(unittest.TestCase):
             repo, snapshot, overlay = self.fixture(Path(directory))
             integrated.validate(snapshot, repo, overlay, integrated.DISPLACEMENT_PROFILE)
             for bad in ({}, {key: value for key, value in overlay.items() if key.endswith(".cc")},
-                        {**overlay, "native/host/main.cc": {}}):
+                        {**overlay, "native/host/app/main.cc": {}}):
                 with self.assertRaises(ValueError):
                     integrated.validate(snapshot, repo, bad, integrated.DISPLACEMENT_PROFILE)
             for target in (repo / "native/host/blender/NativeCyclesImages.cc", snapshot / "lib/libproduction.a",

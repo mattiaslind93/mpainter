@@ -11,7 +11,7 @@
 #include <cstring>
 #include <map>
 #include <chrono>
-#include "../host/ColorPicker.hh"
+#include "../host/ui/widgets/ColorPicker.hh"
 #include <QAction>
 #include <QApplication>
 #include <QCheckBox>
@@ -37,7 +37,7 @@
 #include "DNA_image_types.h"
 #include "IMB_imbuf_types.hh"
 #include "GPU_texture.hh"
-#include "../host/ViewportDemoCapture.hh"
+#include "../host/viewport/ViewportDemoCapture.hh"
 extern "C" unsigned long long BTS_cycles_graph_count();
 extern "C" unsigned long long BTS_cycles_svm_count();
 namespace bts {namespace {

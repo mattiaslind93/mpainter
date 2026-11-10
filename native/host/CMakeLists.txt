@@ -210,11 +210,11 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/ui/dialogs/MeshExportDialog.cc
   ${BTS_HOST_SOURCE_DIR}/blender/MeshImport.cc
   ${BTS_HOST_SOURCE_DIR}/ui/dialogs/NewProjectDialog.cc
-  ${BTS_HOST_SOURCE_DIR}/main.cc
+  ${BTS_HOST_SOURCE_DIR}/app/main.cc
   ${BTS_HOST_SOURCE_DIR}/blender/BlenderHost.cc
   ${BTS_HOST_SOURCE_DIR}/blender/EeveeCompletionSnapshot.cc
   ${BTS_HOST_SOURCE_DIR}/blender/SurfaceGraphSnapshot.cc
-  ${BTS_HOST_SOURCE_DIR}/BlenderHost.hh
+  ${BTS_HOST_SOURCE_DIR}/blender/BlenderHost.hh
   ${BTS_HOST_SOURCE_DIR}/blender/SceneSnapshot.cc
   ${BTS_HOST_SOURCE_DIR}/blender/SceneSnapshot.hh
   ${BTS_HOST_SOURCE_DIR}/ui/shell/WorkspaceShell.cc
@@ -1107,7 +1107,7 @@ if(WITH_MATERIALX)
   target_link_libraries(bts-host PRIVATE bts-openpbr-texture-package)
   target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/../harness/OpenPbrExportCpuTest.cc ${BTS_HOST_SOURCE_DIR}/materials/openpbr/OpenPbrMaterialImport.cc)
   set_source_files_properties(${BTS_HOST_SOURCE_DIR}/../harness/OpenPbrExportCpuTest.cc PROPERTIES INCLUDE_DIRECTORIES "$<TARGET_PROPERTY:MaterialXCore,INTERFACE_INCLUDE_DIRECTORIES>;$<TARGET_PROPERTY:MaterialXFormat,INTERFACE_INCLUDE_DIRECTORIES>")
-  set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/blender/TextureExport.cc ${BTS_HOST_SOURCE_DIR}/ui/dialogs/TextureExportDialog.cc ${BTS_HOST_SOURCE_DIR}/../harness/ExportCpuDemo.cc ${BTS_HOST_SOURCE_DIR}/blender/MeshImport.cc ${BTS_HOST_SOURCE_DIR}/main.cc APPEND PROPERTY COMPILE_DEFINITIONS BTS_WITH_MATERIALX)
+  set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/blender/TextureExport.cc ${BTS_HOST_SOURCE_DIR}/ui/dialogs/TextureExportDialog.cc ${BTS_HOST_SOURCE_DIR}/../harness/ExportCpuDemo.cc ${BTS_HOST_SOURCE_DIR}/blender/MeshImport.cc ${BTS_HOST_SOURCE_DIR}/app/main.cc APPEND PROPERTY COMPILE_DEFINITIONS BTS_WITH_MATERIALX)
 endif()
 
 # The Linux prebuilt monolithic USD library requires these shared libraries.

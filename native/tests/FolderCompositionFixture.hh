@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
-#include "../host/TextureDocument.hh"
+#include "../host/document/TextureDocument.hh"
 namespace bts::folder_test {
 inline TextureSet fixture(LayerBlend mode,
                           float mask = .25f,

@@ -58,7 +58,7 @@ manifest_sha = sha(a.source_manifest)
 frozen = json.loads(a.source_manifest.read_text())['files']
 hashes = {name: value if isinstance(value, str) else value['sha256'] for name, value in frozen.items()}
 required = {'native/harness/NativeHeightImageUiDemo.hh', 'native/host/materials/native/NativeHeightImageUiState.inc',
-            'native/host/main.cc', 'native/harness/GuiFixDemo.cc',
+            'native/host/app/main.cc', 'native/harness/GuiFixDemo.cc',
             'native/tests/native_height_image_native_test.cc', 'native/tests/NativeHeightImageFixture.hh',
             'native/tests/NativeHeightImageReference.hh', 'scripts/host/verify-native-height-image-ui.py'}
 assert required <= hashes.keys()

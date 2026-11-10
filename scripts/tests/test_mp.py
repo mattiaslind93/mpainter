@@ -382,11 +382,11 @@ class HarnessSeam(unittest.TestCase):
         options = 'inline void add(QCommandLineParser &parser){\n  parser.addOption({"demo-x", "Demo"});\n}\n'
         main = ('parser.addOption({"project", "Open", "file"});\n'
                 'if(harness.is_set("demo-x")&&parser.isSet("project"))open(harness.value("demo-x"));\n')
-        repo = Repo(self, {"native/harness/HarnessOptions.hh": options, "native/host/main.cc": main})
+        repo = Repo(self, {"native/harness/HarnessOptions.hh": options, "native/host/app/main.cc": main})
         self.assertEqual(statuses(repo)["harness-seam"][0], "PASS")
         for bad in ('parser.isSet("demo-x");\n', 'harness.is_set("project");\n', 'harness.value("unknown");\n'):
             with self.subTest(bad=bad):
-                repo.write("native/host/main.cc", main + bad)
+                repo.write("native/host/app/main.cc", main + bad)
                 repo.git("add", "-A")
                 self.assertEqual(statuses(repo)["harness-seam"][0], "FAIL")
 

@@ -58,7 +58,7 @@ if not a.run_only:
             raise SystemExit(f'Missing replacement object: {path}')
         replacements[object_for(name)] = str(path)
     tasks = [(name, host_file(production, name)) for name in a.compile_unit]
-    if a.build_workspace: tasks.append(('main.cc', production / 'native/host/main.cc'))
+    if a.build_workspace: tasks.append(('main.cc', production / 'native/host/app/main.cc'))
     tasks.append(('async_project_open_native_test.cc', repo / 'native/tests/async_project_open_native_test.cc'))
     def compile_one(task):
         name, source = task

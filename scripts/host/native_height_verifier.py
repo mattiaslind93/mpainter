@@ -21,7 +21,7 @@ from cycles_live_manifest import sha256
 
 PROFILE = "native-height-policy-integrated-v1"
 # Each actor: its test under native/tests, and the production source it replaces.
-ACTORS = {"owner": ("native_height_policy_native_test.cc", "native/host/main.cc"),
+ACTORS = {"owner": ("native_height_policy_native_test.cc", "native/host/app/main.cc"),
           "artist": ("native_height_policy_artist_test.cc", "native/harness/GuiFixDemo.cc")}
 RUNNERS = tuple("scripts/host/" + name for name in (
     "native_height_verifier.py", "verify-native-height-policy.py",

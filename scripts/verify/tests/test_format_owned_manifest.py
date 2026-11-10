@@ -466,7 +466,7 @@ class Output(unittest.TestCase):
 class RiskTags(unittest.TestCase):
     def test_risk_tags_are_recorded(self):
         repo = Repo(self)
-        repo.write("native/host/R.cc", b'#define X(a) #a\n#ifdef _WIN32\n#endif\n#include "../host/main.cc"\n'
+        repo.write("native/host/R.cc", b'#define X(a) #a\n#ifdef _WIN32\n#endif\n#include "../host/app/main.cc"\n'
                                        b'using std::string;\nusing namespace std;\nauto s = R"x(raw)x";\n'
                                        b"#define Y \\\n 1\n")
         repo.write("native/host/Plain.cc", b"using namespace std;\nint x;\n")

@@ -3,7 +3,7 @@
 #define main bts_native_artist_main
 #define start_gui_fix_demo start_native_mapping_artist_demo
 #ifndef BTS_NATIVE_MAPPING_MAIN
-#  define BTS_NATIVE_MAPPING_MAIN "../host/main.cc"
+#  define BTS_NATIVE_MAPPING_MAIN "../host/app/main.cc"
 #endif
 #include BTS_NATIVE_MAPPING_MAIN
 #undef start_gui_fix_demo

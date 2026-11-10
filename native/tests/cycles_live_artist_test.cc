@@ -2,7 +2,7 @@
 // Compile production main unchanged, replacing only its optional demo driver.
 #define main cycles_live_production_main
 #define start_gui_fix_demo start_cycles_live_artist_demo
-#include "../host/main.cc"
+#include "../host/app/main.cc"
 #undef start_gui_fix_demo
 #undef main
 #include "BKE_global.hh"

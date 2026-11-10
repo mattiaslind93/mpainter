@@ -9,7 +9,7 @@ main.cc alone, so they see the same code wherever main.cc keeps it.
 import re
 from pathlib import Path
 
-MAIN = "native/host/main.cc"
+MAIN = "native/host/app/main.cc"
 # Files main.cc includes textually that hold main()'s code: the session, then the fragments it
 # includes in its body, in include order.
 SESSION_FILES = (

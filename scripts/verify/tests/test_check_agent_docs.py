@@ -105,7 +105,7 @@ def repo(agents, **extra):
         "scripts/build.py": "",
         "scripts/cross-windows/env.sh": "",
         "native/host/CMakeLists.txt": CMAKE,
-        "native/host/main.cc": "",
+        "native/host/app/main.cc": "",
         "third_party/blender/patches/0001-native-host.patch": "",
     }
     files.update(extra)
@@ -121,7 +121,7 @@ class CheckAgentDocs(unittest.TestCase):
     def test_existing_paths_and_commands_pass(self):
         code, out = self.run_repo(
             "# Repo\n"
-            "Version in `pyproject.toml`, host in `native/host/`, file `native/host/main.cc`.\n"
+            "Version in `pyproject.toml`, host in `native/host/`, file `native/host/app/main.cc`.\n"
             "Patch `0001-native-host.patch`.\n"
             "| Build | `python3 scripts/build.py --blender ../build/blender --qt <qt-root>` |\n"
             "| Test | `cmake --build <build> --target bts-cpu-check` |\n"

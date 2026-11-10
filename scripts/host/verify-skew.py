@@ -124,7 +124,7 @@ with (a.output/'run.log').open('w') as f:
 assert code==0,(code,(a.output/'run.log').read_text()[-4000:])
 proof=json.loads((a.output/'skew.json').read_text());assert proof['pid']==proc.pid;c={v['stage']:v for v in proof['captures']}
 for key in ['project-source-disabled','average-disabled','cage-disabled']:assert not c[key]['paint_button_enabled'],key
-for value in c.values():assert value['decimal']=='.' and not value['shader_failures'] and value['document']['schema']==int(re.search(r'texture_document_schema\s*=\s*(\d+)',(root/'native/host/TextureDocument.hh').read_text()).group(1))
+for value in c.values():assert value['decimal']=='.' and not value['shader_failures'] and value['document']['schema']==int(re.search(r'texture_document_schema\s*=\s*(\d+)',(root/'native/host/document/TextureDocument.hh').read_text()).group(1))
 assert not c['initial']['skew']['settings_visible']
 assert c['initial']['skew']['mode']==2 and c['initial']['skew']['eligible'] and c['initial']['skew']['completed']>=1
 assert c['initial']['skew_normal_hash']!=c['painted-uv']['skew_normal_hash']

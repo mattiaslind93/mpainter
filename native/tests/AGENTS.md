@@ -29,7 +29,7 @@ The folders here (`blend-library/`, `native-export-guard/`, `native_image_ui/`, 
 
 ## Pinned tests
 
-The live Cycles drivers (`cycles_live_*main.cc` and their tests) compile `native/host/main.cc` with a renamed `main()` and a `start_gui_fix_demo()` macro. Verifiers in `scripts/host/` pin their sha256. Do not edit them without renewing the pins, which needs the owner.
+The live Cycles drivers (`cycles_live_*main.cc` and their tests) compile `native/host/app/main.cc` with a renamed `main()` and a `start_gui_fix_demo()` macro. Verifiers in `scripts/host/` pin their sha256. Do not edit them without renewing the pins, which needs the owner. Their `../host/` includes were repointed when the files they include left the top of `native/host`; the pins were not renewed, so the admission verifiers reject them until the owner re-pins.
 
 ## Test behaviour, not internals
 

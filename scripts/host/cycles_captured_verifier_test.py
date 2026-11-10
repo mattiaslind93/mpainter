@@ -97,7 +97,7 @@ class CapturedVerifierAdmission(unittest.TestCase):
             self.assertFalse(out.exists())
 
     def test_frozen_command_preserves_flags_and_relocates_all_native_context(self):
-        template=['ccache','c++','-DNDEBUG','-I/native-root/native/host','-I/fork/source','-I/build/generated','-c','/native-root/native/host/main.cc','-o','old.o','-MF','old.d','-MT','old.o']
+        template=['ccache','c++','-DNDEBUG','-I/native-root/native/host','-I/fork/source','-I/build/generated','-c','/native-root/native/host/app/main.cc','-o','old.o','-MF','old.d','-MT','old.o']
         result=v.frozen_command(template,Path('/out/burst-source/native/tests/a.cc'),Path('/out/objects/a.o'),Path('/snapshot'),Path('/out/burst-source'),'/native-root/native',{'blender_root':'/fork','source_build':'/build'})
         self.assertIn('-DNDEBUG',result); self.assertIn('-I/out/burst-source/native/host',result)
         self.assertIn('-I/snapshot/integration-blender/source',result); self.assertIn('-I/snapshot/integration-generated/generated',result)

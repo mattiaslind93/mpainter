@@ -53,7 +53,7 @@ if a.baseline:
     original = subprocess.check_output(["git", "show", baseline + ":" + host_rel_at(repo, baseline, "ColorPicker.cc")], cwd=repo)
     sources["ColorPicker.cc"] = out / "ColorPicker-baseline.cc"
     sources["ColorPicker.cc"].write_bytes(original)
-source_hashes = {str(v): digest(v) for v in (*sources.values(), repo / "native/host/ColorPicker.hh", repo / "native/harness/ColorPickerTest.hh")}
+source_hashes = {str(v): digest(v) for v in (*sources.values(), repo / "native/host/ui/widgets/ColorPicker.hh", repo / "native/harness/ColorPickerTest.hh")}
 replacements = {}
 for name, source in sources.items():
     args = compilation(name)
