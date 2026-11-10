@@ -51,7 +51,10 @@ for path in [*host.rglob('*'), *(root / 'native/harness').rglob('*')]:
     for call in re.finditer(r'\bnative_composite_job\s*\(', code):
         calls += 1
         assert path.name in file_allowlist or path.name.endswith('CpuDemo.cc') or any(a < call.start() < b for a, b in allowed), f'CPU composite outside explicit export/diagnostic: {path.name}:{source.count(chr(10), 0, call.start()) + 1}'
-verify_interactive_brush_transport((host / 'main.cc').read_text())
+import sys
+sys.path.insert(0, str(root / 'scripts/host'))
+from main_source import main_source
+verify_interactive_brush_transport(main_source(root))
 # Persistence is no exception to the GPU rule.
 code = masked((host / 'BlenderHost.cc').read_text())
 for name in ('BlenderHost::begin_save_project(', 'BlenderHost::poll_save_project(', 'BlenderHost::save_project(', 'BlenderHost::apply_texture_set('):

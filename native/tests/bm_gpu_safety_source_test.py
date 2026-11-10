@@ -7,6 +7,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 CHECK = runpy.run_path(str(ROOT / 'scripts/host/verify-gpu-only-paths.py'))['verify_interactive_brush_transport']
+MAIN_SOURCE = runpy.run_path(str(ROOT / 'scripts/host/main_source.py'))['main_source']
 
 
 def callbacks(stamps=''):
@@ -15,7 +16,7 @@ def callbacks(stamps=''):
 
 class BrushGpuBoundary(unittest.TestCase):
     def test_current_interactive_source(self):
-        CHECK((ROOT / 'native/host/main.cc').read_text())
+        CHECK(MAIN_SOURCE(ROOT))
 
     def test_known_sync_bridge_and_direct_readback_are_rejected(self):
         for statement in ('host.capture_layer_below(set,id,0,1001,128,rgba);',

@@ -474,6 +474,8 @@ def check_test_cmake_paths(root, files):
 
 HARNESS_OPTIONS = "native/harness/HarnessOptions.hh"
 MAIN_CC = "native/host/main.cc"
+# main.cc includes main()'s session code textually (scripts/host/main_source.py has the same list).
+MAIN_SESSION_FILES = ("native/host/app/WorkspaceSession.inc",)
 
 
 def check_harness_seam(root, files):
@@ -486,13 +488,15 @@ def check_harness_seam(root, files):
     harness_names = set(re.findall(r'addOption\(\{"([^"]+)"', harness_src))
     product_names = set(re.findall(r'parser\.addOption\(\{"([^"]+)"', main_src))
     hits = []
-    for number, line in enumerate(main_src.splitlines(), 1):
-        for owner, name in re.findall(r'\b(parser|harness)\.(?:isSet|is_set|value|values)\("([^"]+)"', line):
-            if owner == "parser" and name in harness_names:
-                hits.append(f"{MAIN_CC}:{number}: harness option --{name} read through the parser")
-            elif owner == "harness" and name not in harness_names:
-                hits.append(f"{MAIN_CC}:{number}: --{name} read through the harness context but "
-                            f"{'is a product option' if name in product_names else 'is not registered'}")
+    sources = [(MAIN_CC, main_src)] + [(rel, text(root, rel) or "") for rel in MAIN_SESSION_FILES]
+    for rel, source in sources:
+        for number, line in enumerate(source.splitlines(), 1):
+            for owner, name in re.findall(r'\b(parser|harness)\.(?:isSet|is_set|value|values)\("([^"]+)"', line):
+                if owner == "parser" and name in harness_names:
+                    hits.append(f"{rel}:{number}: harness option --{name} read through the parser")
+                elif owner == "harness" and name not in harness_names:
+                    hits.append(f"{rel}:{number}: --{name} read through the harness context but "
+                                f"{'is a product option' if name in product_names else 'is not registered'}")
     return ("FAIL" if hits else "PASS", "main() reads harness options only through HarnessContext", hits)
 
 

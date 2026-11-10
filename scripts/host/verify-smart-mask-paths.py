@@ -1,8 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Guard smart-mask UI paths against accidental synchronous CPU rasterization."""
 from pathlib import Path
+import sys
 root = Path(__file__).resolve().parents[2]
-main = (root / 'native/host/main.cc').read_text()
+sys.path.insert(0, str(root / 'scripts/host'))
+from main_source import main_source
+main = main_source(root)
 callback = main.split('callbacks.create_smart_mask=', 1)[1].split('callbacks.create_smart_material=', 1)[0]
 assert 'begin_mask_preset(mask)' in callback and 'poll_mask_preset()' in callback
 assert 'write_mask_preset(' not in callback, 'Preset compression belongs to the worker'
