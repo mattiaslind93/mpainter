@@ -23,7 +23,7 @@
 #include "ProjectOpenJob.hh"
 #include "NativeMaterialHeightUi.hh"
 #include "NativeMaterialPanel.hh"
-#include "NativeMaterialBundle.hh" // Explicit AW source-byte diagnostic.
+#include "NativeMaterialBundle.hh"  // Explicit AW source-byte diagnostic.
 #include "ProjectIO.hh"
 #include "ProjectSaveConflict.hh"
 #include "ViewportDrawGuard.hh"
@@ -61,7 +61,7 @@
 #include "BlendAssetBrowser.hh"
 #include "NumericLocale.hh"
 #ifdef BTS_WITH_MATERIALX
-#include "OpenPbrMaterialImport.hh"
+#  include "OpenPbrMaterialImport.hh"
 #endif
 #include <QStatusBar>
 #include "GuiFileSelection.hh"
@@ -283,25 +283,29 @@ void configure_theme(QApplication &app)
 int main(int argc, char **argv)
 {
   // Version queries must work without a display or any Qt/GPU initialization.
-  if (argc == 2 && (std::strcmp(argv[1], "--version") == 0 ||
-                    std::strcmp(argv[1], "-v") == 0)) {
+  if (argc == 2 && (std::strcmp(argv[1], "--version") == 0 || std::strcmp(argv[1], "-v") == 0)) {
     const auto version = bts::product_version().toUtf8();
     std::printf("mPainter %s\n", version.constData());
     return 0;
   }
-  if(qEnvironmentVariableIsSet("BTS_MATERIAL_FILTER_UI_TEST")&&!bts::owned_private_xvfb()){
-    std::fprintf(stderr,"Material Filter UI test requires an owned private Xvfb display\n");return 77;
+  if (qEnvironmentVariableIsSet("BTS_MATERIAL_FILTER_UI_TEST") && !bts::owned_private_xvfb()) {
+    std::fprintf(stderr, "Material Filter UI test requires an owned private Xvfb display\n");
+    return 77;
   }
-  if(!bts::prepare_test_session(argc,argv))return 77;
+  if (!bts::prepare_test_session(argc, argv))
+    return 77;
 #ifdef _WIN32
   // The Microsoft CRT rejects zero-sized buffered streams and treats _IOLBF
   // as full buffering. Keep diagnostic output immediate on Windows.
-  std::setvbuf(stdout,nullptr,_IONBF,0);std::setvbuf(stderr,nullptr,_IONBF,0);
+  std::setvbuf(stdout, nullptr, _IONBF, 0);
+  std::setvbuf(stderr, nullptr, _IONBF, 0);
 #else
-  std::setvbuf(stdout,nullptr,_IOLBF,BUFSIZ);std::setvbuf(stderr,nullptr,_IOLBF,BUFSIZ);
+  std::setvbuf(stdout, nullptr, _IOLBF, BUFSIZ);
+  std::setvbuf(stderr, nullptr, _IOLBF, BUFSIZ);
 #endif
-  const bool cpu_only_test=bts::cpu_test_arguments(argc,argv);
-  if(!cpu_only_test)QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+  const bool cpu_only_test = bts::cpu_test_arguments(argc, argv);
+  if (!cpu_only_test)
+    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
   QCoreApplication::setAttribute(Qt::AA_CompressHighFrequencyEvents);
   QCoreApplication::setAttribute(Qt::AA_CompressTabletEvents);
   QSurfaceFormat format;
@@ -315,14 +319,17 @@ int main(int argc, char **argv)
   format.setAlphaBufferSize(8);
   format.setDepthBufferSize(24);
   QSurfaceFormat::setDefaultFormat(format);
-  if(!cpu_only_test)bts::tablet::configure_xwayland_coordinates();
+  if (!cpu_only_test)
+    bts::tablet::configure_xwayland_coordinates();
   bts::initialize_numeric_locale();
   bts::configure_portable_fonts(argv[0]);
   bts::ProfileApplication app(argc, argv);
   // Qt adopts the user's locale. Blender shader code generation requires decimal dots.
   std::setlocale(LC_NUMERIC, "C");
-  const bool numeric_locale_invalid=std::strcmp(std::localeconv()->decimal_point,".")!=0;
-  std::printf("BTS_NUMERIC_LOCALE value=%s decimal=%s\n",std::setlocale(LC_NUMERIC,nullptr),std::localeconv()->decimal_point);
+  const bool numeric_locale_invalid = std::strcmp(std::localeconv()->decimal_point, ".") != 0;
+  std::printf("BTS_NUMERIC_LOCALE value=%s decimal=%s\n",
+              std::setlocale(LC_NUMERIC, nullptr),
+              std::localeconv()->decimal_point);
   // Use an independent application identity for preferences and runtime data.
   app.setApplicationName("mpainter");
   app.setApplicationDisplayName("mPainter");
@@ -340,25 +347,38 @@ int main(int argc, char **argv)
   parser.addOption({"no-splash", "Start without the mPainter splash"});
   parser.addOption({"project", "Open a native .blend project", "file"});
   parser.addOption({"workspace", "Show the Painter workspace around the live viewport"});
-  parser.addOption({"environment", "New-project Studio Light HDR/EXR path", "file", qEnvironmentVariable("BTS_ENVIRONMENT",QCoreApplication::applicationDirPath()+"/5.2/datafiles/studiolights/world/default-studio.hdr")});
-  parser.addOption({"autosave-seconds", "Idle recovery interval (1–3600 seconds)", "seconds", "120"});
+  parser.addOption(
+      {"environment",
+       "New-project Studio Light HDR/EXR path",
+       "file",
+       qEnvironmentVariable("BTS_ENVIRONMENT",
+                            QCoreApplication::applicationDirPath() +
+                                "/5.2/datafiles/studiolights/world/default-studio.hdr")});
+  parser.addOption(
+      {"autosave-seconds", "Idle recovery interval (1–3600 seconds)", "seconds", "120"});
   parser.addOption({"recovery-dir", "Recovery snapshot directory", "directory"});
   parser.addOption({"library-dir", "Use a specific user shelf directory", "directory"});
   // Demo, acceptance and test switches live with the harness.
   bts::harness::add_harness_options(parser);
   parser.process(app);
-  if(const auto code=bts::harness::run_pre_host_test(parser))return *code;
+  if (const auto code = bts::harness::run_pre_host_test(parser))
+    return *code;
   // Harness options are read through here; product options stay on the parser.
   const bts::harness::HarnessContext harness(parser);
 
-  bts::BrandingStartup branding(!parser.isSet("no-splash")&&!harness.is_set("cpu-export-test")&&!harness.is_set("cpu-texture-import-test")&&!harness.is_set("cpu-skew-test")&&!harness.is_set("cpu-bake-source-test")&&!harness.is_set("cpu-native-material-test")&&!harness.is_set("headless-viewport-test")&&!harness.is_set("headless-cycles-cuda-test"));
+  bts::BrandingStartup branding(
+      !parser.isSet("no-splash") && !harness.is_set("cpu-export-test") &&
+      !harness.is_set("cpu-texture-import-test") && !harness.is_set("cpu-skew-test") &&
+      !harness.is_set("cpu-bake-source-test") && !harness.is_set("cpu-native-material-test") &&
+      !harness.is_set("headless-viewport-test") && !harness.is_set("headless-cycles-cuda-test"));
   branding.stage("Loading Blender scene…");
   try {
     bts::BlenderHost host(QCoreApplication::applicationFilePath().toStdString(),
-                         parser.value("project").toStdString());
+                          parser.value("project").toStdString());
     bts::configure_spsm_source_hydration();
-    if(const auto code=bts::harness::run_host_test(host,parser))return *code;
-    return run_workspace_session(app,parser,harness,branding,host,numeric_locale_invalid);
+    if (const auto code = bts::harness::run_host_test(host, parser))
+      return *code;
+    return run_workspace_session(app, parser, harness, branding, host, numeric_locale_invalid);
   }
   catch (const std::exception &error) {
     std::fprintf(stderr, "BTS_HOST_FAILED %s\n", error.what());

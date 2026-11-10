@@ -4,8 +4,9 @@ from pathlib import Path
 import sys
 root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(root / 'scripts/host'))
-from main_source import main_source
-main = main_source(root)
+from main_source import compact, main_source
+# Whitespace-free, so the checks hold however the session is formatted; no needle below has a space.
+main = compact(main_source(root))
 callback = main.split('callbacks.create_smart_mask=', 1)[1].split('callbacks.create_smart_material=', 1)[0]
 assert 'begin_mask_preset(mask)' in callback and 'poll_mask_preset()' in callback
 assert 'write_mask_preset(' not in callback, 'Preset compression belongs to the worker'

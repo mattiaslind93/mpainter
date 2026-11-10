@@ -1,79 +1,483 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Texture, material and reference-image loading. Part of run_workspace_session() (app/WorkspaceSession.inc), included in
-// order inside its body; it shares that function's locals and is not a standalone file.
-    const auto texture_error=[&](const QString &message){qWarning("BTS_TEXTURE_ERROR %s",qPrintable(message));if(!workspace)return;if(asset_progress)asset_progress->fail(message);workspace->append_console(message);workspace->statusBar()->showMessage(message,12000);QTimer::singleShot(16,workspace,[workspace,message]{auto *box=new QMessageBox(QMessageBox::Warning,"Texture could not be loaded",message,QMessageBox::Ok,workspace);box->setObjectName("textureLoadErrorDialog");box->setAttribute(Qt::WA_DeleteOnClose);box->setAttribute(Qt::WA_ShowWithoutActivating);box->setWindowFlag(Qt::WindowDoesNotAcceptFocus);box->setWindowModality(Qt::NonModal);box->show();});};
-    const auto texture_target=[&](int channel,bool insert=false){
-      if(!document||selected_material<0)throw std::runtime_error("No project open — File → New / File → Open");
-      const auto &set=document->set(snapshot.materials[selected_material].session_id);
-      if(set.material_layering.enabled)throw std::runtime_error("File/Shelf textures are unavailable in uniform four-material mode");
-      return bts::texture_load_target(document->id(),set,channel,insert,document_revision);
-    };
-    const auto texture_channel_hint=[&](const QString &path){const auto name=QFileInfo(path).completeBaseName().toLower();if(name.contains("rough"))return 2;if(name.contains("metal"))return 1;if(name.contains("disp"))return 14;if(name.contains("bump")||name.contains("height"))return 4;if(name.contains("ambient_occlusion")||name.contains("ambientocclusion")||name.contains("_ao"))return 5;if(name.contains("sss")&&document&&selected_material>=0){const auto &set=document->set(snapshot.materials[selected_material].session_id);for(int slot=0;slot<8;++slot)if(set.users[slot].scattering)return slot+6;for(int slot=0;slot<8;++slot)if(!set.users[slot].allocated)return slot+6;}return 0;};
-    const auto texture_paths=[&](const QStringList &paths){QStringList result;QSet<QString> groups;for(const auto &path:paths){const auto file=QFileInfo(path);const auto sequence=bts::sequence_filename(path);const auto key=sequence?file.absolutePath()+"/"+sequence->prefix+sequence->separator+"<UDIM>."+sequence->extension.toLower():file.absoluteFilePath();if(groups.contains(key))continue;groups.insert(key);result.append(file.absoluteFilePath());}return result;};
-    const auto initialize_texture_loader = [&]{bts::TextureLoadHooks hooks;
-      hooks.valid=[&](const bts::TextureLoadTarget &target){if(target.material_input>=0)return material_layering_ui&&material_layering_ui->load_target_current(target)&&!(render_controller&&render_controller->active());if(!document||opening_project||document->id()!=target.document||selected_material<0||(render_controller&&render_controller->active()))return false;const auto &set=document->set(snapshot.materials[selected_material].session_id);if(set.id!=target.set||(target.insertion.isNull()&&set.selected_layer!=target.layer))return false;if(!target.effect.isNull())return bts::mask_texture_target_current(set,target,document_revision);if(target.insertion.isNull()&&target.effect.isNull()&&(set.selected_mask||set.selected_geometry||!set.selected_effect.isNull()))return false;return std::any_of(set.layers.begin(),set.layers.end(),[&](const auto &layer){return layer.id==target.layer;});};
-      hooks.busy=[&]{return owner_programs_pending()||viewport->painting_||bool(uniform_before)||bool(path_drag_before)||bool(QApplication::activeModalWidget());};hooks.status=[&](const auto &target,const auto &status){if(asset_progress&&asset_progress->active()){if(status.error)asset_progress->fail(status.text);else if(status.text.contains("Cancelled",Qt::CaseInsensitive))asset_progress->fail(status.text);else if(status.loading)asset_progress->stage(status.text,status.total>0?status.completed:-1,status.total);}if(target.material_input>=0){if(material_layering_ui)material_layering_ui->texture_status(target,status);return;}workspace->set_texture_load_status(target.set,target.layer,target.channel,status.text,status.completed,status.total,status.loading,status.error);};hooks.error=texture_error;
-      hooks.prepare=[&](const bts::LoadedTexture &loaded){if(loaded.target.material_input>=0)return true;const bool ready=host.prepare_texture_resource(loaded.texture);if(!ready)viewport->update();return ready;};hooks.release_preparation=[&]{host.cancel_texture_preparation();};
-      hooks.install=[&](bts::LoadedTexture loaded){const QScopedValueRollback<bool> publication(asset_publication,true);if(loaded.target.material_input>=0){if(!material_layering_ui)throw std::runtime_error("Material editor closed during source load");material_layering_ui->texture_loaded(std::move(loaded));return;}const auto asset=loaded.asset;const auto target=loaded.target;if(document)for(const auto &set:document->texture_sets())if(set.id==target.set&&set.material_layering.enabled)throw std::runtime_error("Texture load target entered uniform four-material mode");const auto texture=loaded.texture;const auto previous_assets=assets.project_assets();const auto existing=std::find_if(assets.assets().begin(),assets.assets().end(),[&](const auto &value){return value.id==asset.id;});if(existing==assets.assets().end())assets.add(asset);bts::property_event("texture-ready");const QScopedValueRollback<bool> deferred_ui(defer_material_ui,true);edit_material([&](bts::TextureSet &set){if(!target.effect.isNull()){auto &effect=bts::install_mask_texture_target(set,target);effect.anchor_source=QUuid();effect.mapping.projection.atom=false;effect.mapping.projection.texture=texture;if(texture->tiles&&set.tiles.size()>1)effect.mapping.projection.mode=6;return;}set.selected_layer=target.layer;set.selected_mask=false;set.selected_geometry=false;set.selected_effect=QUuid();if(target.channel==14)bts::TextureDocument::add_displacement_channel(set);else if(target.channel>=6&&target.channel<14){if(!target.insertion.isNull()&&asset.name.contains("sss",Qt::CaseInsensitive)){bts::TextureDocument::add_scattering_channel(set);if(!set.users[target.channel-6].scattering)throw std::runtime_error("Scattering channel changed during texture loading; choose its channel row and retry");}else bts::TextureDocument::add_user_channel(set,target.channel-6);}if(target.create_fill){bts::TextureDocument::add_fill(set);auto &created=bts::TextureDocument::layer(set,set.selected_layer);created.channels.fill(false);created.ao_enabled=false;created.displacement.enabled=false;for(auto &user:created.users)user.enabled=false;created.name=asset.name.toStdString();}auto &fill=bts::TextureDocument::layer(set,set.selected_layer);bts::require_ordinary_color_source_replacement(fill,target.channel);if(target.channel==0)fill.fill.atom=false;fill.fill.anchors[target.channel]={};bts::fill_channel_texture(fill.fill,target.channel)=texture;if(target.channel==4)fill.fill.bump_bias=-set.bump_offset();if(texture->tiles&&set.tiles.size()>1)fill.fill.mode=6;if(target.channel<5){set.channels[target.channel]=true;fill.channels[target.channel]=true;}else if(target.channel==5){set.ao_channel=true;fill.ao_enabled=true;}else if(target.channel==14){set.displacement.channel=true;fill.displacement.enabled=true;bts::displacement_import_range(set.displacement,*texture);}else{set.users[target.channel-6].present=true;fill.users[target.channel-6].enabled=true;}});
-        // A refresh warning after publication cannot revoke resources now referenced
-        // by the document and its Undo entry. Only failed admission rolls back.
-        if(!last_material_error.isEmpty()&&!last_material_published){assets.replace_project(previous_assets);throw std::runtime_error(last_material_error.toStdString());}if(last_material_published&&!undo_history.empty())undo_history.back().label="Assign texture";QTimer::singleShot(16,workspace,[&]{workspace->refresh_alpha_shelf();});
-      };texture_loader=std::make_unique<bts::TextureLoadController>(workspace,std::move(hooks));
-    };
+// Texture, material and reference-image loading. Part of run_workspace_session()
+// (app/WorkspaceSession.inc), included in order inside its body; it shares that function's locals
+// and is not a standalone file.
+const auto texture_error = [&](const QString &message) {
+  qWarning("BTS_TEXTURE_ERROR %s", qPrintable(message));
+  if (!workspace)
+    return;
+  if (asset_progress)
+    asset_progress->fail(message);
+  workspace->append_console(message);
+  workspace->statusBar()->showMessage(message, 12000);
+  QTimer::singleShot(16, workspace, [workspace, message] {
+    auto *box = new QMessageBox(
+        QMessageBox::Warning, "Texture could not be loaded", message, QMessageBox::Ok, workspace);
+    box->setObjectName("textureLoadErrorDialog");
+    box->setAttribute(Qt::WA_DeleteOnClose);
+    box->setAttribute(Qt::WA_ShowWithoutActivating);
+    box->setWindowFlag(Qt::WindowDoesNotAcceptFocus);
+    box->setWindowModality(Qt::NonModal);
+    box->show();
+  });
+};
+const auto texture_target = [&](int channel, bool insert = false) {
+  if (!document || selected_material < 0)
+    throw std::runtime_error("No project open — File → New / File → Open");
+  const auto &set = document->set(snapshot.materials[selected_material].session_id);
+  if (set.material_layering.enabled)
+    throw std::runtime_error("File/Shelf textures are unavailable in uniform four-material mode");
+  return bts::texture_load_target(document->id(), set, channel, insert, document_revision);
+};
+const auto texture_channel_hint = [&](const QString &path) {
+  const auto name = QFileInfo(path).completeBaseName().toLower();
+  if (name.contains("rough"))
+    return 2;
+  if (name.contains("metal"))
+    return 1;
+  if (name.contains("disp"))
+    return 14;
+  if (name.contains("bump") || name.contains("height"))
+    return 4;
+  if (name.contains("ambient_occlusion") || name.contains("ambientocclusion") ||
+      name.contains("_ao"))
+    return 5;
+  if (name.contains("sss") && document && selected_material >= 0) {
+    const auto &set = document->set(snapshot.materials[selected_material].session_id);
+    for (int slot = 0; slot < 8; ++slot)
+      if (set.users[slot].scattering)
+        return slot + 6;
+    for (int slot = 0; slot < 8; ++slot)
+      if (!set.users[slot].allocated)
+        return slot + 6;
+  }
+  return 0;
+};
+const auto texture_paths = [&](const QStringList &paths) {
+  QStringList result;
+  QSet<QString> groups;
+  for (const auto &path : paths) {
+    const auto file = QFileInfo(path);
+    const auto sequence = bts::sequence_filename(path);
+    const auto key = sequence ?
+                         file.absolutePath() + "/" + sequence->prefix + sequence->separator +
+                             "<UDIM>." + sequence->extension.toLower() :
+                         file.absoluteFilePath();
+    if (groups.contains(key))
+      continue;
+    groups.insert(key);
+    result.append(file.absoluteFilePath());
+  }
+  return result;
+};
+const auto initialize_texture_loader = [&] {
+  bts::TextureLoadHooks hooks;
+  hooks.valid = [&](const bts::TextureLoadTarget &target) {
+    if (target.material_input >= 0)
+      return material_layering_ui && material_layering_ui->load_target_current(target) &&
+             !(render_controller && render_controller->active());
+    if (!document || opening_project || document->id() != target.document ||
+        selected_material < 0 || (render_controller && render_controller->active()))
+      return false;
+    const auto &set = document->set(snapshot.materials[selected_material].session_id);
+    if (set.id != target.set || (target.insertion.isNull() && set.selected_layer != target.layer))
+      return false;
+    if (!target.effect.isNull())
+      return bts::mask_texture_target_current(set, target, document_revision);
+    if (target.insertion.isNull() && target.effect.isNull() &&
+        (set.selected_mask || set.selected_geometry || !set.selected_effect.isNull()))
+      return false;
+    return std::any_of(set.layers.begin(), set.layers.end(), [&](const auto &layer) {
+      return layer.id == target.layer;
+    });
+  };
+  hooks.busy = [&] {
+    return owner_programs_pending() || viewport->painting_ || bool(uniform_before) ||
+           bool(path_drag_before) || bool(QApplication::activeModalWidget());
+  };
+  hooks.status = [&](const auto &target, const auto &status) {
+    if (asset_progress && asset_progress->active()) {
+      if (status.error)
+        asset_progress->fail(status.text);
+      else if (status.text.contains("Cancelled", Qt::CaseInsensitive))
+        asset_progress->fail(status.text);
+      else if (status.loading)
+        asset_progress->stage(status.text, status.total > 0 ? status.completed : -1, status.total);
+    }
+    if (target.material_input >= 0) {
+      if (material_layering_ui)
+        material_layering_ui->texture_status(target, status);
+      return;
+    }
+    workspace->set_texture_load_status(target.set,
+                                       target.layer,
+                                       target.channel,
+                                       status.text,
+                                       status.completed,
+                                       status.total,
+                                       status.loading,
+                                       status.error);
+  };
+  hooks.error = texture_error;
+  hooks.prepare = [&](const bts::LoadedTexture &loaded) {
+    if (loaded.target.material_input >= 0)
+      return true;
+    const bool ready = host.prepare_texture_resource(loaded.texture);
+    if (!ready)
+      viewport->update();
+    return ready;
+  };
+  hooks.release_preparation = [&] { host.cancel_texture_preparation(); };
+  hooks.install = [&](bts::LoadedTexture loaded) {
+    const QScopedValueRollback<bool> publication(asset_publication, true);
+    if (loaded.target.material_input >= 0) {
+      if (!material_layering_ui)
+        throw std::runtime_error("Material editor closed during source load");
+      material_layering_ui->texture_loaded(std::move(loaded));
+      return;
+    }
+    const auto asset = loaded.asset;
+    const auto target = loaded.target;
+    if (document)
+      for (const auto &set : document->texture_sets())
+        if (set.id == target.set && set.material_layering.enabled)
+          throw std::runtime_error("Texture load target entered uniform four-material mode");
+    const auto texture = loaded.texture;
+    const auto previous_assets = assets.project_assets();
+    const auto existing = std::find_if(assets.assets().begin(),
+                                       assets.assets().end(),
+                                       [&](const auto &value) { return value.id == asset.id; });
+    if (existing == assets.assets().end())
+      assets.add(asset);
+    bts::property_event("texture-ready");
+    const QScopedValueRollback<bool> deferred_ui(defer_material_ui, true);
+    edit_material([&](bts::TextureSet &set) {
+      if (!target.effect.isNull()) {
+        auto &effect = bts::install_mask_texture_target(set, target);
+        effect.anchor_source = QUuid();
+        effect.mapping.projection.atom = false;
+        effect.mapping.projection.texture = texture;
+        if (texture->tiles && set.tiles.size() > 1)
+          effect.mapping.projection.mode = 6;
+        return;
+      }
+      set.selected_layer = target.layer;
+      set.selected_mask = false;
+      set.selected_geometry = false;
+      set.selected_effect = QUuid();
+      if (target.channel == 14)
+        bts::TextureDocument::add_displacement_channel(set);
+      else if (target.channel >= 6 && target.channel < 14) {
+        if (!target.insertion.isNull() && asset.name.contains("sss", Qt::CaseInsensitive)) {
+          bts::TextureDocument::add_scattering_channel(set);
+          if (!set.users[target.channel - 6].scattering)
+            throw std::runtime_error(
+                "Scattering channel changed during texture loading; choose its channel row and retry");
+        }
+        else
+          bts::TextureDocument::add_user_channel(set, target.channel - 6);
+      }
+      if (target.create_fill) {
+        bts::TextureDocument::add_fill(set);
+        auto &created = bts::TextureDocument::layer(set, set.selected_layer);
+        created.channels.fill(false);
+        created.ao_enabled = false;
+        created.displacement.enabled = false;
+        for (auto &user : created.users)
+          user.enabled = false;
+        created.name = asset.name.toStdString();
+      }
+      auto &fill = bts::TextureDocument::layer(set, set.selected_layer);
+      bts::require_ordinary_color_source_replacement(fill, target.channel);
+      if (target.channel == 0)
+        fill.fill.atom = false;
+      fill.fill.anchors[target.channel] = {};
+      bts::fill_channel_texture(fill.fill, target.channel) = texture;
+      if (target.channel == 4)
+        fill.fill.bump_bias = -set.bump_offset();
+      if (texture->tiles && set.tiles.size() > 1)
+        fill.fill.mode = 6;
+      if (target.channel < 5) {
+        set.channels[target.channel] = true;
+        fill.channels[target.channel] = true;
+      }
+      else if (target.channel == 5) {
+        set.ao_channel = true;
+        fill.ao_enabled = true;
+      }
+      else if (target.channel == 14) {
+        set.displacement.channel = true;
+        fill.displacement.enabled = true;
+        bts::displacement_import_range(set.displacement, *texture);
+      }
+      else {
+        set.users[target.channel - 6].present = true;
+        fill.users[target.channel - 6].enabled = true;
+      }
+    });
+    // A refresh warning after publication cannot revoke resources now referenced
+    // by the document and its Undo entry. Only failed admission rolls back.
+    if (!last_material_error.isEmpty() && !last_material_published) {
+      assets.replace_project(previous_assets);
+      throw std::runtime_error(last_material_error.toStdString());
+    }
+    if (last_material_published && !undo_history.empty())
+      undo_history.back().label = "Assign texture";
+    QTimer::singleShot(16, workspace, [&] { workspace->refresh_alpha_shelf(); });
+  };
+  texture_loader = std::make_unique<bts::TextureLoadController>(workspace, std::move(hooks));
+};
 #include "NativeMaterialImageUiHooks.inc"
 #ifdef BTS_WITH_MATERIALX
-    const auto initialize_material_importer=[&]{bts::OpenPbrMaterialImportHooks hooks;
-     viewport->material_import_pending=[&]{return material_importer&&material_importer->pending();};
-     hooks.valid=[&](const auto &request){return document&&document->id()==request.document&&material_import_document==request.document&&document_revision==material_import_revision&&std::any_of(document->texture_sets().begin(),document->texture_sets().end(),[&](const auto &set){return set.material_session_uid==request.material_uid;});};
-     hooks.busy=[&]{return viewport->painting_||bool(uniform_before)||bool(path_drag_before)||bool(QApplication::activeModalWidget())||(texture_loader&&texture_loader->pending())||(render_controller&&render_controller->active());};
-     hooks.status=[&](const QString &text){std::printf("BTS_USD_MATERIAL_STATUS %s\n",qPrintable(text));workspace->statusBar()->showMessage(text);workspace->setProperty("importedMaterialStatus",text);workspace->setProperty("importedMaterialLoading",material_importer&&material_importer->pending());};hooks.error=[&](const QString &text){std::fprintf(stderr,"BTS_USD_MATERIAL_ERROR %s\n",qPrintable(text));workspace->setProperty("importedMaterialStatus","Deferred: "+text);workspace->setProperty("importedMaterialLoading",false);texture_error("Material import deferred — native source retained: "+text);};
-     hooks.prepare=[&](const auto &prepared){std::vector<std::shared_ptr<const bts::FillTexture>> inputs;for(const auto &[channel,texture]:prepared.textures)inputs.push_back(texture);const bool ready=host.prepare_texture_resources(inputs);if(!ready)viewport->update();return ready;};hooks.release=[&]{host.cancel_texture_preparation();viewport->update();};
-     hooks.install=[&](bts::PreparedOpenPbrMaterial prepared){
-      auto candidate=std::make_unique<bts::TextureDocument>(*document);auto &set=candidate->set(prepared.request.material_uid);const auto old_assets=assets.project_assets();try{
-       std::map<std::string,QUuid> aliases;for(const auto &asset:prepared.assets){const auto found=std::find_if(assets.assets().begin(),assets.assets().end(),[&](const auto &existing){return existing.scope==bts::AssetScope::Project&&existing.hash()==asset.hash()&&existing.usages==asset.usages;});if(found!=assets.assets().end())aliases[asset.id.toString(QUuid::WithoutBraces).toStdString()]=found->id;else{assets.add(asset);aliases[asset.id.toString(QUuid::WithoutBraces).toStdString()]=asset.id;}}
-       for(auto &[channel,texture]:prepared.textures){const auto id=aliases.at(texture->asset).toString(QUuid::WithoutBraces).toStdString();if(id==texture->asset)continue;auto remapped=std::make_shared<bts::FillTexture>(*texture);remapped->asset=id;if(texture->tiles){auto tiles=std::make_shared<std::map<int,std::shared_ptr<const bts::FillTexture>>>();for(const auto &[number,image]:*texture->tiles){auto member=std::make_shared<bts::FillTexture>(*image);member->asset=id;tiles->emplace(number,std::move(member));}remapped->tiles=std::move(tiles);}texture=std::move(remapped);}
-       bts::apply_openpbr_import_fill(set,prepared);auto library=candidate->shader_instances();bts::ShaderParameters parameters;parameters.openpbr=prepared.constants.shader;const auto existing=std::find_if(library.instances.begin(),library.instances.end(),[&](const auto &entry){return entry.second.parameters==parameters;});QUuid id;if(existing!=library.instances.end())id=existing->first;else{id=library.create(library.default_instance,QString("Imported OpenPBR maps %1").arg(library.instances.size()));library.parameters(id,parameters);}library.assign(set.id,id);candidate->set_shader_instances(std::move(library));
-       host.adopt_imported_material(set,float(prepared.source.bump_scale*prepared.geometry_scale),snapshot);document=std::move(candidate);
-       for(auto &native:snapshot.materials)if(native.session_id==prepared.request.material_uid){native.uniform_editable=native.roughness_editable=native.constant_base_color=native.constant_roughness=true;native.values=document->set(prepared.request.material_uid).base_values;native.roughness=native.values.roughness;native.roughness_unavailable_reason.clear();}
-       dirty=true;++document_revision;material_import_revision=document_revision;last_document_edit=bts::performance::Clock::now();refresh_document_ui(false,prepared.request.material_uid);refresh_history_actions();workspace->refresh_alpha_shelf();viewport->update();workspace->append_console("Imported OpenPBR maps as an editable GPU fill layer");std::printf("BTS_USD_MATERIAL_INSTALLED uid=%u channels=%zu cpu_composition=0\n",prepared.request.material_uid,prepared.textures.size());
-      }catch(...){if(candidate)assets.replace_project(old_assets);throw;}
-     };material_importer=std::make_unique<bts::OpenPbrMaterialImporter>(workspace,std::move(hooks));
-     schedule_material_import=[&]{if(!document||!material_importer||!document->settings().template_path.empty())return;material_import_document=document->id();material_import_revision=document_revision;std::vector<bts::OpenPbrMaterialImportRequest> requests;
-      for(const auto &[uid,metadata]:host.deferred_imported_materials()){const auto found=std::find_if(document->texture_sets().begin(),document->texture_sets().end(),[&](const auto &set){return set.material_session_uid==uid;});if(found==document->texture_sets().end()||found->disabled)continue;try{bts::OpenPbrMaterialImportRequest request;request.document=document->id();request.material_uid=uid;request.source=metadata["source"].toString();request.material_path=metadata["material"].toString();request.options=document->settings().usd;request.tiles=found->tiles;request.uv_tiles=document->settings().uv_workflow==bts::UvWorkflow::PreserveTiles;request.cache=qEnvironmentVariable("BTS_RESOURCE_CACHE",QStandardPaths::writableLocation(QStandardPaths::CacheLocation)+"/resources");request.expected=bts::OpenPbrParameters::from_json(metadata["parameters"].toObject());bts::openpbr_import_constants(request.expected);requests.push_back(std::move(request));}catch(const std::exception &error){workspace->append_console("OpenPBR material retained: "+QString::fromUtf8(error.what()));}}
-      if(!requests.empty()){workspace->setProperty("importedMaterialLoading",true);material_importer->start(std::move(requests));}
-     };
-    };
-#endif
-    const auto apply_fill_texture=[&](bts::StudioAsset asset){try{bts::property_event("texture");texture_loader->from_asset(texture_target(workspace->fill_resource_channel()),std::move(asset));}catch(const std::exception &error){texture_error(QString::fromUtf8(error.what()));}};
-    const auto baked_asset_from_key=[&](const QString &key){const auto parts=key.split(':');if(parts.size()!=3||parts[0]!="baked"||!document)throw std::runtime_error("Baked map is missing");const QUuid id(parts[1]);bool ok=false;const int role=parts[2].toInt(&ok);if(!ok||role<0||role>6)throw std::runtime_error("Baked map is missing");for(const auto &set:document->texture_sets())if(set.id==id&&set.mesh_maps[role]){bts::StudioAsset asset;asset.name=bts::baked_map_title(QString::fromStdString(set.name),role);asset.filename="baked.map";asset.usages={"texture"};asset.search_terms={"baked-map"};asset.scope=bts::AssetScope::Project;asset.bytes=bts::encode_btsmap(*set.mesh_maps[role]);return asset;}throw std::runtime_error("Baked map is missing");};
-    const auto load_texture_files=[&](int channel,const QStringList &paths,bool insert){try{const auto files=texture_paths(paths);if(files.size()>1&&(!insert||!texture_target(channel<0?0:channel,insert).effect.isNull()))throw std::runtime_error("A channel accepts one image or one UDIM sequence. Drop separate images on Layers to create multiple fill layers.");for(const auto &path:files)texture_loader->from_file(texture_target(channel<0?texture_channel_hint(path):channel,insert),path);}catch(const std::exception &error){texture_error(QString::fromUtf8(error.what()));}};
-      const auto sync_reference_image_state = [&] {
-        bts::ReferenceImagePreferences prefs;
-        prefs.enabled = viewport->reference_image_enabled;
-        prefs.path = viewport->reference_image.path;
-        bts::save_reference_image_preferences(prefs);
-        if (document) {
-          bts::ReferenceImageState state;
-          state.enabled = viewport->reference_image_enabled;
-          state.path = viewport->reference_image.path.toStdString();
-          state.center = {viewport->ref_center_.x(), viewport->ref_center_.y()};
-          state.vertical_extent = viewport->ref_vertical_extent_;
-          bts::set_document_reference_image(*document, std::move(state));
+const auto initialize_material_importer = [&] {
+  bts::OpenPbrMaterialImportHooks hooks;
+  viewport->material_import_pending = [&] {
+    return material_importer && material_importer->pending();
+  };
+  hooks.valid = [&](const auto &request) {
+    return document && document->id() == request.document &&
+           material_import_document == request.document &&
+           document_revision == material_import_revision &&
+           std::any_of(
+               document->texture_sets().begin(),
+               document->texture_sets().end(),
+               [&](const auto &set) { return set.material_session_uid == request.material_uid; });
+  };
+  hooks.busy = [&] {
+    return viewport->painting_ || bool(uniform_before) || bool(path_drag_before) ||
+           bool(QApplication::activeModalWidget()) ||
+           (texture_loader && texture_loader->pending()) ||
+           (render_controller && render_controller->active());
+  };
+  hooks.status = [&](const QString &text) {
+    std::printf("BTS_USD_MATERIAL_STATUS %s\n", qPrintable(text));
+    workspace->statusBar()->showMessage(text);
+    workspace->setProperty("importedMaterialStatus", text);
+    workspace->setProperty("importedMaterialLoading",
+                           material_importer && material_importer->pending());
+  };
+  hooks.error = [&](const QString &text) {
+    std::fprintf(stderr, "BTS_USD_MATERIAL_ERROR %s\n", qPrintable(text));
+    workspace->setProperty("importedMaterialStatus", "Deferred: " + text);
+    workspace->setProperty("importedMaterialLoading", false);
+    texture_error("Material import deferred — native source retained: " + text);
+  };
+  hooks.prepare = [&](const auto &prepared) {
+    std::vector<std::shared_ptr<const bts::FillTexture>> inputs;
+    for (const auto &[channel, texture] : prepared.textures)
+      inputs.push_back(texture);
+    const bool ready = host.prepare_texture_resources(inputs);
+    if (!ready)
+      viewport->update();
+    return ready;
+  };
+  hooks.release = [&] {
+    host.cancel_texture_preparation();
+    viewport->update();
+  };
+  hooks.install = [&](bts::PreparedOpenPbrMaterial prepared) {
+    auto candidate = std::make_unique<bts::TextureDocument>(*document);
+    auto &set = candidate->set(prepared.request.material_uid);
+    const auto old_assets = assets.project_assets();
+    try {
+      std::map<std::string, QUuid> aliases;
+      for (const auto &asset : prepared.assets) {
+        const auto found = std::find_if(
+            assets.assets().begin(), assets.assets().end(), [&](const auto &existing) {
+              return existing.scope == bts::AssetScope::Project &&
+                     existing.hash() == asset.hash() && existing.usages == asset.usages;
+            });
+        if (found != assets.assets().end())
+          aliases[asset.id.toString(QUuid::WithoutBraces).toStdString()] = found->id;
+        else {
+          assets.add(asset);
+          aliases[asset.id.toString(QUuid::WithoutBraces).toStdString()] = asset.id;
         }
-      };
-      const auto load_reference_image_file = [&](const QString &path, bool frame_image) -> bool {
-        if (path.trimmed().isEmpty()) return false;
-        try {
-          viewport->reference_image = bts::load_reference_image(path);
-          if (workspace) workspace->set_reference_image_path(viewport->reference_image.path);
-          if (frame_image) viewport->frame_reference_image();
-          viewport->update();
-          return true;
-        } catch (const std::exception &error) {
-          if (workspace) {
-            workspace->set_error_status("Reference image: " + QString::fromUtf8(error.what()));
-            workspace->append_console("Reference image: " + QString::fromUtf8(error.what()));
+      }
+      for (auto &[channel, texture] : prepared.textures) {
+        const auto id = aliases.at(texture->asset).toString(QUuid::WithoutBraces).toStdString();
+        if (id == texture->asset)
+          continue;
+        auto remapped = std::make_shared<bts::FillTexture>(*texture);
+        remapped->asset = id;
+        if (texture->tiles) {
+          auto tiles = std::make_shared<std::map<int, std::shared_ptr<const bts::FillTexture>>>();
+          for (const auto &[number, image] : *texture->tiles) {
+            auto member = std::make_shared<bts::FillTexture>(*image);
+            member->asset = id;
+            tiles->emplace(number, std::move(member));
           }
-          return false;
+          remapped->tiles = std::move(tiles);
         }
-      };
+        texture = std::move(remapped);
+      }
+      bts::apply_openpbr_import_fill(set, prepared);
+      auto library = candidate->shader_instances();
+      bts::ShaderParameters parameters;
+      parameters.openpbr = prepared.constants.shader;
+      const auto existing = std::find_if(
+          library.instances.begin(), library.instances.end(), [&](const auto &entry) {
+            return entry.second.parameters == parameters;
+          });
+      QUuid id;
+      if (existing != library.instances.end())
+        id = existing->first;
+      else {
+        id = library.create(library.default_instance,
+                            QString("Imported OpenPBR maps %1").arg(library.instances.size()));
+        library.parameters(id, parameters);
+      }
+      library.assign(set.id, id);
+      candidate->set_shader_instances(std::move(library));
+      host.adopt_imported_material(
+          set, float(prepared.source.bump_scale * prepared.geometry_scale), snapshot);
+      document = std::move(candidate);
+      for (auto &native : snapshot.materials)
+        if (native.session_id == prepared.request.material_uid) {
+          native.uniform_editable = native.roughness_editable = native.constant_base_color =
+              native.constant_roughness = true;
+          native.values = document->set(prepared.request.material_uid).base_values;
+          native.roughness = native.values.roughness;
+          native.roughness_unavailable_reason.clear();
+        }
+      dirty = true;
+      ++document_revision;
+      material_import_revision = document_revision;
+      last_document_edit = bts::performance::Clock::now();
+      refresh_document_ui(false, prepared.request.material_uid);
+      refresh_history_actions();
+      workspace->refresh_alpha_shelf();
+      viewport->update();
+      workspace->append_console("Imported OpenPBR maps as an editable GPU fill layer");
+      std::printf("BTS_USD_MATERIAL_INSTALLED uid=%u channels=%zu cpu_composition=0\n",
+                  prepared.request.material_uid,
+                  prepared.textures.size());
+    }
+    catch (...) {
+      if (candidate)
+        assets.replace_project(old_assets);
+      throw;
+    }
+  };
+  material_importer = std::make_unique<bts::OpenPbrMaterialImporter>(workspace, std::move(hooks));
+  schedule_material_import = [&] {
+    if (!document || !material_importer || !document->settings().template_path.empty())
+      return;
+    material_import_document = document->id();
+    material_import_revision = document_revision;
+    std::vector<bts::OpenPbrMaterialImportRequest> requests;
+    for (const auto &[uid, metadata] : host.deferred_imported_materials()) {
+      const auto found = std::find_if(
+          document->texture_sets().begin(), document->texture_sets().end(), [&](const auto &set) {
+            return set.material_session_uid == uid;
+          });
+      if (found == document->texture_sets().end() || found->disabled)
+        continue;
+      try {
+        bts::OpenPbrMaterialImportRequest request;
+        request.document = document->id();
+        request.material_uid = uid;
+        request.source = metadata["source"].toString();
+        request.material_path = metadata["material"].toString();
+        request.options = document->settings().usd;
+        request.tiles = found->tiles;
+        request.uv_tiles = document->settings().uv_workflow == bts::UvWorkflow::PreserveTiles;
+        request.cache = qEnvironmentVariable(
+            "BTS_RESOURCE_CACHE",
+            QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + "/resources");
+        request.expected = bts::OpenPbrParameters::from_json(metadata["parameters"].toObject());
+        bts::openpbr_import_constants(request.expected);
+        requests.push_back(std::move(request));
+      }
+      catch (const std::exception &error) {
+        workspace->append_console("OpenPBR material retained: " + QString::fromUtf8(error.what()));
+      }
+    }
+    if (!requests.empty()) {
+      workspace->setProperty("importedMaterialLoading", true);
+      material_importer->start(std::move(requests));
+    }
+  };
+};
+#endif
+const auto apply_fill_texture = [&](bts::StudioAsset asset) {
+  try {
+    bts::property_event("texture");
+    texture_loader->from_asset(texture_target(workspace->fill_resource_channel()),
+                               std::move(asset));
+  }
+  catch (const std::exception &error) {
+    texture_error(QString::fromUtf8(error.what()));
+  }
+};
+const auto baked_asset_from_key = [&](const QString &key) {
+  const auto parts = key.split(':');
+  if (parts.size() != 3 || parts[0] != "baked" || !document)
+    throw std::runtime_error("Baked map is missing");
+  const QUuid id(parts[1]);
+  bool ok = false;
+  const int role = parts[2].toInt(&ok);
+  if (!ok || role < 0 || role > 6)
+    throw std::runtime_error("Baked map is missing");
+  for (const auto &set : document->texture_sets())
+    if (set.id == id && set.mesh_maps[role]) {
+      bts::StudioAsset asset;
+      asset.name = bts::baked_map_title(QString::fromStdString(set.name), role);
+      asset.filename = "baked.map";
+      asset.usages = {"texture"};
+      asset.search_terms = {"baked-map"};
+      asset.scope = bts::AssetScope::Project;
+      asset.bytes = bts::encode_btsmap(*set.mesh_maps[role]);
+      return asset;
+    }
+  throw std::runtime_error("Baked map is missing");
+};
+const auto load_texture_files = [&](int channel, const QStringList &paths, bool insert) {
+  try {
+    const auto files = texture_paths(paths);
+    if (files.size() > 1 &&
+        (!insert || !texture_target(channel < 0 ? 0 : channel, insert).effect.isNull()))
+      throw std::runtime_error(
+          "A channel accepts one image or one UDIM sequence. Drop separate images on Layers to create multiple fill layers.");
+    for (const auto &path : files)
+      texture_loader->from_file(
+          texture_target(channel < 0 ? texture_channel_hint(path) : channel, insert), path);
+  }
+  catch (const std::exception &error) {
+    texture_error(QString::fromUtf8(error.what()));
+  }
+};
+const auto sync_reference_image_state = [&] {
+  bts::ReferenceImagePreferences prefs;
+  prefs.enabled = viewport->reference_image_enabled;
+  prefs.path = viewport->reference_image.path;
+  bts::save_reference_image_preferences(prefs);
+  if (document) {
+    bts::ReferenceImageState state;
+    state.enabled = viewport->reference_image_enabled;
+    state.path = viewport->reference_image.path.toStdString();
+    state.center = {viewport->ref_center_.x(), viewport->ref_center_.y()};
+    state.vertical_extent = viewport->ref_vertical_extent_;
+    bts::set_document_reference_image(*document, std::move(state));
+  }
+};
+const auto load_reference_image_file = [&](const QString &path, bool frame_image) -> bool {
+  if (path.trimmed().isEmpty())
+    return false;
+  try {
+    viewport->reference_image = bts::load_reference_image(path);
+    if (workspace)
+      workspace->set_reference_image_path(viewport->reference_image.path);
+    if (frame_image)
+      viewport->frame_reference_image();
+    viewport->update();
+    return true;
+  }
+  catch (const std::exception &error) {
+    if (workspace) {
+      workspace->set_error_status("Reference image: " + QString::fromUtf8(error.what()));
+      workspace->append_console("Reference image: " + QString::fromUtf8(error.what()));
+    }
+    return false;
+  }
+};

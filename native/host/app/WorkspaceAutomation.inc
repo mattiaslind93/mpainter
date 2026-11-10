@@ -1,81 +1,626 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Automation jobs and the Python console. Part of run_workspace_session() (app/WorkspaceSession.inc), included in
-// order inside its body; it shares that function's locals and is not a standalone file.
-    std::unique_ptr<bts::AutomationJobs> automation_jobs;
-    if(workspace)automation_jobs=std::make_unique<bts::AutomationJobs>(workspace,bts::AutomationJobHooks{
-      [&]{return document.get();},[&]{return snapshot;},[&](const auto &ids){return host.export_source(*document,ids);},[&](bool displaced){return host.prepare_mesh_export(*document,displaced);},
-      [&](const QUuid &id,const std::vector<bts::MeshBakeResult> &baked){if(!document||document->id()!=id)throw std::runtime_error("Project changed during bake; result discarded");auto candidate=std::make_unique<bts::TextureDocument>(*document);for(const auto &result:baked){auto &set=candidate->set(result.material_uid);for(int role=0;role<7;++role)if(result.maps[role]){if(!set.mesh_maps[role])set.mesh_maps[role]=bts::MeshMap{};auto &map=*set.mesh_maps[role];map.name=result.maps[role]->name;for(const auto &[tile,plane]:result.maps[role]->tiles)map.tiles[tile]=plane;}}if(candidate->edit_state()==document->edit_state())return;const auto uid=selected_material>=0?snapshot.materials[selected_material].session_id:document->texture_sets().front().material_session_uid;undo_history.push_back({std::move(document),uid,"Bake mesh maps (Python)"});if(undo_history.size()>128)undo_history.erase(undo_history.begin());redo_history.clear();document=std::move(candidate);refresh_document_ui();},
-      [&](const QString &type,const QJsonObject &data){if(python_event)python_event(type,data);}
-    });
-    const auto automation_busy=[&]{return project_opener.pending()||bool(active_save)||bool(requested_save)||host.save_project_pending()||(automation_jobs&&automation_jobs->pending())||host.texture_updates_pending()||bool(uniform_before)||bool(stroke_before)||bool(path_drag_before)||(skew&&skew->pending())||QApplication::activeModalWidget();};
-    std::unique_ptr<bts::PythonConsole> python_console;
-    if(workspace)python_console=std::make_unique<bts::PythonConsole>(workspace,bts::PythonHooks{[&](const QString &operation,const QJsonObject &parameters)->QJsonValue{
-      const auto status=[&]{return QJsonObject{{"is_open",bool(document)},{"is_busy",automation_busy()},{"needs_saving",bool(document)&&dirty},{"file_path",document_path},{"document_id",document?document->id().toString(QUuid::WithoutBraces):QString()},{"open_error",workspace->property("projectOpenError").toString()}};};
-      if(operation=="project.status")return status();
-      if(operation=="textureset.list"){QJsonArray sets;if(document)for(const auto &set:document->texture_sets()){QJsonArray tiles,maps;for(int number:set.tiles)tiles.append(number);for(int role=0;role<7;++role)if(set.mesh_maps[role])for(const auto &[tile,plane]:set.mesh_maps[role]->tiles)maps.append(QJsonObject{{"role",role},{"tile",tile},{"hash",QString::fromStdString(plane.hash)},{"width",plane.resolution},{"height",plane.rows()}});sets.append(QJsonObject{{"mesh_maps",maps},{"id",set.id.toString(QUuid::WithoutBraces)},{"name",QString::fromStdString(set.name)},{"width",set.texture_resolution},{"tiles",tiles},{"editable",!set.disabled&&set.uniform_editable}});}return sets;}
-      if(operation=="resource.list"){QJsonArray entries;for(const auto &asset:assets.assets())entries.append(QJsonObject{{"id",asset.id.toString(QUuid::WithoutBraces)},{"name",asset.name},{"usages",QJsonArray::fromStringList(asset.usages)},{"scope",bts::asset_scope_name(asset.scope)}});return entries;}
-      if(operation=="display.residency")return host.project_profile()["texture_residency"];
-      if(operation=="display.settings")return QJsonObject{{"color",host.color_state()},{"environment",host.environment_state()},{"view",viewport->view_state()}};
-      if(operation.startsWith("layers.")){
-        if(!document)throw std::runtime_error("No project open");
-        const auto active=[&]()->bts::TextureSet &{if(selected_material<0)throw std::invalid_argument("No active Texture Set");return document->set(snapshot.materials[selected_material].session_id);};
-        if(operation=="layers.active_stack")return selected_material<0?QJsonValue():QJsonValue(active().id.toString(QUuid::WithoutBraces));
-        if(operation=="layers.selection_target")return active().selected_geometry?"geometry":active().selected_mask?"mask":"content";
-        if(operation=="layers.selected"){
-          if(parameters["stack"].isString()&&QUuid(parameters["stack"].toString())!=active().id){const auto id=bts::layer_api_set_id(*document,parameters);for(const auto &set:document->texture_sets())if(set.id==id){const auto &layer=bts::TextureDocument::layer(const_cast<bts::TextureSet &>(set),set.selected_layer);return QJsonArray{bts::layer_api_reference(*document,set,layer,set.selected_effect.isNull()?"layer":set.selected_mask?"mask":"content",set.selected_effect)};}}
-          QJsonArray references;for(const auto *item:workspace->layer_stack()->selectedItems()){const auto parent=QUuid(item->data(Qt::UserRole).toString()),effect=QUuid(item->data(Qt::UserRole+10).toString());auto &set=active();const auto &layer=bts::TextureDocument::layer(set,parent);references.append(bts::layer_api_reference(*document,set,layer,effect.isNull()?"layer":item->data(Qt::UserRole+12).toBool()?"mask":"content",effect));}return references;
-        }
-        if((automation_jobs&&automation_jobs->pending())||uniform_before||stroke_before||path_drag_before||(skew&&skew->pending())||QApplication::activeModalWidget()){
-          if(!bts::layer_api_read_only(operation))throw std::runtime_error("Finish the current edit or job before changing layers");
-        }
-        if(operation=="layers.activate_stack"){
-          const auto id=bts::layer_api_set_id(*document,parameters);const auto found=std::find_if(document->texture_sets().begin(),document->texture_sets().end(),[&](const auto &s){return s.id==id;});if(found->disabled)throw std::invalid_argument("Texture Set is inactive");for(int row=0;row<workspace->texture_sets()->count();++row)if(workspace->texture_sets()->item(row)->data(Qt::UserRole).toUInt()==found->material_session_uid){workspace->texture_sets()->setCurrentRow(row);select_material(row);return id.toString(QUuid::WithoutBraces);}throw std::invalid_argument("Texture Set is not bound to the scene");
-        }
-        if(operation=="layers.select"){
-          if(!parameters["references"].isArray()||parameters["references"].toArray().isEmpty())throw std::invalid_argument("Select at least one node");const auto refs=parameters["references"].toArray();std::set<QUuid> ids;bool mask=false,material=false;for(const auto &ref:refs){if(!ref.isObject())throw std::invalid_argument("Invalid selected node");(void)bts::layer_api_query(*document,"layers.info",{{"reference",ref}});const auto r=ref.toObject();if(QUuid(r["set"].toString())!=active().id)throw std::invalid_argument("Activate the owning Texture Set before selecting its nodes");if(!ids.insert(QUuid(r["node"].toString())).second)throw std::invalid_argument("Duplicate selected node");if(r["scope"]=="mask")mask=true;else material=true;}if(mask&&material)throw std::invalid_argument("Select material or mask nodes in one context");const auto primary=refs.last().toObject();auto &set=active();set.selected_layer=QUuid(primary["layer"].toString());set.selected_effect=primary["scope"]=="layer"?QUuid():QUuid(primary["node"].toString());set.selected_mask=mask;set.selected_geometry=false;select_material(selected_material);auto *list=workspace->layer_stack();QSignalBlocker block(list);list->clearSelection();QListWidgetItem *current=nullptr;for(int row=0;row<list->count();++row){auto *item=list->item(row);const auto effect=QUuid(item->data(Qt::UserRole+10).toString()),parent=QUuid(item->data(Qt::UserRole).toString()),id=effect.isNull()?parent:effect;if(ids.contains(id)){item->setSelected(true);if(id==QUuid(primary["node"].toString()))current=item;}}if(current)list->setCurrentItem(current,QItemSelectionModel::NoUpdate);if(python_event)python_event("LayerStacksModelDataChanged",{{"texture_set",set.id.toString(QUuid::WithoutBraces)},{"selection",true}});return true;
-        }
-        std::vector<bts::StudioAsset> packed;
-        const bts::LayerApiResources resources{[&](const QUuid &id,bool pack){bts::StudioAsset result;bool found=false;for(const auto &a:packed)if(a.id==id){result=a;found=true;break;}if(!found)for(const auto &a:assets.assets())if(a.id==id){result=a;found=true;break;}if(!found)throw std::invalid_argument("Resource is not in Shelf");if(pack&&result.scope!=bts::AssetScope::Project){result.id=QUuid::createUuid();result.scope=bts::AssetScope::Project;if(result.bytes.isEmpty()&&result.material&&!result.fill_preset&&!result.smart_material&&!result.projection_weave){result.filename=QFileInfo(result.filename).completeBaseName()+".btsmaterial";result.bytes=QJsonDocument(QJsonObject{{"version",1},{"native_material",bts::asset_metadata(result)["material"]}}).toJson(QJsonDocument::Compact);}packed.push_back(result);}return result;},[&](const bts::StudioAsset &asset,bool raw){return bts::await_texture_io(workspace,"Loading channel texture…",[asset,raw](const std::atomic_bool &cancel){bts::TextureDecodeControl control;control.cancel=&cancel;return bts::decode_fill_texture(asset,raw,{},control);});}};
-        if(bts::layer_api_read_only(operation))return bts::layer_api_query(*document,operation,parameters,resources);
-        bts::EditTiming timing("BTS_EDIT_MS");const auto set_id=bts::layer_api_set_id(*document,parameters);const auto target=std::find_if(document->texture_sets().begin(),document->texture_sets().end(),[&](const auto &set){return set.id==set_id;});if(target->disabled||!target->uniform_editable)throw std::invalid_argument("Texture Set requires an editable Principled material");const auto uid=target->material_session_uid;auto candidate=std::make_unique<bts::TextureDocument>(*document);const auto value=bts::layer_api_edit(*candidate,operation,parameters,resources);const auto before=document->edit_state(),after=candidate->edit_state();if(before==after)return value;auto candidate_assets=assets;for(const auto &asset:packed)candidate_assets.add(asset);queue_document_edit(*document,*candidate,uid,before,after);undo_history.push_back({std::move(document),uid,"Python "+operation.mid(7)});if(undo_history.size()>128)undo_history.erase(undo_history.begin());redo_history.clear();document=std::move(candidate);assets=std::move(candidate_assets);if(!packed.empty())workspace->refresh_alpha_shelf();refresh_document_ui(false,uid);if(python_event)python_event("LayerStacksModelDataChanged",{{"texture_set",set_id.toString(QUuid::WithoutBraces)},{"operation",operation}});return value;
-      }
-      if(operation.startsWith("jobs.")||operation=="export.list")return automation_jobs->call(operation,parameters);
-      if(automation_busy())throw std::runtime_error("Project is busy; use bts.project.execute_when_not_busy(callback)");
-      const auto path=[&](const char *name){const auto value=parameters.value(name);if(!value.isString()||value.toString().isEmpty()||value.toString().contains(QChar(0)))throw std::invalid_argument("Expected a nonempty file path");return QFileInfo(value.toString()).absoluteFilePath();};
-      if(operation.startsWith("export.")||operation.startsWith("baking."))return automation_jobs->call(operation,parameters);
-      if(operation=="resource.import"){const auto usage=parameters["usage"].toString(),scope=parameters["scope"].toString();if(!QStringList{"texture","alpha","environment"}.contains(usage)||!QStringList{"session","project","user"}.contains(scope))throw std::invalid_argument("Invalid resource usage or scope");if(scope=="project"&&!document)throw std::runtime_error("No project open");const auto filename=path("path");const auto imported=bts::await_texture_io(workspace,"Importing image…",[filename,usage](const std::atomic_bool &cancel){return usage=="texture"?bts::reference_image_resource(filename,true,&cancel):bts::read_image_resource(filename,usage!="environment");});bts::StudioAsset asset;asset.name=parameters["name"].isNull()?imported.name:parameters["name"].toString();asset.filename=imported.filename;asset.path=imported.path;asset.bytes=imported.bytes;asset.texture_files=imported.files;asset.usages={usage};asset.scope=scope=="session"?bts::AssetScope::Session:scope=="user"?bts::AssetScope::User:bts::AssetScope::Project;if(usage=="alpha"){bts::BrushAlpha alpha;alpha.kind=bts::AlphaKind::Bitmap;alpha.bitmap=bts::read_bitmap_alpha_bytes(asset.bytes,asset.name);asset.alpha=alpha;}const auto metadata=bts::asset_metadata(asset);bts::asset_metadata_read(metadata);assets.add(std::move(asset));workspace->refresh_alpha_shelf();bts::FileDialog::remember_folder(QFileInfo(filename).absolutePath());if(scope=="project"){dirty=true;(++document_revision,last_document_edit=bts::performance::Clock::now());}return metadata;}
-      if(operation=="project.create"){
-        if(document)throw std::runtime_error("Close the current project before create");
-        bts::NewProjectOptions options;const auto template_path=parameters.value("template_file_path").toString();if(!template_path.isEmpty())options=bts::project_template_options(bts::read_project_template(template_path));options.template_path=template_path.toStdString();options.absolute_mesh_path=path("mesh_file_path").toStdString();
-        if(!parameters["settings"].isObject())throw std::invalid_argument("settings must be an object");const auto settings=parameters["settings"].toObject();
-        for(auto it=settings.begin();it!=settings.end();++it){const auto key=it.key();if(key=="resolution"){const double value=it.value().toDouble(-1);if(!it.value().isDouble()||!std::isfinite(value)||value<128||value>bts::max_texture_resolution||std::floor(value)!=value)throw std::invalid_argument("Resolution must be an integer from 128 to 8192 (8K)");const int size=int(value);if(size&(size-1))throw std::invalid_argument("Resolution must be a power of two from 128 to 8192 (8K)");options.resolution=bts::DocumentResolution(size);}else if(key=="normal_map_format"){if(it.value()=="OpenGL")options.normal_map_format=bts::NormalMapFormat::OpenGL;else if(it.value()=="DirectX")options.normal_map_format=bts::NormalMapFormat::DirectX;else throw std::invalid_argument("normal_map_format must be OpenGL or DirectX");}else{if(!it.value().isBool())throw std::invalid_argument("Project setting requires a boolean");const bool value=it.value().toBool();if(key=="import_cameras")options.import_cameras=value;else if(key=="preserve_tiles")options.uv_workflow=value?bts::UvWorkflow::PreserveTiles:bts::UvWorkflow::SingleTile;else if(key=="tangent_per_fragment")options.tangent_per_fragment=value;else if(key=="auto_unwrap")options.auto_unwrap.enabled=value;else throw std::invalid_argument("Unknown project setting");}}
-        create_project(options);return status();
-      }
-      if(operation=="project.open"){if(document)throw std::runtime_error("Close the current project before open");begin_open_document(path("path"));return status();}
-      if(!document)throw std::runtime_error("No project open");
-      if(operation=="project.save"){if(document_path.isEmpty())throw std::runtime_error("Unsaved project: use save_as(path)");save_document(document_path);return status();}
-      if(operation=="project.save_as"){save_document(path("path"));return status();}
-      if(operation=="project.save_as_copy"){auto target=path("path");if(!target.endsWith(".blend",Qt::CaseInsensitive))target+=".blend";request_save({target,{},document->id(),document_revision,false,true});bts::FileDialog::remember_folder(QFileInfo(target).absolutePath());return target;}
-      if(operation=="project.close"){if(!parameters["discard"].isBool())throw std::invalid_argument("discard must be a boolean");if(dirty&&!parameters["discard"].toBool())throw std::runtime_error("Unsaved project; save or explicitly close(discard=True)");const auto closed=document->id().toString(QUuid::WithoutBraces);if(render_controller)render_controller->reset_document();if(shader)shader->reset_document();if(skew)skew->reset_document();document.reset();assets.replace_project({});document_path.clear();dirty=false;undo_history.clear();redo_history.clear();refresh_history_actions();workspace->set_texture_sets({},-1);select_material(-1);viewport->set_empty_project(true);window->setWindowTitle("mPainter");if(python_event){python_event("ProjectEditionLeft",{{"project_id",closed}});python_event("ProjectClosed",{{"project_id",closed}});}return status();}
-      throw std::invalid_argument("Unknown BTS automation operation");
-    },automation_busy,{},[&]{QJsonObject data{{"document",document?document->to_json():QJsonObject{}},{"view",viewport->view_state()},{"undo",int(undo_history.size())},{"redo",int(redo_history.size())},{"shader_failures",QString::fromStdString(host.shader_failures())}};if(qEnvironmentVariableIsSet("BTS_RESIDENCY_DEMO"))data["residency"]=host.project_profile()["texture_residency"];QJsonArray textures;if(document)for(const auto &set:document->texture_sets()){QJsonObject entry{{"id",set.id.toString(QUuid::WithoutBraces)},{"name",QString::fromStdString(set.name)}};if(host.has_texture_pixels(set.material_session_uid)){entry["color_hash"]=QString::number(host.texture_hash(set.material_session_uid,0),16);entry["roughness_hash"]=QString::number(host.texture_hash(set.material_session_uid,2),16);}
-        if((qEnvironmentVariableIsSet("BTS_FILL_SYMMETRY_DEMO")||qEnvironmentVariableIsSet("BTS_WARP_GEOMETRY_DEMO"))&&host.has_texture_pixels(set.material_session_uid)){
-          QJsonArray samples;double error=0;auto reference_set=set;bts::TexturePadding reference_geometry(host.scene_snapshot(),set.material_session_uid);reference_set.projection_geometry=reference_geometry.projection_geometry(set.width(),set.tiles,false,set.rows());reference_set.projection_tiles.clear();
-          for(int y:{32,48,64,79,95})for(int x:{16,24,32,40,48,64,79,87,95,103,111}){
-            const auto actual=host.sample_texture(set.material_session_uid,0,x,y);const auto composite=bts::TextureDocument::evaluate(reference_set,x,y);const auto full=bts::precision_channel(composite.material,0,set.precision[0]),base=bts::precision_channel(set.base_values,0,set.precision[0]);const float alpha=composite.coverage[0];QJsonArray pixel;
-            for(int c=0;c<4;++c){const float expected=c==3?alpha:full[c]-base[c]*(1-alpha);error=std::max(error,double(std::abs(actual[c]-expected)));pixel.append(actual[c]);}samples.append(QJsonObject{{"x",x},{"y",y},{"rgba",pixel}});
-          }
-          entry["samples"]=samples;entry["cpu_reference_error"]=error;
-        }
-        textures.append(entry);}data["textures"]=textures;if(qEnvironmentVariableIsSet("BTS_FILL_SYMMETRY_DEMO"))data["brush_symmetry"]=bts::symmetry_json(symmetry);
-      if(qEnvironmentVariableIsSet("BTS_HARD_UNWRAP_DEMO")){QJsonArray triangles;for(const auto &triangle:host.scene_snapshot().uv_triangles){QJsonArray uv,positions;for(int corner=0;corner<3;++corner){uv.append(QJsonArray{triangle.corners[corner][0],triangle.corners[corner][1]});positions.append(QJsonArray{triangle.positions[corner][0],triangle.positions[corner][1],triangle.positions[corner][2]});}triangles.append(QJsonObject{{"uv",uv},{"positions",positions},{"boundary",int(triangle.boundary_edges)}});}data["triangles"]=triangles;}
-      if(qEnvironmentVariableIsSet("BTS_WARP_GEOMETRY_DEMO")&&document&&selected_material>=0){
-        const auto &set=document->set(snapshot.materials[selected_material].session_id);const auto &layer=bts::TextureDocument::layer(document->set(set.material_session_uid),set.selected_layer);auto p=layer.fill;p.cm_per_native=set.cm_per_native;p.native_per_uv=set.native_per_uv;const auto geometry=host.scene_snapshot();QByteArray bytes;
-        for(const auto &triangle:geometry.uv_triangles){bytes.append(reinterpret_cast<const char *>(triangle.positions.data()),sizeof(triangle.positions));bytes.append(reinterpret_cast<const char *>(triangle.corners.data()),sizeof(triangle.corners));}
-        data["source_geometry_hash"]=QString::fromLatin1(QCryptographicHash::hash(bytes,QCryptographicHash::Sha256).toHex());
-        bts::WarpVector center;double extent=0;for(int c=0;c<3;++c){center[c]=(double(geometry.minimum[c])+geometry.maximum[c])*.5;extent=std::max(extent,double(geometry.maximum[c]-geometry.minimum[c]));}if(extent<1e-6)extent=1;
-        const auto frame=bts::warp_projection_frame(p,center,extent);const auto grid=bts::fill_warp_grid(p);QJsonArray author,local,world,screen;for(const auto &node:bts::warp_authored_grid(p)->nodes)author.append(QJsonArray{node.position[0],node.position[1],node.position[2]});for(const auto &node:grid->nodes){const auto point=frame.world(node.position);const auto pixels=viewport->scene_point({float(point[0]),float(point[1]),float(point[2])});local.append(QJsonArray{node.position[0],node.position[1],node.position[2]});world.append(QJsonArray{point[0],point[1],point[2]});screen.append(QJsonArray{pixels.x(),pixels.y()});}
-        data["warp_geometry"]=QJsonObject{{"enabled",bts::warp_geometry_enabled(p)},{"fitted",bts::warp_fit_pose_matches(p)},{"hits",p.warp_fit?p.warp_fit->fitted.hits:0},{"misses",p.warp_fit?p.warp_fit->fitted.misses:0},{"author",author},{"local",local},{"world",world},{"screen",screen},{"settings",bts::warp_settings_json(p)}};
-      }
-      return data;}});
-    python_event=[&](const QString &type,const QJsonObject &data){if(python_console)python_console->notify(type,data);};
+// Automation jobs and the Python console. Part of run_workspace_session()
+// (app/WorkspaceSession.inc), included in order inside its body; it shares that function's locals
+// and is not a standalone file.
+std::unique_ptr<bts::AutomationJobs> automation_jobs;
+if (workspace)
+  automation_jobs = std::make_unique<bts::AutomationJobs>(
+      workspace,
+      bts::AutomationJobHooks{
+          [&] { return document.get(); },
+          [&] { return snapshot; },
+          [&](const auto &ids) { return host.export_source(*document, ids); },
+          [&](bool displaced) { return host.prepare_mesh_export(*document, displaced); },
+          [&](const QUuid &id, const std::vector<bts::MeshBakeResult> &baked) {
+            if (!document || document->id() != id)
+              throw std::runtime_error("Project changed during bake; result discarded");
+            auto candidate = std::make_unique<bts::TextureDocument>(*document);
+            for (const auto &result : baked) {
+              auto &set = candidate->set(result.material_uid);
+              for (int role = 0; role < 7; ++role)
+                if (result.maps[role]) {
+                  if (!set.mesh_maps[role])
+                    set.mesh_maps[role] = bts::MeshMap{};
+                  auto &map = *set.mesh_maps[role];
+                  map.name = result.maps[role]->name;
+                  for (const auto &[tile, plane] : result.maps[role]->tiles)
+                    map.tiles[tile] = plane;
+                }
+            }
+            if (candidate->edit_state() == document->edit_state())
+              return;
+            const auto uid = selected_material >= 0 ?
+                                 snapshot.materials[selected_material].session_id :
+                                 document->texture_sets().front().material_session_uid;
+            undo_history.push_back({std::move(document), uid, "Bake mesh maps (Python)"});
+            if (undo_history.size() > 128)
+              undo_history.erase(undo_history.begin());
+            redo_history.clear();
+            document = std::move(candidate);
+            refresh_document_ui();
+          },
+          [&](const QString &type, const QJsonObject &data) {
+            if (python_event)
+              python_event(type, data);
+          }});
+const auto automation_busy = [&] {
+  return project_opener.pending() || bool(active_save) || bool(requested_save) ||
+         host.save_project_pending() || (automation_jobs && automation_jobs->pending()) ||
+         host.texture_updates_pending() || bool(uniform_before) || bool(stroke_before) ||
+         bool(path_drag_before) || (skew && skew->pending()) || QApplication::activeModalWidget();
+};
+std::unique_ptr<bts::PythonConsole> python_console;
+if (workspace)
+  python_console = std::make_unique<bts::PythonConsole>(
+      workspace,
+      bts::PythonHooks{
+          [&](const QString &operation, const QJsonObject &parameters) -> QJsonValue {
+            const auto status = [&] {
+              return QJsonObject{
+                  {"is_open", bool(document)},
+                  {"is_busy", automation_busy()},
+                  {"needs_saving", bool(document) && dirty},
+                  {"file_path", document_path},
+                  {"document_id",
+                   document ? document->id().toString(QUuid::WithoutBraces) : QString()},
+                  {"open_error", workspace->property("projectOpenError").toString()}};
+            };
+            if (operation == "project.status")
+              return status();
+            if (operation == "textureset.list") {
+              QJsonArray sets;
+              if (document)
+                for (const auto &set : document->texture_sets()) {
+                  QJsonArray tiles, maps;
+                  for (int number : set.tiles)
+                    tiles.append(number);
+                  for (int role = 0; role < 7; ++role)
+                    if (set.mesh_maps[role])
+                      for (const auto &[tile, plane] : set.mesh_maps[role]->tiles)
+                        maps.append(QJsonObject{{"role", role},
+                                                {"tile", tile},
+                                                {"hash", QString::fromStdString(plane.hash)},
+                                                {"width", plane.resolution},
+                                                {"height", plane.rows()}});
+                  sets.append(QJsonObject{{"mesh_maps", maps},
+                                          {"id", set.id.toString(QUuid::WithoutBraces)},
+                                          {"name", QString::fromStdString(set.name)},
+                                          {"width", set.texture_resolution},
+                                          {"tiles", tiles},
+                                          {"editable", !set.disabled && set.uniform_editable}});
+                }
+              return sets;
+            }
+            if (operation == "resource.list") {
+              QJsonArray entries;
+              for (const auto &asset : assets.assets())
+                entries.append(QJsonObject{{"id", asset.id.toString(QUuid::WithoutBraces)},
+                                           {"name", asset.name},
+                                           {"usages", QJsonArray::fromStringList(asset.usages)},
+                                           {"scope", bts::asset_scope_name(asset.scope)}});
+              return entries;
+            }
+            if (operation == "display.residency")
+              return host.project_profile()["texture_residency"];
+            if (operation == "display.settings")
+              return QJsonObject{{"color", host.color_state()},
+                                 {"environment", host.environment_state()},
+                                 {"view", viewport->view_state()}};
+            if (operation.startsWith("layers.")) {
+              if (!document)
+                throw std::runtime_error("No project open");
+              const auto active = [&]() -> bts::TextureSet & {
+                if (selected_material < 0)
+                  throw std::invalid_argument("No active Texture Set");
+                return document->set(snapshot.materials[selected_material].session_id);
+              };
+              if (operation == "layers.active_stack")
+                return selected_material < 0 ?
+                           QJsonValue() :
+                           QJsonValue(active().id.toString(QUuid::WithoutBraces));
+              if (operation == "layers.selection_target")
+                return active().selected_geometry ? "geometry" :
+                       active().selected_mask     ? "mask" :
+                                                    "content";
+              if (operation == "layers.selected") {
+                if (parameters["stack"].isString() &&
+                    QUuid(parameters["stack"].toString()) != active().id)
+                {
+                  const auto id = bts::layer_api_set_id(*document, parameters);
+                  for (const auto &set : document->texture_sets())
+                    if (set.id == id) {
+                      const auto &layer = bts::TextureDocument::layer(
+                          const_cast<bts::TextureSet &>(set), set.selected_layer);
+                      return QJsonArray{bts::layer_api_reference(*document,
+                                                                 set,
+                                                                 layer,
+                                                                 set.selected_effect.isNull() ?
+                                                                     "layer" :
+                                                                 set.selected_mask ? "mask" :
+                                                                                     "content",
+                                                                 set.selected_effect)};
+                    }
+                }
+                QJsonArray references;
+                for (const auto *item : workspace->layer_stack()->selectedItems()) {
+                  const auto parent = QUuid(item->data(Qt::UserRole).toString()),
+                             effect = QUuid(item->data(Qt::UserRole + 10).toString());
+                  auto &set = active();
+                  const auto &layer = bts::TextureDocument::layer(set, parent);
+                  references.append(
+                      bts::layer_api_reference(*document,
+                                               set,
+                                               layer,
+                                               effect.isNull()                        ? "layer" :
+                                               item->data(Qt::UserRole + 12).toBool() ? "mask" :
+                                                                                        "content",
+                                               effect));
+                }
+                return references;
+              }
+              if ((automation_jobs && automation_jobs->pending()) || uniform_before ||
+                  stroke_before || path_drag_before || (skew && skew->pending()) ||
+                  QApplication::activeModalWidget())
+              {
+                if (!bts::layer_api_read_only(operation))
+                  throw std::runtime_error(
+                      "Finish the current edit or job before changing layers");
+              }
+              if (operation == "layers.activate_stack") {
+                const auto id = bts::layer_api_set_id(*document, parameters);
+                const auto found = std::find_if(document->texture_sets().begin(),
+                                                document->texture_sets().end(),
+                                                [&](const auto &s) { return s.id == id; });
+                if (found->disabled)
+                  throw std::invalid_argument("Texture Set is inactive");
+                for (int row = 0; row < workspace->texture_sets()->count(); ++row)
+                  if (workspace->texture_sets()->item(row)->data(Qt::UserRole).toUInt() ==
+                      found->material_session_uid)
+                  {
+                    workspace->texture_sets()->setCurrentRow(row);
+                    select_material(row);
+                    return id.toString(QUuid::WithoutBraces);
+                  }
+                throw std::invalid_argument("Texture Set is not bound to the scene");
+              }
+              if (operation == "layers.select") {
+                if (!parameters["references"].isArray() ||
+                    parameters["references"].toArray().isEmpty())
+                  throw std::invalid_argument("Select at least one node");
+                const auto refs = parameters["references"].toArray();
+                std::set<QUuid> ids;
+                bool mask = false, material = false;
+                for (const auto &ref : refs) {
+                  if (!ref.isObject())
+                    throw std::invalid_argument("Invalid selected node");
+                  (void)bts::layer_api_query(*document, "layers.info", {{"reference", ref}});
+                  const auto r = ref.toObject();
+                  if (QUuid(r["set"].toString()) != active().id)
+                    throw std::invalid_argument(
+                        "Activate the owning Texture Set before selecting its nodes");
+                  if (!ids.insert(QUuid(r["node"].toString())).second)
+                    throw std::invalid_argument("Duplicate selected node");
+                  if (r["scope"] == "mask")
+                    mask = true;
+                  else
+                    material = true;
+                }
+                if (mask && material)
+                  throw std::invalid_argument("Select material or mask nodes in one context");
+                const auto primary = refs.last().toObject();
+                auto &set = active();
+                set.selected_layer = QUuid(primary["layer"].toString());
+                set.selected_effect = primary["scope"] == "layer" ?
+                                          QUuid() :
+                                          QUuid(primary["node"].toString());
+                set.selected_mask = mask;
+                set.selected_geometry = false;
+                select_material(selected_material);
+                auto *list = workspace->layer_stack();
+                QSignalBlocker block(list);
+                list->clearSelection();
+                QListWidgetItem *current = nullptr;
+                for (int row = 0; row < list->count(); ++row) {
+                  auto *item = list->item(row);
+                  const auto effect = QUuid(item->data(Qt::UserRole + 10).toString()),
+                             parent = QUuid(item->data(Qt::UserRole).toString()),
+                             id = effect.isNull() ? parent : effect;
+                  if (ids.contains(id)) {
+                    item->setSelected(true);
+                    if (id == QUuid(primary["node"].toString()))
+                      current = item;
+                  }
+                }
+                if (current)
+                  list->setCurrentItem(current, QItemSelectionModel::NoUpdate);
+                if (python_event)
+                  python_event("LayerStacksModelDataChanged",
+                               {{"texture_set", set.id.toString(QUuid::WithoutBraces)},
+                                {"selection", true}});
+                return true;
+              }
+              std::vector<bts::StudioAsset> packed;
+              const bts::LayerApiResources resources{
+                  [&](const QUuid &id, bool pack) {
+                    bts::StudioAsset result;
+                    bool found = false;
+                    for (const auto &a : packed)
+                      if (a.id == id) {
+                        result = a;
+                        found = true;
+                        break;
+                      }
+                    if (!found)
+                      for (const auto &a : assets.assets())
+                        if (a.id == id) {
+                          result = a;
+                          found = true;
+                          break;
+                        }
+                    if (!found)
+                      throw std::invalid_argument("Resource is not in Shelf");
+                    if (pack && result.scope != bts::AssetScope::Project) {
+                      result.id = QUuid::createUuid();
+                      result.scope = bts::AssetScope::Project;
+                      if (result.bytes.isEmpty() && result.material && !result.fill_preset &&
+                          !result.smart_material && !result.projection_weave)
+                      {
+                        result.filename = QFileInfo(result.filename).completeBaseName() +
+                                          ".btsmaterial";
+                        result.bytes = QJsonDocument(
+                                           QJsonObject{{"version", 1},
+                                                       {"native_material",
+                                                        bts::asset_metadata(result)["material"]}})
+                                           .toJson(QJsonDocument::Compact);
+                      }
+                      packed.push_back(result);
+                    }
+                    return result;
+                  },
+                  [&](const bts::StudioAsset &asset, bool raw) {
+                    return bts::await_texture_io(workspace,
+                                                 "Loading channel texture…",
+                                                 [asset, raw](const std::atomic_bool &cancel) {
+                                                   bts::TextureDecodeControl control;
+                                                   control.cancel = &cancel;
+                                                   return bts::decode_fill_texture(
+                                                       asset, raw, {}, control);
+                                                 });
+                  }};
+              if (bts::layer_api_read_only(operation))
+                return bts::layer_api_query(*document, operation, parameters, resources);
+              bts::EditTiming timing("BTS_EDIT_MS");
+              const auto set_id = bts::layer_api_set_id(*document, parameters);
+              const auto target = std::find_if(document->texture_sets().begin(),
+                                               document->texture_sets().end(),
+                                               [&](const auto &set) { return set.id == set_id; });
+              if (target->disabled || !target->uniform_editable)
+                throw std::invalid_argument(
+                    "Texture Set requires an editable Principled material");
+              const auto uid = target->material_session_uid;
+              auto candidate = std::make_unique<bts::TextureDocument>(*document);
+              const auto value = bts::layer_api_edit(*candidate, operation, parameters, resources);
+              const auto before = document->edit_state(), after = candidate->edit_state();
+              if (before == after)
+                return value;
+              auto candidate_assets = assets;
+              for (const auto &asset : packed)
+                candidate_assets.add(asset);
+              queue_document_edit(*document, *candidate, uid, before, after);
+              undo_history.push_back({std::move(document), uid, "Python " + operation.mid(7)});
+              if (undo_history.size() > 128)
+                undo_history.erase(undo_history.begin());
+              redo_history.clear();
+              document = std::move(candidate);
+              assets = std::move(candidate_assets);
+              if (!packed.empty())
+                workspace->refresh_alpha_shelf();
+              refresh_document_ui(false, uid);
+              if (python_event)
+                python_event("LayerStacksModelDataChanged",
+                             {{"texture_set", set_id.toString(QUuid::WithoutBraces)},
+                              {"operation", operation}});
+              return value;
+            }
+            if (operation.startsWith("jobs.") || operation == "export.list")
+              return automation_jobs->call(operation, parameters);
+            if (automation_busy())
+              throw std::runtime_error(
+                  "Project is busy; use bts.project.execute_when_not_busy(callback)");
+            const auto path = [&](const char *name) {
+              const auto value = parameters.value(name);
+              if (!value.isString() || value.toString().isEmpty() ||
+                  value.toString().contains(QChar(0)))
+                throw std::invalid_argument("Expected a nonempty file path");
+              return QFileInfo(value.toString()).absoluteFilePath();
+            };
+            if (operation.startsWith("export.") || operation.startsWith("baking."))
+              return automation_jobs->call(operation, parameters);
+            if (operation == "resource.import") {
+              const auto usage = parameters["usage"].toString(),
+                         scope = parameters["scope"].toString();
+              if (!QStringList{"texture", "alpha", "environment"}.contains(usage) ||
+                  !QStringList{"session", "project", "user"}.contains(scope))
+                throw std::invalid_argument("Invalid resource usage or scope");
+              if (scope == "project" && !document)
+                throw std::runtime_error("No project open");
+              const auto filename = path("path");
+              const auto imported = bts::await_texture_io(
+                  workspace,
+                  "Importing image…",
+                  [filename, usage](const std::atomic_bool &cancel) {
+                    return usage == "texture" ?
+                               bts::reference_image_resource(filename, true, &cancel) :
+                               bts::read_image_resource(filename, usage != "environment");
+                  });
+              bts::StudioAsset asset;
+              asset.name = parameters["name"].isNull() ? imported.name :
+                                                         parameters["name"].toString();
+              asset.filename = imported.filename;
+              asset.path = imported.path;
+              asset.bytes = imported.bytes;
+              asset.texture_files = imported.files;
+              asset.usages = {usage};
+              asset.scope = scope == "session" ? bts::AssetScope::Session :
+                            scope == "user"    ? bts::AssetScope::User :
+                                                 bts::AssetScope::Project;
+              if (usage == "alpha") {
+                bts::BrushAlpha alpha;
+                alpha.kind = bts::AlphaKind::Bitmap;
+                alpha.bitmap = bts::read_bitmap_alpha_bytes(asset.bytes, asset.name);
+                asset.alpha = alpha;
+              }
+              const auto metadata = bts::asset_metadata(asset);
+              bts::asset_metadata_read(metadata);
+              assets.add(std::move(asset));
+              workspace->refresh_alpha_shelf();
+              bts::FileDialog::remember_folder(QFileInfo(filename).absolutePath());
+              if (scope == "project") {
+                dirty = true;
+                (++document_revision, last_document_edit = bts::performance::Clock::now());
+              }
+              return metadata;
+            }
+            if (operation == "project.create") {
+              if (document)
+                throw std::runtime_error("Close the current project before create");
+              bts::NewProjectOptions options;
+              const auto template_path = parameters.value("template_file_path").toString();
+              if (!template_path.isEmpty())
+                options = bts::project_template_options(bts::read_project_template(template_path));
+              options.template_path = template_path.toStdString();
+              options.absolute_mesh_path = path("mesh_file_path").toStdString();
+              if (!parameters["settings"].isObject())
+                throw std::invalid_argument("settings must be an object");
+              const auto settings = parameters["settings"].toObject();
+              for (auto it = settings.begin(); it != settings.end(); ++it) {
+                const auto key = it.key();
+                if (key == "resolution") {
+                  const double value = it.value().toDouble(-1);
+                  if (!it.value().isDouble() || !std::isfinite(value) || value < 128 ||
+                      value > bts::max_texture_resolution || std::floor(value) != value)
+                    throw std::invalid_argument(
+                        "Resolution must be an integer from 128 to 8192 (8K)");
+                  const int size = int(value);
+                  if (size & (size - 1))
+                    throw std::invalid_argument(
+                        "Resolution must be a power of two from 128 to 8192 (8K)");
+                  options.resolution = bts::DocumentResolution(size);
+                }
+                else if (key == "normal_map_format") {
+                  if (it.value() == "OpenGL")
+                    options.normal_map_format = bts::NormalMapFormat::OpenGL;
+                  else if (it.value() == "DirectX")
+                    options.normal_map_format = bts::NormalMapFormat::DirectX;
+                  else
+                    throw std::invalid_argument("normal_map_format must be OpenGL or DirectX");
+                }
+                else {
+                  if (!it.value().isBool())
+                    throw std::invalid_argument("Project setting requires a boolean");
+                  const bool value = it.value().toBool();
+                  if (key == "import_cameras")
+                    options.import_cameras = value;
+                  else if (key == "preserve_tiles")
+                    options.uv_workflow = value ? bts::UvWorkflow::PreserveTiles :
+                                                  bts::UvWorkflow::SingleTile;
+                  else if (key == "tangent_per_fragment")
+                    options.tangent_per_fragment = value;
+                  else if (key == "auto_unwrap")
+                    options.auto_unwrap.enabled = value;
+                  else
+                    throw std::invalid_argument("Unknown project setting");
+                }
+              }
+              create_project(options);
+              return status();
+            }
+            if (operation == "project.open") {
+              if (document)
+                throw std::runtime_error("Close the current project before open");
+              begin_open_document(path("path"));
+              return status();
+            }
+            if (!document)
+              throw std::runtime_error("No project open");
+            if (operation == "project.save") {
+              if (document_path.isEmpty())
+                throw std::runtime_error("Unsaved project: use save_as(path)");
+              save_document(document_path);
+              return status();
+            }
+            if (operation == "project.save_as") {
+              save_document(path("path"));
+              return status();
+            }
+            if (operation == "project.save_as_copy") {
+              auto target = path("path");
+              if (!target.endsWith(".blend", Qt::CaseInsensitive))
+                target += ".blend";
+              request_save({target, {}, document->id(), document_revision, false, true});
+              bts::FileDialog::remember_folder(QFileInfo(target).absolutePath());
+              return target;
+            }
+            if (operation == "project.close") {
+              if (!parameters["discard"].isBool())
+                throw std::invalid_argument("discard must be a boolean");
+              if (dirty && !parameters["discard"].toBool())
+                throw std::runtime_error(
+                    "Unsaved project; save or explicitly close(discard=True)");
+              const auto closed = document->id().toString(QUuid::WithoutBraces);
+              if (render_controller)
+                render_controller->reset_document();
+              if (shader)
+                shader->reset_document();
+              if (skew)
+                skew->reset_document();
+              document.reset();
+              assets.replace_project({});
+              document_path.clear();
+              dirty = false;
+              undo_history.clear();
+              redo_history.clear();
+              refresh_history_actions();
+              workspace->set_texture_sets({}, -1);
+              select_material(-1);
+              viewport->set_empty_project(true);
+              window->setWindowTitle("mPainter");
+              if (python_event) {
+                python_event("ProjectEditionLeft", {{"project_id", closed}});
+                python_event("ProjectClosed", {{"project_id", closed}});
+              }
+              return status();
+            }
+            throw std::invalid_argument("Unknown BTS automation operation");
+          },
+          automation_busy,
+          {},
+          [&] {
+            QJsonObject data{{"document", document ? document->to_json() : QJsonObject{}},
+                             {"view", viewport->view_state()},
+                             {"undo", int(undo_history.size())},
+                             {"redo", int(redo_history.size())},
+                             {"shader_failures", QString::fromStdString(host.shader_failures())}};
+            if (qEnvironmentVariableIsSet("BTS_RESIDENCY_DEMO"))
+              data["residency"] = host.project_profile()["texture_residency"];
+            QJsonArray textures;
+            if (document)
+              for (const auto &set : document->texture_sets()) {
+                QJsonObject entry{{"id", set.id.toString(QUuid::WithoutBraces)},
+                                  {"name", QString::fromStdString(set.name)}};
+                if (host.has_texture_pixels(set.material_session_uid)) {
+                  entry["color_hash"] = QString::number(
+                      host.texture_hash(set.material_session_uid, 0), 16);
+                  entry["roughness_hash"] = QString::number(
+                      host.texture_hash(set.material_session_uid, 2), 16);
+                }
+                if ((qEnvironmentVariableIsSet("BTS_FILL_SYMMETRY_DEMO") ||
+                     qEnvironmentVariableIsSet("BTS_WARP_GEOMETRY_DEMO")) &&
+                    host.has_texture_pixels(set.material_session_uid))
+                {
+                  QJsonArray samples;
+                  double error = 0;
+                  auto reference_set = set;
+                  bts::TexturePadding reference_geometry(host.scene_snapshot(),
+                                                         set.material_session_uid);
+                  reference_set.projection_geometry = reference_geometry.projection_geometry(
+                      set.width(), set.tiles, false, set.rows());
+                  reference_set.projection_tiles.clear();
+                  for (int y : {32, 48, 64, 79, 95})
+                    for (int x : {16, 24, 32, 40, 48, 64, 79, 87, 95, 103, 111}) {
+                      const auto actual = host.sample_texture(set.material_session_uid, 0, x, y);
+                      const auto composite = bts::TextureDocument::evaluate(reference_set, x, y);
+                      const auto full = bts::precision_channel(
+                                     composite.material, 0, set.precision[0]),
+                                 base = bts::precision_channel(
+                                     set.base_values, 0, set.precision[0]);
+                      const float alpha = composite.coverage[0];
+                      QJsonArray pixel;
+                      for (int c = 0; c < 4; ++c) {
+                        const float expected = c == 3 ? alpha : full[c] - base[c] * (1 - alpha);
+                        error = std::max(error, double(std::abs(actual[c] - expected)));
+                        pixel.append(actual[c]);
+                      }
+                      samples.append(QJsonObject{{"x", x}, {"y", y}, {"rgba", pixel}});
+                    }
+                  entry["samples"] = samples;
+                  entry["cpu_reference_error"] = error;
+                }
+                textures.append(entry);
+              }
+            data["textures"] = textures;
+            if (qEnvironmentVariableIsSet("BTS_FILL_SYMMETRY_DEMO"))
+              data["brush_symmetry"] = bts::symmetry_json(symmetry);
+            if (qEnvironmentVariableIsSet("BTS_HARD_UNWRAP_DEMO")) {
+              QJsonArray triangles;
+              for (const auto &triangle : host.scene_snapshot().uv_triangles) {
+                QJsonArray uv, positions;
+                for (int corner = 0; corner < 3; ++corner) {
+                  uv.append(QJsonArray{triangle.corners[corner][0], triangle.corners[corner][1]});
+                  positions.append(QJsonArray{triangle.positions[corner][0],
+                                              triangle.positions[corner][1],
+                                              triangle.positions[corner][2]});
+                }
+                triangles.append(QJsonObject{{"uv", uv},
+                                             {"positions", positions},
+                                             {"boundary", int(triangle.boundary_edges)}});
+              }
+              data["triangles"] = triangles;
+            }
+            if (qEnvironmentVariableIsSet("BTS_WARP_GEOMETRY_DEMO") && document &&
+                selected_material >= 0)
+            {
+              const auto &set = document->set(snapshot.materials[selected_material].session_id);
+              const auto &layer = bts::TextureDocument::layer(
+                  document->set(set.material_session_uid), set.selected_layer);
+              auto p = layer.fill;
+              p.cm_per_native = set.cm_per_native;
+              p.native_per_uv = set.native_per_uv;
+              const auto geometry = host.scene_snapshot();
+              QByteArray bytes;
+              for (const auto &triangle : geometry.uv_triangles) {
+                bytes.append(reinterpret_cast<const char *>(triangle.positions.data()),
+                             sizeof(triangle.positions));
+                bytes.append(reinterpret_cast<const char *>(triangle.corners.data()),
+                             sizeof(triangle.corners));
+              }
+              data["source_geometry_hash"] = QString::fromLatin1(
+                  QCryptographicHash::hash(bytes, QCryptographicHash::Sha256).toHex());
+              bts::WarpVector center;
+              double extent = 0;
+              for (int c = 0; c < 3; ++c) {
+                center[c] = (double(geometry.minimum[c]) + geometry.maximum[c]) * .5;
+                extent = std::max(extent, double(geometry.maximum[c] - geometry.minimum[c]));
+              }
+              if (extent < 1e-6)
+                extent = 1;
+              const auto frame = bts::warp_projection_frame(p, center, extent);
+              const auto grid = bts::fill_warp_grid(p);
+              QJsonArray author, local, world, screen;
+              for (const auto &node : bts::warp_authored_grid(p)->nodes)
+                author.append(QJsonArray{node.position[0], node.position[1], node.position[2]});
+              for (const auto &node : grid->nodes) {
+                const auto point = frame.world(node.position);
+                const auto pixels = viewport->scene_point(
+                    {float(point[0]), float(point[1]), float(point[2])});
+                local.append(QJsonArray{node.position[0], node.position[1], node.position[2]});
+                world.append(QJsonArray{point[0], point[1], point[2]});
+                screen.append(QJsonArray{pixels.x(), pixels.y()});
+              }
+              data["warp_geometry"] = QJsonObject{
+                  {"enabled", bts::warp_geometry_enabled(p)},
+                  {"fitted", bts::warp_fit_pose_matches(p)},
+                  {"hits", p.warp_fit ? p.warp_fit->fitted.hits : 0},
+                  {"misses", p.warp_fit ? p.warp_fit->fitted.misses : 0},
+                  {"author", author},
+                  {"local", local},
+                  {"world", world},
+                  {"screen", screen},
+                  {"settings", bts::warp_settings_json(p)}};
+            }
+            return data;
+          }});
+python_event = [&](const QString &type, const QJsonObject &data) {
+  if (python_console)
+    python_console->notify(type, data);
+};

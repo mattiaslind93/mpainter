@@ -489,18 +489,21 @@ def check_harness_seam(root, files):
     harness_src, main_src = text(root, HARNESS_OPTIONS), text(root, MAIN_CC)
     if harness_src is None or main_src is None:
         return ("UNAVAILABLE", f"{HARNESS_OPTIONS} or {MAIN_CC} is missing", [])
-    harness_names = set(re.findall(r'addOption\(\{"([^"]+)"', harness_src))
-    product_names = set(re.findall(r'parser\.addOption\(\{"([^"]+)"', main_src))
+    # Whitespace-tolerant, so a formatted call split over lines still counts.
+    harness_names = set(re.findall(r'addOption\(\s*\{\s*"([^"]+)"', harness_src))
+    product_names = set(re.findall(r'parser\.addOption\(\s*\{\s*"([^"]+)"', main_src))
+    read = re.compile(r'\b(parser|harness)\s*\.\s*(?:isSet|is_set|value|values)\s*\(\s*"([^"]+)"')
     hits = []
     sources = [(MAIN_CC, main_src)] + [(rel, text(root, rel) or "") for rel in MAIN_SESSION_FILES]
     for rel, source in sources:
-        for number, line in enumerate(source.splitlines(), 1):
-            for owner, name in re.findall(r'\b(parser|harness)\.(?:isSet|is_set|value|values)\("([^"]+)"', line):
-                if owner == "parser" and name in harness_names:
-                    hits.append(f"{rel}:{number}: harness option --{name} read through the parser")
-                elif owner == "harness" and name not in harness_names:
-                    hits.append(f"{rel}:{number}: --{name} read through the harness context but "
-                                f"{'is a product option' if name in product_names else 'is not registered'}")
+        for match in read.finditer(source):
+            owner, name = match.groups()
+            number = source.count("\n", 0, match.start()) + 1
+            if owner == "parser" and name in harness_names:
+                hits.append(f"{rel}:{number}: harness option --{name} read through the parser")
+            elif owner == "harness" and name not in harness_names:
+                hits.append(f"{rel}:{number}: --{name} read through the harness context but "
+                            f"{'is a product option' if name in product_names else 'is not registered'}")
     return ("FAIL" if hits else "PASS", "main() reads harness options only through HarnessContext", hits)
 
 
