@@ -49,7 +49,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/../harness/InputSpaceDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/SubsurfaceDemo.cc
   ${BTS_HOST_SOURCE_DIR}/io/SubsurfacePreviewIO.cc
-  ${BTS_HOST_SOURCE_DIR}/RenderController.cc
+  ${BTS_HOST_SOURCE_DIR}/viewport/RenderController.cc
   ${BTS_HOST_SOURCE_DIR}/DisplayPostEffects.cc
   ${BTS_HOST_SOURCE_DIR}/ui/panels/DisplayPostPanel.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/DisplayPostDemo.cc
@@ -219,7 +219,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/SceneSnapshot.hh
   ${BTS_HOST_SOURCE_DIR}/WorkspaceShell.cc
   ${BTS_HOST_SOURCE_DIR}/WorkspaceShell.hh
-  ${BTS_HOST_SOURCE_DIR}/ViewLayout.hh
+  ${BTS_HOST_SOURCE_DIR}/viewport/ViewLayout.hh
   ${BTS_HOST_SOURCE_DIR}/viewport/OrbitCamera.cc
   ${BTS_HOST_SOURCE_DIR}/viewport/OrbitCamera.hh
   ${BTS_HOST_SOURCE_DIR}/SceneTriangleOverlay.cc
