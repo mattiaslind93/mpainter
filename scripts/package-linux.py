@@ -32,16 +32,16 @@ if runtime_commit!=commit:
 def is_elf(path):
     if not path.is_file():return False
     with path.open('rb') as stream:return stream.read(4)==b'\x7fELF'
-world=a.runtime/'5.2/datafiles/studiolights/world'
-world.mkdir(parents=True,exist_ok=True)
-for name in ('default-studio.hdr','default-studio.txt'):
-    shutil.copy2(root/'assets/environments'/name,world/name)
-subprocess.run([sys.executable,str(root/'scripts/check-environment.py'),str(a.runtime)],check=True)
 stage=out/f'mPainter-{version}-linux-x86_64'
 if stage.exists():raise SystemExit('Output staging directory exists; choose a new output directory.')
 stage.mkdir();(stage/'lib').mkdir()
 shutil.copy2(a.runtime/'mpainter',stage/'mpainter')
 shutil.copytree(a.runtime/'5.2',stage/'5.2',ignore=shutil.ignore_patterns('__pycache__','*.pyc'))
+# Studio lights go into the stage so that --runtime, often a live build tree, stays read-only.
+world=stage/'5.2/datafiles/studiolights/world'
+world.mkdir(parents=True,exist_ok=True)
+for name in ('default-studio.hdr','default-studio.txt'):
+    shutil.copy2(root/'assets/environments'/name,world/name)
 shutil.rmtree(stage/'5.2/datafiles/assets',ignore_errors=True)
 # Cycles device kernels are portable release resources, not workstation caches.
 kernels=stage/'5.2/scripts/addons_core/cycles/lib'
@@ -54,6 +54,7 @@ for directory in ['branding','meshes']:
     shutil.copytree(root/'assets'/directory,stage/('branding' if directory=='branding' else 'assets/meshes'))
 shutil.copytree(root/'assets/materials',stage/'assets/materials')
 subprocess.run([sys.executable,str(root/'scripts/sanitize-runtime.py'),str(stage/'5.2')],check=True)
+subprocess.run([sys.executable,str(root/'scripts/check-environment.py'),str(stage)],check=True)
 plugins=stage/'plugins';plugins.mkdir()
 for directory in ['platforms','imageformats','iconengines','platforminputcontexts','xcbglintegrations','wayland-decoration-client','wayland-graphics-integration-client','wayland-shell-integration','tls']:
     if (a.qt/'plugins'/directory).exists():shutil.copytree(a.qt/'plugins'/directory,plugins/directory)
