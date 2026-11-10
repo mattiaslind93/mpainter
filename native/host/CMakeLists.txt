@@ -172,7 +172,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/ui/panels/MeshMapsPanel.cc
   ${BTS_HOST_SOURCE_DIR}/baking/MeshBakeDialog.cc
   ${BTS_HOST_SOURCE_DIR}/io/MeshMapImport.cc
-  ${BTS_HOST_SOURCE_DIR}/MeshMapAssign.cc
+  ${BTS_HOST_SOURCE_DIR}/baking/MeshMapAssign.cc
   ${BTS_HOST_SOURCE_DIR}/io/MeshMapIO.cc
   ${BTS_HOST_SOURCE_DIR}/baking/MeshBakeFilter.cc
   ${BTS_HOST_SOURCE_DIR}/MeshBaker.cc
@@ -395,7 +395,7 @@ add_executable(bts-bake-match-tests ${BTS_HOST_SOURCE_DIR}/../tests/bake_match_t
 target_include_directories(bts-bake-match-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-bake-match-tests PRIVATE cxx_std_20)
 
-add_executable(bts-map-import-tests ${BTS_HOST_SOURCE_DIR}/../tests/mesh_map_import_test.cc ${BTS_HOST_SOURCE_DIR}/MeshMapAssign.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-map-import-tests ${BTS_HOST_SOURCE_DIR}/../tests/mesh_map_import_test.cc ${BTS_HOST_SOURCE_DIR}/baking/MeshMapAssign.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
 target_include_directories(bts-map-import-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-map-import-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-map-import-tests PRIVATE Qt6::Core)
