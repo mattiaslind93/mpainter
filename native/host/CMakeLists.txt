@@ -14,7 +14,7 @@ set(BTS_CREATOR_SOURCES ${SRC})
 list(REMOVE_ITEM BTS_CREATOR_SOURCES "${CMAKE_SOURCE_DIR}/release/windows/icons/winblender.rc")
 add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_BRANDING_RESOURCES}
-  ${BTS_HOST_SOURCE_DIR}/Branding.cc
+  ${BTS_HOST_SOURCE_DIR}/app/Branding.cc
   ${BTS_HOST_SOURCE_DIR}/Theme.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/BakeSourceCpuDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/ViewportHeadlessDemo.cc
@@ -81,7 +81,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/../harness/ImageSequenceDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/SkewBakeCpuDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/ClippingDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/Preferences.cc
+  ${BTS_HOST_SOURCE_DIR}/app/Preferences.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/FillChannelsDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/SpatialModeDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/PlanarDemo.cc
@@ -254,7 +254,7 @@ set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/materials/layering/MaterialLayeringSo
 target_compile_definitions(bts-host PRIVATE WITH_BTS_HOST QT_NO_KEYWORDS)
 add_custom_command(TARGET bts-host POST_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:bts-host>/branding COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BTS_HOST_SOURCE_DIR}/../../assets/branding/splash-featured.png ${BTS_HOST_SOURCE_DIR}/../../assets/branding/splash-featured.focus $<TARGET_FILE_DIR:bts-host>/branding)
 install(FILES ${BTS_HOST_SOURCE_DIR}/../../assets/branding/splash-featured.png ${BTS_HOST_SOURCE_DIR}/../../assets/branding/splash-featured.focus DESTINATION branding)
-set_source_files_properties(${BTS_HOST_SOURCE_DIR}/Branding.cc PROPERTIES COMPILE_DEFINITIONS "BTS_PRODUCT_VERSION=\"${BTS_PRODUCT_VERSION}\"")
+set_source_files_properties(${BTS_HOST_SOURCE_DIR}/app/Branding.cc PROPERTIES COMPILE_DEFINITIONS "BTS_PRODUCT_VERSION=\"${BTS_PRODUCT_VERSION}\"")
 target_compile_features(bts-host PRIVATE cxx_std_20)
 # Direct SPSM source inspection is worker-side, independent of external vendor runtimes.
 add_subdirectory(${BTS_HOST_SOURCE_DIR}/../spsm ${CMAKE_CURRENT_BINARY_DIR}/spsm-reader)
@@ -958,7 +958,7 @@ target_link_libraries(bts-ui-stall-tests PRIVATE Qt6::Widgets)
 target_compile_features(bts-ui-stall-tests PRIVATE cxx_std_20)
 add_dependencies(bts-cpu-tests bts-ui-stall-tests)
 
-add_executable(bts-viewport-preferences-tests ${BTS_HOST_SOURCE_DIR}/../tests/viewport_texture_preferences_test.cc ${BTS_HOST_SOURCE_DIR}/Preferences.cc)
+add_executable(bts-viewport-preferences-tests ${BTS_HOST_SOURCE_DIR}/../tests/viewport_texture_preferences_test.cc ${BTS_HOST_SOURCE_DIR}/app/Preferences.cc)
 target_include_directories(bts-viewport-preferences-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_link_libraries(bts-viewport-preferences-tests PRIVATE Qt6::Widgets)
 target_compile_features(bts-viewport-preferences-tests PRIVATE cxx_std_20)
@@ -1217,7 +1217,7 @@ target_compile_options(bts-height-neutral-tests PRIVATE -UNDEBUG)
 target_link_libraries(bts-height-neutral-tests PRIVATE bts-export-config Qt6::Core)
 add_dependencies(bts-cpu-tests bts-height-neutral-tests)
 
-add_executable(bts-branding-tests ${BTS_HOST_SOURCE_DIR}/../tests/branding_test.cc ${BTS_HOST_SOURCE_DIR}/Branding.cc ${BTS_BRANDING_RESOURCES})
+add_executable(bts-branding-tests ${BTS_HOST_SOURCE_DIR}/../tests/branding_test.cc ${BTS_HOST_SOURCE_DIR}/app/Branding.cc ${BTS_BRANDING_RESOURCES})
 target_include_directories(bts-branding-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-branding-tests PRIVATE cxx_std_20)
 target_compile_options(bts-branding-tests PRIVATE -UNDEBUG)
@@ -1633,7 +1633,7 @@ add_test(NAME reference-image-data-cpu COMMAND bts-reference-image-data-tests)
 add_executable(bts-reference-image-tests
   ${BTS_HOST_SOURCE_DIR}/../tests/reference_image_test.cc
   ${BTS_HOST_SOURCE_DIR}/ColorPicker.cc
-  ${BTS_HOST_SOURCE_DIR}/Preferences.cc
+  ${BTS_HOST_SOURCE_DIR}/app/Preferences.cc
   ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
 target_include_directories(bts-reference-image-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-reference-image-tests PRIVATE cxx_std_20)

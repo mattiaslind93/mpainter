@@ -4,7 +4,7 @@
 # them, so every compiled bts target searches every one of these folders.
 # native/host/CMakeLists.txt and the standalone projects in native/tests/*/ include
 # this file, so the list exists once.
-set(BTS_HOST_DOMAINS python materials/openpbr baking gpu painting layers fill ui/panels ui/dialogs assets viewport materials/layering materials/native persistence io diagnostics platform ui/widgets)
+set(BTS_HOST_DOMAINS app python materials/openpbr baking gpu painting layers fill ui/panels ui/dialogs assets viewport materials/layering materials/native persistence io diagnostics platform ui/widgets)
 if(DEFINED BTS_HOST_SOURCE_DIR)
   set(_bts_host_dir ${BTS_HOST_SOURCE_DIR})
 else()
