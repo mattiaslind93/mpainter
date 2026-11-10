@@ -16,7 +16,7 @@ theme and it stays. What changes is that every color now has a stated role and
 a stated place, so that nobody has to guess which of nineteen dark grays is the
 right one.
 
-**Authority.** `native/host/Theme.hh` holds the tokens; this document explains
+**Authority.** `native/host/ui/theme/Theme.hh` holds the tokens; this document explains
 them. Where the two disagree, the code is what ships, so fix the code. Never
 write a literal color, size or spacing value into a widget — `scripts/host/check-theme-colors.py`
 already fails the build for literal colors, and the same discipline applies to

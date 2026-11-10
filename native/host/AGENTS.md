@@ -1,6 +1,6 @@
 # native/host
 
-The mPainter application, C++20, in domain folders. `docs/architecture/source-layout.md` is the map and lists the folders; files that are not assigned to a domain yet stay at the top level.
+The mPainter application, C++20, in domain folders. `docs/architecture/source-layout.md` is the map and lists the folders. Put every new file in a domain folder. The top level holds only `CMakeLists.txt`, `SourceIncludeDirs.cmake`, this file, and seven files that sha-pinned live-render tests in `native/tests/` include by `../host/` path: `main.cc`, `BlenderHost.hh`, `ColorPicker.hh`, `GpuProjectReadback.hh`, `PropertyLatency.hh`, `TextureDocument.hh` and `ViewportDemoCapture.hh`. They move when the owner renews those pins.
 
 ## How it builds
 
@@ -32,7 +32,7 @@ The session is one translation unit with `main.cc` on purpose. The reviewed live
 
 ## Blender boundary
 
-- Only `blender/` may include Blender headers. Files elsewhere that still do are moved there in batches. `docs/blender-surface.md` lists every Blender header in use; `python3 scripts/mp.py check` counts the files outside `blender/` and fails if the count grows.
+- Only `blender/` may include Blender headers. In this folder only `main.cc` and `GpuProjectReadback.hh` still include them outside `blender/` (pinned test includes); the rest of the count is harness and test code. `docs/blender-surface.md` lists every Blender header in use; `python3 scripts/mp.py check` counts the files outside `blender/` and fails if the count grows.
 - Do not add Blender includes to UI, panel or widget files.
 
 ## Platform code
