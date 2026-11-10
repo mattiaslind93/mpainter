@@ -25,11 +25,11 @@ class HeightAdmission(unittest.TestCase):
             self.file(self.repo / name, name)
         self.file(self.snapshot / "integrated-snapshot.json", "attested")
         self.file(self.out / "test-headers.json", "{}")
-        self.commands = [": && c++ /prod/native/host/main.cc.o /prod/native/harness/GuiFixDemo.cc.o /prod/lib.a -o /prod/bin/bts-host && :"]
+        self.commands = [": && c++ /prod/native/host/app/main.cc.o /prod/native/harness/GuiFixDemo.cc.o /prod/lib.a -o /prod/bin/bts-host && :"]
         self.file(self.snapshot / "host-commands.json", json.dumps(self.commands))
         self.admitted = {"native_source_head": "production-head", "source_build": "/prod", "linker_scripts": {},
                          "link_inputs": {value: {"kind": "frozen", "path": "inputs/" + Path(value).name}
-                                         for value in ("/prod/native/host/main.cc.o", "/prod/native/harness/GuiFixDemo.cc.o", "/prod/lib.a")}}
+                                         for value in ("/prod/native/host/app/main.cc.o", "/prod/native/harness/GuiFixDemo.cc.o", "/prod/lib.a")}}
         self.record = {"schema": 1, "profile": height.PROFILE, "snapshot": str(self.snapshot),
                        "snapshot_manifest_sha256": height.sha256(self.snapshot / "integrated-snapshot.json"),
                        "built_source_head": "production-head", "runner_sha256": height.source_identity(self.repo),
