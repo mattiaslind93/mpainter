@@ -12,7 +12,7 @@ assert 'begin_mask_preset(mask)' in callback and 'poll_mask_preset()' in callbac
 assert 'write_mask_preset(' not in callback, 'Preset compression belongs to the worker'
 assert 'std::async(std::launch::async' in callback and 'prepare_user(' in callback and 'add_prepared(' in callback
 assert 'assets.add(' not in callback, 'Preset decoding/blob writes belong to the worker'
-model = compact((root / 'native/host/TextureDocument.cc').read_text())
+model = compact((root / 'native/host/document/TextureDocument.cc').read_text())
 apply = model.split('voidTextureDocument::apply_mask_preset', 1)[1].split('TextureDocument::fill_sample', 1)[0]
 assert 'MaskEffectKind::Paint' in apply
 for forbidden in ('sample_resampled(', 'visit_pages(', '.materialized(', '.assign_page('):

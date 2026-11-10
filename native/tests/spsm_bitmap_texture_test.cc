@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <QCoreApplication>
 #include <QCryptographicHash>
-#include "../host/SpsmBitmapTexture.hh"
+#include "../host/spsm-import/SpsmBitmapTexture.hh"
 #include "../host/io/FillTextureJSON.hh"
 #include "BLI_math_half.hh"
 #include "IMB_colormanagement.hh"

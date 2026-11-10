@@ -35,9 +35,9 @@ commands = subprocess.check_output([ninja, '-t', 'commands', 'bts-host'], cwd=gr
 base = shlex.split(next(c for c in commands if '/main.cc.o' in c and ' -c ' in c))
 main_object = base[base.index('-o') + 1]
 sources = ['native/spsm/SpsmReader.cc', 'native/spsm/bitmaps/SpsmBitmap.cc',
-           'native/spsm/semantic/SpsmSemantic.cc', 'native/host/SpsmMaterialImport.cc',
-           'native/host/SpsmLevelsLowering.cc', 'native/host/blender/SpsmBitmapTexture.cc',
-           'native/host/SpsmBitmapLowering.cc']
+           'native/spsm/semantic/SpsmSemantic.cc', 'native/host/spsm-import/SpsmMaterialImport.cc',
+           'native/host/spsm-import/SpsmLevelsLowering.cc', 'native/host/blender/SpsmBitmapTexture.cc',
+           'native/host/spsm-import/SpsmBitmapLowering.cc']
 if args.source:
     sources += [host_rel(root, name) for name in ['SpsmSource.cc','SpsmMeshMapLowering.cc','AssetCatalog.cc','SpsmAssetDispatch.cc']]
 sources += ['native/tests/spsm_bitmap_mask_source_test.cc' if args.source else 'native/tests/spsm_bitmap_mask_test.cc']

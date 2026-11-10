@@ -45,7 +45,7 @@ commands=json.loads(frozen_commands.read_text()) if frozen_commands.is_file() el
 base = shlex.split(next(c for c in commands if '/main.cc.o' in c and ' -c ' in c))
 main_object = base[base.index('-o') + 1]
 sources = ['native/spsm/SpsmReader.cc', 'native/spsm/semantic/SpsmSemantic.cc',
-           'native/host/SpsmMaterialImport.cc', 'native/host/SpsmMeshMapLowering.cc']
+           'native/host/spsm-import/SpsmMaterialImport.cc', 'native/host/spsm-import/SpsmMeshMapLowering.cc']
 if args.suite=='source':
     sources += [host_rel(root, name) for name in ['SpsmSource.cc','SpsmBitmapLowering.cc','SpsmBitmapTexture.cc','AssetCatalog.cc','SpsmAssetDispatch.cc']]
     sources += ['native/spsm/bitmaps/SpsmBitmap.cc']

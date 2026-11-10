@@ -24,7 +24,7 @@ root = Path(__file__).resolve().parents[2]
 ref, build, qt, out = [p.resolve() for p in (a.reference, a.build, a.qt, a.output)]
 assert not out.is_relative_to(ref)
 out.mkdir(parents=True, exist_ok=True)
-inputs = [ref/'native/host/assets/BuiltinSmartMasks.cc', ref/'native/host/AssetCatalog.cc',
+inputs = [ref/'native/host/assets/BuiltinSmartMasks.cc', ref/'native/host/assets/AssetCatalog.cc',
           ref/'native/host/assets/MaterialSpherePreview.hh', *sorted((ref/'assets/grunges').glob('*')),
           *sorted((ref/'assets/procedurals').glob('shaderball-jl01*.png'))]
 def hashes():

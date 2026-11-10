@@ -31,8 +31,8 @@ commands = subprocess.check_output([ninja, '-t', 'commands', 'bts-host'], cwd=gr
 base = shlex.split(next(c for c in commands if '/main.cc.o' in c and ' -c ' in c))
 main_object = base[base.index('-o') + 1]
 sources = ['native/spsm/SpsmReader.cc',
-           'native/spsm/semantic/SpsmSemantic.cc', 'native/host/SpsmMaterialImport.cc',
-           'native/host/SpsmLevelsLowering.cc', 'native/tests/spsm_levels_lowering_test.cc']
+           'native/spsm/semantic/SpsmSemantic.cc', 'native/host/spsm-import/SpsmMaterialImport.cc',
+           'native/host/spsm-import/SpsmLevelsLowering.cc', 'native/tests/spsm_levels_lowering_test.cc']
 hdf_flags = shlex.split(subprocess.check_output(['h5cc', '-show'], text=True))[1:]
 hdf_cflags = [flag for flag in hdf_flags if flag.startswith(('-I', '-D'))]
 hdf_libs = [flag for flag in hdf_flags if flag.startswith(('-L', '-l', '-Wl,'))]

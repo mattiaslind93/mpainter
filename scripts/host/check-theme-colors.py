@@ -24,7 +24,7 @@ if failures:
 print('UI color audit passed: all literal hex/QSS RGB colors use Theme.hh tokens.')
 
 # Validate the actual product tokens, including the requested brand accent.
-source = (root / 'native/host/Theme.hh').read_text()
+source = (root / 'native/host/ui/theme/Theme.hh').read_text()
 colors = dict(re.findall(r'inline constexpr auto (\w+) = "(#[0-9A-Fa-f]{6})";', source))
 for name, alias in re.findall(r'inline constexpr auto (\w+) = (\w+);', source):
     colors[name] = colors[alias]

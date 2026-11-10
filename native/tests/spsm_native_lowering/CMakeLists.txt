@@ -6,8 +6,8 @@ find_package(Qt6 6.8 REQUIRED COMPONENTS Core Gui Widgets OpenGL)
 include(../../host/SourceIncludeDirs.cmake)
 add_subdirectory(../../spsm reader)
 add_subdirectory(../../spsm/semantic semantic)
-add_library(bts-spsm-native-lowering STATIC ../../host/SpsmMaterialImport.cc
-  ../../host/PaintPixels.cc ../../host/painting/StrokeMetadata.cc
+add_library(bts-spsm-native-lowering STATIC ../../host/spsm-import/SpsmMaterialImport.cc
+  ../../host/painting/PaintPixels.cc ../../host/painting/StrokeMetadata.cc
   ../../host/painting/StrokeHistory.cc ../../host/io/SurfacePathIO.cc)
 target_link_libraries(bts-spsm-native-lowering PUBLIC bts-spsm-semantic Qt6::Widgets Qt6::OpenGL)
 target_include_directories(bts-spsm-native-lowering PUBLIC ${BTS_SOURCE_INCLUDE_DIRS})

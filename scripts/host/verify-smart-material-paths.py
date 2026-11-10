@@ -5,7 +5,7 @@ import sys
 root=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(root/'scripts/host'))
 from main_source import compact, main_source, statement, with_sections
-source=(root/'native/host/SmartMaterial.cc').read_text()
+source=(root/'native/host/assets/SmartMaterial.cc').read_text()
 for forbidden in ('std::vector<float>', 'assign_channel(', 'sample_id_map(', 'sample_resampled('):
     assert forbidden not in source, ('CPU smart-material mask evaluation',forbidden)
 # The bundled worn-metal recipe was deliberately removed. User-owned preset

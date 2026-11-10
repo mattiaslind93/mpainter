@@ -32,10 +32,10 @@ template = shlex.split(next(c for c in commands if '/main.cc.o -c ' in c))
 old = Path(template[template.index('-c') + 1]).parents[2]
 env = dict(os.environ, CCACHE_DIR=str(repo.parent / 'build/ccache'))
 replacements = {}
-source_names = ['native/host/LayerApi.cc', 'native/host/main.cc', 'native/host/io/OrdinaryColorSource.hh', 'native/tests/ordinary_color_source_test.cc', 'native/tests/OrderedRawRgbFixture.hh']
+source_names = ['native/host/layers/LayerApi.cc', 'native/host/main.cc', 'native/host/io/OrdinaryColorSource.hh', 'native/tests/ordinary_color_source_test.cc', 'native/tests/OrderedRawRgbFixture.hh']
 source_hashes = {name: hashlib.sha256((repo / name).read_bytes()).hexdigest() for name in source_names}
 if not a.run_only:
-    for source in ['native/host/LayerApi.cc', 'native/host/main.cc', 'native/tests/ordinary_color_source_test.cc']:
+    for source in ['native/host/layers/LayerApi.cc', 'native/host/main.cc', 'native/tests/ordinary_color_source_test.cc']:
         command = template.copy()
         if Path(source).name == 'LayerApi.cc':
             command = shlex.split(next(c for c in commands if '/LayerApi.cc.o -c ' in c))

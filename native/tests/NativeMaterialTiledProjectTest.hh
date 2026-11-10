@@ -2,9 +2,9 @@
 #pragma once
 #include "NativeMaterialTiledSourceTest.hh"
 #include "../host/materials/native/NativeMaterialApply.hh"
-#include "../host/ProjectIO.hh"
-#include "../host/FillTextureIO.hh"
-#include "../host/ResourceIO.hh"
+#include "../host/persistence/ProjectIO.hh"
+#include "../host/fill/FillTextureIO.hh"
+#include "../host/io/ResourceIO.hh"
 #include "BKE_idprop.hh"
 #include "BKE_main.hh"
 #include "BKE_material.hh"

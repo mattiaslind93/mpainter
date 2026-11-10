@@ -15,7 +15,7 @@ list(REMOVE_ITEM BTS_CREATOR_SOURCES "${CMAKE_SOURCE_DIR}/release/windows/icons/
 add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_BRANDING_RESOURCES}
   ${BTS_HOST_SOURCE_DIR}/app/Branding.cc
-  ${BTS_HOST_SOURCE_DIR}/Theme.cc
+  ${BTS_HOST_SOURCE_DIR}/ui/theme/Theme.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/BakeSourceCpuDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/ViewportHeadlessDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/TextureImportCpuDemo.cc
@@ -27,7 +27,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/python/AutomationJobs.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/AutomationDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/ExtensionCpuDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/LayerApi.cc
+  ${BTS_HOST_SOURCE_DIR}/layers/LayerApi.cc
   ${BTS_HOST_SOURCE_DIR}/blender/LinearColorTransform.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/LayerApiDemo.cc
   ${BTS_HOST_SOURCE_DIR}/layers/ChannelConfiguration.cc
@@ -53,7 +53,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/blender/DisplayPostEffects.cc
   ${BTS_HOST_SOURCE_DIR}/ui/panels/DisplayPostPanel.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/DisplayPostDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/ShaderController.cc
+  ${BTS_HOST_SOURCE_DIR}/viewport/ShaderController.cc
   ${BTS_HOST_SOURCE_DIR}/materials/openpbr/OpenPbrPanel.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/ShaderDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/InspectionDemo.cc
@@ -121,7 +121,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/io/UsdScene.cc
   ${BTS_HOST_SOURCE_DIR}/ui/panels/UsdScenePanel.cc
   ${BTS_HOST_SOURCE_DIR}/blender/BlendAssetLibrary.cc
-  ${BTS_HOST_SOURCE_DIR}/BlendAssetBrowser.cc
+  ${BTS_HOST_SOURCE_DIR}/assets/BlendAssetBrowser.cc
   ${BTS_HOST_SOURCE_DIR}/blender/NativeMaterialPreview.cc
   ${BTS_HOST_SOURCE_DIR}/assets/SmartMaskThumbnailJobs.cc
   ${BTS_HOST_SOURCE_DIR}/blender/NativeMaterialPreviewImages.cc
@@ -141,9 +141,9 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialFragmentGpuTest.cc
   ${BTS_HOST_SOURCE_DIR}/blender/NativeMaterialGpuPrototype.cc
   ${BTS_HOST_SOURCE_DIR}/blender/NativeMaterialContext.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialImagePanel.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialImageJobs.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialImageUi.cc
+  ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialImagePanel.cc
+  ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialImageJobs.cc
+  ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialImageUi.cc
   ${BTS_HOST_SOURCE_DIR}/blender/NativeMaterialImageBindings.cc
   ${BTS_HOST_SOURCE_DIR}/blender/NativeMaterialImageVariant.cc
   ${BTS_HOST_SOURCE_DIR}/blender/NativeMaterialSourceFiles.cc
@@ -161,14 +161,14 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/ui/dialogs/BlendMaterialDialog.cc
   ${BTS_HOST_SOURCE_DIR}/blender/BlendLibrary.cc
   ${BTS_HOST_SOURCE_DIR}/ui/panels/BlendLibraryPanel.cc
-  ${BTS_HOST_SOURCE_DIR}/SceneBridge.cc
+  ${BTS_HOST_SOURCE_DIR}/io/SceneBridge.cc
   ${BTS_HOST_SOURCE_DIR}/blender/AutoUnwrap.cc
   ${BTS_HOST_SOURCE_DIR}/blender/MeshReplacement.cc
   ${BTS_HOST_SOURCE_DIR}/persistence/Recovery.cc
   ${BTS_HOST_SOURCE_DIR}/io/ExportPadding.cc
   ${BTS_HOST_SOURCE_DIR}/blender/TextureExport.cc
   ${BTS_HOST_SOURCE_DIR}/ui/dialogs/TextureExportDialog.cc
-  ${BTS_HOST_SOURCE_DIR}/SmartMaterial.cc
+  ${BTS_HOST_SOURCE_DIR}/assets/SmartMaterial.cc
   ${BTS_HOST_SOURCE_DIR}/ui/panels/MeshMapsPanel.cc
   ${BTS_HOST_SOURCE_DIR}/blender/MeshBakeDialog.cc
   ${BTS_HOST_SOURCE_DIR}/blender/MeshMapImport.cc
@@ -177,7 +177,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/blender/MeshBakeFilter.cc
   ${BTS_HOST_SOURCE_DIR}/blender/MeshBaker.cc
   ${BTS_HOST_SOURCE_DIR}/blender/AssetThumbnail.cc
-  ${BTS_HOST_SOURCE_DIR}/AssetCatalog.cc
+  ${BTS_HOST_SOURCE_DIR}/assets/AssetCatalog.cc
   ${BTS_HOST_SOURCE_DIR}/blender/ResourceIO.cc
   ${BTS_HOST_SOURCE_DIR}/blender/ResourceImport.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/FillTextureDemo.cc
@@ -200,8 +200,8 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/blender/OpenPbrShader.cc
   ${BTS_HOST_SOURCE_DIR}/blender/MaterialInspection.cc
   ${BTS_HOST_SOURCE_DIR}/blender/NativeWorldNormalShader.cc
-  ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc
-  ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc
+  ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc
+  ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc
   ${BTS_HOST_SOURCE_DIR}/blender/NewProjectProfile.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/MeshExportDemo.cc
   ${BTS_HOST_SOURCE_DIR}/blender/UsdTextureBindings.cc
@@ -217,8 +217,8 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/BlenderHost.hh
   ${BTS_HOST_SOURCE_DIR}/blender/SceneSnapshot.cc
   ${BTS_HOST_SOURCE_DIR}/blender/SceneSnapshot.hh
-  ${BTS_HOST_SOURCE_DIR}/WorkspaceShell.cc
-  ${BTS_HOST_SOURCE_DIR}/WorkspaceShell.hh
+  ${BTS_HOST_SOURCE_DIR}/ui/shell/WorkspaceShell.cc
+  ${BTS_HOST_SOURCE_DIR}/ui/shell/WorkspaceShell.hh
   ${BTS_HOST_SOURCE_DIR}/viewport/ViewLayout.hh
   ${BTS_HOST_SOURCE_DIR}/viewport/OrbitCamera.cc
   ${BTS_HOST_SOURCE_DIR}/viewport/OrbitCamera.hh
@@ -261,12 +261,12 @@ add_subdirectory(${BTS_HOST_SOURCE_DIR}/../spsm ${CMAKE_CURRENT_BINARY_DIR}/spsm
 add_subdirectory(${BTS_HOST_SOURCE_DIR}/../spsm/semantic ${CMAKE_CURRENT_BINARY_DIR}/spsm-semantic)
 add_subdirectory(${BTS_HOST_SOURCE_DIR}/../spsm/bitmaps ${CMAKE_CURRENT_BINARY_DIR}/spsm-bitmaps)
 target_sources(bts-host PRIVATE
-  ${BTS_HOST_SOURCE_DIR}/SpsmMaterialImport.cc
+  ${BTS_HOST_SOURCE_DIR}/spsm-import/SpsmMaterialImport.cc
   ${BTS_HOST_SOURCE_DIR}/blender/SpsmBitmapTexture.cc
-  ${BTS_HOST_SOURCE_DIR}/SpsmBitmapLowering.cc
-  ${BTS_HOST_SOURCE_DIR}/SpsmMeshMapLowering.cc
+  ${BTS_HOST_SOURCE_DIR}/spsm-import/SpsmBitmapLowering.cc
+  ${BTS_HOST_SOURCE_DIR}/spsm-import/SpsmMeshMapLowering.cc
   ${BTS_HOST_SOURCE_DIR}/blender/SpsmSource.cc
-  ${BTS_HOST_SOURCE_DIR}/io/SpsmImportUi.cc)
+  ${BTS_HOST_SOURCE_DIR}/spsm-import/SpsmImportUi.cc)
 target_link_libraries(bts-host PRIVATE bts-spsm-semantic bts-spsm-bitmaps)
 add_executable(bts-spsm-bitmap-options-tests ${BTS_HOST_SOURCE_DIR}/../tests/spsm_bitmap_options_test.cc)
 target_compile_features(bts-spsm-bitmap-options-tests PRIVATE cxx_std_20)
@@ -274,7 +274,7 @@ target_link_libraries(bts-spsm-bitmap-options-tests PRIVATE Qt6::Widgets)
 target_include_directories(bts-spsm-bitmap-options-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 add_executable(bts-spsm-application-tests
   ${BTS_HOST_SOURCE_DIR}/../tests/spsm_application_test.cc
-  ${BTS_HOST_SOURCE_DIR}/io/SpsmImportUi.cc ${BTS_HOST_SOURCE_DIR}/AssetCatalog.cc)
+  ${BTS_HOST_SOURCE_DIR}/spsm-import/SpsmImportUi.cc ${BTS_HOST_SOURCE_DIR}/assets/AssetCatalog.cc)
 target_link_libraries(bts-spsm-application-tests PRIVATE bts-export-config bts-spsm-semantic Qt6::Widgets)
 
 if(WITH_CPU_CHECK)
@@ -324,27 +324,27 @@ install(TARGETS bts-host RUNTIME DESTINATION . BUNDLE DESTINATION .)
 # Pure authoring math/storage checks; no GPU or Blender process required.
 add_executable(bts-paint-tests
   ${BTS_HOST_SOURCE_DIR}/../tests/paint_pixels_test.cc
-  ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc
-  ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+  ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc
+  ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-paint-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-paint-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-paint-tests PRIVATE Qt6::Core)
 
-add_executable(bts-mask-tests ${BTS_HOST_SOURCE_DIR}/../tests/layer_mask_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc)
+add_executable(bts-mask-tests ${BTS_HOST_SOURCE_DIR}/../tests/layer_mask_test.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc)
 target_include_directories(bts-mask-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-mask-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-mask-tests PRIVATE Qt6::Core)
 
-add_executable(bts-erase-tests ${BTS_HOST_SOURCE_DIR}/../tests/erase_pixels_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc)
+add_executable(bts-erase-tests ${BTS_HOST_SOURCE_DIR}/../tests/erase_pixels_test.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc)
 target_include_directories(bts-erase-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-erase-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-erase-tests PRIVATE Qt6::Core)
 
-add_executable(bts-alpha-tests ${BTS_HOST_SOURCE_DIR}/../tests/brush_alpha_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc)
+add_executable(bts-alpha-tests ${BTS_HOST_SOURCE_DIR}/../tests/brush_alpha_test.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc)
 target_include_directories(bts-alpha-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-alpha-tests PRIVATE cxx_std_20)
 
-add_executable(bts-projection-tests ${BTS_HOST_SOURCE_DIR}/../tests/brush_projection_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc)
+add_executable(bts-projection-tests ${BTS_HOST_SOURCE_DIR}/../tests/brush_projection_test.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc)
 target_include_directories(bts-projection-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-projection-tests PRIVATE cxx_std_20)
 
@@ -361,22 +361,22 @@ add_executable(bts-lazy-tests ${BTS_HOST_SOURCE_DIR}/../tests/lazy_mouse_test.cc
 target_include_directories(bts-lazy-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-lazy-tests PRIVATE cxx_std_20)
 
-add_executable(bts-polygon-tests ${BTS_HOST_SOURCE_DIR}/../tests/polygon_fill_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc)
+add_executable(bts-polygon-tests ${BTS_HOST_SOURCE_DIR}/../tests/polygon_fill_test.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc)
 target_include_directories(bts-polygon-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-polygon-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-polygon-tests PRIVATE Qt6::Core)
 
-add_executable(bts-fill-projection-tests ${BTS_HOST_SOURCE_DIR}/../tests/fill_projection_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-fill-projection-tests ${BTS_HOST_SOURCE_DIR}/../tests/fill_projection_test.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-fill-projection-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-fill-projection-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-fill-projection-tests PRIVATE Qt6::Core)
 
-add_executable(bts-asset-tests ${BTS_HOST_SOURCE_DIR}/../tests/asset_catalog_test.cc ${BTS_HOST_SOURCE_DIR}/AssetCatalog.cc)
+add_executable(bts-asset-tests ${BTS_HOST_SOURCE_DIR}/../tests/asset_catalog_test.cc ${BTS_HOST_SOURCE_DIR}/assets/AssetCatalog.cc)
 target_include_directories(bts-asset-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-asset-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-asset-tests PRIVATE Qt6::Core Qt6::Gui bts-export-config)
 
-add_executable(bts-mesh-map-tests ${BTS_HOST_SOURCE_DIR}/../tests/mesh_maps_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-mesh-map-tests ${BTS_HOST_SOURCE_DIR}/../tests/mesh_maps_test.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-mesh-map-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-mesh-map-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-mesh-map-tests PRIVATE Qt6::Core)
@@ -395,22 +395,22 @@ add_executable(bts-bake-match-tests ${BTS_HOST_SOURCE_DIR}/../tests/bake_match_t
 target_include_directories(bts-bake-match-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-bake-match-tests PRIVATE cxx_std_20)
 
-add_executable(bts-map-import-tests ${BTS_HOST_SOURCE_DIR}/../tests/mesh_map_import_test.cc ${BTS_HOST_SOURCE_DIR}/baking/MeshMapAssign.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-map-import-tests ${BTS_HOST_SOURCE_DIR}/../tests/mesh_map_import_test.cc ${BTS_HOST_SOURCE_DIR}/baking/MeshMapAssign.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-map-import-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-map-import-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-map-import-tests PRIVATE Qt6::Core)
 
-add_executable(bts-normal-mix-tests ${BTS_HOST_SOURCE_DIR}/../tests/normal_mix_test.cc ${BTS_HOST_SOURCE_DIR}/layers/NormalMix.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-normal-mix-tests ${BTS_HOST_SOURCE_DIR}/../tests/normal_mix_test.cc ${BTS_HOST_SOURCE_DIR}/layers/NormalMix.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-normal-mix-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-normal-mix-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-normal-mix-tests PRIVATE Qt6::Core)
 
-add_executable(bts-height-normal-tests ${BTS_HOST_SOURCE_DIR}/../tests/height_normal_test.cc ${BTS_HOST_SOURCE_DIR}/layers/NormalMix.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-height-normal-tests ${BTS_HOST_SOURCE_DIR}/../tests/height_normal_test.cc ${BTS_HOST_SOURCE_DIR}/layers/NormalMix.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-height-normal-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-height-normal-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-height-normal-tests PRIVATE Qt6::Core)
 
-add_executable(bts-ao-tests ${BTS_HOST_SOURCE_DIR}/../tests/ambient_occlusion_test.cc ${BTS_HOST_SOURCE_DIR}/layers/AmbientOcclusion.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-ao-tests ${BTS_HOST_SOURCE_DIR}/../tests/ambient_occlusion_test.cc ${BTS_HOST_SOURCE_DIR}/layers/AmbientOcclusion.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-ao-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-ao-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-ao-tests PRIVATE Qt6::Core)
@@ -425,7 +425,7 @@ target_include_directories(bts-export-packing-tests PRIVATE ${BTS_HOST_SOURCE_DI
 target_compile_features(bts-export-packing-tests PRIVATE cxx_std_20)
 
 # Shared metadata parser is also linked by the pure TextureDocument test targets.
-add_library(bts-export-config STATIC ${BTS_HOST_SOURCE_DIR}/baking/SkewArchive.cc ${BTS_HOST_SOURCE_DIR}/Displacement.cc ${BTS_HOST_SOURCE_DIR}/layers/CustomChannel.cc ${BTS_HOST_SOURCE_DIR}/fill/PhysicalScale.cc ${BTS_HOST_SOURCE_DIR}/io/ExportConfiguration.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeArchive.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeTransfer.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc)
+add_library(bts-export-config STATIC ${BTS_HOST_SOURCE_DIR}/baking/SkewArchive.cc ${BTS_HOST_SOURCE_DIR}/layers/Displacement.cc ${BTS_HOST_SOURCE_DIR}/layers/CustomChannel.cc ${BTS_HOST_SOURCE_DIR}/fill/PhysicalScale.cc ${BTS_HOST_SOURCE_DIR}/io/ExportConfiguration.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeArchive.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeTransfer.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc)
 target_include_directories(bts-export-config PUBLIC ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-export-config PUBLIC cxx_std_20)
 target_link_libraries(bts-export-config PUBLIC Qt6::Core)
@@ -448,15 +448,15 @@ foreach(_bts_target IN LISTS _bts_targets)
 endforeach()
 # Portable material assets validate their standalone document on a worker. The
 # static archive supplies the model only to targets that do not compile it.
-target_sources(bts-export-config PRIVATE ${BTS_HOST_SOURCE_DIR}/assets/SmartMaterialPreset.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
-target_sources(bts-export-config PRIVATE ${BTS_HOST_SOURCE_DIR}/SpsmAssetDispatch.cc)
-add_executable(bts-spsm-asset-tests ${BTS_HOST_SOURCE_DIR}/../tests/spsm_asset_test.cc ${BTS_HOST_SOURCE_DIR}/AssetCatalog.cc)
+target_sources(bts-export-config PRIVATE ${BTS_HOST_SOURCE_DIR}/assets/SmartMaterialPreset.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
+target_sources(bts-export-config PRIVATE ${BTS_HOST_SOURCE_DIR}/spsm-import/SpsmAssetDispatch.cc)
+add_executable(bts-spsm-asset-tests ${BTS_HOST_SOURCE_DIR}/../tests/spsm_asset_test.cc ${BTS_HOST_SOURCE_DIR}/assets/AssetCatalog.cc)
 target_link_libraries(bts-spsm-asset-tests PRIVATE bts-export-config)
-add_executable(bts-smart-material-preset-tests ${BTS_HOST_SOURCE_DIR}/../tests/smart_material_preset_test.cc ${BTS_HOST_SOURCE_DIR}/AssetCatalog.cc)
+add_executable(bts-smart-material-preset-tests ${BTS_HOST_SOURCE_DIR}/../tests/smart_material_preset_test.cc ${BTS_HOST_SOURCE_DIR}/assets/AssetCatalog.cc)
 target_link_libraries(bts-smart-material-preset-tests PRIVATE bts-export-config)
 
 # Explicit, headless Blender interchange. Uses the same archive codecs as the shelf.
-add_executable(bts-blender-presets ${BTS_HOST_SOURCE_DIR}/BlenderPresetBridge.cc ${BTS_HOST_SOURCE_DIR}/AssetCatalog.cc)
+add_executable(bts-blender-presets ${BTS_HOST_SOURCE_DIR}/assets/BlenderPresetBridge.cc ${BTS_HOST_SOURCE_DIR}/assets/AssetCatalog.cc)
 target_link_libraries(bts-blender-presets PRIVATE bts-builtin-smartmasks)
 
 add_executable(bts-export-config-tests ${BTS_HOST_SOURCE_DIR}/../tests/export_configuration_test.cc)
@@ -465,7 +465,7 @@ target_link_libraries(bts-export-config-tests PRIVATE bts-export-config)
 add_executable(bts-stroke-history-tests ${BTS_HOST_SOURCE_DIR}/../tests/stroke_history_test.cc)
 target_link_libraries(bts-stroke-history-tests PRIVATE bts-export-config)
 
-add_executable(bts-stroke-archive-tests ${BTS_HOST_SOURCE_DIR}/../tests/stroke_archive_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-stroke-archive-tests ${BTS_HOST_SOURCE_DIR}/../tests/stroke_archive_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_link_libraries(bts-stroke-archive-tests PRIVATE bts-export-config)
 
 find_package(ZLIB REQUIRED)
@@ -492,7 +492,7 @@ target_include_directories(bts-set-assignment-tests PRIVATE ${BTS_HOST_SOURCE_DI
 target_compile_features(bts-set-assignment-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-set-assignment-tests PRIVATE Qt6::Core)
 
-add_executable(bts-project-template-tests ${BTS_HOST_SOURCE_DIR}/../tests/project_template_test.cc ${BTS_HOST_SOURCE_DIR}/persistence/ProjectTemplate.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-project-template-tests ${BTS_HOST_SOURCE_DIR}/../tests/project_template_test.cc ${BTS_HOST_SOURCE_DIR}/persistence/ProjectTemplate.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_link_libraries(bts-project-template-tests PRIVATE bts-export-config)
 
 add_executable(bts-fragment-tangents-tests ${BTS_HOST_SOURCE_DIR}/../tests/fragment_tangents_test.cc)
@@ -510,11 +510,11 @@ add_executable(bts-camera-pose-tests ${BTS_HOST_SOURCE_DIR}/../tests/camera_pose
 target_include_directories(bts-camera-pose-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-camera-pose-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-camera-pose-tests PRIVATE Qt6::Gui)
-add_executable(bts-scene-bridge-tests ${BTS_HOST_SOURCE_DIR}/../tests/scene_bridge_test.cc ${BTS_HOST_SOURCE_DIR}/SceneBridge.cc)
+add_executable(bts-scene-bridge-tests ${BTS_HOST_SOURCE_DIR}/../tests/scene_bridge_test.cc ${BTS_HOST_SOURCE_DIR}/io/SceneBridge.cc)
 target_include_directories(bts-scene-bridge-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-scene-bridge-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-scene-bridge-tests PRIVATE Qt6::Gui assimp::assimp)
-add_executable(bts-scene-formats-tests ${BTS_HOST_SOURCE_DIR}/../tests/scene_formats_test.cc ${BTS_HOST_SOURCE_DIR}/SceneBridge.cc)
+add_executable(bts-scene-formats-tests ${BTS_HOST_SOURCE_DIR}/../tests/scene_formats_test.cc ${BTS_HOST_SOURCE_DIR}/io/SceneBridge.cc)
 target_include_directories(bts-scene-formats-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-scene-formats-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-scene-formats-tests PRIVATE Qt6::Gui assimp::assimp)
@@ -527,7 +527,7 @@ target_compile_definitions(bts-usd-scene-tests PRIVATE QT_NO_KEYWORDS BTS_USD_TE
 target_link_libraries(bts-usd-scene-tests PRIVATE Qt6::Core bf::dependencies::optional::usd bf::dependencies::optional::tbb bf::dependencies::optional::python)
 setup_platform_linker_libs(bts-usd-scene-tests)
 
-add_executable(bts-physical-scale-tests ${BTS_HOST_SOURCE_DIR}/../tests/physical_scale_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc ${BTS_HOST_SOURCE_DIR}/fill/PhysicalScaleSource.cc ${BTS_HOST_SOURCE_DIR}/fill/PhysicalScale.cc ${BTS_HOST_SOURCE_DIR}/io/UsdScene.cc)
+add_executable(bts-physical-scale-tests ${BTS_HOST_SOURCE_DIR}/../tests/physical_scale_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc ${BTS_HOST_SOURCE_DIR}/fill/PhysicalScaleSource.cc ${BTS_HOST_SOURCE_DIR}/fill/PhysicalScale.cc ${BTS_HOST_SOURCE_DIR}/io/UsdScene.cc)
 target_include_directories(bts-physical-scale-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-physical-scale-tests PRIVATE cxx_std_20)
 target_compile_definitions(bts-physical-scale-tests PRIVATE QT_NO_KEYWORDS BTS_PHYSICAL_USD_FIXTURE="${BTS_HOST_SOURCE_DIR}/../tests/fixtures/usd_scene_contract.usda" BTS_PHYSICAL_TEST_ROOT="${CMAKE_BINARY_DIR}")
@@ -535,188 +535,188 @@ target_link_libraries(bts-physical-scale-tests PRIVATE bts-export-config Qt6::Co
 setup_platform_linker_libs(bts-physical-scale-tests)
 
 
-add_executable(bts-dynamic-resolution-tests ${BTS_HOST_SOURCE_DIR}/../tests/dynamic_resolution_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-dynamic-resolution-tests ${BTS_HOST_SOURCE_DIR}/../tests/dynamic_resolution_test.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-dynamic-resolution-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-dynamic-resolution-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-dynamic-resolution-tests PRIVATE bts-export-config)
 
-add_executable(bts-channel-precision-tests ${BTS_HOST_SOURCE_DIR}/../tests/channel_precision_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-channel-precision-tests ${BTS_HOST_SOURCE_DIR}/../tests/channel_precision_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-channel-precision-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-channel-precision-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-channel-precision-tests PRIVATE bts-export-config)
 
-add_executable(bts-custom-channel-tests ${BTS_HOST_SOURCE_DIR}/../tests/custom_channel_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-custom-channel-tests ${BTS_HOST_SOURCE_DIR}/../tests/custom_channel_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-custom-channel-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-custom-channel-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-custom-channel-tests PRIVATE bts-export-config)
 
-add_executable(bts-tile-resolution-tests ${BTS_HOST_SOURCE_DIR}/../tests/tile_resolution_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-tile-resolution-tests ${BTS_HOST_SOURCE_DIR}/../tests/tile_resolution_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-tile-resolution-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-tile-resolution-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-tile-resolution-tests PRIVATE bts-export-config)
 
-add_executable(bts-blend-families-tests ${BTS_HOST_SOURCE_DIR}/../tests/blend_families_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-blend-families-tests ${BTS_HOST_SOURCE_DIR}/../tests/blend_families_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-blend-families-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-blend-families-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-blend-families-tests PRIVATE bts-export-config)
 
-add_executable(bts-normal-vector-blend-tests ${BTS_HOST_SOURCE_DIR}/../tests/normal_vector_blend_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-normal-vector-blend-tests ${BTS_HOST_SOURCE_DIR}/../tests/normal_vector_blend_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-normal-vector-blend-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-normal-vector-blend-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-normal-vector-blend-tests PRIVATE bts-export-config)
 
-add_executable(bts-levels-tests ${BTS_HOST_SOURCE_DIR}/../tests/levels_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-levels-tests ${BTS_HOST_SOURCE_DIR}/../tests/levels_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-levels-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-levels-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-levels-tests PRIVATE bts-export-config)
 
-add_executable(bts-color-selection-tests ${BTS_HOST_SOURCE_DIR}/../tests/color_selection_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-color-selection-tests ${BTS_HOST_SOURCE_DIR}/../tests/color_selection_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-color-selection-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-color-selection-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-color-selection-tests PRIVATE bts-export-config)
 
-add_executable(bts-mask-copy-tests ${BTS_HOST_SOURCE_DIR}/../tests/mask_copy_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-mask-copy-tests ${BTS_HOST_SOURCE_DIR}/../tests/mask_copy_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-mask-copy-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-mask-copy-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-mask-copy-tests PRIVATE bts-export-config)
 
-add_executable(bts-mask-preset-tests ${BTS_HOST_SOURCE_DIR}/../tests/mask_preset_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc ${BTS_HOST_SOURCE_DIR}/AssetCatalog.cc)
+add_executable(bts-mask-preset-tests ${BTS_HOST_SOURCE_DIR}/../tests/mask_preset_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc ${BTS_HOST_SOURCE_DIR}/assets/AssetCatalog.cc)
 target_include_directories(bts-mask-preset-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-mask-preset-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-mask-preset-tests PRIVATE bts-export-config)
 
-add_executable(bts-mask-replace-tests ${BTS_HOST_SOURCE_DIR}/../tests/mask_replace_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-mask-replace-tests ${BTS_HOST_SOURCE_DIR}/../tests/mask_replace_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-mask-replace-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-mask-replace-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-mask-replace-tests PRIVATE bts-export-config)
 
-add_executable(bts-mask-effect-stack-tests ${BTS_HOST_SOURCE_DIR}/../tests/mask_effect_stack_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-mask-effect-stack-tests ${BTS_HOST_SOURCE_DIR}/../tests/mask_effect_stack_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-mask-effect-stack-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-mask-effect-stack-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-mask-effect-stack-tests PRIVATE bts-export-config)
 
-add_executable(bts-mask-generator-tests ${BTS_HOST_SOURCE_DIR}/../tests/mask_generator_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-mask-generator-tests ${BTS_HOST_SOURCE_DIR}/../tests/mask_generator_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-mask-generator-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-mask-generator-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-mask-generator-tests PRIVATE bts-export-config)
 
-add_executable(bts-levels-components-tests ${BTS_HOST_SOURCE_DIR}/../tests/levels_components_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-levels-components-tests ${BTS_HOST_SOURCE_DIR}/../tests/levels_components_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-levels-components-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-levels-components-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-levels-components-tests PRIVATE bts-export-config)
 
-add_executable(bts-compare-mask-tests ${BTS_HOST_SOURCE_DIR}/../tests/compare_mask_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-compare-mask-tests ${BTS_HOST_SOURCE_DIR}/../tests/compare_mask_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-compare-mask-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-compare-mask-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-compare-mask-tests PRIVATE bts-export-config)
 
-add_executable(bts-paint-effect-tests ${BTS_HOST_SOURCE_DIR}/../tests/paint_effect_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-paint-effect-tests ${BTS_HOST_SOURCE_DIR}/../tests/paint_effect_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-paint-effect-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-paint-effect-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-paint-effect-tests PRIVATE bts-export-config)
 
-add_executable(bts-filter-effect-tests ${BTS_HOST_SOURCE_DIR}/../tests/filter_effect_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-filter-effect-tests ${BTS_HOST_SOURCE_DIR}/../tests/filter_effect_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-filter-effect-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-filter-effect-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-filter-effect-tests PRIVATE bts-export-config Qt6::Widgets)
 
-add_executable(bts-fill-effect-tests ${BTS_HOST_SOURCE_DIR}/../tests/fill_effect_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-fill-effect-tests ${BTS_HOST_SOURCE_DIR}/../tests/fill_effect_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-fill-effect-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-fill-effect-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-fill-effect-tests PRIVATE bts-export-config)
 
-add_executable(bts-anchor-reference-tests ${BTS_HOST_SOURCE_DIR}/../tests/anchor_reference_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-anchor-reference-tests ${BTS_HOST_SOURCE_DIR}/../tests/anchor_reference_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-anchor-reference-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-anchor-reference-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-anchor-reference-tests PRIVATE bts-export-config)
 
-add_executable(bts-anchor-validity-tests ${BTS_HOST_SOURCE_DIR}/../tests/anchor_validity_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-anchor-validity-tests ${BTS_HOST_SOURCE_DIR}/../tests/anchor_validity_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-anchor-validity-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-anchor-validity-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-anchor-validity-tests PRIVATE bts-export-config)
 
-add_executable(bts-geometry-mask-tests ${BTS_HOST_SOURCE_DIR}/../tests/geometry_mask_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-geometry-mask-tests ${BTS_HOST_SOURCE_DIR}/../tests/geometry_mask_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-geometry-mask-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-geometry-mask-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-geometry-mask-tests PRIVATE bts-export-config)
 
-add_executable(bts-instance-tests ${BTS_HOST_SOURCE_DIR}/../tests/layer_instance_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-instance-tests ${BTS_HOST_SOURCE_DIR}/../tests/layer_instance_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-instance-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-instance-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-instance-tests PRIVATE bts-export-config)
 
-add_executable(bts-jitter-tests ${BTS_HOST_SOURCE_DIR}/../tests/brush_jitter_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc)
+add_executable(bts-jitter-tests ${BTS_HOST_SOURCE_DIR}/../tests/brush_jitter_test.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc)
 target_include_directories(bts-jitter-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-jitter-tests PRIVATE cxx_std_20)
 
-add_executable(bts-stencil-tests ${BTS_HOST_SOURCE_DIR}/../tests/brush_stencil_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc)
+add_executable(bts-stencil-tests ${BTS_HOST_SOURCE_DIR}/../tests/brush_stencil_test.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc)
 target_include_directories(bts-stencil-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-stencil-tests PRIVATE cxx_std_20)
 
-add_executable(bts-direction-tests ${BTS_HOST_SOURCE_DIR}/../tests/stroke_direction_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc)
+add_executable(bts-direction-tests ${BTS_HOST_SOURCE_DIR}/../tests/stroke_direction_test.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc)
 target_include_directories(bts-direction-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-direction-tests PRIVATE cxx_std_20)
 
-add_executable(bts-material-projection-tests ${BTS_HOST_SOURCE_DIR}/../tests/material_projection_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc)
+add_executable(bts-material-projection-tests ${BTS_HOST_SOURCE_DIR}/../tests/material_projection_test.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc)
 target_include_directories(bts-material-projection-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-material-projection-tests PRIVATE cxx_std_20)
 
 target_sources(bts-export-config PRIVATE ${BTS_HOST_SOURCE_DIR}/io/SurfacePathIO.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeMetadata.cc)
 target_sources(bts-export-config PRIVATE ${BTS_HOST_SOURCE_DIR}/painting/SmudgeStroke.cc)
 
-add_executable(bts-smudge-tests ${BTS_HOST_SOURCE_DIR}/../tests/smudge_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/painting/SmudgeStroke.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc)
+add_executable(bts-smudge-tests ${BTS_HOST_SOURCE_DIR}/../tests/smudge_test.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/painting/SmudgeStroke.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc)
 target_include_directories(bts-smudge-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-smudge-tests PRIVATE cxx_std_20)
 
-add_executable(bts-clone-tests ${BTS_HOST_SOURCE_DIR}/../tests/clone_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/painting/SmudgeStroke.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc)
+add_executable(bts-clone-tests ${BTS_HOST_SOURCE_DIR}/../tests/clone_test.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/painting/SmudgeStroke.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc)
 target_include_directories(bts-clone-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-clone-tests PRIVATE cxx_std_20)
 
-add_executable(bts-quick-mask-tests ${BTS_HOST_SOURCE_DIR}/../tests/quick_mask_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc)
+add_executable(bts-quick-mask-tests ${BTS_HOST_SOURCE_DIR}/../tests/quick_mask_test.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc)
 target_include_directories(bts-quick-mask-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-quick-mask-tests PRIVATE cxx_std_20)
 
-add_executable(bts-dynamic-stroke-tests ${BTS_HOST_SOURCE_DIR}/../tests/dynamic_stroke_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc)
+add_executable(bts-dynamic-stroke-tests ${BTS_HOST_SOURCE_DIR}/../tests/dynamic_stroke_test.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc)
 target_include_directories(bts-dynamic-stroke-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-dynamic-stroke-tests PRIVATE cxx_std_20)
 
-add_executable(bts-surface-path-tests ${BTS_HOST_SOURCE_DIR}/../tests/surface_path_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc)
+add_executable(bts-surface-path-tests ${BTS_HOST_SOURCE_DIR}/../tests/surface_path_test.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc)
 target_include_directories(bts-surface-path-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-surface-path-tests PRIVATE cxx_std_20)
 
-add_executable(bts-surface-path-archive-tests ${BTS_HOST_SOURCE_DIR}/../tests/surface_path_archive_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-surface-path-archive-tests ${BTS_HOST_SOURCE_DIR}/../tests/surface_path_archive_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_link_libraries(bts-surface-path-archive-tests PRIVATE bts-export-config)
 
-add_executable(bts-surface-path-raster-tests ${BTS_HOST_SOURCE_DIR}/../tests/surface_path_raster_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc)
+add_executable(bts-surface-path-raster-tests ${BTS_HOST_SOURCE_DIR}/../tests/surface_path_raster_test.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc)
 target_include_directories(bts-surface-path-raster-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-surface-path-raster-tests PRIVATE cxx_std_20)
 
-add_executable(bts-surface-path-effect-archive-tests ${BTS_HOST_SOURCE_DIR}/../tests/surface_path_effect_archive_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-surface-path-effect-archive-tests ${BTS_HOST_SOURCE_DIR}/../tests/surface_path_effect_archive_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_link_libraries(bts-surface-path-effect-archive-tests PRIVATE bts-export-config)
 
 add_executable(bts-path-curve-tests ${BTS_HOST_SOURCE_DIR}/../tests/path_curve_test.cc)
 target_include_directories(bts-path-curve-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-path-curve-tests PRIVATE cxx_std_20)
 
-add_executable(bts-ribbon-tests ${BTS_HOST_SOURCE_DIR}/../tests/ribbon_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc)
+add_executable(bts-ribbon-tests ${BTS_HOST_SOURCE_DIR}/../tests/ribbon_test.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc)
 target_include_directories(bts-ribbon-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-ribbon-tests PRIVATE cxx_std_20)
 
-add_executable(bts-color-default-tests ${BTS_HOST_SOURCE_DIR}/../tests/color_defaults_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-color-default-tests ${BTS_HOST_SOURCE_DIR}/../tests/color_defaults_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_link_libraries(bts-color-default-tests PRIVATE bts-export-config)
 
-add_executable(bts-bump-migration-tests ${BTS_HOST_SOURCE_DIR}/../tests/bump_migration_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-bump-migration-tests ${BTS_HOST_SOURCE_DIR}/../tests/bump_migration_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_link_libraries(bts-bump-migration-tests PRIVATE bts-export-config)
 
-add_executable(bts-displacement-tests ${BTS_HOST_SOURCE_DIR}/../tests/displacement_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-displacement-tests ${BTS_HOST_SOURCE_DIR}/../tests/displacement_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_link_libraries(bts-displacement-tests PRIVATE bts-export-config)
 
 # Release/NDEBUG must not disable the assertions that form the CPU test oracle.
-add_executable(bts-fill-texture-tests ${BTS_HOST_SOURCE_DIR}/../tests/fill_texture_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-fill-texture-tests ${BTS_HOST_SOURCE_DIR}/../tests/fill_texture_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_link_libraries(bts-fill-texture-tests PRIVATE bts-export-config)
-add_executable(bts-bake-preferences-tests ${BTS_HOST_SOURCE_DIR}/../tests/bake_preferences_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-bake-preferences-tests ${BTS_HOST_SOURCE_DIR}/../tests/bake_preferences_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_link_libraries(bts-bake-preferences-tests PRIVATE bts-export-config)
-add_executable(bts-edit-state-tests ${BTS_HOST_SOURCE_DIR}/../tests/edit_state_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-edit-state-tests ${BTS_HOST_SOURCE_DIR}/../tests/edit_state_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-edit-state-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-edit-state-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-edit-state-tests PRIVATE bts-export-config)
@@ -726,28 +726,28 @@ target_include_directories(bts-panel-scroll-tests PRIVATE ${BTS_HOST_SOURCE_DIR}
 target_compile_features(bts-panel-scroll-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-panel-scroll-tests PRIVATE Qt6::Widgets)
 
-add_executable(bts-ribbon-archive-tests ${BTS_HOST_SOURCE_DIR}/../tests/ribbon_archive_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-ribbon-archive-tests ${BTS_HOST_SOURCE_DIR}/../tests/ribbon_archive_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_link_libraries(bts-ribbon-archive-tests PRIVATE bts-export-config)
 
-add_executable(bts-filled-path-tests ${BTS_HOST_SOURCE_DIR}/../tests/filled_path_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc)
+add_executable(bts-filled-path-tests ${BTS_HOST_SOURCE_DIR}/../tests/filled_path_test.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc)
 target_include_directories(bts-filled-path-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-filled-path-tests PRIVATE cxx_std_20)
 target_compile_definitions(bts-filled-path-tests PRIVATE QT_NO_KEYWORDS)
 target_link_libraries(bts-filled-path-tests PRIVATE bts-export-config)
 
-add_executable(bts-planar-projection-tests ${BTS_HOST_SOURCE_DIR}/../tests/planar_projection_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-planar-projection-tests ${BTS_HOST_SOURCE_DIR}/../tests/planar_projection_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_link_libraries(bts-planar-projection-tests PRIVATE bts-export-config)
 
-add_executable(bts-spherical-projection-tests ${BTS_HOST_SOURCE_DIR}/../tests/spherical_projection_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-spherical-projection-tests ${BTS_HOST_SOURCE_DIR}/../tests/spherical_projection_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_link_libraries(bts-spherical-projection-tests PRIVATE bts-export-config)
 
-add_executable(bts-cylindrical-projection-tests ${BTS_HOST_SOURCE_DIR}/../tests/cylindrical_projection_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-cylindrical-projection-tests ${BTS_HOST_SOURCE_DIR}/../tests/cylindrical_projection_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_link_libraries(bts-cylindrical-projection-tests PRIVATE bts-export-config)
 
-add_executable(bts-fill-channel-texture-tests ${BTS_HOST_SOURCE_DIR}/../tests/fill_channel_texture_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-fill-channel-texture-tests ${BTS_HOST_SOURCE_DIR}/../tests/fill_channel_texture_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_link_libraries(bts-fill-channel-texture-tests PRIVATE bts-export-config)
 
-add_executable(bts-property-composite-tests ${BTS_HOST_SOURCE_DIR}/../tests/property_composite_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-property-composite-tests ${BTS_HOST_SOURCE_DIR}/../tests/property_composite_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_link_libraries(bts-property-composite-tests PRIVATE bts-export-config)
 
 add_executable(bts-stroke-spline-tests ${BTS_HOST_SOURCE_DIR}/../tests/stroke_spline_test.cc)
@@ -818,12 +818,12 @@ add_executable(bts-skew-correction-tests ${BTS_HOST_SOURCE_DIR}/../tests/skew_co
 target_include_directories(bts-skew-correction-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-skew-correction-tests PRIVATE cxx_std_20)
 add_dependencies(bts-cpu-tests bts-skew-correction-tests)
-add_executable(bts-skew-field-tests ${BTS_HOST_SOURCE_DIR}/../tests/skew_field_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc)
+add_executable(bts-skew-field-tests ${BTS_HOST_SOURCE_DIR}/../tests/skew_field_test.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc)
 target_include_directories(bts-skew-field-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-skew-field-tests PRIVATE cxx_std_20)
 add_dependencies(bts-cpu-tests bts-skew-field-tests)
 
-add_executable(bts-skew-archive-tests ${BTS_HOST_SOURCE_DIR}/../tests/skew_archive_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-skew-archive-tests ${BTS_HOST_SOURCE_DIR}/../tests/skew_archive_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-skew-archive-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-skew-archive-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-skew-archive-tests PRIVATE bts-export-config Qt6::Core)
@@ -848,7 +848,7 @@ target_include_directories(bts-shader-instance-tests PRIVATE ${BTS_HOST_SOURCE_D
 target_compile_features(bts-shader-instance-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-shader-instance-tests PRIVATE Qt6::Core)
 
-add_executable(bts-shader-document-tests ${BTS_HOST_SOURCE_DIR}/../tests/shader_document_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-shader-document-tests ${BTS_HOST_SOURCE_DIR}/../tests/shader_document_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-shader-document-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-shader-document-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-shader-document-tests PRIVATE bts-export-config Qt6::Core)
@@ -884,13 +884,13 @@ target_include_directories(bts-usd-preset-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-usd-preset-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-usd-preset-tests PRIVATE bts-export-config Qt6::Core)
 
-add_executable(bts-folder-composition-tests ${BTS_HOST_SOURCE_DIR}/../tests/folder_composition_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc ${BTS_HOST_SOURCE_DIR}/layers/FlattenLayer.cc)
+add_executable(bts-folder-composition-tests ${BTS_HOST_SOURCE_DIR}/../tests/folder_composition_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc ${BTS_HOST_SOURCE_DIR}/layers/FlattenLayer.cc)
 target_include_directories(bts-folder-composition-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-folder-composition-tests PRIVATE cxx_std_20)
 target_compile_options(bts-folder-composition-tests PRIVATE "$<IF:$<CXX_COMPILER_ID:MSVC>,/UNDEBUG,-UNDEBUG>")
 target_link_libraries(bts-folder-composition-tests PRIVATE bts-export-config Qt6::Core)
 
-add_executable(bts-flatten-layer-tests ${BTS_HOST_SOURCE_DIR}/../tests/flatten_layer_test.cc ${BTS_HOST_SOURCE_DIR}/layers/FlattenLayer.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-flatten-layer-tests ${BTS_HOST_SOURCE_DIR}/../tests/flatten_layer_test.cc ${BTS_HOST_SOURCE_DIR}/layers/FlattenLayer.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-flatten-layer-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-flatten-layer-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-flatten-layer-tests PRIVATE bts-export-config Qt6::Core)
@@ -901,10 +901,10 @@ target_compile_features(bts-file-dialog-tests PRIVATE cxx_std_20)
 target_compile_options(bts-file-dialog-tests PRIVATE "$<IF:$<CXX_COMPILER_ID:MSVC>,/UNDEBUG,-UNDEBUG>")
 target_link_libraries(bts-file-dialog-tests PRIVATE Qt6::Widgets Qt6::GuiPrivate)
 
-add_executable(bts-layer-api-tests ${BTS_HOST_SOURCE_DIR}/../tests/layer_api_test.cc ${BTS_HOST_SOURCE_DIR}/LayerApi.cc ${BTS_HOST_SOURCE_DIR}/SmartMaterial.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-layer-api-tests ${BTS_HOST_SOURCE_DIR}/../tests/layer_api_test.cc ${BTS_HOST_SOURCE_DIR}/layers/LayerApi.cc ${BTS_HOST_SOURCE_DIR}/assets/SmartMaterial.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_link_libraries(bts-layer-api-tests PRIVATE bts-export-config)
 
-add_executable(bts-channel-configuration-tests ${BTS_HOST_SOURCE_DIR}/../tests/channel_configuration_test.cc ${BTS_HOST_SOURCE_DIR}/layers/ChannelConfiguration.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-channel-configuration-tests ${BTS_HOST_SOURCE_DIR}/../tests/channel_configuration_test.cc ${BTS_HOST_SOURCE_DIR}/layers/ChannelConfiguration.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_link_libraries(bts-channel-configuration-tests PRIVATE bts-export-config)
 
 add_executable(bts-fill-symmetry-tests ${BTS_HOST_SOURCE_DIR}/../tests/fill_symmetry_test.cc)
@@ -912,7 +912,7 @@ target_include_directories(bts-fill-symmetry-tests PRIVATE ${BTS_HOST_SOURCE_DIR
 target_compile_features(bts-fill-symmetry-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-fill-symmetry-tests PRIVATE Qt6::Core)
 
-add_executable(bts-fill-symmetry-document-tests ${BTS_HOST_SOURCE_DIR}/../tests/fill_symmetry_document_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-fill-symmetry-document-tests ${BTS_HOST_SOURCE_DIR}/../tests/fill_symmetry_document_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_link_libraries(bts-fill-symmetry-document-tests PRIVATE bts-export-config)
 
 add_executable(bts-warp-geometry-tests ${BTS_HOST_SOURCE_DIR}/../tests/warp_geometry_test.cc)
@@ -924,7 +924,7 @@ target_include_directories(bts-warp-geometry-io-tests PRIVATE ${BTS_HOST_SOURCE_
 target_compile_features(bts-warp-geometry-io-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-warp-geometry-io-tests PRIVATE Qt6::Core)
 
-add_executable(bts-warp-geometry-instance-tests ${BTS_HOST_SOURCE_DIR}/../tests/warp_geometry_instance_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-warp-geometry-instance-tests ${BTS_HOST_SOURCE_DIR}/../tests/warp_geometry_instance_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_link_libraries(bts-warp-geometry-instance-tests PRIVATE bts-export-config)
 
 add_executable(bts-texture-residency-policy-tests ${BTS_HOST_SOURCE_DIR}/../tests/texture_residency_policy_test.cc)
@@ -936,7 +936,7 @@ target_include_directories(bts-material-layering-tests PRIVATE ${BTS_HOST_SOURCE
 target_compile_features(bts-material-layering-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-material-layering-tests PRIVATE Qt6::Core)
 
-add_executable(bts-material-layering-document-tests ${BTS_HOST_SOURCE_DIR}/../tests/material_layering_document_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc ${BTS_HOST_SOURCE_DIR}/materials/layering/MaterialLayerParameterIO.cc)
+add_executable(bts-material-layering-document-tests ${BTS_HOST_SOURCE_DIR}/../tests/material_layering_document_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc ${BTS_HOST_SOURCE_DIR}/materials/layering/MaterialLayerParameterIO.cc)
 target_link_libraries(bts-material-layering-document-tests PRIVATE bts-export-config)
 
 add_executable(bts-symmetry-intersection-tests ${BTS_HOST_SOURCE_DIR}/../tests/symmetry_intersection_test.cc ${BTS_HOST_SOURCE_DIR}/viewport/OrbitCamera.cc)
@@ -999,7 +999,7 @@ target_compile_features(bts-brush-preview-tests PRIVATE cxx_std_20)
 target_compile_options(bts-brush-preview-tests PRIVATE -UNDEBUG)
 add_dependencies(bts-cpu-tests bts-brush-preview-tests)
 
-add_executable(bts-paint-source-tests ${BTS_HOST_SOURCE_DIR}/../tests/paint_source_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc)
+add_executable(bts-paint-source-tests ${BTS_HOST_SOURCE_DIR}/../tests/paint_source_test.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc)
 target_include_directories(bts-paint-source-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_link_libraries(bts-paint-source-tests PRIVATE Qt6::Core)
 target_compile_features(bts-paint-source-tests PRIVATE cxx_std_20)
@@ -1019,14 +1019,14 @@ add_dependencies(bts-cpu-tests bts-gpu-only-paths)
 get_property(_bts_page_targets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
 foreach(_bts_page_target IN LISTS _bts_page_targets)
   get_target_property(_bts_page_sources ${_bts_page_target} SOURCES)
-  if("${BTS_HOST_SOURCE_DIR}/PaintPixels.cc" IN_LIST _bts_page_sources)
+  if("${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc" IN_LIST _bts_page_sources)
     target_link_libraries(${_bts_page_target} PRIVATE Qt6::Core)
   endif()
 endforeach()
 
 add_executable(bts-history-memory-tests
   ${BTS_HOST_SOURCE_DIR}/../tests/history_memory_test.cc
-  ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc
+  ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc
   ${BTS_HOST_SOURCE_DIR}/painting/SmudgeStroke.cc)
 target_link_libraries(bts-history-memory-tests PRIVATE bts-export-config)
 target_compile_options(bts-history-memory-tests PRIVATE -UNDEBUG)
@@ -1053,7 +1053,7 @@ target_compile_features(bts-openpbr-parameter-tests PRIVATE cxx_std_20)
 target_compile_options(bts-openpbr-parameter-tests PRIVATE -UNDEBUG)
 add_dependencies(bts-cpu-tests bts-openpbr-parameter-tests)
 
-add_executable(bts-project-template-shader-tests ${BTS_HOST_SOURCE_DIR}/../tests/project_template_shader_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc ${BTS_HOST_SOURCE_DIR}/persistence/ProjectTemplate.cc)
+add_executable(bts-project-template-shader-tests ${BTS_HOST_SOURCE_DIR}/../tests/project_template_shader_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc ${BTS_HOST_SOURCE_DIR}/persistence/ProjectTemplate.cc)
 target_include_directories(bts-project-template-shader-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_link_libraries(bts-project-template-shader-tests PRIVATE bts-export-config Qt6::Core)
 target_compile_features(bts-project-template-shader-tests PRIVATE cxx_std_20)
@@ -1131,7 +1131,7 @@ target_compile_options(bts-blend-selection-tests PRIVATE -UNDEBUG)
 target_link_libraries(bts-blend-selection-tests PRIVATE Qt6::Core)
 add_dependencies(bts-cpu-tests bts-blend-selection-tests)
 
-add_executable(bts-layer-channel-tests ${BTS_HOST_SOURCE_DIR}/../tests/layer_channel_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-layer-channel-tests ${BTS_HOST_SOURCE_DIR}/../tests/layer_channel_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-layer-channel-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-layer-channel-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-layer-channel-tests PRIVATE bts-export-config Qt6::Core)
@@ -1151,7 +1151,7 @@ target_compile_options(bts-baking-ui-tests PRIVATE -UNDEBUG)
 target_link_libraries(bts-baking-ui-tests PRIVATE Qt6::Widgets Qt6::GuiPrivate)
 add_dependencies(bts-cpu-tests bts-baking-ui-tests)
 
-add_executable(bts-rename-ui-tests ${BTS_HOST_SOURCE_DIR}/../tests/rename_ui_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-rename-ui-tests ${BTS_HOST_SOURCE_DIR}/../tests/rename_ui_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-rename-ui-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-rename-ui-tests PRIVATE cxx_std_20)
 target_compile_options(bts-rename-ui-tests PRIVATE -UNDEBUG)
@@ -1179,7 +1179,7 @@ target_compile_options(bts-painter-workflow-document-ui-tests PRIVATE "$<IF:$<CX
 target_link_libraries(bts-painter-workflow-document-ui-tests PRIVATE bts-export-config Qt6::Widgets)
 add_dependencies(bts-cpu-tests bts-painter-workflow-document-ui-tests)
 
-add_executable(bts-layer-drop-tests ${BTS_HOST_SOURCE_DIR}/../tests/layer_drop_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-layer-drop-tests ${BTS_HOST_SOURCE_DIR}/../tests/layer_drop_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-layer-drop-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-layer-drop-tests PRIVATE cxx_std_20)
 target_compile_options(bts-layer-drop-tests PRIVATE -UNDEBUG)
@@ -1210,7 +1210,7 @@ target_compile_options(bts-numeric-locale-tests PRIVATE -UNDEBUG)
 target_link_libraries(bts-numeric-locale-tests PRIVATE bts-export-config Qt6::Widgets)
 add_dependencies(bts-cpu-tests bts-numeric-locale-tests)
 
-add_executable(bts-height-neutral-tests ${BTS_HOST_SOURCE_DIR}/../tests/height_neutral_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-height-neutral-tests ${BTS_HOST_SOURCE_DIR}/../tests/height_neutral_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-height-neutral-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-height-neutral-tests PRIVATE cxx_std_20)
 target_compile_options(bts-height-neutral-tests PRIVATE -UNDEBUG)
@@ -1307,7 +1307,7 @@ target_include_directories(bts-document-edit-commit-tests PRIVATE ${BTS_HOST_SOU
 target_compile_features(bts-document-edit-commit-tests PRIVATE cxx_std_20)
 add_dependencies(bts-cpu-tests bts-document-edit-commit-tests)
 
-add_executable(bts-native-image-panel-tests ${BTS_HOST_SOURCE_DIR}/../tests/native_material_image_panel_test.cc ${BTS_HOST_SOURCE_DIR}/NativeMaterialImagePanel.cc)
+add_executable(bts-native-image-panel-tests ${BTS_HOST_SOURCE_DIR}/../tests/native_material_image_panel_test.cc ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialImagePanel.cc)
 target_include_directories(bts-native-image-panel-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-native-image-panel-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-native-image-panel-tests PRIVATE Qt6::Widgets)
@@ -1336,7 +1336,7 @@ add_dependencies(bts-cpu-tests bts-texture-set-selection-ui-tests)
 # Descriptor, template and editing admission checks run without native image I/O.
 add_executable(bts-resource-caps-tests
   ${BTS_HOST_SOURCE_DIR}/../tests/resource_caps_test.cc
-  ${BTS_HOST_SOURCE_DIR}/AssetCatalog.cc
+  ${BTS_HOST_SOURCE_DIR}/assets/AssetCatalog.cc
   ${BTS_HOST_SOURCE_DIR}/persistence/ProjectTemplate.cc)
 target_include_directories(bts-resource-caps-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-resource-caps-tests PRIVATE cxx_std_20)
@@ -1345,7 +1345,7 @@ target_link_libraries(bts-resource-caps-tests PRIVATE bts-export-config Qt6::Gui
 add_dependencies(bts-cpu-tests bts-resource-caps-tests)
 
 # Sparse metadata tests use real page-key bounds and never allocate dense textures.
-add_executable(bts-texture-extent-tests ${BTS_HOST_SOURCE_DIR}/../tests/texture_extent_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeMetadata.cc ${BTS_HOST_SOURCE_DIR}/io/SurfacePathIO.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc)
+add_executable(bts-texture-extent-tests ${BTS_HOST_SOURCE_DIR}/../tests/texture_extent_test.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeMetadata.cc ${BTS_HOST_SOURCE_DIR}/io/SurfacePathIO.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc)
 target_include_directories(bts-texture-extent-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-texture-extent-tests PRIVATE cxx_std_20)
 target_compile_options(bts-texture-extent-tests PRIVATE "$<IF:$<CXX_COMPILER_ID:MSVC>,/UNDEBUG,-UNDEBUG>")
@@ -1361,7 +1361,7 @@ target_link_libraries(bts-owner-worker-job-tests PRIVATE Qt6::Widgets bts-export
 add_dependencies(bts-cpu-tests bts-owner-worker-job-tests)
 
 # Ordered raw linear RGB must preserve source values until its explicit matrix.
-add_executable(bts-linear-color-transform-tests ${BTS_HOST_SOURCE_DIR}/../tests/linear_color_transform_test.cc ${BTS_HOST_SOURCE_DIR}/LayerApi.cc ${BTS_HOST_SOURCE_DIR}/SmartMaterial.cc)
+add_executable(bts-linear-color-transform-tests ${BTS_HOST_SOURCE_DIR}/../tests/linear_color_transform_test.cc ${BTS_HOST_SOURCE_DIR}/layers/LayerApi.cc ${BTS_HOST_SOURCE_DIR}/assets/SmartMaterial.cc)
 target_link_libraries(bts-linear-color-transform-tests PRIVATE bts-export-config)
 target_compile_options(bts-linear-color-transform-tests PRIVATE "$<IF:$<CXX_COMPILER_ID:MSVC>,/UNDEBUG,-UNDEBUG>")
 add_dependencies(bts-cpu-tests bts-linear-color-transform-tests)
@@ -1507,14 +1507,14 @@ target_compile_options(bts-mask-effect-path-tests PRIVATE "$<IF:$<CXX_COMPILER_I
 target_link_libraries(bts-mask-effect-path-tests PRIVATE Qt6::Core Qt6::Gui)
 add_dependencies(bts-cpu-tests bts-mask-effect-path-tests)
 
-add_executable(bts-nested-mask-model-tests ${BTS_HOST_SOURCE_DIR}/../tests/nested_mask_model_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-nested-mask-model-tests ${BTS_HOST_SOURCE_DIR}/../tests/nested_mask_model_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-nested-mask-model-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-nested-mask-model-tests PRIVATE cxx_std_20)
 target_compile_options(bts-nested-mask-model-tests PRIVATE "$<IF:$<CXX_COMPILER_ID:MSVC>,/UNDEBUG,-UNDEBUG>")
 target_link_libraries(bts-nested-mask-model-tests PRIVATE bts-export-config)
 add_dependencies(bts-cpu-tests bts-nested-mask-model-tests)
 
-add_executable(bts-folder-mask-target-tests ${BTS_HOST_SOURCE_DIR}/../tests/folder_mask_target_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-folder-mask-target-tests ${BTS_HOST_SOURCE_DIR}/../tests/folder_mask_target_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-folder-mask-target-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-folder-mask-target-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-folder-mask-target-tests PRIVATE Qt6::Core Qt6::Gui bts-export-config)
@@ -1529,7 +1529,7 @@ target_compile_options(bts-generator-surface-tests PRIVATE "$<IF:$<CXX_COMPILER_
 target_link_libraries(bts-generator-surface-tests PRIVATE Qt6::Core Qt6::Gui)
 add_dependencies(bts-cpu-tests bts-generator-surface-tests)
 
-add_executable(bts-smart-mask-model-tests ${BTS_HOST_SOURCE_DIR}/../tests/smart_mask_model_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc ${BTS_HOST_SOURCE_DIR}/AssetCatalog.cc)
+add_executable(bts-smart-mask-model-tests ${BTS_HOST_SOURCE_DIR}/../tests/smart_mask_model_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc ${BTS_HOST_SOURCE_DIR}/assets/AssetCatalog.cc)
 target_include_directories(bts-smart-mask-model-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-smart-mask-model-tests PRIVATE cxx_std_20)
 target_compile_options(bts-smart-mask-model-tests PRIVATE "$<IF:$<CXX_COMPILER_ID:MSVC>,/UNDEBUG,-UNDEBUG>")
@@ -1552,8 +1552,8 @@ endforeach()
 # Portable native import boundaries run in the ordinary CPU suite too. Keep
 # this independent of Blender/host initialization and the document archive.
 add_library(bts-spsm-native-lowering-cpu STATIC
-  ${BTS_HOST_SOURCE_DIR}/SpsmMaterialImport.cc
-  ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc
+  ${BTS_HOST_SOURCE_DIR}/spsm-import/SpsmMaterialImport.cc
+  ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc
   ${BTS_HOST_SOURCE_DIR}/painting/StrokeMetadata.cc
   ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc
   ${BTS_HOST_SOURCE_DIR}/io/SurfacePathIO.cc
@@ -1592,7 +1592,7 @@ target_include_directories(bts-brush-preset-tests PRIVATE ${BTS_HOST_SOURCE_DIR}
 target_compile_features(bts-brush-preset-tests PRIVATE cxx_std_20)
 target_compile_options(bts-brush-preset-tests PRIVATE "$<IF:$<CXX_COMPILER_ID:MSVC>,/UNDEBUG,-UNDEBUG>")
 target_link_libraries(bts-brush-preset-tests PRIVATE Qt6::Core)
-add_executable(bts-brush-preset-catalog-tests ${BTS_HOST_SOURCE_DIR}/../tests/brush_preset_catalog_test.cc ${BTS_HOST_SOURCE_DIR}/AssetCatalog.cc)
+add_executable(bts-brush-preset-catalog-tests ${BTS_HOST_SOURCE_DIR}/../tests/brush_preset_catalog_test.cc ${BTS_HOST_SOURCE_DIR}/assets/AssetCatalog.cc)
 target_include_directories(bts-brush-preset-catalog-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-brush-preset-catalog-tests PRIVATE cxx_std_20)
 target_compile_options(bts-brush-preset-catalog-tests PRIVATE "$<IF:$<CXX_COMPILER_ID:MSVC>,/UNDEBUG,-UNDEBUG>")
@@ -1634,7 +1634,7 @@ add_executable(bts-reference-image-tests
   ${BTS_HOST_SOURCE_DIR}/../tests/reference_image_test.cc
   ${BTS_HOST_SOURCE_DIR}/blender/ColorPicker.cc
   ${BTS_HOST_SOURCE_DIR}/app/Preferences.cc
-  ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+  ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-reference-image-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-reference-image-tests PRIVATE cxx_std_20)
 target_compile_definitions(bts-reference-image-tests PRIVATE BTS_STANDALONE_COLOR_PICKER)
@@ -1694,7 +1694,7 @@ set_source_files_properties(${BTS_HOST_SOURCE_DIR}/../tests/asset_workspace_drop
 add_test(NAME asset-dragdrop-workspace COMMAND bts-host --cpu-asset-dragdrop-test ${CMAKE_BINARY_DIR}/asset-dragdrop-proof)
 set_tests_properties(asset-dragdrop-workspace PROPERTIES ENVIRONMENT "BTS_NO_BACKGROUND_GPU=1;QT_QPA_PLATFORM=offscreen;QT_QPA_OFFSCREEN_NO_GLX=1;XDG_CONFIG_HOME=${CMAKE_BINARY_DIR}/asset-dragdrop-proof/config;XDG_DATA_HOME=${CMAKE_BINARY_DIR}/asset-dragdrop-proof/data;XDG_CACHE_HOME=${CMAKE_BINARY_DIR}/asset-dragdrop-proof/cache")
 
-add_executable(bts-project-save-safety-tests ${BTS_HOST_SOURCE_DIR}/../tests/project_save_safety_test.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeMetadata.cc ${BTS_HOST_SOURCE_DIR}/io/SurfacePathIO.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc)
+add_executable(bts-project-save-safety-tests ${BTS_HOST_SOURCE_DIR}/../tests/project_save_safety_test.cc ${BTS_HOST_SOURCE_DIR}/painting/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeMetadata.cc ${BTS_HOST_SOURCE_DIR}/io/SurfacePathIO.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc)
 add_executable(bts-viewport-draw-guard-tests ${BTS_HOST_SOURCE_DIR}/../tests/viewport_draw_guard_test.cc)
 foreach(target bts-project-save-safety-tests bts-viewport-draw-guard-tests)
   target_include_directories(${target} PRIVATE ${BTS_HOST_SOURCE_DIR})
@@ -1730,7 +1730,7 @@ install(FILES
   ${BTS_HOST_SOURCE_DIR}/../../assets/meshes/CC-BY-4.0.txt
   DESTINATION assets/meshes)
 
-add_executable(bts-theme-tests ${BTS_HOST_SOURCE_DIR}/../tests/theme_test.cc ${BTS_HOST_SOURCE_DIR}/Theme.cc)
+add_executable(bts-theme-tests ${BTS_HOST_SOURCE_DIR}/../tests/theme_test.cc ${BTS_HOST_SOURCE_DIR}/ui/theme/Theme.cc)
 target_include_directories(bts-theme-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-theme-tests PRIVATE cxx_std_20)
 target_compile_options(bts-theme-tests PRIVATE "$<IF:$<CXX_COMPILER_ID:MSVC>,/UNDEBUG,-UNDEBUG>")
@@ -1757,7 +1757,7 @@ target_link_libraries(bts-environment-rotation-gesture-tests PRIVATE Qt6::Gui)
 add_test(NAME bts-environment-rotation-gesture COMMAND bts-environment-rotation-gesture-tests)
 add_dependencies(bts-release-check bts-environment-rotation-gesture-tests)
 
-add_executable(bts-texture-set-residency-tests ${BTS_HOST_SOURCE_DIR}/../tests/texture_set_residency_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-texture-set-residency-tests ${BTS_HOST_SOURCE_DIR}/../tests/texture_set_residency_test.cc ${BTS_HOST_SOURCE_DIR}/document/TextureDocument.cc)
 target_include_directories(bts-texture-set-residency-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-texture-set-residency-tests PRIVATE cxx_std_20)
 target_compile_options(bts-texture-set-residency-tests PRIVATE "$<IF:$<CXX_COMPILER_ID:MSVC>,/UNDEBUG,-UNDEBUG>")

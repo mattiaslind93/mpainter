@@ -36,7 +36,7 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--strict', action='store_true')
 args = parser.parse_args()
 
-source = (pathlib.Path(__file__).resolve().parents[2] / 'native/host/Theme.cc').read_text()
+source = (pathlib.Path(__file__).resolve().parents[2] / 'native/host/ui/theme/Theme.cc').read_text()
 
 # One rule per entry, so a violation can be named by the selector it sits in.
 findings = []

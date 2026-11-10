@@ -4,9 +4,9 @@ How `native/` is organised while the restructure plan's phases 4 and 5 are under
 
 | Folder | What lives there |
 |---|---|
-| `native/host/` | The application, compiled into `bts-host`. Files not yet assigned to a domain stay at the top level. |
-| `native/host/<domain>/` | Domain folders so far: `app/`, `assets/`, `baking/`, `blender/`, `diagnostics/`, `fill/`, `gpu/`, `io/`, `layers/`, `materials/layering/`, `materials/native/`, `materials/openpbr/`, `painting/`, `persistence/`, `platform/`, `python/`, `ui/dialogs/`, `ui/panels/`, `ui/widgets/`, `viewport/`. Still to come from the plan: `document/`, `spsm-import/`, `ui/shell/`, `ui/theme/`, `materials/common/`. |
-| `native/host/blender/` | The only folder allowed to include Blender headers (plan rule 7). Top-level files that include them move here in batches; `mp check`'s `blender-boundary` ratchet counts the files still outside. Files already in a domain folder keep their Blender includes until those are wrapped. |
+| `native/host/` | The application, compiled into `bts-host`. The top level holds only `CMakeLists.txt`, `SourceIncludeDirs.cmake`, `AGENTS.md` and the seven files the sha-pinned live-render tests include by `../host/` path: `main.cc`, `BlenderHost.hh`, `ColorPicker.hh`, `GpuProjectReadback.hh`, `PropertyLatency.hh`, `TextureDocument.hh`, `ViewportDemoCapture.hh`. |
+| `native/host/<domain>/` | Domain folders: `app/`, `assets/`, `baking/`, `blender/`, `diagnostics/`, `document/`, `fill/`, `gpu/`, `io/`, `layers/`, `materials/layering/`, `materials/native/`, `materials/openpbr/`, `painting/`, `persistence/`, `platform/`, `python/`, `spsm-import/`, `ui/dialogs/`, `ui/panels/`, `ui/shell/`, `ui/theme/`, `ui/widgets/`, `viewport/`. Still to come from the plan: `materials/common/`. |
+| `native/host/blender/` | The only folder allowed to include Blender headers (plan rule 7). Every native/host file that includes them is here, except `main.cc` and `GpuProjectReadback.hh` (pinned test includes). A file whose `.cc` includes Blender sits here while its header, which does not, stays in its domain. The files still outside are harness and test code; `mp check`'s `blender-boundary` ratchet counts them. |
 | `native/host/openpbr/` | Vendored OpenPBR resources (Apache-2.0), not our code. |
 | `native/harness/` | Test, demo and proof code (`*Demo`, `*Test`, `*Proof`, `*Fixture`, `*Witness`, ...). Still compiled into `bts-host`, because `main()` calls it. |
 | `native/tests/` | Test programs and their fixtures. |
@@ -39,8 +39,9 @@ quoted bare stem such as `'NativeMaterialImageVariant'`, because some verifiers 
 Before moving a file, check that nothing pins it. Some verifiers in `scripts/host/` and
 `native/tests/` recompile a source by name, hash it, or read its text. Moving such a file
 needs the verifier updated with it, and some sha256 pins are reviewed provenance that only the
-owner can renew. `GuiFixDemo.cc/.hh`, `MeshBaker.cc` and the `Spsm*` files stay at the top
-level of `native/host/` for these reasons.
+owner can renew. Verifiers that need a host file by name resolve it with `host_rel`,
+`host_file` or `host_rel_at` in `scripts/host/main_source.py` instead of writing
+`'native/host/' + name`, so the file can move between domain folders.
 
 Source scanners list these folders with `rglob`, and
 `scripts/tests/test_recursive_source_listing.py` fails on a flat listing of an owned folder.

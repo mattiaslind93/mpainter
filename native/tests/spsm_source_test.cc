@@ -6,7 +6,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QTemporaryDir>
-#include "../host/SpsmSource.hh"
+#include "../host/spsm-import/SpsmSource.hh"
 #include "SpsmAssetDispatch.hh"
 #include "IMB_imbuf.hh"
 #include "CLG_log.h"
