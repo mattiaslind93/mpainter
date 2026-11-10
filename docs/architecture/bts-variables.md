@@ -298,7 +298,7 @@ leaves the release build.
 | `BTS_REBAKE_DEGENERATE` | native/harness | `RebakeProof.hh` |
 | `BTS_REBAKE_REGRESSION` | native/harness | `BakeSourceCpuDemo.cc` |
 | `BTS_REBAKE_WORKSPACE` | native/harness | `BakeFixDemo.cc` |
-| `BTS_RECOVERY_DIR` | native/harness, native/host, native/tests | `BakeMemoryDemo.hh`, `UnloadResidencyTest.hh`, `ColdImBuf.hh`, `DiskPixelPayload.hh` and 9 more |
+| `BTS_RECOVERY_DIR` | native/harness, native/host, native/tests | `BakeMemoryDemo.hh`, `UnloadResidencyTest.hh`, `ColdImBuf.hh`, `MeshMapStorage.hh` and 9 more |
 | `BTS_RELEASE_BORROWED_CONTEXT` | native/host | `BlenderHost.cc` |
 | `BTS_RENAME_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `main.cc` |
 | `BTS_RENDER_MODE_DEMO` | native/harness | `GuiFixDemo.cc` |
