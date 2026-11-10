@@ -20,7 +20,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/../harness/ViewportHeadlessDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/TextureImportCpuDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/TextureImportDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/TextureLoadController.cc
+  ${BTS_HOST_SOURCE_DIR}/io/TextureLoadController.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/ViewportIdleDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/AutomationPlanCpuDemo.cc
   ${BTS_HOST_SOURCE_DIR}/AutomationExportPlan.cc
@@ -113,12 +113,12 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/../harness/TabletPerformanceDemo.cc
   ${BTS_HOST_SOURCE_DIR}/painting/StrokeReproject.cc
   ${BTS_HOST_SOURCE_DIR}/painting/StrokeIO.cc
-  ${BTS_HOST_SOURCE_DIR}/TextureSetReassignment.cc
+  ${BTS_HOST_SOURCE_DIR}/io/TextureSetReassignment.cc
   ${BTS_HOST_SOURCE_DIR}/persistence/ProjectTemplate.cc
   ${BTS_HOST_SOURCE_DIR}/persistence/ProjectConfiguration.cc
   ${BTS_HOST_SOURCE_DIR}/ui/panels/UnitsPanel.cc
   ${BTS_HOST_SOURCE_DIR}/PhysicalScaleSource.cc
-  ${BTS_HOST_SOURCE_DIR}/UsdScene.cc
+  ${BTS_HOST_SOURCE_DIR}/io/UsdScene.cc
   ${BTS_HOST_SOURCE_DIR}/ui/panels/UsdScenePanel.cc
   ${BTS_HOST_SOURCE_DIR}/BlendAssetLibrary.cc
   ${BTS_HOST_SOURCE_DIR}/BlendAssetBrowser.cc
@@ -520,14 +520,14 @@ target_compile_features(bts-scene-formats-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-scene-formats-tests PRIVATE Qt6::Gui assimp::assimp)
 add_test(NAME bts-scene-formats COMMAND bts-scene-formats-tests)
 
-add_executable(bts-usd-scene-tests ${BTS_HOST_SOURCE_DIR}/../tests/usd_scene_test.cc ${BTS_HOST_SOURCE_DIR}/UsdScene.cc)
+add_executable(bts-usd-scene-tests ${BTS_HOST_SOURCE_DIR}/../tests/usd_scene_test.cc ${BTS_HOST_SOURCE_DIR}/io/UsdScene.cc)
 target_include_directories(bts-usd-scene-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-usd-scene-tests PRIVATE cxx_std_20)
 target_compile_definitions(bts-usd-scene-tests PRIVATE QT_NO_KEYWORDS BTS_USD_TEST_ROOT="${CMAKE_BINARY_DIR}/../.." BTS_USD_FIXTURE="${BTS_HOST_SOURCE_DIR}/../tests/fixtures/usd_scene_contract.usda")
 target_link_libraries(bts-usd-scene-tests PRIVATE Qt6::Core bf::dependencies::optional::usd bf::dependencies::optional::tbb bf::dependencies::optional::python)
 setup_platform_linker_libs(bts-usd-scene-tests)
 
-add_executable(bts-physical-scale-tests ${BTS_HOST_SOURCE_DIR}/../tests/physical_scale_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc ${BTS_HOST_SOURCE_DIR}/PhysicalScaleSource.cc ${BTS_HOST_SOURCE_DIR}/PhysicalScale.cc ${BTS_HOST_SOURCE_DIR}/UsdScene.cc)
+add_executable(bts-physical-scale-tests ${BTS_HOST_SOURCE_DIR}/../tests/physical_scale_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc ${BTS_HOST_SOURCE_DIR}/PhysicalScaleSource.cc ${BTS_HOST_SOURCE_DIR}/PhysicalScale.cc ${BTS_HOST_SOURCE_DIR}/io/UsdScene.cc)
 target_include_directories(bts-physical-scale-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-physical-scale-tests PRIVATE cxx_std_20)
 target_compile_definitions(bts-physical-scale-tests PRIVATE QT_NO_KEYWORDS BTS_PHYSICAL_USD_FIXTURE="${BTS_HOST_SOURCE_DIR}/../tests/fixtures/usd_scene_contract.usda" BTS_PHYSICAL_TEST_ROOT="${CMAKE_BINARY_DIR}")
