@@ -475,7 +475,11 @@ def check_test_cmake_paths(root, files):
 HARNESS_OPTIONS = "native/harness/HarnessOptions.hh"
 MAIN_CC = "native/host/main.cc"
 # main.cc includes main()'s session code textually (scripts/host/main_source.py has the same list).
-MAIN_SESSION_FILES = ("native/host/app/WorkspaceSession.inc",)
+MAIN_SESSION_FILES = tuple(f"native/host/app/{n}.inc" for n in (
+    "WorkspaceSession", "WorkspaceState", "WorkspaceViewport", "WorkspaceStrokes", "WorkspaceResources",
+    "WorkspaceCallbacks", "WorkspacePaths", "WorkspaceProject", "WorkspaceMenus", "WorkspaceAutomation",
+    "WorkspaceWindow")) + tuple(f"native/harness/{n}.inc" for n in (
+    "SessionDemoFlags", "SessionDemoSequence", "SessionCaptureDemos", "SessionDemoActions"))
 
 
 def check_harness_seam(root, files):

@@ -8,23 +8,23 @@ The restructure plan (phase 4) moves this register to `native/harness/` once the
 leaves the release build.
 
 - Variables: 372
-- Read only outside `native/host` (harness and tests): 217
+- Read only outside `native/host` (harness and tests): 274
 
 | Variable | Read in | Files |
 |---|---|---|
 | `BTS_AA_IMAGE` | native/harness | `AaPerformanceDemo.hh` |
-| `BTS_AA_PERFORMANCE` | native/harness, native/host | `GuiFixDemo.cc`, `ProfileApplication.hh`, `WorkspaceSession.inc` |
+| `BTS_AA_PERFORMANCE` | native/harness, native/host | `GuiFixDemo.cc`, `SessionDemoActions.inc`, `ProfileApplication.hh` |
 | `BTS_AA_PROJECT` | native/harness | `AaPerformanceDemo.hh` |
 | `BTS_AB_DETAIL` | native/harness | `AbDisplacementDemo.hh` |
 | `BTS_AB_DETAIL_FIXTURES` | native/harness | `TextureImportCpuDemo.cc` |
-| `BTS_AB_DISPLACEMENT` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_AB_DISPLACEMENT` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_AB_RESOLUTION_SECONDS` | native/harness | `AaPerformanceDemo.hh` |
 | `BTS_AB_SOURCE_COPY` | native/harness | `TextureImportCpuDemo.cc` |
-| `BTS_AD_STROKE_BENCH` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_AD_STROKE_BENCH` | native/harness, native/host | `GuiFixDemo.cc`, `SessionDemoActions.inc`, `WorkspaceStrokes.inc` |
 | `BTS_AD_STROKE_LIMIT` | native/harness | `AdStrokeBench.hh` |
 | `BTS_AE_PAINT` | native/harness | `AePersistenceDemo.cc` |
-| `BTS_AE_PERSISTENCE_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
-| `BTS_AE_PROJECT` | native/harness, native/host | `AePersistenceDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_AE_PERSISTENCE_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceProject.inc` |
+| `BTS_AE_PROJECT` | native/harness, native/host | `AePersistenceDemo.cc`, `WorkspaceProject.inc` |
 | `BTS_AE_RESOLUTION` | native/harness | `AePersistenceDemo.cc` |
 | `BTS_ALEMBIC_DEMO` | native/harness | `GuiFixDemo.cc` |
 | `BTS_AUTOMATION_DEMO` | native/harness, native/host | `AutomationDemo.cc`, `PythonConsole.cc` |
@@ -41,17 +41,17 @@ leaves the release build.
 | `BTS_AW_VECTOR_EXPECTED` | native/harness | `NativeVectorMappingDemo.hh` |
 | `BTS_AW_VECTOR_SOURCE` | native/harness | `NativeVectorMappingDemo.hh` |
 | `BTS_AW_VECTOR_UI` | native/harness, native/host | `GuiFixDemo.cc`, `NativeVectorMappingState.inc` |
-| `BTS_BAKED_MAPS_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_BAKED_MAPS_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_BAKE_CACHE_TEST` | native/harness | `GpuBakeRayDemo.hh` |
-| `BTS_BAKE_FIX_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_BAKE_FIX_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_BAKE_JOB_GPU_TEST` | native/harness | `GpuBakeRayDemo.hh` |
 | `BTS_BAKE_MEMORY_STRESS` | native/harness | `ViewportHeadlessDemo.cc` |
-| `BTS_BAKE_MULTISET_HISTORY_DEMO` | native/harness, native/host | `SkewDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_BAKE_MULTISET_HISTORY_DEMO` | native/harness | `SessionDemoActions.inc`, `SkewDemo.cc` |
 | `BTS_BAKE_SETTINGS_HISTORY_DEMO` | native/harness | `SkewDemo.cc` |
 | `BTS_BAKE_SOURCE_DEMO` | native/harness | `GuiFixDemo.cc` |
 | `BTS_BAKE_TEST_RESOLUTION` | native/harness | `BakeMemoryDemo.hh` |
 | `BTS_BAKING_LAYOUT_BEFORE` | native/harness | `BakingLayoutDemo.hh` |
-| `BTS_BAKING_LAYOUT_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_BAKING_LAYOUT_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_BATCH_CHANNEL_DEMO` | native/harness, native/host | `ChannelConfigurationDemo.cc`, `PythonConsole.cc` |
 | `BTS_BATCH_CHANNEL_MESH` | native/harness | `ChannelConfigurationDemo.cc` |
 | `BTS_BA_CONTROLLED_PROFILE` | native/tests | `cycles_live_default_observed_artist_test.cc`, `cycles_live_udim_artist_test.cc` |
@@ -64,49 +64,49 @@ leaves the release build.
 | `BTS_BJ_PROJECTION_UI` | native/harness, native/host | `GuiFixDemo.cc`, `HarnessDispatch.hh`, `NativeMaterialProjectionProofActions.inc`, `MaterialInspection.cc` and 2 more |
 | `BTS_BK_BITMAP` | native/harness | `FolderMaskDemo.hh` |
 | `BTS_BK_COLD` | native/harness | `FolderMaskDemo.hh` |
-| `BTS_BK_FOLDER_MASK` | native/harness, native/host | `FolderMaskProofActions.inc`, `GuiFixDemo.cc`, `MaterialInspection.cc`, `NativeCyclesImages.cc` and 1 more |
+| `BTS_BK_FOLDER_MASK` | native/harness, native/host | `FolderMaskProofActions.inc`, `GuiFixDemo.cc`, `SessionDemoActions.inc`, `MaterialInspection.cc` and 2 more |
 | `BTS_BK_PROJECT_DIR` | native/harness | `FolderMaskDemo.hh`, `FolderMaskProofActions.inc` |
 | `BTS_BLEND_ASSET_BROWSER_DEMO` | native/harness | `GuiFixDemo.cc` |
 | `BTS_BLEND_ASSET_ROOT` | native/harness | `BlendAssetLibraryDemo.hh` |
-| `BTS_BLEND_IMAGES_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
-| `BTS_BLEND_IMPORT_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_BLEND_IMAGES_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
+| `BTS_BLEND_IMPORT_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_BLEND_LIBRARY_CACHE` | native/host | `BlendLibraryIndex.hh` |
-| `BTS_BLEND_MATERIAL_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_BLEND_MATERIAL_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_BLEND_MATERIAL_SOURCE` | native/harness, native/tests | `BlendImagesDemo.hh`, `BlendMaterialDemo.hh`, `native_height_policy_artist_test.cc`, `native_material_artist_edit_test.cc` and 1 more |
 | `BTS_BL_BAKE_SAMPLES_TEST` | native/harness | `GpuBakeRayDemo.hh` |
 | `BTS_BM_ADJUSTMENT_COLD` | native/harness | `ViewportHeadlessDemo.cc` |
-| `BTS_BM_ADJUSTMENT_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `GpuLayerPreview.cc`, `MaterialInspection.cc`, `NativeAdjustmentState.inc` and 3 more |
+| `BTS_BM_ADJUSTMENT_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `GpuLayerPreview.cc`, `MaterialInspection.cc`, `NativeAdjustmentState.inc` and 5 more |
 | `BTS_BM_ADJUSTMENT_EXPECTED` | native/harness | `AdjustmentPaintColdProof.hh` |
 | `BTS_BM_GPU_ADJUSTMENT_TEST` | native/harness, native/host | `ViewportHeadlessDemo.cc`, `GpuLayerPreview.cc` |
 | `BTS_BN_PRECISION_DIAG` | native/harness | `GpuSmartMaskTests.inc` |
-| `BTS_BN_SMART_MASK` | native/harness, native/host | `GuiFixDemo.cc`, `SmartMaskProofActions.inc`, `WorkspaceSession.inc` |
+| `BTS_BN_SMART_MASK` | native/harness, native/host | `GuiFixDemo.cc`, `SessionDemoActions.inc`, `SmartMaskProofActions.inc`, `WorkspaceCallbacks.inc` |
 | `BTS_BN_SPMSK_PHASE` | native/harness | `SpmskShelfWorkflowDemo.hh` |
 | `BTS_BN_SPMSK_PROJECT` | native/harness | `SpmskShelfProofActions.inc` |
-| `BTS_BN_SPMSK_UI` | native/harness, native/host | `GuiFixDemo.cc`, `SpmskShelfProofActions.inc`, `AssetThumbnail.cc`, `WorkspaceSession.inc` |
+| `BTS_BN_SPMSK_UI` | native/harness, native/host | `GuiFixDemo.cc`, `SessionDemoActions.inc`, `SpmskShelfProofActions.inc`, `AssetThumbnail.cc` |
 | `BTS_BO_PRESET_DEMO` | native/host | `BrushPresetThumbnailJobs.cc` |
 | `BTS_BO_PRESET_PHASE` | native/harness | `BrushPresetDemo.hh` |
 | `BTS_BO_PRESET_WARM` | native/harness | `BrushPresetDemo.hh` |
 | `BTS_BRANDING_CAPTURE` | native/host | `Branding.cc` |
 | `BTS_BRANDING_QUIT` | native/host | `Branding.cc` |
-| `BTS_CHECKBOX_DEMO` | native/harness, native/host | `CheckboxWitness.inc`, `GuiFixDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_CHECKBOX_DEMO` | native/harness | `CheckboxWitness.inc`, `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_CHECKBOX_SCREENSHOT` | native/tests | `theme_test.cc` |
 | `BTS_CLIPPING_BASELINE` | native/harness | `ClippingDemo.cc` |
-| `BTS_CLIPPING_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_CLIPPING_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_CLIPPING_RESTART` | native/harness | `ClippingDemo.cc` |
-| `BTS_COLOR_PICKER_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_COLOR_PICKER_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_COLOR_PROOF_BINDING` | native/tests | `spsm_bitmap_color_native_test.cc` |
-| `BTS_COLOR_SPACE_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_COLOR_SPACE_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_COMPOSITE_SAMPLED` | native/harness, native/host | `ExportCpuDemo.cc`, `NativeCompositeJob.cc` |
 | `BTS_COMPOSITE_SERIAL` | native/harness, native/host | `ExportCpuDemo.cc`, `NativeCompositeJob.cc` |
-| `BTS_CONTENT_ANCHORS` | native/host | `WorkspaceSession.inc`, `ContentAnchorCapture.inc` |
-| `BTS_CONTENT_GENERATORS` | native/host | `WorkspaceSession.inc` |
+| `BTS_CONTENT_ANCHORS` | native/harness, native/host | `SessionDemoFlags.inc`, `SessionDemoSequence.inc`, `ContentAnchorCapture.inc` |
+| `BTS_CONTENT_GENERATORS` | native/harness | `SessionDemoFlags.inc`, `SessionDemoSequence.inc` |
 | `BTS_CYCLES_DEVICE` | native/host | `BlenderHost.cc` |
 | `BTS_CYCLES_PREVIEW_PROBE` | native/harness, native/host | `GuiFixDemo.cc`, `BlenderHost.cc` |
 | `BTS_DERIVED_EXPORT_DEMO` | native/harness | `GuiFixDemo.cc` |
 | `BTS_DERIVED_VERIFY_INPUT` | native/harness | `ExportCpuDemo.cc` |
-| `BTS_DISPLACEMENT_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_DISPLACEMENT_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_DISPLAY_COLOR_DEMO` | native/harness | `DisplayPostDemo.cc` |
-| `BTS_DISPLAY_LENS_DEMO` | native/harness, native/host | `DisplayPostDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_DISPLAY_LENS_DEMO` | native/harness | `DisplayPostDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_DISPLAY_OPTICS_DEMO` | native/harness | `DisplayPostDemo.cc` |
 | `BTS_DISPLAY_POST_DEBUG` | native/host | `BlenderHost.cc` |
 | `BTS_DISPLAY_POST_DEMO` | native/harness | `GuiFixDemo.cc` |
@@ -117,13 +117,13 @@ leaves the release build.
 | `BTS_EXPORT_DEPTH_DEMO` | native/harness | `DerivedExportDemo.cc` |
 | `BTS_EXPORT_REFERENCE` | native/host | `TextureExport.cc` |
 | `BTS_EXTENSION_DEMO` | native/harness | `AutomationDemo.cc` |
-| `BTS_FILLED_PATH_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
-| `BTS_FILL_ANCHORS` | native/harness, native/host | `ContentAnchorDemo.inc`, `WorkspaceSession.inc`, `FillAnchorCapture.inc` |
-| `BTS_FILL_CHANNELS_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
-| `BTS_FILL_CHANNELS_LEGACY` | native/harness, native/host | `FillChannelsDemo.cc`, `WorkspaceSession.inc` |
-| `BTS_FILL_SYMMETRY_DEMO` | native/harness, native/host | `FillSymmetryDemo.cc`, `WorkspaceSession.inc`, `PythonConsole.cc` |
-| `BTS_FILL_TEXTURE_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
-| `BTS_FLATTEN_DEMO` | native/harness, native/host | `FlattenProofActions.inc`, `GuiFixDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_FILLED_PATH_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
+| `BTS_FILL_ANCHORS` | native/harness, native/host | `ContentAnchorDemo.inc`, `SessionDemoFlags.inc`, `FillAnchorCapture.inc` |
+| `BTS_FILL_CHANNELS_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
+| `BTS_FILL_CHANNELS_LEGACY` | native/harness | `FillChannelsDemo.cc`, `SessionDemoActions.inc` |
+| `BTS_FILL_SYMMETRY_DEMO` | native/harness, native/host | `FillSymmetryDemo.cc`, `WorkspaceAutomation.inc`, `PythonConsole.cc` |
+| `BTS_FILL_TEXTURE_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
+| `BTS_FLATTEN_DEMO` | native/harness | `FlattenProofActions.inc`, `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_FLATTEN_LARGE` | native/harness | `FlattenDemo.cc`, `FlattenProofActions.inc` |
 | `BTS_FLATTEN_LEGACY_NORMAL` | native/harness | `FlattenDemo.cc`, `FlattenProofActions.inc` |
 | `BTS_FLATTEN_RECT` | native/harness | `FlattenDemo.cc` |
@@ -131,15 +131,15 @@ leaves the release build.
 | `BTS_FLATTEN_UDIM` | native/harness | `FlattenDemo.cc` |
 | `BTS_FLATTEN_VERIFY_OUTPUT` | native/harness, native/host | `SpsmDemo.hh`, `FlattenExport.cc` |
 | `BTS_FULL_RES_BAKE_TEST` | native/harness | `GpuBakeRayDemo.hh` |
-| `BTS_GENERATOR_ANCHORS` | native/harness, native/host | `ContentAnchorDemo.inc`, `WorkspaceSession.inc`, `GeneratorAnchorCapture.inc` |
+| `BTS_GENERATOR_ANCHORS` | native/harness, native/host | `ContentAnchorDemo.inc`, `SessionDemoFlags.inc`, `GeneratorAnchorCapture.inc` |
 | `BTS_GENERATOR_IMPORT_TEST` | native/harness | `TextureImportCpuDemo.cc` |
 | `BTS_GL_DEBUG` | native/host | `BlenderHost.cc` |
 | `BTS_GPU_AUTHORING_PROGRAM_TEST` | native/host | `GpuLayerPreview.cc` |
 | `BTS_GPU_AUTHORING_PROGRAM_TEST_OUTPUT` | native/harness | `GpuAuthoringWorkerTest.hh` |
 | `BTS_GPU_BAKE_BVH_TEST` | native/harness | `ViewportHeadlessDemo.cc` |
-| `BTS_GPU_BRUSH_AUTHORING` | native/host | `WorkspaceSession.inc` |
+| `BTS_GPU_BRUSH_AUTHORING` | native/host | `WorkspaceViewport.inc` |
 | `BTS_GPU_DENSE_ORACLE` | native/harness, native/host | `WarpDemo.cc`, `WarpGeometryDemo.cc`, `MaterialInspection.cc` |
-| `BTS_GPU_EARLY_PROJECT_TEST_MESH` | native/host, native/tests | `WorkspaceSession.inc`, `MainViewport.inc`, `GpuProgramWarmupDiagnostic.hh` |
+| `BTS_GPU_EARLY_PROJECT_TEST_MESH` | native/host, native/tests | `WorkspaceMenus.inc`, `MainViewport.inc`, `GpuProgramWarmupDiagnostic.hh` |
 | `BTS_GPU_FILL_COVERAGE_TEST` | native/host | `GpuLayerPreview.cc` |
 | `BTS_GPU_FILL_DETAILS` | native/host | `MaterialInspection.cc` |
 | `BTS_GPU_NEIGHBORHOOD_FILTER_TEST` | native/harness | `ViewportHeadlessDemo.cc` |
@@ -149,32 +149,32 @@ leaves the release build.
 | `BTS_GPU_PHASE1_ROLE` | native/tests | `GpuBakePhaseOneTest.hh` |
 | `BTS_GPU_PHASE1_SIZE` | native/tests | `GpuBakePhaseOneTest.hh` |
 | `BTS_GPU_PHASE1_TEST` | native/harness | `GpuBakeRayDemo.hh` |
-| `BTS_GPU_PROGRAM_WARMUP_TEST_OUTPUT` | native/host | `WorkspaceSession.inc` |
+| `BTS_GPU_PROGRAM_WARMUP_TEST_OUTPUT` | native/harness | `SessionDemoFlags.inc` |
 | `BTS_GPU_STACK_DISABLE` | native/host | `GpuLayerPreview.cc` |
 | `BTS_GPU_STORAGE_STAGING` | native/host | `BlenderHost.cc` |
 | `BTS_GPU_UNIFORM_DEMO` | native/harness | `PerformanceDemo.cc` |
 | `BTS_GPU_WARP_TIMING` | native/host | `GpuLayerPreview.cc` |
 | `BTS_GUI_PERFORMANCE` | native/harness | `GuiFixDemo.cc` |
-| `BTS_HARD_UNWRAP_DEMO` | native/harness, native/host | `HardSurfaceDemo.cc`, `WorkspaceSession.inc`, `PythonConsole.cc` |
+| `BTS_HARD_UNWRAP_DEMO` | native/harness, native/host | `HardSurfaceDemo.cc`, `WorkspaceAutomation.inc`, `PythonConsole.cc` |
 | `BTS_HEADLESS_WORKSPACE` | native/harness, native/host, native/tests | `PainterWorkflowDemo.hh`, `WorkspaceSession.inc`, `MainViewport.inc`, `GpuProgramWarmupDiagnostic.hh` |
 | `BTS_HEIGHT_8K_IMPORT_TEST` | native/harness | `TextureImportCpuDemo.cc` |
-| `BTS_HEIGHT_NEUTRAL_DEMO` | native/harness, native/host, native/tests | `GuiFixDemo.cc`, `WorkspaceSession.inc`, `native_height_policy_artist_test.cc` |
-| `BTS_HOSTED_SHADER_WORKERS` | native/host, native/tests | `BlenderHost.cc`, `GpuLayerPreview.cc`, `WorkspaceSession.inc`, `MainViewport.inc` and 5 more |
+| `BTS_HEIGHT_NEUTRAL_DEMO` | native/harness, native/tests | `GuiFixDemo.cc`, `SessionDemoActions.inc`, `native_height_policy_artist_test.cc` |
+| `BTS_HOSTED_SHADER_WORKERS` | native/host, native/tests | `BlenderHost.cc`, `GpuLayerPreview.cc`, `WorkspaceState.inc`, `MainViewport.inc` and 5 more |
 | `BTS_IDLE_DEMO_DIR` | native/harness, native/host | `ViewportIdleDemo.cc`, `PythonConsole.cc` |
-| `BTS_IMAGE_SEQUENCE_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
-| `BTS_INSPECTION_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_IMAGE_SEQUENCE_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
+| `BTS_INSPECTION_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_JPEG_EXPORT_DEMO` | native/harness | `DerivedExportDemo.cc` |
 | `BTS_LARGE_MESH_TEST` | native/harness | `LargeMeshBudgetDemo.hh`, `ViewportHeadlessDemo.cc` |
 | `BTS_LAYER_API_DEMO` | native/harness, native/host | `LayerApiDemo.cc`, `PythonConsole.cc` |
 | `BTS_LAYER_API_MESH` | native/harness | `LayerApiDemo.cc` |
-| `BTS_LAYER_CHANNEL_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
-| `BTS_LAYER_DROP_DEMO` | native/harness, native/host, native/tests | `GuiFixDemo.cc`, `WorkspaceSession.inc`, `cycles_live_displacement_artist_test.cc` |
-| `BTS_LAYER_EDIT_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
-| `BTS_LEGACY_DISPLACEMENT_PROJECT` | native/host | `WorkspaceSession.inc` |
-| `BTS_LEGACY_LIGHTING_PROJECT` | native/host | `WorkspaceSession.inc` |
-| `BTS_LEVELS_EDITOR_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
-| `BTS_LIGHTING_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
-| `BTS_MASK_FILL_GPU_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_LAYER_CHANNEL_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
+| `BTS_LAYER_DROP_DEMO` | native/harness, native/tests | `GuiFixDemo.cc`, `SessionDemoActions.inc`, `cycles_live_displacement_artist_test.cc` |
+| `BTS_LAYER_EDIT_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
+| `BTS_LEGACY_DISPLACEMENT_PROJECT` | native/harness | `SessionDemoActions.inc` |
+| `BTS_LEGACY_LIGHTING_PROJECT` | native/harness | `SessionDemoActions.inc` |
+| `BTS_LEVELS_EDITOR_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
+| `BTS_LIGHTING_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
+| `BTS_MASK_FILL_GPU_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_MASK_FILL_IMAGE` | native/harness | `GuiFixDemo.cc` |
 | `BTS_MASK_FILL_UI_TEST` | native/host | `WorkspaceShell.cc` |
 | `BTS_MASK_PRESET_LARGE_TEST` | native/tests | `mask_preset_test.cc` |
@@ -190,7 +190,7 @@ leaves the release build.
 | `BTS_MESH_EXPORT_DEMO` | native/harness | `GuiFixDemo.cc` |
 | `BTS_MESH_EXPORT_DISPLACED` | native/harness | `MeshExportDemo.cc` |
 | `BTS_MESH_EXPORT_USD` | native/harness | `MeshExportDemo.cc` |
-| `BTS_MESH_GENERATORS` | native/host | `WorkspaceSession.inc` |
+| `BTS_MESH_GENERATORS` | native/harness | `SessionDemoFlags.inc`, `SessionDemoSequence.inc` |
 | `BTS_NATIVE_BUMP_CPU_ONLY` | native/tests | `native_bump_capabilities_test.cc` |
 | `BTS_NATIVE_CAPTURE_BASELINE` | native/harness | `NativeMaterialCaptureDemo.hh` |
 | `BTS_NATIVE_CAPTURE_TEST` | native/harness | `NativeMaterialHostQueueDemo.cc` |
@@ -216,11 +216,11 @@ leaves the release build.
 | `BTS_NATIVE_IMAGE_PROJECT` | native/tests | `native_material_image_ui_artist_test.cc` |
 | `BTS_NATIVE_IMAGE_REOPEN` | native/tests | `native_material_image_ui_artist_test.cc` |
 | `BTS_NATIVE_IMAGE_REPLACEMENT` | native/tests | `native_material_image_ui_artist_test.cc` |
-| `BTS_NATIVE_IMAGE_UI_DEMO` | native/host | `WorkspaceSession.inc` |
+| `BTS_NATIVE_IMAGE_UI_DEMO` | native/harness, native/host | `SessionDemoActions.inc`, `WorkspaceViewport.inc` |
 | `BTS_NATIVE_MAPPING_DESCRIPTOR` | native/tests | `native_material_mapping_artist_test.cc` |
 | `BTS_NATIVE_MAPPING_PROJECT` | native/tests | `native_material_mapping_artist_test.cc` |
 | `BTS_NATIVE_MAPPING_REOPEN` | native/tests | `native_material_mapping_artist_test.cc` |
-| `BTS_NATIVE_MAPPING_UPSTREAM` | native/host, native/tests | `WorkspaceSession.inc`, `native_material_mapping_artist_test.cc` |
+| `BTS_NATIVE_MAPPING_UPSTREAM` | native/harness, native/tests | `SessionDemoActions.inc`, `native_material_mapping_artist_test.cc` |
 | `BTS_NATIVE_MATERIAL_ACTIVATION_TEST` | native/harness | `NativeMaterialHostQueueDemo.cc` |
 | `BTS_NATIVE_MATERIAL_ARCHIVE_TEST` | native/host | `NativeMaterialGpuPrototype.cc` |
 | `BTS_NATIVE_MATERIAL_CACHE_LEGACY` | native/host | `NativeMaterialGpuCompiler.cc` |
@@ -246,7 +246,7 @@ leaves the release build.
 | `BTS_OPENPBR_DEFERRED_LEGACY` | native/harness | `OpenPbrImagesDemo.hh` |
 | `BTS_OPENPBR_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `BlenderHost.cc` |
 | `BTS_OPENPBR_EXPORT_DEMO` | native/harness | `GuiFixDemo.cc` |
-| `BTS_OPENPBR_IMAGES_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_OPENPBR_IMAGES_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_OPENPBR_IMPORT_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `BlenderHost.cc` |
 | `BTS_ORDERED_ORACLE_SHA` | native/tests | `ordered_raw_rgb_gpu_test.cc` |
 | `BTS_ORDERED_PRODUCTION_SHA` | native/tests | `ordered_raw_rgb_gpu_test.cc` |
@@ -255,7 +255,7 @@ leaves the release build.
 | `BTS_OVERLAY_PROFILE` | native/harness, native/host | `GuiFixDemo.cc`, `BlenderHost.cc`, `SceneTriangleOverlay.cc`, `MainViewport.inc` |
 | `BTS_OVERLAY_SELF_TEST_DIR` | native/host | `UvGpuOverlay.cc` |
 | `BTS_OVERLAY_TRIANGLE_PROFILE` | native/harness | `OverlayPerformanceDemo.hh` |
-| `BTS_PAINTER_WORKFLOW_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_PAINTER_WORKFLOW_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_PD149_BUMP_SOURCE` | native/tests | `material_layering_ui_artist_test.cc` |
 | `BTS_PD149_COLOR_PACKAGE_IMPORT` | native/tests | `MaterialLayerColorUdimImportArtist.inc` |
 | `BTS_PD149_COLOR_UDIM_COLD` | native/tests | `MaterialLayerColorUdimArtist.inc` |
@@ -285,62 +285,62 @@ leaves the release build.
 | `BTS_PD149_SURFACE_TEST` | native/host, native/tests | `MaterialLayerReferenceLease.hh`, `material_layering_ui_artist_test.cc` |
 | `BTS_PD149_UV_SCALAR_TRACE` | native/host | `UvPreview.cc` |
 | `BTS_PERFORMANCE_PROFILE` | native/harness, native/host | `GuiFixDemo.cc`, `Performance.hh` |
-| `BTS_PLANAR_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
-| `BTS_POLYGON_BUCKET_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_PLANAR_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
+| `BTS_POLYGON_BUCKET_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_POLYHAVEN_ASSET_DIR` | native/host | `BuiltinPolyHaven.cc` |
 | `BTS_POLYHAVEN_DEMO` | native/harness | `GuiFixDemo.cc`, `HarnessDispatch.hh`, `NativeMaterialProjectionProofActions.inc` |
 | `BTS_POLYHAVEN_DETAIL` | native/harness | `PolyHavenDemo.hh` |
 | `BTS_POLYHAVEN_MATERIAL` | native/host | `PolyHavenPreparation.hh` |
 | `BTS_PRECOMPOSE_WORKSPACE_DEMO` | native/harness | `GuiFixDemo.cc` |
 | `BTS_PRIVATE_XVFB_PID` | native/harness, native/host | `PainterWorkflowDemo.hh`, `Res8kDemo.hh`, `UserSessionGuard.hh` |
-| `BTS_PROPERTY_PERFORMANCE` | native/harness, native/host | `GuiFixDemo.cc`, `PropertyLatency.hh`, `WorkspaceSession.inc` |
+| `BTS_PROPERTY_PERFORMANCE` | native/harness, native/host | `GuiFixDemo.cc`, `SessionDemoActions.inc`, `PropertyLatency.hh` |
 | `BTS_RAW_HEIGHT_CPU_ONLY` | native/tests | `native_raw_height_test.cc` |
 | `BTS_REBAKE_DEGENERATE` | native/harness | `RebakeProof.hh` |
 | `BTS_REBAKE_REGRESSION` | native/harness | `BakeSourceCpuDemo.cc` |
 | `BTS_REBAKE_WORKSPACE` | native/harness | `BakeFixDemo.cc` |
-| `BTS_RECOVERY_DIR` | native/harness, native/host, native/tests | `BakeMemoryDemo.hh`, `UnloadResidencyTest.hh`, `WorkspaceSession.inc`, `MeshMapStorage.hh` and 9 more |
+| `BTS_RECOVERY_DIR` | native/harness, native/host, native/tests | `BakeMemoryDemo.hh`, `UnloadResidencyTest.hh`, `WorkspaceProject.inc`, `MeshMapStorage.hh` and 9 more |
 | `BTS_RELEASE_BORROWED_CONTEXT` | native/host | `BlenderHost.cc` |
-| `BTS_RENAME_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_RENAME_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_RENDER_MODE_DEMO` | native/harness | `GuiFixDemo.cc` |
 | `BTS_RENDER_WORKSPACE_DEMO` | native/harness | `GuiFixDemo.cc`, `RenderModeDemo.cc` |
 | `BTS_REQUESTED_FEATURES_PROOF` | native/harness | `ExportCpuDemo.cc` |
 | `BTS_RES8K_DEMO` | native/harness | `GuiFixDemo.cc`, `Res8kWitness.inc` |
-| `BTS_RESIDENCY_DEMO` | native/harness, native/host | `ResidencyDemo.cc`, `WorkspaceSession.inc`, `PythonConsole.cc` |
+| `BTS_RESIDENCY_DEMO` | native/harness, native/host | `ResidencyDemo.cc`, `WorkspaceAutomation.inc`, `PythonConsole.cc` |
 | `BTS_RESIDENCY_OPEN_ONLY` | native/harness | `ResidencyDemo.cc` |
 | `BTS_RESIDENCY_RESTART` | native/harness | `ResidencyDemo.cc` |
 | `BTS_RESOLUTION_LOG` | native/host | `GpuLayerPreview.cc`, `ViewportResidency.cc` |
 | `BTS_RESOURCE_CACHE` | native/harness, native/host, native/tests | `BlendAssetLibraryDemo.hh`, `BlendImagesDemo.hh`, `NativeMaterialHostQueueDemo.cc`, `NativeMaterialImageResourceTest.inc` and 11 more |
-| `BTS_RESOURCE_MONITOR_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
-| `BTS_RIBBON_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
-| `BTS_ROOT` | native/harness, native/host, native/tests | `NativeMaterialHostQueueDemo.cc`, `NativeMaterialThumbnailTest.hh`, `TextureImportCpuDemo.cc`, `WorkspaceSession.inc` and 3 more |
+| `BTS_RESOURCE_MONITOR_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
+| `BTS_RIBBON_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
+| `BTS_ROOT` | native/harness, native/tests | `NativeMaterialHostQueueDemo.cc`, `NativeMaterialThumbnailTest.hh`, `SessionDemoActions.inc`, `TextureImportCpuDemo.cc` and 3 more |
 | `BTS_SCROLL_DEMO` | native/harness | `GuiFixDemo.cc` |
 | `BTS_SESSION_PROFILE` | native/host | `Performance.hh` |
-| `BTS_SHADERBALL_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `HarnessDispatch.hh`, `WorkspaceSession.inc` |
-| `BTS_SHADER_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_SHADERBALL_DEMO` | native/harness | `GuiFixDemo.cc`, `HarnessDispatch.hh`, `SessionDemoActions.inc` |
+| `BTS_SHADER_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_SHELF_NAV_TEST` | native/host | `WorkspaceShell.cc` |
-| `BTS_SIGNED_DISPLACEMENT_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
-| `BTS_SKEW_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `HarnessDispatch.hh`, `WorkspaceSession.inc` |
+| `BTS_SIGNED_DISPLACEMENT_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
+| `BTS_SKEW_DEMO` | native/harness | `GuiFixDemo.cc`, `HarnessDispatch.hh`, `SessionDemoActions.inc` |
 | `BTS_SKEW_HIGH_SOURCE` | native/harness | `AutoBakeDemo.cc`, `SkewDemo.cc` |
 | `BTS_SKEW_SETS_HIGH` | native/harness | `SkewDemo.cc` |
 | `BTS_SKEW_SETS_LOW` | native/harness | `AutoBakeDemo.cc`, `SkewDemo.cc` |
-| `BTS_SMART_MASK_BITMAP` | native/host | `WorkspaceSession.inc` |
+| `BTS_SMART_MASK_BITMAP` | native/harness | `SessionDemoSequence.inc` |
 | `BTS_SMART_MASK_COLD_OPEN` | native/harness | `ViewportHeadlessDemo.cc` |
-| `BTS_SMART_MATERIAL_GPU_CHECK` | native/host | `WorkspaceSession.inc` |
-| `BTS_SMART_MATERIAL_SOURCE` | native/host | `WorkspaceSession.inc` |
-| `BTS_SMART_MATERIAL_USER` | native/host | `WorkspaceSession.inc` |
+| `BTS_SMART_MATERIAL_GPU_CHECK` | native/harness | `SessionDemoSequence.inc` |
+| `BTS_SMART_MATERIAL_SOURCE` | native/harness | `SessionDemoSequence.inc` |
+| `BTS_SMART_MATERIAL_USER` | native/harness | `SessionDemoFlags.inc`, `SessionDemoSequence.inc` |
 | `BTS_SPATIAL_MODE_DEMO` | native/harness | `GuiFixDemo.cc`, `SpatialModeDemo.cc` |
 | `BTS_SPLINE_BRUSH_SIZE` | native/harness | `StrokeSplineDemo.cc` |
 | `BTS_SPSM_BITMAP_COLOR_POLICY` | native/harness | `SpsmDemo.hh` |
 | `BTS_SPSM_BITMAP_POLICY` | native/harness | `SpsmDemo.hh` |
-| `BTS_SPSM_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc`, `SpsmImportUi.cc` |
+| `BTS_SPSM_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `SessionDemoActions.inc`, `SpsmImportUi.cc` |
 | `BTS_SPSM_FIXTURES` | native/harness | `SpsmDemo.hh` |
 | `BTS_SPSM_HIDE_SOURCES` | native/harness | `SpsmDemo.hh` |
 | `BTS_SPSM_LEGACY_REPORT_DEMO` | native/host | `SpsmImportUi.cc` |
 | `BTS_SPSM_LEVELS_POLICY` | native/harness | `SpsmDemo.hh` |
 | `BTS_SPSM_MASK_BITMAP_POLICY` | native/harness | `SpsmDemo.hh` |
 | `BTS_STROKE_PROFILE_PROJECT` | native/harness | `StrokeTargetPerformanceDemo.cc` |
-| `BTS_STROKE_SPLINE_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
-| `BTS_STROKE_TARGET_PROFILE` | native/harness, native/host | `GuiFixDemo.cc`, `SurfaceBrush.cc`, `WorkspaceSession.inc`, `MainViewport.inc` |
+| `BTS_STROKE_SPLINE_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceViewport.inc` |
+| `BTS_STROKE_TARGET_PROFILE` | native/harness, native/host | `GuiFixDemo.cc`, `SessionDemoActions.inc`, `SurfaceBrush.cc`, `MainViewport.inc` |
 | `BTS_STROKE_TARGET_SMUDGE` | native/harness | `StrokeTargetPerformanceDemo.cc` |
 | `BTS_STUDIO_EXPORT_ONLY` | native/harness | `ExportCpuDemo.cc` |
 | `BTS_SUBSURFACE_DEMO` | native/harness | `GuiFixDemo.cc` |
@@ -351,29 +351,29 @@ leaves the release build.
 | `BTS_SURFACE_REGRESSION` | native/harness | `SurfaceBakeProof.hh` |
 | `BTS_TABLET_LOG` | native/host | `TabletDiagnostics.hh` |
 | `BTS_TABLET_PERFORMANCE` | native/harness | `GuiFixDemo.cc` |
-| `BTS_TABLET_REGRESSION` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_TABLET_REGRESSION` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceViewport.inc` |
 | `BTS_TABLET_XI2` | native/harness | `TabletPressureDemo.cc` |
 | `BTS_TEMPLATE_DIR` | native/host | `ProjectTemplate.cc` |
 | `BTS_TEMPLATE_SHADER_DEMO` | native/harness | `GuiFixDemo.cc` |
-| `BTS_TEMPORARY_INK_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_TEMPORARY_INK_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_TEST_CONTINUOUS_FRAMES` | native/host | `MainViewport.inc` |
-| `BTS_TEST_LINEAR_INPUT` | native/host | `WorkspaceSession.inc` |
+| `BTS_TEST_LINEAR_INPUT` | native/host | `WorkspaceViewport.inc` |
 | `BTS_TEST_OUTPUT` | native/tests | `blend_library_browser_test.cc` |
-| `BTS_TEXTURE_IMPORT_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_TEXTURE_IMPORT_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_TEXTURE_IMPORT_EXTRA_CHANNELS` | native/harness | `TextureImportDemo.cc` |
-| `BTS_TEXTURE_IMPORT_FIXTURES` | native/harness, native/host | `AbDisplacementDemo.hh`, `TextureImportDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_TEXTURE_IMPORT_FIXTURES` | native/harness | `AbDisplacementDemo.hh`, `SessionDemoActions.inc`, `TextureImportDemo.cc` |
 | `BTS_TEXTURE_IMPORT_LARGE` | native/harness | `TextureImportCpuDemo.cc` |
-| `BTS_TEXTURE_SET_SELECTION_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
+| `BTS_TEXTURE_SET_SELECTION_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_TRACE_GPU_CPU_READ` | native/host | `PaintPixels.cc` |
-| `BTS_TRACKBALL_DEMO` | native/host | `WorkspaceSession.inc` |
-| `BTS_TRACKBALL_RELOAD` | native/host | `WorkspaceSession.inc` |
+| `BTS_TRACKBALL_DEMO` | native/harness | `SessionCaptureDemos.inc` |
+| `BTS_TRACKBALL_RELOAD` | native/harness | `SessionCaptureDemos.inc` |
 | `BTS_UNLOAD_REGRESSION` | native/harness | `ViewportHeadlessDemo.cc` |
 | `BTS_USD_DISPLACE_DEMO` | native/harness | `DerivedExportDemo.cc` |
 | `BTS_USD_EXPORT_DEMO` | native/harness | `DerivedExportDemo.cc` |
 | `BTS_USD_MESH_VERIFY_INPUT` | native/harness | `ExportCpuDemo.cc` |
 | `BTS_USD_UDIM_DEMO` | native/harness | `DerivedExportDemo.cc` |
 | `BTS_UV_TEXTURE_DEMO` | native/harness | `GuiFixDemo.cc`, `UvProofActions.inc` |
-| `BTS_VERIFY_ASYNC_SAVE` | native/host | `WorkspaceSession.inc` |
+| `BTS_VERIFY_ASYNC_SAVE` | native/host | `WorkspaceProject.inc` |
 | `BTS_VERIFY_CYCLES_LIVE` | native/host | `NativeCyclesImages.cc` |
 | `BTS_VERIFY_GPU_STACK` | native/harness, native/host, native/tests | `AdjustmentPaintColdProof.hh`, `NativeMaterialProjectionColdProof.hh`, `SmartMaskNativeProof.cc`, `GpuLayerPreview.cc` and 1 more |
 | `BTS_VERIFY_GPU_UNIFORM` | native/host | `MaterialInspection.cc` |
@@ -382,5 +382,5 @@ leaves the release build.
 | `BTS_VERIFY_HOSTED_GPUPASS_READINESS` | native/harness | `ViewportHeadlessDemo.cc` |
 | `BTS_VERIFY_HOSTED_SHADER_WORKERS` | native/harness | `ViewportHeadlessDemo.cc` |
 | `BTS_VERIFY_SHARED_TEXTURE` | native/host | `GpuLayerPreview.cc` |
-| `BTS_WARP_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceSession.inc` |
-| `BTS_WARP_GEOMETRY_DEMO` | native/harness, native/host | `WarpGeometryDemo.cc`, `WorkspaceSession.inc`, `PythonConsole.cc` |
+| `BTS_WARP_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
+| `BTS_WARP_GEOMETRY_DEMO` | native/harness, native/host | `SessionDemoActions.inc`, `WarpGeometryDemo.cc`, `WorkspaceAutomation.inc`, `PythonConsole.cc` |
