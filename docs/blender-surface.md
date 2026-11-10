@@ -192,8 +192,6 @@ naming. The restructure plan moves all of these includes behind `native/host/ble
 
 Check these by hand: system, OpenUSD, MaterialX and other libraries land here.
 
-- `../../host/ResourceAvailability.hh` (2 files)
-- `../host/ResourceAvailability.hh` (2 files)
 - `Description.hh` (1 files)
 - `MaterialXCore/Document.h` (4 files)
 - `MaterialXFormat/Util.h` (2 files)

@@ -23,6 +23,9 @@ p.add_argument('--run-only',action='store_true')
 a=p.parse_args()
 repo=Path(__file__).resolve().parents[2]
 bts=Path(os.environ.get('BTS_ROOT',repo.parent)).resolve()
+import sys
+sys.path.insert(0,str(repo/'scripts/host'))
+from main_source import host_file  # host files live in domain folders
 snap,out=a.host_snapshot.resolve(),a.output.resolve()
 if out==bts/'build' or not out.is_relative_to(bts/'build') or out==snap or out.is_relative_to(snap) or out.is_relative_to(bts/'build/host'):
  raise SystemExit('Use private build output outside the immutable snapshot and artist build')
@@ -31,7 +34,8 @@ cmds=json.loads((snap/'host-commands.json').read_text())
 env=dict(os.environ,CCACHE_DIR=str(bts/'build/ccache'))
 def compile(name):
  extra=name in ('NativeMaterialPreview.cc','NativeMaterialPreviewImages.cc','NativeMaterialDecodedImage.cc');test=name.endswith('_test.cc');template='BlenderHost.cc'if extra else 'main.cc'if test else name
- args=shlex.split(next(c for c in cmds if ' -o 'in c and '/'+template+'.o -c 'in c));old=args[args.index('-o')+1];root=str(Path(args[args.index('-c')+1]).parent);args=[x.replace(root,str(repo/'native/host'))for x in args];obj=out/(name+'.o');args[args.index('-o')+1]=str(obj);args[args.index('-MF')+1]=str(obj)+'.d';args[args.index('-c')+1]=str(repo/('native/tests'if test else 'native/host')/name);args.extend(['-UNDEBUG']if test else []);args=['-O1'if name=='main.cc'and x=='-O2'else x for x in args];print('Compile',name,flush=True)
+ # The snapshot's native/host root (template sources may sit in domain folders).
+ args=shlex.split(next(c for c in cmds if ' -o 'in c and '/'+template+'.o -c 'in c));old=args[args.index('-o')+1];src=args[args.index('-c')+1];root=src[:src.index('/native/host')+len('/native/host')];args=[x.replace(root,str(repo/'native/host'))for x in args];obj=out/(name+'.o');args[args.index('-o')+1]=str(obj);args[args.index('-MF')+1]=str(obj)+'.d';args[args.index('-c')+1]=str(repo/'native/tests'/name if test else host_file(repo,name));args.extend(['-UNDEBUG']if test else []);args=['-O1'if name=='main.cc'and x=='-O2'else x for x in args];print('Compile',name,flush=True)
  with(out/(name+'.compile.log')).open('w')as log:subprocess.run(['nice','-n','19',*args],cwd=snap,env=env,stdout=log,stderr=subprocess.STDOUT,check=True)
  return ('__extra__'+name if extra else '__test__'if test else old,str(obj))
 if not a.run_only:

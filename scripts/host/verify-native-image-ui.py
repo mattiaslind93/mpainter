@@ -37,6 +37,9 @@ if not out.is_relative_to(bts/'build')or out in(bts/'build',snapshot)or out.is_r
 out.mkdir(parents=True,exist_ok=True)
 for folder in('bin','objects','tmp'):(out/folder).mkdir(exist_ok=True)
 env=dict(os.environ,CCACHE_DIR=str(bts/'build/ccache'),TMPDIR=str(out/'tmp'))
+import sys
+sys.path.insert(0,str(repo/'scripts/host'))
+from main_source import host_file  # host files live in domain folders
 if os.name=='posix':
  import resource
  resource.setrlimit(resource.RLIMIT_CORE,(0,0))
@@ -69,7 +72,9 @@ if not a.run_only:
  frozen=json.loads((snapshot/'snapshot.json').read_text())['source_head']
  changed=subprocess.check_output(['git','diff','--name-only',frozen,'--','native/host'],cwd=repo,text=True).splitlines()
  new_sources={path for path in changed if path.endswith('.cc') and subprocess.run(['git','cat-file','-e',frozen+':'+path],cwd=repo,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode!=0}
- assert new_sources<={"native/host/NativeMaterialImageJobs.cc","native/host/NativeMaterialImagePanel.cc","native/host/NativeMaterialImageUi.cc"},'Unexpected new production unit; extend the explicit build closure'
+ # By name: host files move between domain folders, so a moved unit is not a new one.
+ frozen_names={Path(path).name for path in subprocess.check_output(['git','ls-tree','-r','--name-only',frozen,'native/host'],cwd=repo,text=True).splitlines()}
+ assert {Path(path).name for path in new_sources}-frozen_names<={"NativeMaterialImageJobs.cc","NativeMaterialImagePanel.cc","NativeMaterialImageUi.cc"},'Unexpected new production unit; extend the explicit build closure'
  if not a.consumer_audit and (snapshot/'native-deps.txt').is_file():
   header_paths={path for path in changed if path.endswith('.hh') and subprocess.run(['git','cat-file','-e',frozen+':'+path],cwd=repo,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode==0}
   deps={};key=None
@@ -118,7 +123,7 @@ if not a.run_only:
   artist=compile(main,repo/'native/tests/native_material_image_ui_artist_test.cc','native-image-artist')
   extra=[]
   for name in('NativeMaterialImageJobs','NativeMaterialImagePanel','NativeMaterialImageUi'):
-   extra.append(compile(main,repo/'native/host'/(name+'.cc'),'bts-host-new-'+name))
+   extra.append(compile(main,host_file(repo,name+'.cc'),'bts-host-new-'+name))
  archives={};archive_members={};native_keys={args[args.index('-o')+1]for args in native};rebuilt_keys={args[args.index('-o')+1]for args in selected}if not a.cpu_only else set()
  if not a.cpu_only:
   (out/'lib').mkdir(exist_ok=True)

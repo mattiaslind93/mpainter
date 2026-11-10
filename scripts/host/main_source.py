@@ -42,6 +42,33 @@ def main_source(root):
     return text
 
 
+def host_rel(root, name):
+    """'native/host/<folder>/<name>' for the one file called name anywhere below native/host.
+    Host files live in domain folders and move between them; verifiers that need a host file
+    by name resolve it here instead of writing 'native/host/' + name."""
+    found = sorted(p for p in (Path(root) / "native/host").rglob(name) if p.is_file() and p.name == name)
+    if len(found) != 1:
+        raise AssertionError(f"expected one native/host file named {name}, found {len(found)}")
+    return found[0].relative_to(Path(root)).as_posix()
+
+
+def host_file(root, name):
+    """The Path of the one file called name below native/host (see host_rel)."""
+    return Path(root) / host_rel(root, name)
+
+
+def host_rel_at(root, rev, name):
+    """Where the host file called name was at commit rev (git ls-tree), for verifiers that
+    compare a recorded snapshot's sources with today's."""
+    import subprocess
+    listing = subprocess.run(["git", "-C", str(root), "ls-tree", "-r", "--name-only", rev, "native/host"],
+                             capture_output=True, text=True, check=True, timeout=120).stdout.split("\n")
+    found = [p for p in listing if p.rsplit("/", 1)[-1] == name]
+    if len(found) != 1:
+        raise AssertionError(f"expected one native/host file named {name} at {rev}, found {len(found)}")
+    return found[0]
+
+
 def with_sections(root, rel):
     """rel's text with every `#include "Name.inc"` it holds replaced by that file, recursively.
     A big file such as native/host/MaterialInspection.cc keeps its code in .inc sections it

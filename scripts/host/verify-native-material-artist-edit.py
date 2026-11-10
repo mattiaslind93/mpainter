@@ -25,7 +25,9 @@ p.add_argument('--cpu-only',action='store_true')
 a=p.parse_args();repo=Path(__file__).resolve().parents[2];bts=Path(os.environ.get('BTS_ROOT',repo.parent)).resolve();snapshot=a.host_snapshot.resolve();out=a.output.resolve()
 if not out.is_relative_to(bts/'build') or out in (bts/'build',snapshot) or out.is_relative_to(snapshot) or out.is_relative_to(bts/'build/host'):
  raise SystemExit('Output must be private build storage outside host/snapshot')
-
+import sys
+sys.path.insert(0,str(repo/'scripts/host'))
+from main_source import host_file,host_rel_at  # host files live in domain folders
 if os.name=='posix':
  import resource
  resource.setrlimit(resource.RLIMIT_CORE,(0,0))
@@ -36,11 +38,11 @@ if not a.run_only:
  def compilation(name):return shlex.split(next(c for c in commands if ' -o ' in c and '/'+name+'.o -c ' in c))
  baseline=out/'baseline';baseline.mkdir(exist_ok=True)
  source_bts=Path(compilation('main.cc')[compilation('main.cc').index('-c')+1]).parents[3]
- original=subprocess.check_output(['git','show',a.baseline_ref+':native/host/LayerEditDiff.hh'],cwd=repo)
+ original=subprocess.check_output(['git','show',a.baseline_ref+':'+host_rel_at(repo,a.baseline_ref,'LayerEditDiff.hh')],cwd=repo)
  (baseline/'LayerEditDiff.hh').write_bytes(original)
  def compile(name,label,old=False):
   args=compilation('main.cc' if name=='native_material_artist_edit_test.cc' else 'MeshBaker.cc')
-  previous=Path(args[args.index('-c')+1]).parent
+  source=args[args.index('-c')+1];previous=source[:source.index('/native/host')+len('/native/host')]
   args=[arg.replace(str(previous),str(repo/'native/host')) for arg in args]
   args=['-O0' if arg in ('-O1','-O2','-O3') else arg for arg in args]
   obj=out/(label+'.o');args[args.index('-o')+1]=str(obj);args[args.index('-c')+1]=str(repo/'native/tests'/name)
@@ -116,7 +118,7 @@ if not a.build_only:
  proof['source_unchanged']=True;proof['source_sha256']=source_sha;proof['baseline_zero_invalidation_stale_gpu_reproduced']=True
  proof['baseline_ref']=a.baseline_ref
  proof['production_main_sha256']=hashlib.sha256((repo/'native/host/main.cc').read_bytes()).hexdigest()
- proof['fixed_diff_header_sha256']=hashlib.sha256((repo/'native/host/LayerEditDiff.hh').read_bytes()).hexdigest()
+ proof['fixed_diff_header_sha256']=hashlib.sha256(host_file(repo,'LayerEditDiff.hh').read_bytes()).hexdigest()
  proof['unique_exact_diff_implementation_symbol']=True
 
  (out/'verified.json').write_text(json.dumps(proof,indent=2)+'\n');print('Native artist edit: baseline stale GPU reproduced; fixed widget/frame/Undo/Redo PASS')

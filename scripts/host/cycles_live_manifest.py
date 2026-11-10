@@ -22,7 +22,9 @@ def sha256(path):
 
 
 def required_sources(mode):
-    core = {"native/host/" + name for name in (
+    # By name: host files live in domain folders and move between them.
+    root = Path(__file__).resolve().parents[2]
+    core = {_main_source.host_rel(root, name) for name in (
         "main.cc", "BlenderHost.cc", "MaterialInspection.cc", "MaterialInspection.hh",
         "NativeCyclesImages.cc", "NativeCyclesImages.hh", "NativeCyclesImageCache.hh",
         "NativeCyclesPublication.hh")}

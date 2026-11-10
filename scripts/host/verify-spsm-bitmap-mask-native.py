@@ -25,6 +25,9 @@ p.add_argument('--run-only', action='store_true')
 a = p.parse_args()
 repo = Path(__file__).resolve().parents[2]
 bts = Path(os.environ.get('BTS_ROOT', repo.parent)).resolve()
+import sys
+sys.path.insert(0, str(repo / 'scripts/host'))
+from main_source import host_file  # host files live in domain folders
 snapshot, output, async_objects = a.host_snapshot.resolve(), a.output.resolve(), a.async_objects.resolve()
 if not output.is_relative_to(bts / 'build') or output == bts / 'build' or output == snapshot or output.is_relative_to(snapshot) or output.is_relative_to(bts / 'build/host'):
     raise SystemExit('Output must be private BTS_ROOT/build storage, outside the immutable snapshot')
@@ -49,11 +52,12 @@ if not a.run_only:
         extra = not test and not any('/' + name + '.o -c ' in c for c in commands)
         args = compilation('MeshBaker.cc' if test else 'SpsmSource.cc' if extra else name)
         previous = args[args.index('-o') + 1]
-        old_root = str(Path(args[args.index('-c') + 1]).parent)
+        source = args[args.index('-c') + 1]
+        old_root = source[:source.index('/native/host') + len('/native/host')]
         args = [arg.replace(old_root, str(repo / 'native/host')) for arg in args]
         obj = output / (name + '.o')
         args[args.index('-o') + 1] = str(obj)
-        args[args.index('-c') + 1] = str(repo / ('native/tests' if test else 'native/host') / name)
+        args[args.index('-c') + 1] = str(repo / 'native/tests' / name if test else host_file(repo, name))
         for option, value in [('-MF', str(obj) + '.d'), ('-MT', str(obj))]:
             if option in args:
                 args[args.index(option) + 1] = value

@@ -11,8 +11,11 @@ p=argparse.ArgumentParser(description=__doc__);p.add_argument('--host-snapshot',
 repo=Path(__file__).resolve().parents[2];snapshot=a.host_snapshot.resolve();out=a.output.resolve()
 assert out.is_relative_to(repo.parent/'build') and not out.is_relative_to(snapshot) and not out.is_relative_to(repo.parent/'build/host')
 out.mkdir(parents=True,exist_ok=True);commands=json.loads((snapshot/'host-commands.json').read_text());source_head=json.loads((snapshot/'snapshot.json').read_text())['source_head']
+import sys
+sys.path.insert(0,str(repo/'scripts/host'))
+from main_source import host_file,host_rel,host_rel_at  # host files live in domain folders
 for header in ['ShaderController.hh','WorkspaceShell.hh','TextureDocument.hh','NativeMaterialParameters.hh','LayerEffect.hh','MaskEffect.hh','AssetCatalog.hh']:
- assert subprocess.check_output(['git','show',source_head+':native/host/'+header],cwd=repo)==(repo/'native/host'/header).read_bytes(),'Snapshot ABI mismatch: '+header
+ assert subprocess.check_output(['git','show',source_head+':'+host_rel_at(repo,source_head,header)],cwd=repo)==host_file(repo,header).read_bytes(),'Snapshot ABI mismatch: '+header
 base=shlex.split(next(c for c in commands if '/ShaderController.cc.o -c ' in c));old_source=Path(base[base.index('-c')+1]).parents[2];old_object=base[base.index('-o')+1]
 env=dict(os.environ,QT_QPA_PLATFORM='offscreen',CCACHE_DIR=str(repo.parent/'build/ccache'))
 for key,folder in [('XDG_CONFIG_HOME','config'),('XDG_DATA_HOME','data'),('XDG_CACHE_HOME','cache'),('BTS_RECOVERY_DIR','recovery'),('TMPDIR','tmp')]:
@@ -24,7 +27,7 @@ def compile(source,label):
  args[2:2]=['-I'+str(repo/'native/host')];args+=['-g0']
  with(out/(label+'.compile.log')).open('w')as log:subprocess.run(['nice','-n','19',*args],cwd=snapshot,env=env,stdout=log,stderr=subprocess.STDOUT,check=True)
  return obj
-controller=compile('native/host/ShaderController.cc','ShaderController')if not a.baseline else str(snapshot/old_object);test=compile('native/tests/shader_settings_reparent_test.cc','test')
+controller=compile(host_rel(repo,'ShaderController.cc'),'ShaderController')if not a.baseline else str(snapshot/old_object);test=compile('native/tests/shader_settings_reparent_test.cc','test')
 link=shlex.split(commands[-1]);link=link[2:]if link[:2]==[':','&&']else link
 if '&&'in link:link=link[:link.index('&&')]
 for i,value in enumerate(link):

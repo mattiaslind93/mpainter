@@ -26,6 +26,9 @@ args = parser.parse_args()
 build, output = args.build_dir.resolve(), args.output.resolve()
 output.mkdir(parents=True, exist_ok=True)
 root = Path(__file__).resolve().parents[2]
+import sys
+sys.path.insert(0, str(root / 'scripts/host'))
+from main_source import host_rel  # host files live in domain folders
 ninja = shutil.which('ninja') or shutil.which('ninja-build')
 graph = args.graph_dir.resolve() if args.graph_dir else build
 commands = subprocess.check_output([ninja, '-t', 'commands', 'bts-host'], cwd=graph, text=True).splitlines()
@@ -36,7 +39,7 @@ sources = ['native/spsm/SpsmReader.cc', 'native/spsm/bitmaps/SpsmBitmap.cc',
            'native/host/SpsmLevelsLowering.cc', 'native/host/SpsmBitmapTexture.cc',
            'native/host/SpsmBitmapLowering.cc']
 if args.source:
-    sources += ['native/host/' + name for name in ['SpsmSource.cc','SpsmMeshMapLowering.cc','AssetCatalog.cc','SpsmAssetDispatch.cc']]
+    sources += [host_rel(root, name) for name in ['SpsmSource.cc','SpsmMeshMapLowering.cc','AssetCatalog.cc','SpsmAssetDispatch.cc']]
 sources += ['native/tests/spsm_bitmap_mask_source_test.cc' if args.source else 'native/tests/spsm_bitmap_mask_test.cc']
 
 hdf_flags = shlex.split(subprocess.check_output(['h5cc', '-show'], text=True))[1:]

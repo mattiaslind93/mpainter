@@ -58,24 +58,24 @@ for path in [*host.rglob('*'), *(root / 'native/harness').rglob('*')]:
         assert path.name in file_allowlist or path.name.endswith('CpuDemo.cc') or any(a < call.start() < b for a, b in allowed), f'CPU composite outside explicit export/diagnostic: {path.name}:{source.count(chr(10), 0, call.start()) + 1}'
 import sys
 sys.path.insert(0, str(root / 'scripts/host'))
-from main_source import compact, main_source, with_sections
+from main_source import compact, host_file, host_rel, main_source, with_sections
 verify_interactive_brush_transport(main_source(root))
 # Persistence is no exception to the GPU rule.
 # BlenderHost.cc keeps its code in .inc sections it includes in place.
-blender_host = with_sections(root, 'native/host/BlenderHost.cc')
+blender_host = with_sections(root, host_rel(root, 'BlenderHost.cc'))
 code = masked(blender_host)
 for name in ('BlenderHost::begin_save_project(', 'BlenderHost::poll_save_project(', 'BlenderHost::save_project(', 'BlenderHost::apply_texture_set('):
     a, b = body(code, code.index(name))
     assert 'queue_composite(' not in code[a:b] and 'TextureDocument::composite(' not in code[a:b]
 assert 'reason=save-cache' not in blender_host
-assert 'GpuPersistenceScope gpu_only' in (host / 'ProjectIO.cc').read_text(), 'Save worker must reject unhandled CPU authoring recipes'
-assert 'if(cpu_paint_evaluation_forbidden)throw' in compact((host / 'PaintPixels.cc').read_text())
+assert 'GpuPersistenceScope gpu_only' in host_file(root, 'ProjectIO.cc').read_text(), 'Save worker must reject unhandled CPU authoring recipes'
+assert 'if(cpu_paint_evaluation_forbidden)throw' in compact(host_file(root, 'PaintPixels.cc').read_text())
 # MaterialInspection.cc keeps its code in .inc sections it includes in place.
-inspection = masked(with_sections(root, 'native/host/MaterialInspection.cc'))
+inspection = masked(with_sections(root, host_rel(root, 'MaterialInspection.cc')))
 a, b = body(inspection, inspection.index('MaterialInspection::update_pixels('))
 assert 'composite_pixel' not in inspection[a:b] and 'padding->apply(' not in inspection[a:b], 'Native image allocation must not contain a CPU compositor/padding fallback'
 a, b = body(inspection, inspection.index('MaterialInspection::preview_uniform('))
 assert 'TextureDocument::composite(' not in inspection[a:b] and 'BKE_image_acquire_ibuf(' not in inspection[a:b], 'Uniform controls must use the GPU stack'
 for name in ('ViewportResidency.cc','FillTextureIO.cc'):
-    assert 'QSettings' not in masked((host / name).read_text()), f'Hot viewport/import path must not wait on settings writers: {name}'
+    assert 'QSettings' not in masked(host_file(root, name).read_text()), f'Hot viewport/import path must not wait on settings writers: {name}'
 print(f'GPU-only interactive and save paths: PASS ({calls} CPU calls confined to export/diagnostic allowlist)')

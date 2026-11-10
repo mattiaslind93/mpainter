@@ -30,16 +30,19 @@ snapshot=a.host_snapshot.resolve();output=a.output.resolve()
 if not output.is_relative_to(root.parent/'build') or output==snapshot:raise RuntimeError('Use private workspace build output')
 output.mkdir(parents=True,exist_ok=True)
 source_head=json.loads((snapshot/'snapshot.json').read_text())['source_head']
+import sys
+sys.path.insert(0,str(root/'scripts/host'))
+from main_source import host_file,host_rel,host_rel_at  # host files live in domain folders
 protected=['NativeMaterialParameters.hh','LayerEffect.hh','MaskEffect.hh','FillProjection.hh','NativeMaterialGpuProgram.hh','NativeMaterialGraph.hh','AssetCatalog.hh']
 for name in protected:
- old=subprocess.check_output(['git','show',source_head+':native/host/'+name],cwd=root)
- if old!=(root/'native/host'/name).read_bytes():raise RuntimeError('Frozen native ABI mismatch: '+name+'; use a coherent snapshot/rebuild')
+ old=subprocess.check_output(['git','show',source_head+':'+host_rel_at(root,source_head,name)],cwd=root)
+ if old!=host_file(root,name).read_bytes():raise RuntimeError('Frozen native ABI mismatch: '+name+'; use a coherent snapshot/rebuild')
 (output/'objects').mkdir(exist_ok=True)
 commands=json.loads((snapshot/'host-commands.json').read_text())
 base=shlex.split(next(c for c in commands if '/main.cc.o' in c and ' -c ' in c))
 oldmain=base[base.index('-o')+1]
-sources=['native/host/'+s+'.cc' for s in ['NativeMaterialImageBindings','NativeMaterialImageVariant','NativeMaterialSourceFiles','NativeMaterialResource','NativeMaterialArchive','BlendMaterial','AssetCatalog','ResourceIO']]
-if a.suite=='jobs':sources+=['native/host/NativeMaterialImageJobs.cc','native/host/NativeMaterialImagePanel.cc']
+sources=[host_rel(root,s+'.cc') for s in ['NativeMaterialImageBindings','NativeMaterialImageVariant','NativeMaterialSourceFiles','NativeMaterialResource','NativeMaterialArchive','BlendMaterial','AssetCatalog','ResourceIO']]
+if a.suite=='jobs':sources+=[host_rel(root,'NativeMaterialImageJobs.cc'),host_rel(root,'NativeMaterialImagePanel.cc')]
 sources+=['native/tests/native_material_image_variant'+('_'+a.suite if a.suite!='cpu' else '')+'_test.cc']
 if a.sanitize and a.suite=='gpu':raise RuntimeError('Use CPU suite for sanitizers')
 if a.runtime_baseline and (a.libraries or a.suite!='cpu'):raise RuntimeError('Runtime baseline is separate from fixture/GPU tests')

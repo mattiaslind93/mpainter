@@ -31,6 +31,9 @@ args = parser.parse_args()
 build, output = args.build_dir.resolve(), args.output.resolve()
 output.mkdir(parents=True, exist_ok=True)
 root = Path(__file__).resolve().parents[2]
+import sys
+sys.path.insert(0, str(root / 'scripts/host'))
+from main_source import host_rel  # host files live in domain folders
 if not output.is_relative_to(root.parent/'build') or output.is_relative_to(build):
     raise RuntimeError('Output must be private under the workspace build directory, outside the artist build')
 if args.host_snapshot.resolve().is_relative_to(build):
@@ -44,7 +47,7 @@ main_object = base[base.index('-o') + 1]
 sources = ['native/spsm/SpsmReader.cc', 'native/spsm/semantic/SpsmSemantic.cc',
            'native/host/SpsmMaterialImport.cc', 'native/host/SpsmMeshMapLowering.cc']
 if args.suite=='source':
-    sources += ['native/host/'+name for name in ['SpsmSource.cc','SpsmBitmapLowering.cc','SpsmBitmapTexture.cc','AssetCatalog.cc','SpsmAssetDispatch.cc']]
+    sources += [host_rel(root, name) for name in ['SpsmSource.cc','SpsmBitmapLowering.cc','SpsmBitmapTexture.cc','AssetCatalog.cc','SpsmAssetDispatch.cc']]
     sources += ['native/spsm/bitmaps/SpsmBitmap.cc']
 sources += ['native/tests/'+{'cpu':'spsm_meshmap_lowering_test.cc','source':'spsm_meshmap_source_test.cc','gpu':'spsm_meshmap_native_test.cc'}[args.suite]]
 hdf_flags = shlex.split(subprocess.check_output(['h5cc', '-show'], text=True))[1:]

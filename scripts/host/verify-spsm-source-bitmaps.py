@@ -24,6 +24,9 @@ args = parser.parse_args()
 build, output = args.build_dir.resolve(), args.output.resolve()
 output.mkdir(parents=True, exist_ok=True)
 root = Path(__file__).resolve().parents[2]
+import sys
+sys.path.insert(0, str(root / 'scripts/host'))
+from main_source import host_rel  # host files live in domain folders; the overlay keeps the layout
 ninja = shutil.which('ninja') or shutil.which('ninja-build')
 graph = args.graph_dir.resolve() if args.graph_dir else build
 commands = subprocess.check_output([ninja, '-t', 'commands', 'bts-host'], cwd=graph, text=True).splitlines()
@@ -38,11 +41,11 @@ shutil.copytree(root / 'native/host', overlay_host, dirs_exist_ok=True)
 if args.asset_helper_root:
     helper = args.asset_helper_root.resolve() / 'native/host'
     for name in ('AssetCatalog.cc', 'AssetCatalog.hh', 'SpsmAssetDispatch.hh'):
-        shutil.copy2(helper / name, overlay_host / name)
+        shutil.copy2(helper / name, overlay / host_rel(root, name))
 (overlay / 'native/tests').mkdir(exist_ok=True)
 for name in ('spsm_source_bitmap_test.cc', 'spsm_source_test.cc'):
     shutil.copy2(root / 'native/tests' / name, overlay / 'native/tests' / name)
-sources = [str(overlay_host / name) for name in ('SpsmSource.cc', 'SpsmMaterialImport.cc',
+sources = [str(overlay / host_rel(root, name)) for name in ('SpsmSource.cc', 'SpsmMaterialImport.cc',
            'SpsmBitmapLowering.cc', 'SpsmBitmapTexture.cc', 'AssetCatalog.cc', 'SpsmAssetDispatch.cc')]
 sources += ['native/spsm/SpsmReader.cc', 'native/spsm/semantic/SpsmSemantic.cc',
             'native/spsm/bitmaps/SpsmBitmap.cc', str(overlay / 'native/tests/spsm_source_bitmap_test.cc')]

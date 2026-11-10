@@ -346,6 +346,23 @@ class Move(unittest.TestCase):
         self.assertEqual((repo.root / "native/spsm/bitmaps/Reader.cc").read_text(),
                          '#include "../../host/painting/Other.hh"\n')
 
+    def test_files_move_between_domain_folders(self):
+        repo = self.repo()
+        self.assertEqual(self.move(repo, "Brush.cc", "Brush.hh", refs=True)[0], 0)
+        repo.git("add", "-A")
+        listing = repo.root.parent / "list2.txt"
+        listing.write_text("native/host/painting/Brush.cc\nnative/host/painting/Brush.hh\n")
+        code, _, err = repo.mp("move", "native/host/blender", "--list", str(listing), "--refs", "--allow-referenced")
+        self.assertEqual(code, 0, err)
+        cmake = (repo.root / "native/host/CMakeLists.txt").read_text()
+        self.assertIn("${BTS_HOST_SOURCE_DIR}/blender/Brush.cc ${BTS_HOST_SOURCE_DIR}/BrushJitter.cc", cmake)
+        self.assertIn("'native/host/blender/Brush.cc'", (repo.root / "scripts/host/verify-brush.py").read_text())
+        self.assertIn('"../host/blender/Brush.hh"', (repo.root / "native/tests/brush_test.cc").read_text())
+        self.assertTrue((repo.root / "native/host/blender/Brush.hh").is_file())
+        # A file already in the destination is refused.
+        listing.write_text("native/host/blender/Brush.cc\n")
+        self.assertEqual(repo.mp("move", "native/host/blender", "--list", str(listing))[0], 2)
+
     def test_move_refuses_bad_input_and_changes_nothing(self):
         repo = self.repo()
         before = (repo.root / "native/host/CMakeLists.txt").read_text()

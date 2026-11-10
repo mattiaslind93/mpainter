@@ -27,6 +27,9 @@ a = p.parse_args()
 repo = Path(__file__).resolve().parents[2]
 production = (a.production_source_root or repo).resolve()
 bts = Path(os.environ.get('BTS_ROOT', repo.parent)).resolve()
+import sys
+sys.path.insert(0, str(repo / 'scripts/host'))
+from main_source import host_file  # host files live in domain folders
 build = (a.host_build or bts / 'build/host').resolve()
 output = a.output.resolve()
 if not output.is_relative_to(bts / 'build') or output == build or output.is_relative_to(build):
@@ -50,13 +53,14 @@ if not a.run_only:
         if not path.is_file():
             raise SystemExit(f'Missing replacement object: {path}')
         replacements[object_for(name)] = str(path)
-    tasks = [(name, production / 'native/host' / name) for name in a.compile_unit]
+    tasks = [(name, host_file(production, name)) for name in a.compile_unit]
     tasks.append(('many_udim_project_native_test.cc', repo / 'native/tests/many_udim_project_native_test.cc'))
     def compile_one(task):
         name, source = task
         args = compilation('MeshBaker.cc' if name == 'many_udim_project_native_test.cc' else name)
         previous = args[args.index('-o') + 1]
-        old_source_root = Path(args[args.index('-c') + 1]).parent
+        old_source = args[args.index('-c') + 1]
+        old_source_root = old_source[:old_source.index('/native/host') + len('/native/host')]
         source_root = repo if name == 'many_udim_project_native_test.cc' else production
         args = [arg.replace(str(old_source_root), str(source_root / 'native/host')) for arg in args]
         obj = output / (name + '.o')

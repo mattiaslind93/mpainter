@@ -21,9 +21,12 @@ if not a.run_only:
    target=snapshot/(hashlib.sha256(token.encode()).hexdigest()[:16]+'-'+path.name);subprocess.run(['cp','--reflink=auto','-p',str(path),str(target)],check=True);frozen[token]=str(target)
   commands_file.write_text(json.dumps(commands));inputs_file.write_text(json.dumps(frozen))
  objects={}
- SOURCE_FOLDER={'NativeMaterialHostQueueDemo.cc':'native/harness','TextureExport.cc':'native/host'}
+ import sys
+ sys.path.insert(0,str(root/'scripts/host'))
+ from main_source import host_rel  # host files live in domain folders
+ SOURCE={'NativeMaterialHostQueueDemo.cc':'native/harness/NativeMaterialHostQueueDemo.cc','TextureExport.cc':host_rel(root,'TextureExport.cc')}
  def compile(name):
-  c=shlex.split(next(v for v in commands if ' -c 'in v and v.endswith('/'+name)));old=c[c.index('-o')+1];obj=str(out/(name+'.o'));c[c.index('-o')+1]=obj;c[c.index('-c')+1]=str(root/SOURCE_FOLDER[name]/name)
+  c=shlex.split(next(v for v in commands if ' -c 'in v and v.endswith('/'+name)));old=c[c.index('-o')+1];obj=str(out/(name+'.o'));c[c.index('-o')+1]=obj;c[c.index('-c')+1]=str(root/SOURCE[name])
   for flag,value in [('-MF',obj+'.d'),('-MT',obj)]:
    if flag in c:c[c.index(flag)+1]=value
   c[(2 if Path(c[0]).name=='ccache'else 1):(2 if Path(c[0]).name=='ccache'else 1)]=['-I'+str(root/'native/host'),'-I'+str(root/'native/harness')];c=['-O1'if v in ['-O2','-O3']else v for v in c];print('Compile',name,flush=True);subprocess.run(c,cwd=build,check=True);return old,obj

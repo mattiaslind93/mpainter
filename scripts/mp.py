@@ -318,26 +318,32 @@ def name_references(root, names):
 
 
 def move_files(root, dest, sources, refs=False, allow_referenced=False):
-    """git mv top-level native/host files into dest and repoint what names them.
+    """git mv native/host files (top level or a domain folder) into dest and repoint what
+    names them.
 
-    Rewrites `${BTS_HOST_SOURCE_DIR}/<name>` in native/host/CMakeLists.txt and
-    `../../host/<name>` in the standalone projects (native/tests/*/CMakeLists.txt). With
-    refs, also `native/host/<name>` in tracked Python, JSON and shell files and
-    `"../host/<name>"` includes in native/tests. Adding dest to BTS_HOST_DOMAINS in
+    Rewrites `${BTS_HOST_SOURCE_DIR}/<old>` in native/host/CMakeLists.txt and
+    `../../host/<old>` in the standalone projects (native/tests/*/CMakeLists.txt), where <old>
+    is the path below native/host. With refs, also `native/host/<old>` in tracked Python,
+    JSON and shell files and `"../host/<old>"` includes in native/tests, native/spsm and
+    native/sbsar_metadata. Adding dest to BTS_HOST_DOMAINS in
     native/host/SourceIncludeDirs.cmake is left to the caller, because it is a decision.
     Returns {"cmake": n, "refs": {file: n}}.
     """
     if not MOVE_DESTINATIONS.fullmatch(dest):
         raise UsageError(f"{dest} is not native/harness or a native/host domain folder")
     tracked = set(git_files(root))
-    names = []
+    names, olds = [], []
     for rel in sources:
-        name = rel[len(HOST) + 1:]
-        if not rel.startswith(HOST + "/") or "/" in name or rel not in tracked:
-            raise UsageError(f"{rel} is not a tracked top-level native/host file")
+        old = rel[len(HOST) + 1:]
+        name = old.rsplit("/", 1)[-1]
+        if not rel.startswith(HOST + "/") or rel not in tracked or old.count("/") > 2:
+            raise UsageError(f"{rel} is not a tracked native/host file")
+        if os.path.dirname(rel) == dest:
+            raise UsageError(f"{rel} is already in {dest}")
         if (root / dest / name).exists():
             raise UsageError(f"{dest}/{name} already exists")
         names.append(name)
+        olds.append(old)
     if len(set(names)) != len(names):
         raise UsageError("a file is listed twice")
     if not allow_referenced:
@@ -349,26 +355,26 @@ def move_files(root, dest, sources, refs=False, allow_referenced=False):
     prefix = os.path.relpath(dest, HOST).replace(os.sep, "/")
     cmake = (root / HOST_CMAKE).read_text(encoding="utf-8")
     total = 0
-    for name in names:
-        pattern = re.compile(r"\$\{BTS_HOST_SOURCE_DIR\}/" + re.escape(name) + NAME_END)
+    for old, name in zip(olds, names):
+        pattern = re.compile(r"\$\{BTS_HOST_SOURCE_DIR\}/" + re.escape(old) + NAME_END)
         cmake, n = pattern.subn(lambda m, name=name: "${BTS_HOST_SOURCE_DIR}/" + prefix + "/" + name, cmake)
         total += n
     rewritten = {}
     for rel in sorted(r for r in tracked if TEST_CMAKE.fullmatch(r)):
         content = (root / rel).read_text(encoding="utf-8")
         count = 0
-        for name in names:
-            pattern = re.compile(r"(\.\./\.\./host|\$\{HOST\})/" + re.escape(name) + NAME_END)
+        for old, name in zip(olds, names):
+            pattern = re.compile(r"(\.\./\.\./host|\$\{HOST\})/" + re.escape(old) + NAME_END)
             content, n = pattern.subn(lambda m, name=name: f"{m.group(1)}/{prefix}/{name}", content)
             count += n
         if count:
             (root / rel).write_text(content, encoding="utf-8")
             total += count
     if refs:
-        rules = [(re.compile(r"native/host/" + re.escape(n) + NAME_END), f"{dest}/{n}") for n in names]
+        rules = [(re.compile(r"native/host/" + re.escape(o) + NAME_END), f"{dest}/{n}") for o, n in zip(olds, names)]
         # "../host/X" from native/tests or native/spsm, "../../host/X" from one folder deeper.
-        rules += [(re.compile(r'"((?:\.\./)+)host/' + re.escape(n) + '"'),
-                   f'"\\1{dest[len("native/"):]}/{n}"') for n in names]
+        rules += [(re.compile(r'"((?:\.\./)+)host/' + re.escape(o) + '"'),
+                   f'"\\1{dest[len("native/"):]}/{n}"') for o, n in zip(olds, names)]
         for rel in sorted(tracked):
             path = root / rel
             if not REF_FILES.match(rel) or path.is_symlink() or not path.is_file():
