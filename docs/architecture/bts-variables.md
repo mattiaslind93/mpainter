@@ -61,10 +61,10 @@ leaves the release build.
 | `BTS_BJ_PROJECTION_EXPECTED` | native/harness | `NativeMaterialProjectionColdProof.hh`, `NativeMaterialProjectionDemo.hh` |
 | `BTS_BJ_PROJECTION_KIND` | native/harness | `NativeMaterialProjectionDemo.hh` |
 | `BTS_BJ_PROJECTION_PHASE` | native/harness | `NativeMaterialProjectionDemo.hh` |
-| `BTS_BJ_PROJECTION_UI` | native/harness, native/host | `GuiFixDemo.cc`, `HarnessDispatch.hh`, `NativeMaterialProjectionProofActions.inc`, `MaterialInspection.cc` and 2 more |
+| `BTS_BJ_PROJECTION_UI` | native/harness, native/host | `GuiFixDemo.cc`, `HarnessDispatch.hh`, `NativeMaterialProjectionProofActions.inc`, `NativeCyclesImages.cc` and 2 more |
 | `BTS_BK_BITMAP` | native/harness | `FolderMaskDemo.hh` |
 | `BTS_BK_COLD` | native/harness | `FolderMaskDemo.hh` |
-| `BTS_BK_FOLDER_MASK` | native/harness, native/host | `FolderMaskProofActions.inc`, `GuiFixDemo.cc`, `SessionDemoActions.inc`, `MaterialInspection.cc` and 2 more |
+| `BTS_BK_FOLDER_MASK` | native/harness, native/host | `FolderMaskProofActions.inc`, `GuiFixDemo.cc`, `SessionDemoActions.inc`, `NativeCyclesImages.cc` and 2 more |
 | `BTS_BK_PROJECT_DIR` | native/harness | `FolderMaskDemo.hh`, `FolderMaskProofActions.inc` |
 | `BTS_BLEND_ASSET_BROWSER_DEMO` | native/harness | `GuiFixDemo.cc` |
 | `BTS_BLEND_ASSET_ROOT` | native/harness | `BlendAssetLibraryDemo.hh` |
@@ -75,7 +75,7 @@ leaves the release build.
 | `BTS_BLEND_MATERIAL_SOURCE` | native/harness, native/tests | `BlendImagesDemo.hh`, `BlendMaterialDemo.hh`, `native_height_policy_artist_test.cc`, `native_material_artist_edit_test.cc` and 1 more |
 | `BTS_BL_BAKE_SAMPLES_TEST` | native/harness | `GpuBakeRayDemo.hh` |
 | `BTS_BM_ADJUSTMENT_COLD` | native/harness | `ViewportHeadlessDemo.cc` |
-| `BTS_BM_ADJUSTMENT_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `GpuLayerPreview.cc`, `MaterialInspection.cc`, `NativeAdjustmentState.inc` and 5 more |
+| `BTS_BM_ADJUSTMENT_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `GpuLayerPreview.cc`, `NativeAdjustmentState.inc`, `NativeCyclesImages.cc` and 5 more |
 | `BTS_BM_ADJUSTMENT_EXPECTED` | native/harness | `AdjustmentPaintColdProof.hh` |
 | `BTS_BM_GPU_ADJUSTMENT_TEST` | native/harness, native/host | `ViewportHeadlessDemo.cc`, `GpuLayerPreview.cc` |
 | `BTS_BN_PRECISION_DIAG` | native/harness | `GpuSmartMaskTests.inc` |
@@ -138,10 +138,10 @@ leaves the release build.
 | `BTS_GPU_AUTHORING_PROGRAM_TEST_OUTPUT` | native/harness | `GpuAuthoringWorkerTest.hh` |
 | `BTS_GPU_BAKE_BVH_TEST` | native/harness | `ViewportHeadlessDemo.cc` |
 | `BTS_GPU_BRUSH_AUTHORING` | native/host | `WorkspaceViewport.inc` |
-| `BTS_GPU_DENSE_ORACLE` | native/harness, native/host | `WarpDemo.cc`, `WarpGeometryDemo.cc`, `MaterialInspection.cc` |
+| `BTS_GPU_DENSE_ORACLE` | native/harness, native/host | `WarpDemo.cc`, `WarpGeometryDemo.cc`, `MaterialInspectionDiagnostics.inc` |
 | `BTS_GPU_EARLY_PROJECT_TEST_MESH` | native/host, native/tests | `WorkspaceMenus.inc`, `MainViewport.inc`, `GpuProgramWarmupDiagnostic.hh` |
 | `BTS_GPU_FILL_COVERAGE_TEST` | native/harness | `GpuLayerPreviewSelfTest.inc` |
-| `BTS_GPU_FILL_DETAILS` | native/host | `MaterialInspection.cc` |
+| `BTS_GPU_FILL_DETAILS` | native/host | `MaterialInspectionSources.inc` |
 | `BTS_GPU_NEIGHBORHOOD_FILTER_TEST` | native/harness | `ViewportHeadlessDemo.cc` |
 | `BTS_GPU_PHASE1_BENCHMARKS` | native/tests | `GpuBakePhaseOneTest.hh` |
 | `BTS_GPU_PHASE1_GPU` | native/tests | `GpuBakePhaseOneTest.hh` |
@@ -239,7 +239,7 @@ leaves the release build.
 | `BTS_NATIVE_TREE_LEGACY` | native/harness | `NativeMaterialTreeIsolationTest.inc` |
 | `BTS_NATIVE_WORLD_NORMAL_COLD` | native/harness | `NativeWorldNormalDemo.hh` |
 | `BTS_NATIVE_WORLD_NORMAL_FIXTURE` | native/harness | `NativeWorldNormalDemo.hh` |
-| `BTS_NATIVE_WORLD_NORMAL_UI` | native/harness, native/host | `GuiFixDemo.cc`, `BlenderHost.cc`, `MaterialInspection.cc`, `NativeVectorMappingState.inc` |
+| `BTS_NATIVE_WORLD_NORMAL_UI` | native/harness, native/host | `GuiFixDemo.cc`, `BlenderHost.cc`, `MaterialInspectionNative.inc`, `NativeVectorMappingState.inc` |
 | `BTS_NO_BACKGROUND_GPU` | native/host | `UserSessionGuard.hh` |
 | `BTS_NUMERIC_LOCALE_DEMO` | native/harness | `GuiFixDemo.cc` |
 | `BTS_OPENPBR_DEFERRED_DEMO` | native/harness | `OpenPbrImagesDemo.hh` |
@@ -376,7 +376,7 @@ leaves the release build.
 | `BTS_VERIFY_ASYNC_SAVE` | native/host | `WorkspaceProject.inc` |
 | `BTS_VERIFY_CYCLES_LIVE` | native/host | `NativeCyclesImages.cc` |
 | `BTS_VERIFY_GPU_STACK` | native/harness, native/host, native/tests | `AdjustmentPaintColdProof.hh`, `NativeMaterialProjectionColdProof.hh`, `SmartMaskNativeProof.cc`, `GpuLayerPreview.cc` and 2 more |
-| `BTS_VERIFY_GPU_UNIFORM` | native/host | `MaterialInspection.cc` |
+| `BTS_VERIFY_GPU_UNIFORM` | native/host | `MaterialInspectionSources.inc` |
 | `BTS_VERIFY_HOSTED_EEVEE_GENERATED_SOURCE` | native/harness | `ViewportHeadlessDemo.cc` |
 | `BTS_VERIFY_HOSTED_EEVEE_IMAGE_LIFETIME` | native/harness | `ViewportHeadlessDemo.cc` |
 | `BTS_VERIFY_HOSTED_GPUPASS_READINESS` | native/harness | `ViewportHeadlessDemo.cc` |

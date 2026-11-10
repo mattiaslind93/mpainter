@@ -42,6 +42,27 @@ def main_source(root):
     return text
 
 
+def with_sections(root, rel):
+    """rel's text with every `#include "Name.inc"` it holds replaced by that file, recursively.
+    A big file such as native/host/MaterialInspection.cc keeps its code in .inc sections it
+    includes in place; verifiers that read the file's code as text read this instead."""
+    root = Path(root)
+    found = {}
+    for folder in ("native/host", "native/harness"):
+        for path in (root / folder).rglob("*.inc"):
+            found.setdefault(path.name, []).append(path)
+
+    def expand(text, depth=0):
+        def replace(match):
+            paths = found.get(match.group(1), [])
+            if len(paths) != 1 or depth > 8:
+                return match.group(0)
+            return expand(paths[0].read_text(), depth + 1)
+        return re.sub(r'^#include "([A-Za-z0-9_]+\.inc)"\n', replace, text, flags=re.M)
+
+    return expand((root / rel).read_text())
+
+
 def compact(text):
     """text without any whitespace, so a needle matches however clang-format lays the code out.
     Write needles without spaces too: 'const auto save_document=' becomes 'constautosave_document='."""

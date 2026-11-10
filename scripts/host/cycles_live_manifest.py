@@ -5,6 +5,12 @@ import json
 import shutil
 import subprocess
 from pathlib import Path
+import importlib.util as _importlib_util
+
+_spec = _importlib_util.spec_from_file_location("bts_main_source", Path(__file__).with_name("main_source.py"))
+_main_source = _importlib_util.module_from_spec(_spec)
+_spec.loader.exec_module(_main_source)
+SESSION_FILES = _main_source.SESSION_FILES
 
 
 def sha256(path):
@@ -20,6 +26,10 @@ def required_sources(mode):
         "main.cc", "BlenderHost.cc", "MaterialInspection.cc", "MaterialInspection.hh",
         "NativeCyclesImages.cc", "NativeCyclesImages.hh", "NativeCyclesImageCache.hh",
         "NativeCyclesPublication.hh")}
+    # main.cc and MaterialInspection.cc keep their code in .inc sections they include in place
+    # (main_source.py, with_sections); a run built from older sections is stale too.
+    core |= set(SESSION_FILES) | {"native/host/materials/native/MaterialInspection" + name + ".inc" for name in (
+        "Images", "Impl", "Scene", "Update", "Diagnostics", "Pixels", "Native", "Sources")}
     if mode == "displacement":
         drivers = ("cycles_live_displacement_main.cc", "cycles_live_displacement_artist_test.cc",
                    "CyclesLiveDisplacementArtist.hh", "CyclesLiveDisplacementProbe.hh", "CyclesLiveDisplacementProbe.cc")

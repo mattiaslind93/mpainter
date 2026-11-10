@@ -33,7 +33,8 @@ def verify_interactive_brush_transport(source, label='main.cc'):
 
 file_allowlist = {'NativeCompositeJob.cc', 'NativeCompositeJob.hh', 'TextureExport.cc', 'MeshExport.cc'}
 function_allowlist = {
-    'MaterialInspection.cc': ['MaterialInspection::copy_pixels(', 'MaterialInspection::verify_gpu_pixels('],
+    # Read-back diagnostics, a section MaterialInspection.cc includes.
+    'MaterialInspectionDiagnostics.inc': ['MaterialInspection::copy_pixels(', 'MaterialInspection::verify_gpu_pixels('],
     # The GPU stack oracle; GpuLayerPreview.cc includes it from the harness.
     'GpuLayerPreviewSelfTest.inc': ['GpuLayerPreview::self_test('],
 }
@@ -57,7 +58,7 @@ for path in [*host.rglob('*'), *(root / 'native/harness').rglob('*')]:
         assert path.name in file_allowlist or path.name.endswith('CpuDemo.cc') or any(a < call.start() < b for a, b in allowed), f'CPU composite outside explicit export/diagnostic: {path.name}:{source.count(chr(10), 0, call.start()) + 1}'
 import sys
 sys.path.insert(0, str(root / 'scripts/host'))
-from main_source import main_source
+from main_source import compact, main_source, with_sections
 verify_interactive_brush_transport(main_source(root))
 # Persistence is no exception to the GPU rule.
 code = masked((host / 'BlenderHost.cc').read_text())
@@ -66,8 +67,9 @@ for name in ('BlenderHost::begin_save_project(', 'BlenderHost::poll_save_project
     assert 'queue_composite(' not in code[a:b] and 'TextureDocument::composite(' not in code[a:b]
 assert 'reason=save-cache' not in (host / 'BlenderHost.cc').read_text()
 assert 'GpuPersistenceScope gpu_only' in (host / 'ProjectIO.cc').read_text(), 'Save worker must reject unhandled CPU authoring recipes'
-assert 'if(cpu_paint_evaluation_forbidden)throw' in (host / 'PaintPixels.cc').read_text()
-inspection = masked((host / 'MaterialInspection.cc').read_text())
+assert 'if(cpu_paint_evaluation_forbidden)throw' in compact((host / 'PaintPixels.cc').read_text())
+# MaterialInspection.cc keeps its code in .inc sections it includes in place.
+inspection = masked(with_sections(root, 'native/host/MaterialInspection.cc'))
 a, b = body(inspection, inspection.index('MaterialInspection::update_pixels('))
 assert 'composite_pixel' not in inspection[a:b] and 'padding->apply(' not in inspection[a:b], 'Native image allocation must not contain a CPU compositor/padding fallback'
 a, b = body(inspection, inspection.index('MaterialInspection::preview_uniform('))
