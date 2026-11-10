@@ -5,7 +5,8 @@ How `native/` is organised while the restructure plan's phases 4 and 5 are under
 | Folder | What lives there |
 |---|---|
 | `native/host/` | The application, compiled into `bts-host`. Files not yet assigned to a domain stay at the top level. |
-| `native/host/<domain>/` | Domain folders so far: `app/`, `assets/`, `baking/`, `diagnostics/`, `fill/`, `gpu/`, `io/`, `layers/`, `materials/layering/`, `materials/native/`, `materials/openpbr/`, `painting/`, `persistence/`, `platform/`, `python/`, `ui/dialogs/`, `ui/panels/`, `ui/widgets/`, `viewport/`. Still to come from the plan: `blender/`, `document/`, `spsm-import/`, `ui/shell/`, `ui/theme/`, `materials/common/`. |
+| `native/host/<domain>/` | Domain folders so far: `app/`, `assets/`, `baking/`, `blender/`, `diagnostics/`, `fill/`, `gpu/`, `io/`, `layers/`, `materials/layering/`, `materials/native/`, `materials/openpbr/`, `painting/`, `persistence/`, `platform/`, `python/`, `ui/dialogs/`, `ui/panels/`, `ui/widgets/`, `viewport/`. Still to come from the plan: `document/`, `spsm-import/`, `ui/shell/`, `ui/theme/`, `materials/common/`. |
+| `native/host/blender/` | The only folder allowed to include Blender headers (plan rule 7). Top-level files that include them move here in batches; `mp check`'s `blender-boundary` ratchet counts the files still outside. Files already in a domain folder keep their Blender includes until those are wrapped. |
 | `native/host/openpbr/` | Vendored OpenPBR resources (Apache-2.0), not our code. |
 | `native/harness/` | Test, demo and proof code (`*Demo`, `*Test`, `*Proof`, `*Fixture`, `*Witness`, ...). Still compiled into `bts-host`, because `main()` calls it. |
 | `native/tests/` | Test programs and their fixtures. |
