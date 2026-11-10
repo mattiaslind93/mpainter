@@ -38,6 +38,12 @@ inline std::optional<int> run_pre_host_test(const QCommandLineParser &parser)
   }
   if(parser.isSet("brush-presets-demo")){if(parser.isSet("gui-fix-demo")||parser.isSet("material-layering-demo")){qCritical("Choose one diagnostic actor");return 2;}qputenv("BTS_BO_PRESET_DEMO",parser.value("brush-presets-demo").toUtf8());}
   if(parser.isSet("material-layering-demo")&&parser.isSet("gui-fix-demo")){qCritical("Choose one diagnostic actor");return 2;}
+  // Two actor demos drive controls that a companion switch registers in main(): the shaderball
+  // demo saves through guiSkewSave (BTS_SKEW_DEMO), the Poly Haven demo reads guiBjSnapshot
+  // (BTS_BJ_PROJECTION_UI). Their scripts always set both; imply the companion here, so a run
+  // with only the demo switch does the same thing instead of a qFatal on a missing control.
+  if(qEnvironmentVariableIsSet("BTS_SHADERBALL_DEMO")&&!qEnvironmentVariableIsSet("BTS_SKEW_DEMO"))qputenv("BTS_SKEW_DEMO","1");
+  if(qEnvironmentVariableIsSet("BTS_POLYHAVEN_DEMO")&&!qEnvironmentVariableIsSet("BTS_BJ_PROJECTION_UI"))qputenv("BTS_BJ_PROJECTION_UI","1");
   if(parser.isSet("cpu-asset-dragdrop-test"))return bts::run_asset_workspace_drop_test(parser.value("cpu-asset-dragdrop-test"));
   if(parser.isSet("cpu-render-status-test"))return bts::run_render_status_test();
   if(parser.isSet("cpu-workspace-shutdown-test"))return bts::run_workspace_shutdown_test();
