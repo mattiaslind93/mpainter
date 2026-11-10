@@ -8,7 +8,7 @@ The restructure plan (phase 4) moves this register to `native/harness/` once the
 leaves the release build.
 
 - Variables: 372
-- Read only outside `native/host` (harness and tests): 274
+- Read only outside `native/host` (harness and tests): 279
 
 | Variable | Read in | Files |
 |---|---|---|
@@ -140,7 +140,7 @@ leaves the release build.
 | `BTS_GPU_BRUSH_AUTHORING` | native/host | `WorkspaceViewport.inc` |
 | `BTS_GPU_DENSE_ORACLE` | native/harness, native/host | `WarpDemo.cc`, `WarpGeometryDemo.cc`, `MaterialInspection.cc` |
 | `BTS_GPU_EARLY_PROJECT_TEST_MESH` | native/host, native/tests | `WorkspaceMenus.inc`, `MainViewport.inc`, `GpuProgramWarmupDiagnostic.hh` |
-| `BTS_GPU_FILL_COVERAGE_TEST` | native/host | `GpuLayerPreview.cc` |
+| `BTS_GPU_FILL_COVERAGE_TEST` | native/harness | `GpuLayerPreviewSelfTest.inc` |
 | `BTS_GPU_FILL_DETAILS` | native/host | `MaterialInspection.cc` |
 | `BTS_GPU_NEIGHBORHOOD_FILTER_TEST` | native/harness | `ViewportHeadlessDemo.cc` |
 | `BTS_GPU_PHASE1_BENCHMARKS` | native/tests | `GpuBakePhaseOneTest.hh` |
@@ -153,7 +153,7 @@ leaves the release build.
 | `BTS_GPU_STACK_DISABLE` | native/host | `GpuLayerPreview.cc` |
 | `BTS_GPU_STORAGE_STAGING` | native/host | `BlenderHost.cc` |
 | `BTS_GPU_UNIFORM_DEMO` | native/harness | `PerformanceDemo.cc` |
-| `BTS_GPU_WARP_TIMING` | native/host | `GpuLayerPreview.cc` |
+| `BTS_GPU_WARP_TIMING` | native/harness | `GpuLayerPreviewSelfTest.inc` |
 | `BTS_GUI_PERFORMANCE` | native/harness | `GuiFixDemo.cc` |
 | `BTS_HARD_UNWRAP_DEMO` | native/harness, native/host | `HardSurfaceDemo.cc`, `WorkspaceAutomation.inc`, `PythonConsole.cc` |
 | `BTS_HEADLESS_WORKSPACE` | native/harness, native/host, native/tests | `PainterWorkflowDemo.hh`, `WorkspaceSession.inc`, `MainViewport.inc`, `GpuProgramWarmupDiagnostic.hh` |
@@ -176,7 +176,7 @@ leaves the release build.
 | `BTS_LIGHTING_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_MASK_FILL_GPU_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_MASK_FILL_IMAGE` | native/harness | `GuiFixDemo.cc` |
-| `BTS_MASK_FILL_UI_TEST` | native/host | `WorkspaceShell.cc` |
+| `BTS_MASK_FILL_UI_TEST` | native/harness | `AcPanelCapture.inc` |
 | `BTS_MASK_PRESET_LARGE_TEST` | native/tests | `mask_preset_test.cc` |
 | `BTS_MATERIALX_BASE` | native/harness | `OpenPbrExportCpuTest.cc` |
 | `BTS_MATERIAL_FILTER_MESH` | native/host | `WorkspaceSession.inc` |
@@ -317,7 +317,7 @@ leaves the release build.
 | `BTS_SESSION_PROFILE` | native/host | `Performance.hh` |
 | `BTS_SHADERBALL_DEMO` | native/harness | `GuiFixDemo.cc`, `HarnessDispatch.hh`, `SessionDemoActions.inc` |
 | `BTS_SHADER_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
-| `BTS_SHELF_NAV_TEST` | native/host | `WorkspaceShell.cc` |
+| `BTS_SHELF_NAV_TEST` | native/harness | `AcPanelCapture.inc` |
 | `BTS_SIGNED_DISPLACEMENT_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_SKEW_DEMO` | native/harness | `GuiFixDemo.cc`, `HarnessDispatch.hh`, `SessionDemoActions.inc` |
 | `BTS_SKEW_HIGH_SOURCE` | native/harness | `AutoBakeDemo.cc`, `SkewDemo.cc` |
@@ -381,6 +381,6 @@ leaves the release build.
 | `BTS_VERIFY_HOSTED_EEVEE_IMAGE_LIFETIME` | native/harness | `ViewportHeadlessDemo.cc` |
 | `BTS_VERIFY_HOSTED_GPUPASS_READINESS` | native/harness | `ViewportHeadlessDemo.cc` |
 | `BTS_VERIFY_HOSTED_SHADER_WORKERS` | native/harness | `ViewportHeadlessDemo.cc` |
-| `BTS_VERIFY_SHARED_TEXTURE` | native/host | `GpuLayerPreview.cc` |
+| `BTS_VERIFY_SHARED_TEXTURE` | native/harness | `GpuLayerPreviewSelfTest.inc` |
 | `BTS_WARP_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_WARP_GEOMETRY_DEMO` | native/harness, native/host | `SessionDemoActions.inc`, `WarpGeometryDemo.cc`, `WorkspaceAutomation.inc`, `PythonConsole.cc` |
