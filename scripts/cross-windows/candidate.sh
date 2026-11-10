@@ -22,6 +22,14 @@ case "${1:-}" in
       { echo "package.py packages HEAD; check out $ref first" >&2; exit 1; }
     trap 'echo "CANDIDATE_EXIT rc=$? $(date -Is)"' EXIT
     echo "CANDIDATE_START $ref jobs=$MP_WIN_JOBS $(date -Is)"
+    # A workspace stripped to its runtime cannot be rebuilt here; prepare-source.sh
+    # re-fetches the Blender tree and Windows libraries over the network.
+    missing=()
+    for input in blender lib-windows_x64 mpainter-source dependency-source; do
+      [[ -d "$MP_WIN_WORK/build/windows/$input" ]] || missing+=("build/windows/$input")
+    done
+    ((${#missing[@]} == 0)) ||
+      { echo "Missing build inputs: ${missing[*]}; run bootstrap.sh and prepare-source.sh first" >&2; exit 1; }
     version=$(sed -n 's/^version = "\(.*\)"$/\1/p' "$repo/pyproject.toml")
     materials=$(git -C "$repo" ls-tree -r --name-only "$ref" assets/materials | wc -l)
     python3 "$MP_WIN_SCRIPTS/snapshot-source.py" --ref "$ref"
