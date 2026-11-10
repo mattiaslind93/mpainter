@@ -7,11 +7,91 @@
 #include <cassert>
 #include <iostream>
 using namespace bts;
-int main(int argc,char **argv){QCoreApplication app(argc,argv);QTemporaryDir dir;assert(dir.isValid());AssetCatalog catalog(dir.path());int stock=0;for(const auto &a:catalog.assets())if(a.brush_preset){++stock;assert(!a.bytes.isEmpty());assert(read_brush_preset(a.bytes).brush.spacing==a.brush_preset->spacing);}assert(stock==9);
- StudioAsset a;a.scope=AssetScope::User;a.name="Own brush";a.filename="own.btsbrush";a.usages={"brush"};BrushSettings b;b.lazy_mouse=true;b.lazy_distance=17;b.mask_value=.23;auto alpha=std::make_shared<AlphaBitmap>();alpha->width=3;alpha->height=2;alpha->name="custom α";alpha->pixels={0,.15f,.33f,.51f,.84f,1};b.alpha.kind=AlphaKind::Bitmap;b.alpha.bitmap=alpha;a.bytes=write_brush_preset({a.name,b});
- catalog.add_prepared(AssetCatalog::prepare_user(a,dir.path()));const auto get=[&](const AssetCatalog &c,const QUuid &id){for(const auto &v:c.assets())if(v.id==id)return v;throw std::runtime_error("Missing fixture asset");};a=get(catalog,a.id);assert(a.brush_preset&&a.brush_preset->alpha.bitmap->pixels==alpha->pixels);AssetCatalog cold(dir.path());cold.load_user_library();assert(get(cold,a.id).bytes==a.bytes&&get(cold,a.id).brush_preset->lazy_distance==17);
- auto pending=a;pending.bytes=write_brush_preset({a.name,BrushSettings{}});auto token=AssetCatalog::prepare_user(pending,dir.path());catalog.rename(a.id,"Renamed brush");assert(!catalog.replace_prepared(std::move(token),a.hash(),a.revision));auto renamed=get(catalog,a.id);assert(renamed.name=="Renamed brush"&&renamed.bytes==a.bytes&&renamed.revision!=a.revision);
- const auto retained=catalog.retain_project(renamed);auto update=renamed;auto changed=*renamed.brush_preset;changed.flow=31;update.bytes=write_brush_preset({renamed.name,changed});assert(catalog.replace_prepared(AssetCatalog::prepare_user(update,dir.path()),renamed.hash(),renamed.revision));auto updated=get(catalog,a.id);assert(updated.brush_preset->flow==31&&get(catalog,retained).brush_preset->flow==b.flow);assert(!catalog.remove_user(a.id,renamed.hash(),renamed.revision));
- AssetCatalog restarted(dir.path());restarted.load_user_library();assert(get(restarted,a.id).name=="Renamed brush"&&get(restarted,a.id).brush_preset->flow==31);assert(catalog.remove_user(a.id,updated.hash(),updated.revision));AssetCatalog deleted(dir.path());deleted.load_user_library();for(const auto &v:deleted.assets())assert(v.id!=a.id);assert(get(catalog,retained).bytes==a.bytes);const auto packed=catalog.project_assets();AssetCatalog project("unused");project.replace_project(packed);assert(get(project,retained).brush_preset->alpha.bitmap->name==alpha->name&&get(project,retained).brush_preset->alpha.bitmap->pixels==alpha->pixels);
- bool rejected=false;const auto builtin=catalog.assets().front();try{catalog.remove_user(builtin.id,builtin.hash(),builtin.revision);}catch(const std::invalid_argument &){rejected=true;}assert(rejected);std::cout<<"Brush catalog: nine actual defaults; User restart/update/rename/stale completion/delete; immutable packed snapshot and exact alpha PASS\n";
+int main(int argc, char **argv)
+{
+  QCoreApplication app(argc, argv);
+  QTemporaryDir dir;
+  assert(dir.isValid());
+  AssetCatalog catalog(dir.path());
+  int stock = 0;
+  for (const auto &a : catalog.assets())
+    if (a.brush_preset) {
+      ++stock;
+      assert(!a.bytes.isEmpty());
+      assert(read_brush_preset(a.bytes).brush.spacing == a.brush_preset->spacing);
+    }
+  assert(stock == 9);
+  StudioAsset a;
+  a.scope = AssetScope::User;
+  a.name = "Own brush";
+  a.filename = "own.btsbrush";
+  a.usages = {"brush"};
+  BrushSettings b;
+  b.lazy_mouse = true;
+  b.lazy_distance = 17;
+  b.mask_value = .23;
+  auto alpha = std::make_shared<AlphaBitmap>();
+  alpha->width = 3;
+  alpha->height = 2;
+  alpha->name = "custom α";
+  alpha->pixels = {0, .15f, .33f, .51f, .84f, 1};
+  b.alpha.kind = AlphaKind::Bitmap;
+  b.alpha.bitmap = alpha;
+  a.bytes = write_brush_preset({a.name, b});
+  catalog.add_prepared(AssetCatalog::prepare_user(a, dir.path()));
+  const auto get = [&](const AssetCatalog &c, const QUuid &id) {
+    for (const auto &v : c.assets())
+      if (v.id == id)
+        return v;
+    throw std::runtime_error("Missing fixture asset");
+  };
+  a = get(catalog, a.id);
+  assert(a.brush_preset && a.brush_preset->alpha.bitmap->pixels == alpha->pixels);
+  AssetCatalog cold(dir.path());
+  cold.load_user_library();
+  assert(get(cold, a.id).bytes == a.bytes && get(cold, a.id).brush_preset->lazy_distance == 17);
+  auto pending = a;
+  pending.bytes = write_brush_preset({a.name, BrushSettings{}});
+  auto token = AssetCatalog::prepare_user(pending, dir.path());
+  catalog.rename(a.id, "Renamed brush");
+  assert(!catalog.replace_prepared(std::move(token), a.hash(), a.revision));
+  auto renamed = get(catalog, a.id);
+  assert(renamed.name == "Renamed brush" && renamed.bytes == a.bytes &&
+         renamed.revision != a.revision);
+  const auto retained = catalog.retain_project(renamed);
+  auto update = renamed;
+  auto changed = *renamed.brush_preset;
+  changed.flow = 31;
+  update.bytes = write_brush_preset({renamed.name, changed});
+  assert(catalog.replace_prepared(
+      AssetCatalog::prepare_user(update, dir.path()), renamed.hash(), renamed.revision));
+  auto updated = get(catalog, a.id);
+  assert(updated.brush_preset->flow == 31 && get(catalog, retained).brush_preset->flow == b.flow);
+  assert(!catalog.remove_user(a.id, renamed.hash(), renamed.revision));
+  AssetCatalog restarted(dir.path());
+  restarted.load_user_library();
+  assert(get(restarted, a.id).name == "Renamed brush" &&
+         get(restarted, a.id).brush_preset->flow == 31);
+  assert(catalog.remove_user(a.id, updated.hash(), updated.revision));
+  AssetCatalog deleted(dir.path());
+  deleted.load_user_library();
+  for (const auto &v : deleted.assets())
+    assert(v.id != a.id);
+  assert(get(catalog, retained).bytes == a.bytes);
+  const auto packed = catalog.project_assets();
+  AssetCatalog project("unused");
+  project.replace_project(packed);
+  assert(get(project, retained).brush_preset->alpha.bitmap->name == alpha->name &&
+         get(project, retained).brush_preset->alpha.bitmap->pixels == alpha->pixels);
+  bool rejected = false;
+  const auto builtin = catalog.assets().front();
+  try {
+    catalog.remove_user(builtin.id, builtin.hash(), builtin.revision);
+  }
+  catch (const std::invalid_argument &) {
+    rejected = true;
+  }
+  assert(rejected);
+  std::cout
+      << "Brush catalog: nine actual defaults; User restart/update/rename/stale completion/delete; immutable packed snapshot and exact alpha PASS\n";
 }

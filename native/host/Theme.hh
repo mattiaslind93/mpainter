@@ -88,8 +88,14 @@ inline constexpr int RemoveColumnPx = 28;
 // and cost two lines per colour once its caption is counted.
 inline constexpr int SwatchWidthPx = 44;
 inline constexpr int SwatchHeightPx = 20;
-inline QColor alpha(const char *token, int opacity) { QColor result(token); result.setAlpha(opacity); return result; }
-inline QString qss(QString source) {
+inline QColor alpha(const char *token, int opacity)
+{
+  QColor result(token);
+  result.setAlpha(opacity);
+  return result;
+}
+inline QString qss(QString source)
+{
   source.replace("@Viewport@", QLatin1String(Viewport));
   source.replace("@ViewportEdge@", QLatin1String(ViewportEdge));
   source.replace("@Tool@", QLatin1String(Tool));
@@ -140,4 +146,4 @@ inline QString qss(QString source) {
 }
 QPalette palette();
 void apply(QApplication &app);
-} // namespace bts::theme
+}  // namespace bts::theme

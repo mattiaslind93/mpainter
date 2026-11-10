@@ -3,45 +3,309 @@
 // its pinned four formulas, then the separate authored POINT transform.
 QJsonObject upstream_report;
 {
- QJsonArray results;std::uint64_t identity_components=0,analytic_components=0;double maximum=0;
- const auto rotate=[](std::array<double,3> value,const auto &rotation,bool inverse=false){for(int n=0;n<3;++n){const int axis=inverse?2-n:n,a=(axis+1)%3,b=(axis+2)%3;const double angle=float(rotation[axis])*(inverse?-1 : 1),cs=std::cos(angle),sn=std::sin(angle),x=value[a],y=value[b];value[a]=cs*x-sn*y;value[b]=sn*x+cs*y;}return value;};
- const auto original_map=[&](std::array<double,3> value,int mode,bool chained,bool zero_scale){
-  if(chained){for(int c=0;c<3;++c)value[c]*=std::array{.8f,1.2f,.5f}[c];value=rotate(value,std::array{-.07f,.13f,-.17f});for(int c=0;c<3;++c)value[c]+=std::array{-.1f,.3f,-.2f}[c];}
-  auto scale=chained?native_mapping_test::linked_scale:native_mapping_test::original_scale;const auto location=chained?native_mapping_test::linked_location:native_mapping_test::original_location;const auto rotation=chained?native_mapping_test::linked_rotation:native_mapping_test::original_rotation;if(zero_scale)scale[2]=0;
-  if(mode==NODE_MAPPING_TYPE_TEXTURE){for(int c=0;c<3;++c)value[c]-=location[c];value=rotate(value,rotation,true);for(int c=0;c<3;++c)value[c]=scale[c]==0?0:value[c]/scale[c];}
-  else{for(int c=0;c<3;++c)value[c]=mode==NODE_MAPPING_TYPE_NORMAL?(scale[c]==0?0:value[c]/scale[c]):value[c]*scale[c];value=rotate(value,rotation);if(mode==NODE_MAPPING_TYPE_POINT)for(int c=0;c<3;++c)value[c]+=location[c];else if(mode==NODE_MAPPING_TYPE_NORMAL){double square=0;for(double v:value)square+=v*v;const double length=std::sqrt(square);require(length>1e-12,"NORMAL analytic fixture must have a finite nonzero pre-normalize vector");for(auto &v:value)v/=length;}}
-  return value;
- };
- for(const char *basis:{"UV","Generated","Object"})for(int mode=NODE_MAPPING_TYPE_POINT;mode<=NODE_MAPPING_TYPE_NORMAL;++mode)for(int linked=0;linked<(std::string_view(basis)=="UV"?2:1);++linked){
-  const bool zero_scale=mode==NODE_MAPPING_TYPE_TEXTURE||mode==NODE_MAPPING_TYPE_NORMAL;
-  auto adapted=native_mapping_test::upstream_fixture(basis,mode,linked,linked,zero_scale),plain=native_mapping_test::upstream_fixture(basis,mode,linked,linked,zero_scale);const auto retained=adapted.description;const auto metadata=native_material_description_json(retained);for(auto &p:plain.description.parameters)p.mapping=false;
-  std::atomic_bool cancel=false;auto graph=std::make_shared<NativeMaterialGraph>(std::move(adapted.owner),adapted.material,adapted.description,cancel);auto reference_graph=std::make_shared<NativeMaterialGraph>(std::move(plain.owner),plain.material,plain.description,cancel);NativeMaterialGpuLibrary library,reference;library.install("upstream-a","upstream",graph);library.alias("upstream-a","upstream-b");reference.install("unadapted","unadapted",reference_graph);
-  for(int channel:{0,2})for(int tile:{1001,1002,1011}){context.tile=tile;library.render("upstream-a",channel,retained,target.get(),context,{0,0,width,height});auto *actual=pixels();require(actual,"Upstream Mapping identity readback absent");const auto release=qScopeGuard([&]{MEM_delete(actual);});reference.render("unadapted",channel,plain.description,target.get(),context,{0,0,width,height});auto *expected=pixels();require(expected,"Original Mapping reference readback absent");const auto release_reference=qScopeGuard([&]{MEM_delete(expected);});for(int i=0;i<width*height*4;++i){require(actual[i]==expected[i],"Extra POINT identity changed original Mapping output");++identity_components;}}
-  const auto compilations=GPU_pass_global_compilation_count();auto first=retained,second=retained;first.parameters[0].mapping_transform={{-.4,.3,-.2},{.31,-.23,.47},{-1.5,.75,0}};first.parameters[1].mapping_transform={{.2,-.1,.8},{-.2,.4,-.1},{.4,-.5,1.3}};second.parameters[0].mapping_transform={{.1,-.2,.3},{-.14,.26,-.32},{.7,1.2,-.6}};
-  require(library.signature("upstream-a",2,second)==library.signature("upstream-a",2,retained),"Extra POINT edit invalidated independent input");
-  for(int pass=0;pass<4;++pass)for(int channel:{0,2})for(int tile:{1001,1002,1011}){context.tile=tile;const auto &instance=pass%2?second:first;library.render(pass%2?"upstream-b":"upstream-a",channel,instance,target.get(),context,{0,0,width,height});auto *actual=pixels();require(actual,"Upstream Mapping authored readback absent");const auto release=qScopeGuard([&]{MEM_delete(actual);});for(int y=0;y<height;++y)for(int x=0;x<width;++x){std::array<double,3> value{float((x+.5)/width)+(tile-1001)%10,float((y+.5)/height)+(tile-1001)/10,0};if(std::string_view(basis)!="UV"){const auto &owner=x<width/2?mapping_owner_a:mapping_owner_b;for(int r=0;r<3;++r){float local=owner.world_to_object[12+r];for(int c=0;c<3;++c)local+=owner.world_to_object[c*4+r]*points[y*width+x].position[c];value[r]=std::string_view(basis)=="Generated"?(local-owner.bounds_min[r])/std::max(1e-20f,owner.bounds_max[r]-owner.bounds_min[r]):local;}}value=affine(instance.parameters[channel==0?0:1].mapping_transform,original_map(value,mode,linked,zero_scale));for(int c=0;c<4;++c){const double expected=!points[y*width+x].valid?0:c==3?1:channel==0?value[c]:value[0];const double error=std::abs(actual[(y*width+x)*4+c]-expected);maximum=std::max(maximum,error);require(std::isfinite(actual[(y*width+x)*4+c])&&error<3e-5,"Retained Mapping + extra POINT differs from independent four-mode oracle");++analytic_components;}}}
-  require(GPU_pass_global_compilation_count()==compilations&&library.statistics().sources==1&&library.statistics().resources==2&&library.statistics().programs==2,"Extra POINT instance edits recompiled/duplicated original Mapping source");require(graph->original_inputs_preserved&&native_material_description_json(retained)==metadata,"Extra POINT changed retained Mapping interface");
-  results.append(QJsonObject{{"basis",basis},{"original_mode",mode},{"linked_location_rotation_scale",bool(linked)},{"original_two_mapping_chain",bool(linked)},{"original_safe_zero_scale",zero_scale},{"instances",2},{"owners",2},{"inputs",2},{"tiles",QJsonArray{1001,1002,1011}}});
- }
- // Node mute is a native internal bypass, unlike an ignored target link.
- // Identity must match the untouched native graph; extra POINT follows bypass.
- std::uint64_t muted_identity=0,muted_authored=0;double muted_maximum=0;
- {
-  auto adapted=native_mapping_test::upstream_fixture("UV",NODE_MAPPING_TYPE_POINT),plain=native_mapping_test::upstream_fixture("UV",NODE_MAPPING_TYPE_POINT);
-  const auto mute=[](auto &fixture){for(auto &node:fixture.material->nodetree->nodes)if(STREQ(node.idname,"ShaderNodeMapping"))node.flag|=NODE_MUTED;BKE_ntree_update_after_single_tree_change(*fixture.owner,*fixture.material->nodetree);};mute(adapted);mute(plain);for(auto &p:plain.description.parameters)p.mapping=false;
-  std::atomic_bool cancel=false;auto graph=std::make_shared<NativeMaterialGraph>(std::move(adapted.owner),adapted.material,adapted.description,cancel),reference_graph=std::make_shared<NativeMaterialGraph>(std::move(plain.owner),plain.material,plain.description,cancel);NativeMaterialGpuLibrary library,reference;library.install("muted","muted",graph);reference.install("original","original",reference_graph);context.tile=1002;
-  for(int channel:{0,2}){
-   library.render("muted",channel,adapted.description,target.get(),context,{0,0,width,height});auto *identity=pixels();require(identity,"Muted Mapping identity readback absent");const auto release=qScopeGuard([&]{MEM_delete(identity);});reference.render("original",channel,plain.description,target.get(),context,{0,0,width,height});auto *original=pixels();require(original,"Muted Mapping original readback absent");const auto release_original=qScopeGuard([&]{MEM_delete(original);});for(int i=0;i<width*height*4;++i){require(identity[i]==original[i],"Extra POINT identity changed native muted-node bypass");++muted_identity;}
-   auto authored=adapted.description;for(auto &p:authored.parameters)p.mapping_transform={{.2,-.3,.4},{.12,-.23,.34},{-.7,.8,1.1}};library.render("muted",channel,authored,target.get(),context,{0,0,width,height});auto *actual=pixels();require(actual,"Muted Mapping authored readback absent");const auto release_actual=qScopeGuard([&]{MEM_delete(actual);});for(int y=0;y<height;++y)for(int x=0;x<width;++x){const auto expected=affine(authored.parameters[channel==0?0:1].mapping_transform,std::array<double,3>{float((x+.5)/width)+1,float((y+.5)/height),0});for(int c=0;c<4;++c){const double value=!points[y*width+x].valid?0:c==3?1:channel==0?expected[c]:expected[0];const double error=std::abs(actual[(y*width+x)*4+c]-value);muted_maximum=std::max(muted_maximum,error);require(std::isfinite(actual[(y*width+x)*4+c])&&error<3e-5,"Extra POINT did not follow native muted Mapping bypass");++muted_authored;}}
+  QJsonArray results;
+  std::uint64_t identity_components = 0, analytic_components = 0;
+  double maximum = 0;
+  const auto rotate = [](std::array<double, 3> value, const auto &rotation, bool inverse = false) {
+    for (int n = 0; n < 3; ++n) {
+      const int axis = inverse ? 2 - n : n, a = (axis + 1) % 3, b = (axis + 2) % 3;
+      const double angle = float(rotation[axis]) * (inverse ? -1 : 1), cs = std::cos(angle),
+                   sn = std::sin(angle), x = value[a], y = value[b];
+      value[a] = cs * x - sn * y;
+      value[b] = sn * x + cs * y;
+    }
+    return value;
+  };
+  const auto original_map =
+      [&](std::array<double, 3> value, int mode, bool chained, bool zero_scale) {
+        if (chained) {
+          for (int c = 0; c < 3; ++c)
+            value[c] *= std::array{.8f, 1.2f, .5f}[c];
+          value = rotate(value, std::array{-.07f, .13f, -.17f});
+          for (int c = 0; c < 3; ++c)
+            value[c] += std::array{-.1f, .3f, -.2f}[c];
+        }
+        auto scale = chained ? native_mapping_test::linked_scale :
+                               native_mapping_test::original_scale;
+        const auto location = chained ? native_mapping_test::linked_location :
+                                        native_mapping_test::original_location;
+        const auto rotation = chained ? native_mapping_test::linked_rotation :
+                                        native_mapping_test::original_rotation;
+        if (zero_scale)
+          scale[2] = 0;
+        if (mode == NODE_MAPPING_TYPE_TEXTURE) {
+          for (int c = 0; c < 3; ++c)
+            value[c] -= location[c];
+          value = rotate(value, rotation, true);
+          for (int c = 0; c < 3; ++c)
+            value[c] = scale[c] == 0 ? 0 : value[c] / scale[c];
+        }
+        else {
+          for (int c = 0; c < 3; ++c)
+            value[c] = mode == NODE_MAPPING_TYPE_NORMAL ?
+                           (scale[c] == 0 ? 0 : value[c] / scale[c]) :
+                           value[c] * scale[c];
+          value = rotate(value, rotation);
+          if (mode == NODE_MAPPING_TYPE_POINT)
+            for (int c = 0; c < 3; ++c)
+              value[c] += location[c];
+          else if (mode == NODE_MAPPING_TYPE_NORMAL) {
+            double square = 0;
+            for (double v : value)
+              square += v * v;
+            const double length = std::sqrt(square);
+            require(length > 1e-12,
+                    "NORMAL analytic fixture must have a finite nonzero pre-normalize vector");
+            for (auto &v : value)
+              v /= length;
+          }
+        }
+        return value;
+      };
+  for (const char *basis : {"UV", "Generated", "Object"})
+    for (int mode = NODE_MAPPING_TYPE_POINT; mode <= NODE_MAPPING_TYPE_NORMAL; ++mode)
+      for (int linked = 0; linked < (std::string_view(basis) == "UV" ? 2 : 1); ++linked) {
+        const bool zero_scale = mode == NODE_MAPPING_TYPE_TEXTURE ||
+                                mode == NODE_MAPPING_TYPE_NORMAL;
+        auto adapted = native_mapping_test::upstream_fixture(
+                 basis, mode, linked, linked, zero_scale),
+             plain = native_mapping_test::upstream_fixture(
+                 basis, mode, linked, linked, zero_scale);
+        const auto retained = adapted.description;
+        const auto metadata = native_material_description_json(retained);
+        for (auto &p : plain.description.parameters)
+          p.mapping = false;
+        std::atomic_bool cancel = false;
+        auto graph = std::make_shared<NativeMaterialGraph>(
+            std::move(adapted.owner), adapted.material, adapted.description, cancel);
+        auto reference_graph = std::make_shared<NativeMaterialGraph>(
+            std::move(plain.owner), plain.material, plain.description, cancel);
+        NativeMaterialGpuLibrary library, reference;
+        library.install("upstream-a", "upstream", graph);
+        library.alias("upstream-a", "upstream-b");
+        reference.install("unadapted", "unadapted", reference_graph);
+        for (int channel : {0, 2})
+          for (int tile : {1001, 1002, 1011}) {
+            context.tile = tile;
+            library.render(
+                "upstream-a", channel, retained, target.get(), context, {0, 0, width, height});
+            auto *actual = pixels();
+            require(actual, "Upstream Mapping identity readback absent");
+            const auto release = qScopeGuard([&] { MEM_delete(actual); });
+            reference.render("unadapted",
+                             channel,
+                             plain.description,
+                             target.get(),
+                             context,
+                             {0, 0, width, height});
+            auto *expected = pixels();
+            require(expected, "Original Mapping reference readback absent");
+            const auto release_reference = qScopeGuard([&] { MEM_delete(expected); });
+            for (int i = 0; i < width * height * 4; ++i) {
+              require(actual[i] == expected[i],
+                      "Extra POINT identity changed original Mapping output");
+              ++identity_components;
+            }
+          }
+        const auto compilations = GPU_pass_global_compilation_count();
+        auto first = retained, second = retained;
+        first.parameters[0].mapping_transform = {{-.4, .3, -.2}, {.31, -.23, .47}, {-1.5, .75, 0}};
+        first.parameters[1].mapping_transform = {{.2, -.1, .8}, {-.2, .4, -.1}, {.4, -.5, 1.3}};
+        second.parameters[0].mapping_transform = {
+            {.1, -.2, .3}, {-.14, .26, -.32}, {.7, 1.2, -.6}};
+        require(library.signature("upstream-a", 2, second) ==
+                    library.signature("upstream-a", 2, retained),
+                "Extra POINT edit invalidated independent input");
+        for (int pass = 0; pass < 4; ++pass)
+          for (int channel : {0, 2})
+            for (int tile : {1001, 1002, 1011}) {
+              context.tile = tile;
+              const auto &instance = pass % 2 ? second : first;
+              library.render(pass % 2 ? "upstream-b" : "upstream-a",
+                             channel,
+                             instance,
+                             target.get(),
+                             context,
+                             {0, 0, width, height});
+              auto *actual = pixels();
+              require(actual, "Upstream Mapping authored readback absent");
+              const auto release = qScopeGuard([&] { MEM_delete(actual); });
+              for (int y = 0; y < height; ++y)
+                for (int x = 0; x < width; ++x) {
+                  std::array<double, 3> value{float((x + .5) / width) + (tile - 1001) % 10,
+                                              float((y + .5) / height) + (tile - 1001) / 10,
+                                              0};
+                  if (std::string_view(basis) != "UV") {
+                    const auto &owner = x < width / 2 ? mapping_owner_a : mapping_owner_b;
+                    for (int r = 0; r < 3; ++r) {
+                      float local = owner.world_to_object[12 + r];
+                      for (int c = 0; c < 3; ++c)
+                        local += owner.world_to_object[c * 4 + r] *
+                                 points[y * width + x].position[c];
+                      value[r] = std::string_view(basis) == "Generated" ?
+                                     (local - owner.bounds_min[r]) /
+                                         std::max(1e-20f,
+                                                  owner.bounds_max[r] - owner.bounds_min[r]) :
+                                     local;
+                    }
+                  }
+                  value = affine(instance.parameters[channel == 0 ? 0 : 1].mapping_transform,
+                                 original_map(value, mode, linked, zero_scale));
+                  for (int c = 0; c < 4; ++c) {
+                    const double expected = !points[y * width + x].valid ? 0 :
+                                            c == 3                       ? 1 :
+                                            channel == 0                 ? value[c] :
+                                                                           value[0];
+                    const double error = std::abs(actual[(y * width + x) * 4 + c] - expected);
+                    maximum = std::max(maximum, error);
+                    require(
+                        std::isfinite(actual[(y * width + x) * 4 + c]) && error < 3e-5,
+                        "Retained Mapping + extra POINT differs from independent four-mode oracle");
+                    ++analytic_components;
+                  }
+                }
+            }
+        require(GPU_pass_global_compilation_count() == compilations &&
+                    library.statistics().sources == 1 && library.statistics().resources == 2 &&
+                    library.statistics().programs == 2,
+                "Extra POINT instance edits recompiled/duplicated original Mapping source");
+        require(graph->original_inputs_preserved &&
+                    native_material_description_json(retained) == metadata,
+                "Extra POINT changed retained Mapping interface");
+        results.append(QJsonObject{{"basis", basis},
+                                   {"original_mode", mode},
+                                   {"linked_location_rotation_scale", bool(linked)},
+                                   {"original_two_mapping_chain", bool(linked)},
+                                   {"original_safe_zero_scale", zero_scale},
+                                   {"instances", 2},
+                                   {"owners", 2},
+                                   {"inputs", 2},
+                                   {"tiles", QJsonArray{1001, 1002, 1011}}});
+      }
+  // Node mute is a native internal bypass, unlike an ignored target link.
+  // Identity must match the untouched native graph; extra POINT follows bypass.
+  std::uint64_t muted_identity = 0, muted_authored = 0;
+  double muted_maximum = 0;
+  {
+    auto adapted = native_mapping_test::upstream_fixture("UV", NODE_MAPPING_TYPE_POINT),
+         plain = native_mapping_test::upstream_fixture("UV", NODE_MAPPING_TYPE_POINT);
+    const auto mute = [](auto &fixture) {
+      for (auto &node : fixture.material->nodetree->nodes)
+        if (STREQ(node.idname, "ShaderNodeMapping"))
+          node.flag |= NODE_MUTED;
+      BKE_ntree_update_after_single_tree_change(*fixture.owner, *fixture.material->nodetree);
+    };
+    mute(adapted);
+    mute(plain);
+    for (auto &p : plain.description.parameters)
+      p.mapping = false;
+    std::atomic_bool cancel = false;
+    auto graph = std::make_shared<NativeMaterialGraph>(
+             std::move(adapted.owner), adapted.material, adapted.description, cancel),
+         reference_graph = std::make_shared<NativeMaterialGraph>(
+             std::move(plain.owner), plain.material, plain.description, cancel);
+    NativeMaterialGpuLibrary library, reference;
+    library.install("muted", "muted", graph);
+    reference.install("original", "original", reference_graph);
+    context.tile = 1002;
+    for (int channel : {0, 2}) {
+      library.render(
+          "muted", channel, adapted.description, target.get(), context, {0, 0, width, height});
+      auto *identity = pixels();
+      require(identity, "Muted Mapping identity readback absent");
+      const auto release = qScopeGuard([&] { MEM_delete(identity); });
+      reference.render(
+          "original", channel, plain.description, target.get(), context, {0, 0, width, height});
+      auto *original = pixels();
+      require(original, "Muted Mapping original readback absent");
+      const auto release_original = qScopeGuard([&] { MEM_delete(original); });
+      for (int i = 0; i < width * height * 4; ++i) {
+        require(identity[i] == original[i],
+                "Extra POINT identity changed native muted-node bypass");
+        ++muted_identity;
+      }
+      auto authored = adapted.description;
+      for (auto &p : authored.parameters)
+        p.mapping_transform = {{.2, -.3, .4}, {.12, -.23, .34}, {-.7, .8, 1.1}};
+      library.render("muted", channel, authored, target.get(), context, {0, 0, width, height});
+      auto *actual = pixels();
+      require(actual, "Muted Mapping authored readback absent");
+      const auto release_actual = qScopeGuard([&] { MEM_delete(actual); });
+      for (int y = 0; y < height; ++y)
+        for (int x = 0; x < width; ++x) {
+          const auto expected = affine(
+              authored.parameters[channel == 0 ? 0 : 1].mapping_transform,
+              std::array<double, 3>{float((x + .5) / width) + 1, float((y + .5) / height), 0});
+          for (int c = 0; c < 4; ++c) {
+            const double value = !points[y * width + x].valid ? 0 :
+                                 c == 3                       ? 1 :
+                                 channel == 0                 ? expected[c] :
+                                                                expected[0];
+            const double error = std::abs(actual[(y * width + x) * 4 + c] - value);
+            muted_maximum = std::max(muted_maximum, error);
+            require(std::isfinite(actual[(y * width + x) * 4 + c]) && error < 3e-5,
+                    "Extra POINT did not follow native muted Mapping bypass");
+            ++muted_authored;
+          }
+        }
+    }
   }
- }
- std::uint64_t legacy_components=0;int legacy_cases=0;
- for(bool mapping:{false,true})for(bool inactive:{false,true}){
-  auto fixture=inactive?(mapping?native_mapping_test::upstream_fixture("UV",NODE_MAPPING_TYPE_POINT):native_mapping_test::fixture("UV")):native_mapping_test::unconsumed_fixture(mapping,false);
-  if(inactive)for(auto &node:fixture.material->nodetree->nodes)if(STREQ(node.idname,"ShaderNodeGroup"))native_mapping_test::socket(node,fixture.description.parameters[0].identifier.toUtf8().constData(),true).link->flag|=NODE_LINK_MUTED;
-  const auto original=fixture.description;auto legacy=original;legacy.parameters[0].mapping_transform.offset[0]=.37;const auto legacy_json=native_material_description_json(legacy);std::atomic_bool cancel=false;auto graph=std::make_shared<NativeMaterialGraph>(std::move(fixture.owner),fixture.material,fixture.description,cancel);NativeMaterialGpuLibrary library;library.install("legacy","legacy",graph);library.validate_mapping_edit("legacy",&legacy,legacy);context.tile=1001;
-  for(int channel:{0,2}){library.render("legacy",channel,original,target.get(),context,{0,0,width,height});auto *identity=pixels();require(identity,"Legacy no-op identity readback absent");const auto release=qScopeGuard([&]{MEM_delete(identity);});library.render("legacy",channel,legacy,target.get(),context,{0,0,width,height});auto *stored=pixels();require(stored,"Legacy no-op authored readback absent");const auto release_stored=qScopeGuard([&]{MEM_delete(stored);});for(int i=0;i<width*height*4;++i){require(identity[i]==stored[i],"Unchanged legacy inactive/unused transform changed original no-op output");++legacy_components;}}
-  require(native_material_description_json(legacy)==legacy_json&&native_material_description_json(read_native_material_description(legacy_json))==legacy_json,"Legacy schema3 no-op transform data was discarded");++legacy_cases;
- }
- upstream_report={{"cases",results},{"legacy_inactive_unused_cases",legacy_cases},{"legacy_exact_noop_components",qint64(legacy_components)},{"muted_node_exact_identity_components",qint64(muted_identity)},{"muted_node_analytic_components",qint64(muted_authored)},{"muted_node_maximum_error",muted_maximum},{"exact_identity_components",qint64(identity_components)},{"analytic_components",qint64(analytic_components)},{"maximum_error",maximum},{"fixed_bound",3e-5},{"shader_recompiles",0},{"original_modes_and_linked_inputs_preserved",true}};
+  std::uint64_t legacy_components = 0;
+  int legacy_cases = 0;
+  for (bool mapping : {false, true})
+    for (bool inactive : {false, true}) {
+      auto fixture = inactive ? (mapping ? native_mapping_test::upstream_fixture(
+                                               "UV", NODE_MAPPING_TYPE_POINT) :
+                                           native_mapping_test::fixture("UV")) :
+                                native_mapping_test::unconsumed_fixture(mapping, false);
+      if (inactive)
+        for (auto &node : fixture.material->nodetree->nodes)
+          if (STREQ(node.idname, "ShaderNodeGroup"))
+            native_mapping_test::socket(
+                node, fixture.description.parameters[0].identifier.toUtf8().constData(), true)
+                .link->flag |= NODE_LINK_MUTED;
+      const auto original = fixture.description;
+      auto legacy = original;
+      legacy.parameters[0].mapping_transform.offset[0] = .37;
+      const auto legacy_json = native_material_description_json(legacy);
+      std::atomic_bool cancel = false;
+      auto graph = std::make_shared<NativeMaterialGraph>(
+          std::move(fixture.owner), fixture.material, fixture.description, cancel);
+      NativeMaterialGpuLibrary library;
+      library.install("legacy", "legacy", graph);
+      library.validate_mapping_edit("legacy", &legacy, legacy);
+      context.tile = 1001;
+      for (int channel : {0, 2}) {
+        library.render("legacy", channel, original, target.get(), context, {0, 0, width, height});
+        auto *identity = pixels();
+        require(identity, "Legacy no-op identity readback absent");
+        const auto release = qScopeGuard([&] { MEM_delete(identity); });
+        library.render("legacy", channel, legacy, target.get(), context, {0, 0, width, height});
+        auto *stored = pixels();
+        require(stored, "Legacy no-op authored readback absent");
+        const auto release_stored = qScopeGuard([&] { MEM_delete(stored); });
+        for (int i = 0; i < width * height * 4; ++i) {
+          require(identity[i] == stored[i],
+                  "Unchanged legacy inactive/unused transform changed original no-op output");
+          ++legacy_components;
+        }
+      }
+      require(native_material_description_json(legacy) == legacy_json &&
+                  native_material_description_json(
+                      read_native_material_description(legacy_json)) == legacy_json,
+              "Legacy schema3 no-op transform data was discarded");
+      ++legacy_cases;
+    }
+  upstream_report = {{"cases", results},
+                     {"legacy_inactive_unused_cases", legacy_cases},
+                     {"legacy_exact_noop_components", qint64(legacy_components)},
+                     {"muted_node_exact_identity_components", qint64(muted_identity)},
+                     {"muted_node_analytic_components", qint64(muted_authored)},
+                     {"muted_node_maximum_error", muted_maximum},
+                     {"exact_identity_components", qint64(identity_components)},
+                     {"analytic_components", qint64(analytic_components)},
+                     {"maximum_error", maximum},
+                     {"fixed_bound", 3e-5},
+                     {"shader_recompiles", 0},
+                     {"original_modes_and_linked_inputs_preserved", true}};
 }

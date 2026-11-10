@@ -3,6 +3,7 @@
 import copy
 import importlib.util
 import json
+import re
 from pathlib import Path
 import tempfile
 import unittest
@@ -146,13 +147,15 @@ class Admission(unittest.TestCase):
                 admission.validate_cold_frame_progression(invalid)
 
     def test_cold_helper_keeps_data_before_draw_and_advances_pending_frames(self):
-        source = (root / 'native/harness/NativeMaterialProjectionColdProof.hh').read_text()
+        # Whitespace-free on both sides, so the checks hold however the file is formatted.
+        compact = lambda text: re.sub(r'\s+', '', text)
+        source = compact((root / 'native/harness/NativeMaterialProjectionColdProof.hh').read_text())
         self.assertLess(source.index('data_file.close();'), source.index('host.draw('))
-        pending = source[source.index('while(source_loader.pending()||host.texture_updates_pending())'):source.index('int components=0;')]
+        pending = source[source.index('while(source_loader.pending()||host.texture_updates_pending())'):source.index(compact('int components=0;'))]
         self.assertIn('host.draw(', pending)
         self.assertLess(source.index('data_file.close();'), source.index('source_loader.ensure('))
-        self.assertIn('NativeMaterialSourceLoader source_loader', source)
-        self.assertIn('const auto resources=host.project_resources();', source)
+        self.assertIn(compact('NativeMaterialSourceLoader source_loader'), source)
+        self.assertIn(compact('const auto resources=host.project_resources();'), source)
         self.assertIn('source.ready&&host.has_native_material(id)', source)
         self.assertIn('require_hydration();', pending)
         self.assertLess(pending.index('host.draw('), pending.index('host.flush_texture_updates()'))

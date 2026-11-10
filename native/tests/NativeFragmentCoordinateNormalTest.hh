@@ -12,58 +12,386 @@ namespace bts::native_fragment_coordinate_normal_test {
 using native_fragment_retained_image_test::require;
 using native_fragment_retained_image_test::socket;
 using native_fragment_retained_image_test::work;
-enum class Kind {Noise,Dot,WorldNormal,Unused};
-inline DetachedNativeMaterial fixture(Kind kind){
- using namespace blender;DetachedNativeMaterial result;result.main={BKE_main_new(),BKE_main_free};IMB_colormanagement_working_space_init_default(result.main.get());result.material=BKE_material_add(result.main.get(),"Coordinate Normal original source");auto &tree=*result.material->nodetree;
- auto *coord=bke::node_add_node(nullptr,tree,UString("ShaderNodeTexCoord"));auto *bump=bke::node_add_node(nullptr,tree,UString("ShaderNodeBump"));auto *pbr=bke::node_add_node(nullptr,tree,UString("ShaderNodeBsdfPrincipled"));auto *out=bke::node_add_node(nullptr,tree,UString("ShaderNodeOutputMaterial"));
- static_cast<bNodeSocketValueFloat *>(socket(*bump,"Strength",true).default_value)->value=.55f;static_cast<bNodeSocketValueFloat *>(socket(*bump,"Distance",true).default_value)->value=-.3f;static_cast<bNodeSocketValueFloat *>(socket(*bump,"Filter Width",true).default_value)->value=1.25f;static_cast<bNodeSocketValueFloat *>(socket(*pbr,"Roughness",true).default_value)->value=.67f;
- const auto link=[&](bNode &a,const char *output,bNode &b,const char *input){bke::node_add_link(tree,a,socket(a,output,false),b,socket(b,input,true));};
- if(kind==Kind::Unused){auto *value=bke::node_add_node(nullptr,tree,UString("ShaderNodeValue"));static_cast<bNodeSocketValueFloat *>(socket(*value,"Value",false).default_value)->value=.37f;link(*value,"Value",*bump,"Height");}
- else if(kind==Kind::Noise){auto *noise=bke::node_add_node(nullptr,tree,UString("ShaderNodeTexNoise"));static_cast<bNodeSocketValueFloat *>(socket(*noise,"Scale",true).default_value)->value=3.25f;link(*coord,"Normal",*noise,"Vector");link(*noise,"Fac",*bump,"Height");}
- else{auto *math=bke::node_add_node(nullptr,tree,UString("ShaderNodeVectorMath"));math->custom1=NODE_VECTOR_MATH_DOT_PRODUCT;auto *second=static_cast<bNodeSocket *>(math->inputs.first)->next;auto *value=static_cast<bNodeSocketValueVector *>(second->default_value);value->value[0]=.2f;value->value[1]=-.3f;value->value[2]=.7f;if(kind==Kind::WorldNormal){auto *geometry=bke::node_add_node(nullptr,tree,UString("ShaderNodeNewGeometry"));link(*geometry,"Normal",*math,"Vector");}else link(*coord,"Normal",*math,"Vector");link(*math,"Value",*bump,"Height");}
- link(*bump,"Normal",*pbr,"Normal");link(*pbr,"BSDF",*out,"Surface");BKE_ntree_update_after_single_tree_change(*result.main,tree);return result;
+enum class Kind { Noise, Dot, WorldNormal, Unused };
+inline DetachedNativeMaterial fixture(Kind kind)
+{
+  using namespace blender;
+  DetachedNativeMaterial result;
+  result.main = {BKE_main_new(), BKE_main_free};
+  IMB_colormanagement_working_space_init_default(result.main.get());
+  result.material = BKE_material_add(result.main.get(), "Coordinate Normal original source");
+  auto &tree = *result.material->nodetree;
+  auto *coord = bke::node_add_node(nullptr, tree, UString("ShaderNodeTexCoord"));
+  auto *bump = bke::node_add_node(nullptr, tree, UString("ShaderNodeBump"));
+  auto *pbr = bke::node_add_node(nullptr, tree, UString("ShaderNodeBsdfPrincipled"));
+  auto *out = bke::node_add_node(nullptr, tree, UString("ShaderNodeOutputMaterial"));
+  static_cast<bNodeSocketValueFloat *>(socket(*bump, "Strength", true).default_value)->value =
+      .55f;
+  static_cast<bNodeSocketValueFloat *>(socket(*bump, "Distance", true).default_value)->value =
+      -.3f;
+  static_cast<bNodeSocketValueFloat *>(socket(*bump, "Filter Width", true).default_value)->value =
+      1.25f;
+  static_cast<bNodeSocketValueFloat *>(socket(*pbr, "Roughness", true).default_value)->value =
+      .67f;
+  const auto link = [&](bNode &a, const char *output, bNode &b, const char *input) {
+    bke::node_add_link(tree, a, socket(a, output, false), b, socket(b, input, true));
+  };
+  if (kind == Kind::Unused) {
+    auto *value = bke::node_add_node(nullptr, tree, UString("ShaderNodeValue"));
+    static_cast<bNodeSocketValueFloat *>(socket(*value, "Value", false).default_value)->value =
+        .37f;
+    link(*value, "Value", *bump, "Height");
+  }
+  else if (kind == Kind::Noise) {
+    auto *noise = bke::node_add_node(nullptr, tree, UString("ShaderNodeTexNoise"));
+    static_cast<bNodeSocketValueFloat *>(socket(*noise, "Scale", true).default_value)->value =
+        3.25f;
+    link(*coord, "Normal", *noise, "Vector");
+    link(*noise, "Fac", *bump, "Height");
+  }
+  else {
+    auto *math = bke::node_add_node(nullptr, tree, UString("ShaderNodeVectorMath"));
+    math->custom1 = NODE_VECTOR_MATH_DOT_PRODUCT;
+    auto *second = static_cast<bNodeSocket *>(math->inputs.first)->next;
+    auto *value = static_cast<bNodeSocketValueVector *>(second->default_value);
+    value->value[0] = .2f;
+    value->value[1] = -.3f;
+    value->value[2] = .7f;
+    if (kind == Kind::WorldNormal) {
+      auto *geometry = bke::node_add_node(nullptr, tree, UString("ShaderNodeNewGeometry"));
+      link(*geometry, "Normal", *math, "Vector");
+    }
+    else
+      link(*coord, "Normal", *math, "Vector");
+    link(*math, "Value", *bump, "Height");
+  }
+  link(*bump, "Normal", *pbr, "Normal");
+  link(*pbr, "BSDF", *out, "Surface");
+  BKE_ntree_update_after_single_tree_change(*result.main, tree);
+  return result;
 }
 // Inspect the actual adapter edge: the stock Attribute differentiates its raw
 // expression, then the downstream Normalize operates on the offset value.
-inline int normalization_adapters(const blender::bNodeTree &tree){
- using namespace blender;int result=0;for(const auto &node:tree.nodes)if(STREQ(node.idname,"ShaderNodeAttribute")&&node.storage&&STREQ(static_cast<const NodeShaderAttribute *>(node.storage)->name,"BTS_Coord_Normal")){
-  int outgoing=0;for(const auto &edge:tree.links)if(edge.fromnode==&node){++outgoing;require(STREQ(edge.tonode->idname,"ShaderNodeVectorMath")&&edge.tonode->custom1==NODE_VECTOR_MATH_NORMALIZE&&STREQ(edge.tosock->identifier,"Vector"),"Coordinate Normal raw Attribute bypassed the private post-differentiation Normalize");bool consumer=false;for(const auto &next:tree.links)if(next.fromnode==edge.tonode)consumer=true;require(consumer,"Coordinate Normal normalization adapter lost its authored downstream consumer");++result;}require(outgoing==1,"Coordinate Normal private raw value has missing/ambiguous consumers");
- }return result;
+inline int normalization_adapters(const blender::bNodeTree &tree)
+{
+  using namespace blender;
+  int result = 0;
+  for (const auto &node : tree.nodes)
+    if (STREQ(node.idname, "ShaderNodeAttribute") && node.storage &&
+        STREQ(static_cast<const NodeShaderAttribute *>(node.storage)->name, "BTS_Coord_Normal"))
+    {
+      int outgoing = 0;
+      for (const auto &edge : tree.links)
+        if (edge.fromnode == &node) {
+          ++outgoing;
+          require(
+              STREQ(edge.tonode->idname, "ShaderNodeVectorMath") &&
+                  edge.tonode->custom1 == NODE_VECTOR_MATH_NORMALIZE &&
+                  STREQ(edge.tosock->identifier, "Vector"),
+              "Coordinate Normal raw Attribute bypassed the private post-differentiation Normalize");
+          bool consumer = false;
+          for (const auto &next : tree.links)
+            if (next.fromnode == edge.tonode)
+              consumer = true;
+          require(consumer,
+                  "Coordinate Normal normalization adapter lost its authored downstream consumer");
+          ++result;
+        }
+      require(outgoing == 1,
+              "Coordinate Normal private raw value has missing/ambiguous consumers");
+    }
+  return result;
 }
-inline int coordinate_attributes(const blender::bNodeTree &tree){int result=0;for(const auto &node:tree.nodes)if(STREQ(node.idname,"ShaderNodeAttribute")&&node.storage&&STREQ(static_cast<const blender::NodeShaderAttribute *>(node.storage)->name,"BTS_Coord_Normal"))++result;return result;}
-inline void rejects(auto function,const char *message){bool rejected=false;try{function();}catch(const std::invalid_argument &){rejected=true;}require(rejected,message);}
+inline int coordinate_attributes(const blender::bNodeTree &tree)
+{
+  int result = 0;
+  for (const auto &node : tree.nodes)
+    if (STREQ(node.idname, "ShaderNodeAttribute") && node.storage &&
+        STREQ(static_cast<const blender::NodeShaderAttribute *>(node.storage)->name,
+              "BTS_Coord_Normal"))
+      ++result;
+  return result;
 }
+inline void rejects(auto function, const char *message)
+{
+  bool rejected = false;
+  try {
+    function();
+  }
+  catch (const std::invalid_argument &) {
+    rejected = true;
+  }
+  require(rejected, message);
+}
+}  // namespace bts::native_fragment_coordinate_normal_test
 
 namespace bts {
-inline QJsonObject verify_native_fragment_coordinate_normal(){
- using namespace native_fragment_coordinate_normal_test;using namespace blender;static_assert(sizeof(NativeFragmentVertex)==80);static_assert(sizeof(ObjectMatrices)==128);require(QCoreApplication::instance()&&QThread::currentThread()==QCoreApplication::instance()->thread(),"Coordinate Normal fixture requires initialized CPU owner");require(!GPU_context_active_get(),"Coordinate Normal CPU fixture entered with GPU context");const auto compiles=GPU_pass_global_compilation_count();std::atomic_bool cancel=false;QTemporaryDir directory;require(directory.isValid(),"Cannot create Coordinate Normal archive directory");
- const auto source=work([&]{
-  QJsonArray cases;int owner_rejections=0,adapters=0;for(const auto &[kind,name]:std::array<std::pair<Kind,const char *>,4>{{{Kind::Noise,"coordinate-normal-noise"},{Kind::Dot,"coordinate-normal-dot"},{Kind::WorldNormal,"geometry-world-normal"},{Kind::Unused,"unreachable-coordinate-normal"}}}){
-   auto detached=fixture(kind);const auto before=native_fragment_normal_test::source_state(*detached.material->nodetree);auto graph=finish_native_material_source(std::move(detached),cancel,nullptr,NativeWorldNormalSurfaceContract::PainterUndisplaced);const auto description=native_material_description_json(graph->description);prepare_optional_native_world_normal(graph,cancel);require(graph->world_normal_tree&&graph->world_normal_error.isEmpty(),"Coordinate Normal source failed optional extraction");const auto layout=native_world_normal_source_request({graph,graph->world_normal_tree});const auto diagnostic=inspect_native_fragment_source_context({graph,graph->world_normal_tree},layout);const bool matrices=kind==Kind::Noise||kind==Kind::Dot;
-   require(diagnostic.object_matrices_context==matrices&&!diagnostic.object_context&&!diagnostic.image_context&&diagnostic.normal_maps==0&&!diagnostic.codegen_invoked&&!layout.generated_stream&&!layout.resident_view_context&&layout.uv_name.empty(),"Image-free Coordinate Normal requested wrong owner/image/tangent/view/Generated context");
-   auto no_tangent=layout;no_tangent.tangent_stream=false;const auto minimal=inspect_native_fragment_source_context({graph,graph->world_normal_tree},no_tangent);require(minimal.object_matrices_context==matrices&&minimal.normal_maps==0,"Coordinate Normal invented a tangent-stream requirement");const int count=normalization_adapters(*graph->world_normal_tree);require(count==(matrices?1:0),"Coordinate Normal adapter reachability/count differs");adapters+=count;
-   if(matrices){auto no_owner=layout;no_owner.resident_object_context=false;rejects([&]{inspect_native_fragment_source_context({graph,graph->world_normal_tree},no_owner);},"Coordinate Normal admitted absent owner context");++owner_rejections;auto no_raster=layout;no_raster.resident_raster_origin=false;rejects([&]{inspect_native_fragment_source_context({graph,graph->world_normal_tree},no_raster);},"Coordinate Normal admitted standalone raster layout");++owner_rejections;NativeFragmentLayout standalone;standalone.paired_physical_sides=true;rejects([&]{inspect_native_fragment_source_context({graph,graph->world_normal_tree},standalone);},"Standalone Coordinate Normal invented captured matrices");++owner_rejections;}
-   for(const auto &channel:graph->channels)if(channel.tree&&channel.channel!=3)require(coordinate_attributes(*channel.tree)==0,"Ordinary independent channels gained a Coordinate Normal adapter");require(native_fragment_normal_test::source_state(*graph->material->nodetree)==before&&native_material_description_json(graph->description)==description,"Coordinate Normal source preparation changed original links/defaults/controls or scalar policy");
-   auto archive=archive_native_material(*graph,directory.filePath(QString::fromUtf8(name)+".blend"),cancel,true);auto asset=native_material_asset(QString::fromUtf8(name),archive.bytes,archive.description);asset.scope=AssetScope::Project;auto hydrated=hydrate_native_material_resource(asset,cancel,archive.textures);require(native_fragment_normal_test::source_state(*hydrated->material->nodetree)==before&&native_material_description_json(hydrated->description)==description&&normalization_adapters(*hydrated->world_normal_tree)==count,"Coordinate Normal archive/hydrate changed original source or private normalization order");NativeMaterialGpuLibrary library;library.install(name,asset.hash().toStdString(),hydrated);require(library.statistics().programs==0&&library.statistics().world_programs==0,"Coordinate Normal CPU metadata created GPU programs");
-   cases.append(QJsonObject{{"case",name},{"requires_object_matrices",matrices},{"private_normalize_adapters",count},{"source_and_archive_hydrate_preserved",true},{"ordinary_channels_unchanged",true},{"object_push_context",false},{"images",false},{"codegen_invoked",false},{"programs",0},{"world_programs",0}});
+inline QJsonObject verify_native_fragment_coordinate_normal()
+{
+  using namespace native_fragment_coordinate_normal_test;
+  using namespace blender;
+  static_assert(sizeof(NativeFragmentVertex) == 80);
+  static_assert(sizeof(ObjectMatrices) == 128);
+  require(QCoreApplication::instance() &&
+              QThread::currentThread() == QCoreApplication::instance()->thread(),
+          "Coordinate Normal fixture requires initialized CPU owner");
+  require(!GPU_context_active_get(), "Coordinate Normal CPU fixture entered with GPU context");
+  const auto compiles = GPU_pass_global_compilation_count();
+  std::atomic_bool cancel = false;
+  QTemporaryDir directory;
+  require(directory.isValid(), "Cannot create Coordinate Normal archive directory");
+  const auto source = work([&] {
+    QJsonArray cases;
+    int owner_rejections = 0, adapters = 0;
+    for (const auto &[kind, name] :
+         std::array<std::pair<Kind, const char *>, 4>{
+             {{Kind::Noise, "coordinate-normal-noise"},
+              {Kind::Dot, "coordinate-normal-dot"},
+              {Kind::WorldNormal, "geometry-world-normal"},
+              {Kind::Unused, "unreachable-coordinate-normal"}}})
+    {
+      auto detached = fixture(kind);
+      const auto before = native_fragment_normal_test::source_state(*detached.material->nodetree);
+      auto graph = finish_native_material_source(
+          std::move(detached),
+          cancel,
+          nullptr,
+          NativeWorldNormalSurfaceContract::PainterUndisplaced);
+      const auto description = native_material_description_json(graph->description);
+      prepare_optional_native_world_normal(graph, cancel);
+      require(graph->world_normal_tree && graph->world_normal_error.isEmpty(),
+              "Coordinate Normal source failed optional extraction");
+      const auto layout = native_world_normal_source_request({graph, graph->world_normal_tree});
+      const auto diagnostic = inspect_native_fragment_source_context(
+          {graph, graph->world_normal_tree}, layout);
+      const bool matrices = kind == Kind::Noise || kind == Kind::Dot;
+      require(
+          diagnostic.object_matrices_context == matrices && !diagnostic.object_context &&
+              !diagnostic.image_context && diagnostic.normal_maps == 0 &&
+              !diagnostic.codegen_invoked && !layout.generated_stream &&
+              !layout.resident_view_context && layout.uv_name.empty(),
+          "Image-free Coordinate Normal requested wrong owner/image/tangent/view/Generated context");
+      auto no_tangent = layout;
+      no_tangent.tangent_stream = false;
+      const auto minimal = inspect_native_fragment_source_context(
+          {graph, graph->world_normal_tree}, no_tangent);
+      require(minimal.object_matrices_context == matrices && minimal.normal_maps == 0,
+              "Coordinate Normal invented a tangent-stream requirement");
+      const int count = normalization_adapters(*graph->world_normal_tree);
+      require(count == (matrices ? 1 : 0), "Coordinate Normal adapter reachability/count differs");
+      adapters += count;
+      if (matrices) {
+        auto no_owner = layout;
+        no_owner.resident_object_context = false;
+        rejects(
+            [&] {
+              inspect_native_fragment_source_context({graph, graph->world_normal_tree}, no_owner);
+            },
+            "Coordinate Normal admitted absent owner context");
+        ++owner_rejections;
+        auto no_raster = layout;
+        no_raster.resident_raster_origin = false;
+        rejects(
+            [&] {
+              inspect_native_fragment_source_context({graph, graph->world_normal_tree}, no_raster);
+            },
+            "Coordinate Normal admitted standalone raster layout");
+        ++owner_rejections;
+        NativeFragmentLayout standalone;
+        standalone.paired_physical_sides = true;
+        rejects(
+            [&] {
+              inspect_native_fragment_source_context({graph, graph->world_normal_tree},
+                                                     standalone);
+            },
+            "Standalone Coordinate Normal invented captured matrices");
+        ++owner_rejections;
+      }
+      for (const auto &channel : graph->channels)
+        if (channel.tree && channel.channel != 3)
+          require(coordinate_attributes(*channel.tree) == 0,
+                  "Ordinary independent channels gained a Coordinate Normal adapter");
+      require(
+          native_fragment_normal_test::source_state(*graph->material->nodetree) == before &&
+              native_material_description_json(graph->description) == description,
+          "Coordinate Normal source preparation changed original links/defaults/controls or scalar policy");
+      auto archive = archive_native_material(
+          *graph, directory.filePath(QString::fromUtf8(name) + ".blend"), cancel, true);
+      auto asset = native_material_asset(
+          QString::fromUtf8(name), archive.bytes, archive.description);
+      asset.scope = AssetScope::Project;
+      auto hydrated = hydrate_native_material_resource(asset, cancel, archive.textures);
+      require(
+          native_fragment_normal_test::source_state(*hydrated->material->nodetree) == before &&
+              native_material_description_json(hydrated->description) == description &&
+              normalization_adapters(*hydrated->world_normal_tree) == count,
+          "Coordinate Normal archive/hydrate changed original source or private normalization order");
+      NativeMaterialGpuLibrary library;
+      library.install(name, asset.hash().toStdString(), hydrated);
+      require(library.statistics().programs == 0 && library.statistics().world_programs == 0,
+              "Coordinate Normal CPU metadata created GPU programs");
+      cases.append(QJsonObject{{"case", name},
+                               {"requires_object_matrices", matrices},
+                               {"private_normalize_adapters", count},
+                               {"source_and_archive_hydrate_preserved", true},
+                               {"ordinary_channels_unchanged", true},
+                               {"object_push_context", false},
+                               {"images", false},
+                               {"codegen_invoked", false},
+                               {"programs", 0},
+                               {"world_programs", 0}});
+    }
+    auto raw = prepare_native_raw_height(
+        fixture(Kind::Dot), cancel, nullptr, NativeWorldNormalSurfaceContract::PainterUndisplaced);
+    require(raw.tree && coordinate_attributes(*raw.tree) == 1,
+            "Raw Height lost its existing Coordinate Normal context");
+    for (const auto &node : raw.tree->nodes)
+      if (STREQ(node.idname, "ShaderNodeVectorMath"))
+        require(node.custom1 != NODE_VECTOR_MATH_NORMALIZE,
+                "Fragment-only adapter changed existing Raw Height binding");
+    return QJsonObject{{"cases", cases},
+                       {"owner_raster_standalone_rejections", owner_rejections},
+                       {"post_differentiation_normalize_adapters", adapters},
+                       {"raw_height_no_fragment_normalize", true},
+                       {"unused_coordinate_normal_no_matrix_admission", true}};
+  });
+  const std::string raw = "(normalize(fragment_N)*mat3(native_object_matrices[0].model))";
+  require(native_material_fragment_context_value("BTS_Coord_Normal", true, true, true) == raw &&
+              native_material_fragment_context_value("BTS_Coord_Normal", false, true, true) ==
+                  "vec4(" + raw + ",1.0)",
+          "Coordinate Normal raw expression normalized too early or used inverse/world binding");
+  require(native_material_fragment_context_value("BTS_Geometry_Normal", true, true, true) ==
+                  "normalize(fragment_N)" &&
+              native_material_compute_context_value("BTS_Coord_Normal", true) ==
+                  "bts_object_normal",
+          "Geometry world Normal or ordinary compute expression changed");
+  require(native_material_fragment_object_matrices_attribute("BTS_Coord_Normal") &&
+              !native_material_fragment_object_matrices_attribute("BTS_Geometry_Normal") &&
+              !native_material_fragment_object_attribute("BTS_Coord_Normal"),
+          "Coordinate Normal owner matrices aliased ordinary object push admission");
+  rejects([&] { native_material_fragment_context_value("BTS_Coord_Normal", true, true, false); },
+          "Coordinate Normal raw expression invented missing owner matrices");
+  std::shared_ptr<const NativeFragmentGeometrySource> captured;
+  {
+    native_fragment_geometry_test::Fixture scene;
+    auto *parent = BKE_object_add_only_object(
+        scene.main, OB_EMPTY, "Coordinate Normal nonuniform parent");
+    parent->scale[0] = 2;
+    parent->scale[1] = 3;
+    parent->scale[2] = 4;
+    BKE_collection_object_add(scene.main, scene.scene->master_collection, parent);
+    DEG_id_tag_update_ex(scene.main, &parent->id, ID_RECALC_TRANSFORM);
+    for (auto &object : scene.main->objects)
+      if (object.type == OB_MESH) {
+        object.parent = parent;
+        id_us_plus(&parent->id);
+        object.rot[2] = .5f;
+        DEG_id_tag_update_ex(scene.main, &object.id, ID_RECALC_TRANSFORM);
+      }
+    DEG_relations_tag_update(scene.main);
+    BKE_scene_graph_update_tagged(CTX_data_ensure_evaluated_depsgraph(scene.context), scene.main);
+    NativeFragmentGeometryRequest request;
+    request.revision = 73;
+    request.material_uid = scene.material->id.session_uid;
+    request.tiles = {1001};
+    request.target_uv = {NativeFragmentUvKind::DisplayActive, {}};
+    request.uv_requests = {{NativeFragmentUvKind::DefaultRender, {}}};
+    captured = capture_native_fragment_geometry(scene.context, nullptr, {}, request, cancel);
   }
-  auto raw=prepare_native_raw_height(fixture(Kind::Dot),cancel,nullptr,NativeWorldNormalSurfaceContract::PainterUndisplaced);require(raw.tree&&coordinate_attributes(*raw.tree)==1,"Raw Height lost its existing Coordinate Normal context");for(const auto &node:raw.tree->nodes)if(STREQ(node.idname,"ShaderNodeVectorMath"))require(node.custom1!=NODE_VECTOR_MATH_NORMALIZE,"Fragment-only adapter changed existing Raw Height binding");
-  return QJsonObject{{"cases",cases},{"owner_raster_standalone_rejections",owner_rejections},{"post_differentiation_normalize_adapters",adapters},{"raw_height_no_fragment_normalize",true},{"unused_coordinate_normal_no_matrix_admission",true}};
- });
- const std::string raw="(normalize(fragment_N)*mat3(native_object_matrices[0].model))";require(native_material_fragment_context_value("BTS_Coord_Normal",true,true,true)==raw&&native_material_fragment_context_value("BTS_Coord_Normal",false,true,true)=="vec4("+raw+",1.0)","Coordinate Normal raw expression normalized too early or used inverse/world binding");require(native_material_fragment_context_value("BTS_Geometry_Normal",true,true,true)=="normalize(fragment_N)"&&native_material_compute_context_value("BTS_Coord_Normal",true)=="bts_object_normal","Geometry world Normal or ordinary compute expression changed");require(native_material_fragment_object_matrices_attribute("BTS_Coord_Normal")&&!native_material_fragment_object_matrices_attribute("BTS_Geometry_Normal")&&!native_material_fragment_object_attribute("BTS_Coord_Normal"),"Coordinate Normal owner matrices aliased ordinary object push admission");rejects([&]{native_material_fragment_context_value("BTS_Coord_Normal",true,true,false);},"Coordinate Normal raw expression invented missing owner matrices");
- std::shared_ptr<const NativeFragmentGeometrySource> captured;{
-  native_fragment_geometry_test::Fixture scene;auto *parent=BKE_object_add_only_object(scene.main,OB_EMPTY,"Coordinate Normal nonuniform parent");parent->scale[0]=2;parent->scale[1]=3;parent->scale[2]=4;BKE_collection_object_add(scene.main,scene.scene->master_collection,parent);DEG_id_tag_update_ex(scene.main,&parent->id,ID_RECALC_TRANSFORM);
-  for(auto &object:scene.main->objects)if(object.type==OB_MESH){object.parent=parent;id_us_plus(&parent->id);object.rot[2]=.5f;DEG_id_tag_update_ex(scene.main,&object.id,ID_RECALC_TRANSFORM);}DEG_relations_tag_update(scene.main);BKE_scene_graph_update_tagged(CTX_data_ensure_evaluated_depsgraph(scene.context),scene.main);
-  NativeFragmentGeometryRequest request;request.revision=73;request.material_uid=scene.material->id.session_uid;request.tiles={1001};request.target_uv={NativeFragmentUvKind::DisplayActive,{}};request.uv_requests={{NativeFragmentUvKind::DefaultRender,{}}};captured=capture_native_fragment_geometry(scene.context,nullptr,{},request,cancel);
- }
- const auto matrices=work([&]{
-  auto geometry=prepare_native_fragment_geometry(captured,cancel);captured.reset();require(geometry->objects().size()==2,"Coordinate Normal actual owner count differs");NativeFragmentImageOwnerCache<std::shared_ptr<const ObjectMatrices>> cache;std::vector<std::weak_ptr<const ObjectMatrices>> weak;int acquisitions=0;bool shear=false,negative=false,different_inverse=false,different_world=false,raw_nonunit=false;
-  for(std::size_t i=0;i<geometry->objects().size();++i){const auto &owner=geometry->objects()[i];const auto payload=native_fragment_image_object_matrices(owner,geometry->object_infos(i));for(int col=0;col<4;++col)for(int row=0;row<4;++row)require(payload.model[col][row]==owner.object_to_world[col*4+row]&&payload.model_inverse[col][row]==owner.world_to_object[col*4+row],"Actual Coordinate Normal binder swapped or reconstructed captured matrices");const auto &m=payload.model;shear|=std::abs(double(m[0][0])*m[1][0]+double(m[0][1])*m[1][1]+double(m[0][2])*m[1][2])>1e-3;const double det=double(m[0][0])*(double(m[1][1])*m[2][2]-double(m[1][2])*m[2][1])-double(m[1][0])*(double(m[0][1])*m[2][2]-double(m[0][2])*m[2][1])+double(m[2][0])*(double(m[0][1])*m[1][2]-double(m[0][2])*m[1][1]);negative|=det<0;
-   const auto n=math::normalize(float3(.25f,.5f,.75f));float3 object(0),inverse(0),back(0);for(int col=0;col<3;++col)for(int row=0;row<3;++row){object[col]+=n[row]*payload.model[col][row];inverse[col]+=n[row]*payload.model_inverse[col][row];back[col]+=-n[row]*payload.model[col][row];}raw_nonunit|=std::abs(math::length(object)-1.f)>.01f;const auto front_unit=math::normalize(object),back_unit=math::normalize(back),inverse_unit=math::normalize(inverse);require(std::abs(math::length(front_unit)-1.f)<1e-6f&&math::distance(front_unit,-back_unit)<1e-6f,"Coordinate Normal normalization or paired physical sign differs");different_inverse|=math::distance(front_unit,inverse_unit)>.01f;different_world|=math::distance(front_unit,n)>.01f;
-   const auto &token=cache.prepare(i,[&]{++acquisitions;return std::make_shared<const ObjectMatrices>(native_fragment_image_object_matrices(owner,geometry->object_infos(i)));});weak.emplace_back(token);for(int repeat=0;repeat<4;++repeat)require(cache.prepare(i,[&]{++acquisitions;return std::make_shared<const ObjectMatrices>(payload);})==token,"Coordinate Normal reacquired unchanged physical owner matrices");
-  }
-  require(shear&&negative&&different_inverse&&different_world&&raw_nonunit&&acquisitions==2,"Coordinate Normal real owners failed model/inverse/world/normalization distinction");cache.clear();require(cache.empty()&&std::all_of(weak.begin(),weak.end(),[](const auto &token){return token.expired();}),"Coordinate Normal retired owner cache retained CPU tokens");return QJsonObject{{"actual_owners",2},{"source_main_destroyed_before_prepare",true},{"stock_payload_bytes",128},{"captured_model_and_inverse_exact",true},{"nonuniform_parent_shear",true},{"negative_scale_owner",true},{"model_not_inverse_normal_transform",true},{"object_normal_distinct_from_world",true},{"raw_requires_final_normalization",true},{"normalized_paired_physical_signs",true},{"owner_cache_acquisitions",acquisitions},{"owner_cache_reused_and_released",true}};
- });
- require(native_fragment_push_bytes(native_fragment_push_fields(true,true,true,true,true))==128,"Coordinate Normal grew canonical push budget");require(!GPU_context_active_get()&&GPU_pass_global_compilation_count()==compiles,"Coordinate Normal CPU fixture created GPU context/program");return {{"complete",true},{"scope","CPU source/derivative-adapter structure and actual captured owner-matrix admission; no GLSL or shader execution"},{"source",source},{"matrices",matrices},{"raw_expression_and_vec4_wrapper_exact",true},{"geometry_world_and_compute_context_unchanged",true},{"standalone_expression_rejected",true},{"vertex_bytes",80},{"portable_push_bytes",128},{"gpu_context_created",false},{"gpu_compilations",0}};
+  const auto matrices = work([&] {
+    auto geometry = prepare_native_fragment_geometry(captured, cancel);
+    captured.reset();
+    require(geometry->objects().size() == 2, "Coordinate Normal actual owner count differs");
+    NativeFragmentImageOwnerCache<std::shared_ptr<const ObjectMatrices>> cache;
+    std::vector<std::weak_ptr<const ObjectMatrices>> weak;
+    int acquisitions = 0;
+    bool shear = false, negative = false, different_inverse = false, different_world = false,
+         raw_nonunit = false;
+    for (std::size_t i = 0; i < geometry->objects().size(); ++i) {
+      const auto &owner = geometry->objects()[i];
+      const auto payload = native_fragment_image_object_matrices(owner, geometry->object_infos(i));
+      for (int col = 0; col < 4; ++col)
+        for (int row = 0; row < 4; ++row)
+          require(payload.model[col][row] == owner.object_to_world[col * 4 + row] &&
+                      payload.model_inverse[col][row] == owner.world_to_object[col * 4 + row],
+                  "Actual Coordinate Normal binder swapped or reconstructed captured matrices");
+      const auto &m = payload.model;
+      shear |= std::abs(double(m[0][0]) * m[1][0] + double(m[0][1]) * m[1][1] +
+                        double(m[0][2]) * m[1][2]) > 1e-3;
+      const double det = double(m[0][0]) *
+                             (double(m[1][1]) * m[2][2] - double(m[1][2]) * m[2][1]) -
+                         double(m[1][0]) *
+                             (double(m[0][1]) * m[2][2] - double(m[0][2]) * m[2][1]) +
+                         double(m[2][0]) * (double(m[0][1]) * m[1][2] - double(m[0][2]) * m[1][1]);
+      negative |= det < 0;
+      const auto n = math::normalize(float3(.25f, .5f, .75f));
+      float3 object(0), inverse(0), back(0);
+      for (int col = 0; col < 3; ++col)
+        for (int row = 0; row < 3; ++row) {
+          object[col] += n[row] * payload.model[col][row];
+          inverse[col] += n[row] * payload.model_inverse[col][row];
+          back[col] += -n[row] * payload.model[col][row];
+        }
+      raw_nonunit |= std::abs(math::length(object) - 1.f) > .01f;
+      const auto front_unit = math::normalize(object), back_unit = math::normalize(back),
+                 inverse_unit = math::normalize(inverse);
+      require(std::abs(math::length(front_unit) - 1.f) < 1e-6f &&
+                  math::distance(front_unit, -back_unit) < 1e-6f,
+              "Coordinate Normal normalization or paired physical sign differs");
+      different_inverse |= math::distance(front_unit, inverse_unit) > .01f;
+      different_world |= math::distance(front_unit, n) > .01f;
+      const auto &token = cache.prepare(i, [&] {
+        ++acquisitions;
+        return std::make_shared<const ObjectMatrices>(
+            native_fragment_image_object_matrices(owner, geometry->object_infos(i)));
+      });
+      weak.emplace_back(token);
+      for (int repeat = 0; repeat < 4; ++repeat)
+        require(cache.prepare(i,
+                              [&] {
+                                ++acquisitions;
+                                return std::make_shared<const ObjectMatrices>(payload);
+                              }) == token,
+                "Coordinate Normal reacquired unchanged physical owner matrices");
+    }
+    require(shear && negative && different_inverse && different_world && raw_nonunit &&
+                acquisitions == 2,
+            "Coordinate Normal real owners failed model/inverse/world/normalization distinction");
+    cache.clear();
+    require(cache.empty() && std::all_of(weak.begin(),
+                                         weak.end(),
+                                         [](const auto &token) { return token.expired(); }),
+            "Coordinate Normal retired owner cache retained CPU tokens");
+    return QJsonObject{{"actual_owners", 2},
+                       {"source_main_destroyed_before_prepare", true},
+                       {"stock_payload_bytes", 128},
+                       {"captured_model_and_inverse_exact", true},
+                       {"nonuniform_parent_shear", true},
+                       {"negative_scale_owner", true},
+                       {"model_not_inverse_normal_transform", true},
+                       {"object_normal_distinct_from_world", true},
+                       {"raw_requires_final_normalization", true},
+                       {"normalized_paired_physical_signs", true},
+                       {"owner_cache_acquisitions", acquisitions},
+                       {"owner_cache_reused_and_released", true}};
+  });
+  require(native_fragment_push_bytes(native_fragment_push_fields(true, true, true, true, true)) ==
+              128,
+          "Coordinate Normal grew canonical push budget");
+  require(!GPU_context_active_get() && GPU_pass_global_compilation_count() == compiles,
+          "Coordinate Normal CPU fixture created GPU context/program");
+  return {
+      {"complete", true},
+      {"scope",
+       "CPU source/derivative-adapter structure and actual captured owner-matrix admission; no GLSL or shader execution"},
+      {"source", source},
+      {"matrices", matrices},
+      {"raw_expression_and_vec4_wrapper_exact", true},
+      {"geometry_world_and_compute_context_unchanged", true},
+      {"standalone_expression_rejected", true},
+      {"vertex_bytes", 80},
+      {"portable_push_bytes", 128},
+      {"gpu_context_created", false},
+      {"gpu_compilations", 0}};
 }
-}
+}  // namespace bts

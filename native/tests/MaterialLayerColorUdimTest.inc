@@ -1,78 +1,593 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Real original EXRs, native OCIO/owned nodes, PartialWrite and source-hidden
 // disk Open. Explicit diagnostic CPU tests; no interactive compositor or GL.
-QJsonObject verify_linear_color_udim_carriers(){
- using namespace blender;using Buffer=std::unique_ptr<ImBuf,decltype(&IMB_freeImBuf)>;
- QTemporaryDir directory;assert(directory.isValid());int graph_negatives=0;QJsonArray packages;
- const auto color_taps=[](Material &material,int input,int tile){std::array<bNode *,4> taps{};const auto prefix="__BTS_LayerMaterial"+std::to_string(input)+"ColorUdimTile"+std::to_string(tile)+"Image";for(int tap=0;tap<4;++tap){taps[tap]=bke::node_find_node_by_name(*material.nodetree,prefix+(tap?"Tap"+std::to_string(tap):std::string{}));assert(taps[tap]&&STREQ(taps[tap]->idname,"ShaderNodeTexImage")&&taps[tap]->id);}return taps;};
- const auto require_taps=[&](Material &material,int input,int tile,Image &image){for(auto *tap:color_taps(material,input,tile)){assert(tap->id==&image.id&&tap->storage);const auto &settings=*static_cast<const NodeTexImage *>(tap->storage);assert(settings.extension==SHD_IMAGE_EXTENSION_EXTEND&&settings.interpolation==SHD_INTERP_CLOSEST&&settings.projection==SHD_PROJ_FLAT);}};
- const auto encode=[&](StudioAsset &asset,int tile,int width,int height,bool mask){
-  auto *image=reinterpret_cast<Image *>(BKE_id_new_nomain(ID_IM,"Own Color UDIM original"));assert(image);const auto cleanup=qScopeGuard([&]{BKE_id_free(nullptr,&image->id);});describe_source(*image,width,height);image->flag|=IMA_HIGH_BITDEPTH;
-  FillTexture source;source.asset=asset.id.toString(QUuid::WithoutBraces).toStdString();source.hash=std::string(64,'b');source.name="Original RGB";source.raw=true;source.width=width;source.height=height;
-  auto pixels=std::make_shared<std::vector<FillTexture::Pixel>>(width*height);for(int y=0;y<height;++y)for(int x=0;x<width;++x)(*pixels)[y*width+x]=mask?FillTexture::Pixel{.5f,0,0,1}:FillTexture::Pixel{float(x+tile-1001)/8-.125f,float(y+1)/4,float(x+2*y+1)/4+1,float((x+y)%3)/2};source.pixels=pixels;
-  Buffer header(material_layer_source_pixel_view(source),IMB_freeImBuf);assert(BKE_image_assign_hosted_immutable_source(image,1001,header.get())&&BKE_image_memorypack(image));const auto *part=static_cast<const ImagePackedFile *>(image->packedfiles.first);assert(part&&part->packedfile&&part->packedfile->size>0);
-  const auto name=QString("%1.%2.exr").arg(asset.name).arg(tile),path=directory.filePath(name);QFile file(path);assert(file.open(QIODevice::WriteOnly)&&file.write(static_cast<const char *>(part->packedfile->data),part->packedfile->size)==part->packedfile->size);asset.texture_files.push_back({tile,name,path,QString::fromLatin1(QCryptographicHash::hash(QByteArrayView(static_cast<const char *>(part->packedfile->data),part->packedfile->size),QCryptographicHash::Sha256).toHex()),part->packedfile->size});
- };
- const auto asset=[](const QString &name){StudioAsset value;value.id=QUuid::createUuid();value.name=name;value.filename=name+".btsseq";value.scope=AssetScope::Project;value.usages={"texture"};return value;};
- for(const std::string space:{"ACEScg","Linear Rec.709"}){
-  auto original=asset(QString("linear-%1").arg(packages.size()));encode(original,1001,2,2,false);encode(original,1002,4,2,false);const auto color=decode_fill_texture(original,false,space),raw=decode_fill_texture(original,true);require_material_layer_udim_originals(*color,original.texture_files);
-  const auto transforms=material_layer_color_source_transforms(*color);assert(transforms.size()==2&&color->tiles->at(1001)->width==2&&color->tiles->at(1002)->width==4);for(const auto &[tile,transform]:transforms){assert(!transform.srgb&&!transform.processor.empty());for(float value:transform.to_aces)assert(std::isfinite(value));}
-  {LayerMaterialInput input;input.textures[0]=color;require_material_layer_udim_coverage(input,{1001,1002});input.offset={1,0};bool failed=false;try{require_material_layer_udim_coverage(input,{1001,1002});}catch(const std::invalid_argument &){failed=true;}assert(failed);++graph_negatives;auto wrong=original.texture_files;wrong[1].sha256=wrong[0].sha256;failed=false;try{require_material_layer_udim_originals(*color,wrong);}catch(const std::invalid_argument &){failed=true;}assert(failed);++graph_negatives;}
-  // Real independently decoded interpretations exercise the table helper's
-  // per-member authority. This synthetic mixed descriptor is not a claim that
-  // these fixture EXRs carry mixed automatic file tags or may be cold-adopted.
-  {const auto other=decode_fill_texture(original,false,space=="ACEScg"?"Linear Rec.709":"ACEScg");auto mixed=*color;mixed.source_space.clear();auto members=std::make_shared<std::map<int,std::shared_ptr<const FillTexture>>>();for(int tile:{1001,1002}){auto member=std::make_shared<FillTexture>(*(tile==1001?color:other)->tiles->at(tile));member->source_space.clear();members->emplace(tile,member);}mixed.tiles=members;const auto table=material_layer_color_source_transforms(mixed);assert(table.size()==2&&table.at(1001).processor!=table.at(1002).processor&&table.at(1001).to_aces!=table.at(1002).to_aces);}
-  // Exercise the whole member table: changing only the SECOND member to a
-  // nonlinear resolved space is rejected even if the preview remains linear.
-  {auto mixed=*color;auto members=std::make_shared<std::map<int,std::shared_ptr<const FillTexture>>>(*mixed.tiles);auto member=std::make_shared<FillTexture>(*members->at(1002));member->input_space="sRGB";members->at(1002)=member;mixed.tiles=members;bool failed=false;try{material_layer_color_source_transforms(mixed);}catch(const std::invalid_argument &){failed=true;}assert(failed);++graph_negatives;}
-  std::unique_ptr<Main,decltype(&BKE_main_free)> live(BKE_main_new(),BKE_main_free);IMB_colormanagement_working_space_init_default(live.get());auto *scene=BKE_scene_add(live.get(),"Linear Color UDIM");for(auto &layer:scene->view_layers)BKE_view_layer_synced_ensure(*live,scene,&layer);auto *material=BKE_material_add(live.get(),"Color UDIM owner");auto &tree=*material->nodetree;
-  auto *surface=bke::node_add_node(nullptr,tree,UString("ShaderNodeBsdfPrincipled")),*output=bke::node_add_node(nullptr,tree,UString("ShaderNodeOutputMaterial"));const auto socket=[](bNode &node,const char *name,bool input)->bNodeSocket &{for(auto &s:input?node.inputs:node.outputs)if(STREQ(s.identifier,name))return s;throw std::runtime_error("Color UDIM fixture socket missing");};BKE_ntree_update_after_single_tree_change(*live,tree);bke::node_add_link(tree,*surface,socket(*surface,"BSDF",false),*output,socket(*output,"Surface",true));BKE_ntree_update_after_single_tree_change(*live,tree);
-  SceneSnapshot description;MaterialSummary summary;summary.session_id=material->id.session_uid;summary.name=material->id.name+2;summary.uniform_editable=true;description.materials.push_back(summary);ImportSummary imported;imported.materials.push_back({summary.session_id,summary.name});imported.materials.back().tiles={1001,1002};NewProjectOptions options;options.resolution=DocumentResolution::Pixels128;options.uv_workflow=UvWorkflow::PreserveTiles;TextureDocument document(options,imported,description);auto &set=document.set(summary.session_id);const auto target=set;configure_material_layering(set,true);for(int i=0;i<3;++i)set.material_layering.materials[i].textures[0]=color;set.material_layering.materials[3].textures[4]=raw;
-  for(int slot:set.material_layering.mask_slots){auto *image=reinterpret_cast<Image *>(BKE_id_new(live.get(),ID_IM,"Color UDIM opacity"));describe_source(*image,1,1);image->runtime->gpuflag&=~IMA_HOSTED_IMMUTABLE_SOURCE;auto *n=bke::node_add_node(nullptr,tree,UString("ShaderNodeTexImage"));STRNCPY(n->name,("__BTS_UserPixels"+std::to_string(slot)).c_str());n->id=&image->id;id_us_plus(n->id);}
-  MaterialLayerImages images{};std::map<std::pair<bool,int>,Image *> aliases;for(bool data:{false,true})for(const auto &[tile,member]:*(data?raw:color)->tiles){auto *image=reinterpret_cast<Image *>(BKE_id_new(live.get(),ID_IM,"Color UDIM typed alias"));id_us_min(&image->id);describe_source(*image,member->width,member->height);Buffer header(material_layer_source_pixel_view(*member),IMB_freeImBuf);assert(BKE_image_assign_hosted_immutable_source(image,1001,header.get()));aliases.emplace(std::pair{data,tile},image);if(data)images.members[3][4].emplace(tile,image);else for(int i=0;i<3;++i)images.members[i][0].emplace(tile,image);}
-  MaterialLayerShader shader;shader.apply(*live,*material,set.material_layering,1,1,false,images);const auto capture=[&]{return capture_material_layer_source_bindings(*live,document);};assert(capture().size()==8);const auto before=document.to_json();const auto reject=[&]{bool failed=false;try{capture();}catch(const std::invalid_argument &){failed=true;}assert(failed&&document.to_json()==before);++graph_negatives;};
-  for(int input=0;input<3;++input)for(int tile:{1001,1002})require_taps(*material,input,tile,*aliases.at({false,tile}));
-  for(const auto &binding:capture())if(binding.channel==0){std::set<int> identifiers(binding.tap_identifiers.begin(),binding.tap_identifiers.end());assert(identifiers.size()==4&&!identifiers.contains(0)&&binding.node_identifier==binding.tap_identifiers[0]);}
-  // Every sibling is audited, including its Image, sampling mode, dimensions,
-  // clamp flags and fanout. Rejection must leave the typed document untouched.
-  {const auto taps=color_taps(*material,0,1002);auto *saved=taps[3]->id;taps[3]->id=&aliases.at({false,1001})->id;reject();taps[3]->id=nullptr;reject();taps[3]->id=saved;auto &settings=*static_cast<NodeTexImage *>(taps[1]->storage);settings.interpolation=SHD_INTERP_LINEAR;reject();settings.interpolation=SHD_INTERP_CLOSEST;
-   auto *extra=bke::node_add_node(nullptr,tree,UString("ShaderNodeVectorMath"));bke::node_add_link(tree,*taps[1],socket(*taps[1],"Color",false),*extra,*static_cast<bNodeSocket *>(extra->inputs.first));BKE_ntree_update_after_single_tree_change(*live,tree);reject();bke::node_remove_node(live.get(),tree,*extra,true);}
-  for(const char *suffix:{"Pixels","TexelUv2"}){auto *node=bke::node_find_node_by_name(tree,std::string("__BTS_LayerMaterial0ColorUdimTile1002")+suffix);assert(node);auto *value=static_cast<bNodeSocketValueVector *>(static_cast<bNodeSocket *>(node->inputs.first)->next->default_value)->value;const float saved=value[0];value[0]+=.125f;reject();value[0]=saved;}
-  {auto *node=bke::node_find_node_by_name(tree,"__BTS_LayerMaterial0ColorUdimTile1002Bilinear");assert(node);const auto saved=node->custom2;node->custom2=1;reject();node->custom2=saved;}
-  auto *sample=bke::node_find_node_by_name(tree,"__BTS_LayerMaterial0ColorUdimTile1002Image");assert(sample&&sample->id==&aliases.at({false,1002})->id);auto &settings=*static_cast<NodeTexImage *>(sample->storage);settings.extension=SHD_IMAGE_EXTENSION_REPEAT;reject();settings.extension=SHD_IMAGE_EXTENSION_EXTEND;auto *old=sample->id;sample->id=&aliases.at({false,1001})->id;reject();sample->id=old;
-  {auto *node=bke::node_find_node_by_name(tree,"__BTS_LayerMaterial0ColorUdimTile1002ToAP10");auto *value=static_cast<bNodeSocketValueVector *>(static_cast<bNodeSocket *>(node->inputs.first)->next->default_value)->value;const float saved=value[0];value[0]=.25f;reject();value[0]=saved;}
-  {auto *unknown=bke::node_add_node(nullptr,tree,UString("ShaderNodeValue"));STRNCPY(unknown->name,"__BTS_LayerMaterial0ColorUdimUnknown");reject();bke::node_remove_node(live.get(),tree,*unknown,true);}
-  const auto bindings=capture();using Context=bke::blendfile::PartialWriteContext;Context snapshot(*live);snapshot.bmain.colorspace=live->colorspace;auto *copy_scene=reinterpret_cast<Scene *>(snapshot.id_add(&scene->id,{Context::ADD_DEPENDENCIES}));auto *copy_material=reinterpret_cast<Material *>(snapshot.id_add(&material->id,{Context::ADD_DEPENDENCIES}));auto owners=retain_material_layer_source_snapshot_headers(*live,snapshot.bmain);ProjectResourceImages resources;pack_project_assets(snapshot.bmain,*copy_scene,{original},&resources,&snapshot);pack_material_layer_source_bindings(snapshot,*copy_scene,bindings,resources);assert(snapshot.is_valid()&&resources.by_key.size()==2&&document.to_json()==before);
-  for(const auto &[key,alias]:aliases)for(const Image &image:snapshot.bmain.images)assert(image.id.session_uid!=alias->id.session_uid);auto copied=document;copied.set(summary.session_id).material_session_uid=copy_material->id.session_uid;assert(validate_packed_material_layer_sources(snapshot.bmain,*copy_scene,copied,resources));
-  const auto reject_cold=[&]{bool failed=false;try{validate_packed_material_layer_sources(snapshot.bmain,*copy_scene,copied,resources);}catch(const std::invalid_argument &){failed=true;}assert(failed);++graph_negatives;};
-  for(int input=0;input<3;++input)for(int tile:{1001,1002})require_taps(*copy_material,input,tile,*resources.by_key.at(color->asset+"_"+std::to_string(tile)));
-  {auto *properties=IDP_EnsureProperties(&copy_scene->id);const auto *property=IDP_GetPropertyFromGroup(properties,"bts_material_layer_sources");assert(property&&property->type==IDP_STRING&&property->len>0);const QByteArray original_rows(IDP_string_get(property),property->len-1);const auto original_json=QJsonDocument::fromJson(original_rows).object();assert(original_json["version"]==4);const auto original_bindings=original_json["bindings"].toArray();int target_row=-1;
-   for(int i=0;i<original_bindings.size();++i){const auto row=original_bindings[i].toObject();if(row["channel"]!=0)continue;assert(row["sampling"]=="linear-color-udim-extend-float-bilinear-v1");const auto taps=row["taps"].toArray();assert(taps.size()==4&&taps[0]==row["node"]);std::set<int> identifiers;for(const auto &tap:taps)assert(tap.toInt()!=0&&identifiers.insert(tap.toInt()).second);if(target_row<0)target_row=i;}assert(target_row>=0);
-   for(bool duplicate:{false,true}){auto changed=original_json;auto rows=original_bindings;auto row=rows[target_row].toObject();auto taps=row["taps"].toArray();if(duplicate){const QJsonValue primary=taps[0];taps[3]=primary;}else taps.removeLast();row["taps"]=taps;rows[target_row]=row;changed["bindings"]=rows;const auto bytes=QJsonDocument(changed).toJson(QJsonDocument::Compact);IDP_ReplaceInGroup(properties,IDP_NewString(bytes.constData(),"bts_material_layer_sources"));reject_cold();IDP_ReplaceInGroup(properties,IDP_NewString(original_rows.constData(),"bts_material_layer_sources"));}
+QJsonObject verify_linear_color_udim_carriers()
+{
+  using namespace blender;
+  using Buffer = std::unique_ptr<ImBuf, decltype(&IMB_freeImBuf)>;
+  QTemporaryDir directory;
+  assert(directory.isValid());
+  int graph_negatives = 0;
+  QJsonArray packages;
+  const auto color_taps = [](Material &material, int input, int tile) {
+    std::array<bNode *, 4> taps{};
+    const auto prefix = "__BTS_LayerMaterial" + std::to_string(input) + "ColorUdimTile" +
+                        std::to_string(tile) + "Image";
+    for (int tap = 0; tap < 4; ++tap) {
+      taps[tap] = bke::node_find_node_by_name(
+          *material.nodetree, prefix + (tap ? "Tap" + std::to_string(tap) : std::string{}));
+      assert(taps[tap] && STREQ(taps[tap]->idname, "ShaderNodeTexImage") && taps[tap]->id);
+    }
+    return taps;
+  };
+  const auto require_taps = [&](Material &material, int input, int tile, Image &image) {
+    for (auto *tap : color_taps(material, input, tile)) {
+      assert(tap->id == &image.id && tap->storage);
+      const auto &settings = *static_cast<const NodeTexImage *>(tap->storage);
+      assert(settings.extension == SHD_IMAGE_EXTENSION_EXTEND &&
+             settings.interpolation == SHD_INTERP_CLOSEST && settings.projection == SHD_PROJ_FLAT);
+    }
+  };
+  const auto encode = [&](StudioAsset &asset, int tile, int width, int height, bool mask) {
+    auto *image = reinterpret_cast<Image *>(BKE_id_new_nomain(ID_IM, "Own Color UDIM original"));
+    assert(image);
+    const auto cleanup = qScopeGuard([&] { BKE_id_free(nullptr, &image->id); });
+    describe_source(*image, width, height);
+    image->flag |= IMA_HIGH_BITDEPTH;
+    FillTexture source;
+    source.asset = asset.id.toString(QUuid::WithoutBraces).toStdString();
+    source.hash = std::string(64, 'b');
+    source.name = "Original RGB";
+    source.raw = true;
+    source.width = width;
+    source.height = height;
+    auto pixels = std::make_shared<std::vector<FillTexture::Pixel>>(width * height);
+    for (int y = 0; y < height; ++y)
+      for (int x = 0; x < width; ++x)
+        (*pixels)[y * width + x] = mask ? FillTexture::Pixel{.5f, 0, 0, 1} :
+                                          FillTexture::Pixel{float(x + tile - 1001) / 8 - .125f,
+                                                             float(y + 1) / 4,
+                                                             float(x + 2 * y + 1) / 4 + 1,
+                                                             float((x + y) % 3) / 2};
+    source.pixels = pixels;
+    Buffer header(material_layer_source_pixel_view(source), IMB_freeImBuf);
+    assert(BKE_image_assign_hosted_immutable_source(image, 1001, header.get()) &&
+           BKE_image_memorypack(image));
+    const auto *part = static_cast<const ImagePackedFile *>(image->packedfiles.first);
+    assert(part && part->packedfile && part->packedfile->size > 0);
+    const auto name = QString("%1.%2.exr").arg(asset.name).arg(tile),
+               path = directory.filePath(name);
+    QFile file(path);
+    assert(file.open(QIODevice::WriteOnly) &&
+           file.write(static_cast<const char *>(part->packedfile->data), part->packedfile->size) ==
+               part->packedfile->size);
+    asset.texture_files.push_back(
+        {tile,
+         name,
+         path,
+         QString::fromLatin1(QCryptographicHash::hash(
+                                 QByteArrayView(static_cast<const char *>(part->packedfile->data),
+                                                part->packedfile->size),
+                                 QCryptographicHash::Sha256)
+                                 .toHex()),
+         part->packedfile->size});
+  };
+  const auto asset = [](const QString &name) {
+    StudioAsset value;
+    value.id = QUuid::createUuid();
+    value.name = name;
+    value.filename = name + ".btsseq";
+    value.scope = AssetScope::Project;
+    value.usages = {"texture"};
+    return value;
+  };
+  for (const std::string space : {"ACEScg", "Linear Rec.709"}) {
+    auto original = asset(QString("linear-%1").arg(packages.size()));
+    encode(original, 1001, 2, 2, false);
+    encode(original, 1002, 4, 2, false);
+    const auto color = decode_fill_texture(original, false, space),
+               raw = decode_fill_texture(original, true);
+    require_material_layer_udim_originals(*color, original.texture_files);
+    const auto transforms = material_layer_color_source_transforms(*color);
+    assert(transforms.size() == 2 && color->tiles->at(1001)->width == 2 &&
+           color->tiles->at(1002)->width == 4);
+    for (const auto &[tile, transform] : transforms) {
+      assert(!transform.srgb && !transform.processor.empty());
+      for (float value : transform.to_aces)
+        assert(std::isfinite(value));
+    }
+    {
+      LayerMaterialInput input;
+      input.textures[0] = color;
+      require_material_layer_udim_coverage(input, {1001, 1002});
+      input.offset = {1, 0};
+      bool failed = false;
+      try {
+        require_material_layer_udim_coverage(input, {1001, 1002});
+      }
+      catch (const std::invalid_argument &) {
+        failed = true;
+      }
+      assert(failed);
+      ++graph_negatives;
+      auto wrong = original.texture_files;
+      wrong[1].sha256 = wrong[0].sha256;
+      failed = false;
+      try {
+        require_material_layer_udim_originals(*color, wrong);
+      }
+      catch (const std::invalid_argument &) {
+        failed = true;
+      }
+      assert(failed);
+      ++graph_negatives;
+    }
+    // Real independently decoded interpretations exercise the table helper's
+    // per-member authority. This synthetic mixed descriptor is not a claim that
+    // these fixture EXRs carry mixed automatic file tags or may be cold-adopted.
+    {
+      const auto other = decode_fill_texture(
+          original, false, space == "ACEScg" ? "Linear Rec.709" : "ACEScg");
+      auto mixed = *color;
+      mixed.source_space.clear();
+      auto members = std::make_shared<std::map<int, std::shared_ptr<const FillTexture>>>();
+      for (int tile : {1001, 1002}) {
+        auto member = std::make_shared<FillTexture>(
+            *(tile == 1001 ? color : other)->tiles->at(tile));
+        member->source_space.clear();
+        members->emplace(tile, member);
+      }
+      mixed.tiles = members;
+      const auto table = material_layer_color_source_transforms(mixed);
+      assert(table.size() == 2 && table.at(1001).processor != table.at(1002).processor &&
+             table.at(1001).to_aces != table.at(1002).to_aces);
+    }
+    // Exercise the whole member table: changing only the SECOND member to a
+    // nonlinear resolved space is rejected even if the preview remains linear.
+    {
+      auto mixed = *color;
+      auto members = std::make_shared<std::map<int, std::shared_ptr<const FillTexture>>>(
+          *mixed.tiles);
+      auto member = std::make_shared<FillTexture>(*members->at(1002));
+      member->input_space = "sRGB";
+      members->at(1002) = member;
+      mixed.tiles = members;
+      bool failed = false;
+      try {
+        material_layer_color_source_transforms(mixed);
+      }
+      catch (const std::invalid_argument &) {
+        failed = true;
+      }
+      assert(failed);
+      ++graph_negatives;
+    }
+    std::unique_ptr<Main, decltype(&BKE_main_free)> live(BKE_main_new(), BKE_main_free);
+    IMB_colormanagement_working_space_init_default(live.get());
+    auto *scene = BKE_scene_add(live.get(), "Linear Color UDIM");
+    for (auto &layer : scene->view_layers)
+      BKE_view_layer_synced_ensure(*live, scene, &layer);
+    auto *material = BKE_material_add(live.get(), "Color UDIM owner");
+    auto &tree = *material->nodetree;
+    auto *surface = bke::node_add_node(nullptr, tree, UString("ShaderNodeBsdfPrincipled")),
+         *output = bke::node_add_node(nullptr, tree, UString("ShaderNodeOutputMaterial"));
+    const auto socket = [](bNode &node, const char *name, bool input) -> bNodeSocket & {
+      for (auto &s : input ? node.inputs : node.outputs)
+        if (STREQ(s.identifier, name))
+          return s;
+      throw std::runtime_error("Color UDIM fixture socket missing");
+    };
+    BKE_ntree_update_after_single_tree_change(*live, tree);
+    bke::node_add_link(tree,
+                       *surface,
+                       socket(*surface, "BSDF", false),
+                       *output,
+                       socket(*output, "Surface", true));
+    BKE_ntree_update_after_single_tree_change(*live, tree);
+    SceneSnapshot description;
+    MaterialSummary summary;
+    summary.session_id = material->id.session_uid;
+    summary.name = material->id.name + 2;
+    summary.uniform_editable = true;
+    description.materials.push_back(summary);
+    ImportSummary imported;
+    imported.materials.push_back({summary.session_id, summary.name});
+    imported.materials.back().tiles = {1001, 1002};
+    NewProjectOptions options;
+    options.resolution = DocumentResolution::Pixels128;
+    options.uv_workflow = UvWorkflow::PreserveTiles;
+    TextureDocument document(options, imported, description);
+    auto &set = document.set(summary.session_id);
+    const auto target = set;
+    configure_material_layering(set, true);
+    for (int i = 0; i < 3; ++i)
+      set.material_layering.materials[i].textures[0] = color;
+    set.material_layering.materials[3].textures[4] = raw;
+    for (int slot : set.material_layering.mask_slots) {
+      auto *image = reinterpret_cast<Image *>(BKE_id_new(live.get(), ID_IM, "Color UDIM opacity"));
+      describe_source(*image, 1, 1);
+      image->runtime->gpuflag &= ~IMA_HOSTED_IMMUTABLE_SOURCE;
+      auto *n = bke::node_add_node(nullptr, tree, UString("ShaderNodeTexImage"));
+      STRNCPY(n->name, ("__BTS_UserPixels" + std::to_string(slot)).c_str());
+      n->id = &image->id;
+      id_us_plus(n->id);
+    }
+    MaterialLayerImages images{};
+    std::map<std::pair<bool, int>, Image *> aliases;
+    for (bool data : {false, true})
+      for (const auto &[tile, member] : *(data ? raw : color)->tiles) {
+        auto *image = reinterpret_cast<Image *>(
+            BKE_id_new(live.get(), ID_IM, "Color UDIM typed alias"));
+        id_us_min(&image->id);
+        describe_source(*image, member->width, member->height);
+        Buffer header(material_layer_source_pixel_view(*member), IMB_freeImBuf);
+        assert(BKE_image_assign_hosted_immutable_source(image, 1001, header.get()));
+        aliases.emplace(std::pair{data, tile}, image);
+        if (data)
+          images.members[3][4].emplace(tile, image);
+        else
+          for (int i = 0; i < 3; ++i)
+            images.members[i][0].emplace(tile, image);
+      }
+    MaterialLayerShader shader;
+    shader.apply(*live, *material, set.material_layering, 1, 1, false, images);
+    const auto capture = [&] { return capture_material_layer_source_bindings(*live, document); };
+    assert(capture().size() == 8);
+    const auto before = document.to_json();
+    const auto reject = [&] {
+      bool failed = false;
+      try {
+        capture();
+      }
+      catch (const std::invalid_argument &) {
+        failed = true;
+      }
+      assert(failed && document.to_json() == before);
+      ++graph_negatives;
+    };
+    for (int input = 0; input < 3; ++input)
+      for (int tile : {1001, 1002})
+        require_taps(*material, input, tile, *aliases.at({false, tile}));
+    for (const auto &binding : capture())
+      if (binding.channel == 0) {
+        std::set<int> identifiers(binding.tap_identifiers.begin(), binding.tap_identifiers.end());
+        assert(identifiers.size() == 4 && !identifiers.contains(0) &&
+               binding.node_identifier == binding.tap_identifiers[0]);
+      }
+    // Every sibling is audited, including its Image, sampling mode, dimensions,
+    // clamp flags and fanout. Rejection must leave the typed document untouched.
+    {
+      const auto taps = color_taps(*material, 0, 1002);
+      auto *saved = taps[3]->id;
+      taps[3]->id = &aliases.at({false, 1001})->id;
+      reject();
+      taps[3]->id = nullptr;
+      reject();
+      taps[3]->id = saved;
+      auto &settings = *static_cast<NodeTexImage *>(taps[1]->storage);
+      settings.interpolation = SHD_INTERP_LINEAR;
+      reject();
+      settings.interpolation = SHD_INTERP_CLOSEST;
+      auto *extra = bke::node_add_node(nullptr, tree, UString("ShaderNodeVectorMath"));
+      bke::node_add_link(tree,
+                         *taps[1],
+                         socket(*taps[1], "Color", false),
+                         *extra,
+                         *static_cast<bNodeSocket *>(extra->inputs.first));
+      BKE_ntree_update_after_single_tree_change(*live, tree);
+      reject();
+      bke::node_remove_node(live.get(), tree, *extra, true);
+    }
+    for (const char *suffix : {"Pixels", "TexelUv2"}) {
+      auto *node = bke::node_find_node_by_name(
+          tree, std::string("__BTS_LayerMaterial0ColorUdimTile1002") + suffix);
+      assert(node);
+      auto *value = static_cast<bNodeSocketValueVector *>(
+                        static_cast<bNodeSocket *>(node->inputs.first)->next->default_value)
+                        ->value;
+      const float saved = value[0];
+      value[0] += .125f;
+      reject();
+      value[0] = saved;
+    }
+    {
+      auto *node = bke::node_find_node_by_name(tree,
+                                               "__BTS_LayerMaterial0ColorUdimTile1002Bilinear");
+      assert(node);
+      const auto saved = node->custom2;
+      node->custom2 = 1;
+      reject();
+      node->custom2 = saved;
+    }
+    auto *sample = bke::node_find_node_by_name(tree, "__BTS_LayerMaterial0ColorUdimTile1002Image");
+    assert(sample && sample->id == &aliases.at({false, 1002})->id);
+    auto &settings = *static_cast<NodeTexImage *>(sample->storage);
+    settings.extension = SHD_IMAGE_EXTENSION_REPEAT;
+    reject();
+    settings.extension = SHD_IMAGE_EXTENSION_EXTEND;
+    auto *old = sample->id;
+    sample->id = &aliases.at({false, 1001})->id;
+    reject();
+    sample->id = old;
+    {
+      auto *node = bke::node_find_node_by_name(tree,
+                                               "__BTS_LayerMaterial0ColorUdimTile1002ToAP10");
+      auto *value = static_cast<bNodeSocketValueVector *>(
+                        static_cast<bNodeSocket *>(node->inputs.first)->next->default_value)
+                        ->value;
+      const float saved = value[0];
+      value[0] = .25f;
+      reject();
+      value[0] = saved;
+    }
+    {
+      auto *unknown = bke::node_add_node(nullptr, tree, UString("ShaderNodeValue"));
+      STRNCPY(unknown->name, "__BTS_LayerMaterial0ColorUdimUnknown");
+      reject();
+      bke::node_remove_node(live.get(), tree, *unknown, true);
+    }
+    const auto bindings = capture();
+    using Context = bke::blendfile::PartialWriteContext;
+    Context snapshot(*live);
+    snapshot.bmain.colorspace = live->colorspace;
+    auto *copy_scene = reinterpret_cast<Scene *>(
+        snapshot.id_add(&scene->id, {Context::ADD_DEPENDENCIES}));
+    auto *copy_material = reinterpret_cast<Material *>(
+        snapshot.id_add(&material->id, {Context::ADD_DEPENDENCIES}));
+    auto owners = retain_material_layer_source_snapshot_headers(*live, snapshot.bmain);
+    ProjectResourceImages resources;
+    pack_project_assets(snapshot.bmain, *copy_scene, {original}, &resources, &snapshot);
+    pack_material_layer_source_bindings(snapshot, *copy_scene, bindings, resources);
+    assert(snapshot.is_valid() && resources.by_key.size() == 2 && document.to_json() == before);
+    for (const auto &[key, alias] : aliases)
+      for (const Image &image : snapshot.bmain.images)
+        assert(image.id.session_uid != alias->id.session_uid);
+    auto copied = document;
+    copied.set(summary.session_id).material_session_uid = copy_material->id.session_uid;
+    assert(validate_packed_material_layer_sources(snapshot.bmain, *copy_scene, copied, resources));
+    const auto reject_cold = [&] {
+      bool failed = false;
+      try {
+        validate_packed_material_layer_sources(snapshot.bmain, *copy_scene, copied, resources);
+      }
+      catch (const std::invalid_argument &) {
+        failed = true;
+      }
+      assert(failed);
+      ++graph_negatives;
+    };
+    for (int input = 0; input < 3; ++input)
+      for (int tile : {1001, 1002})
+        require_taps(*copy_material,
+                     input,
+                     tile,
+                     *resources.by_key.at(color->asset + "_" + std::to_string(tile)));
+    {
+      auto *properties = IDP_EnsureProperties(&copy_scene->id);
+      const auto *property = IDP_GetPropertyFromGroup(properties, "bts_material_layer_sources");
+      assert(property && property->type == IDP_STRING && property->len > 0);
+      const QByteArray original_rows(IDP_string_get(property), property->len - 1);
+      const auto original_json = QJsonDocument::fromJson(original_rows).object();
+      assert(original_json["version"] == 4);
+      const auto original_bindings = original_json["bindings"].toArray();
+      int target_row = -1;
+      for (int i = 0; i < original_bindings.size(); ++i) {
+        const auto row = original_bindings[i].toObject();
+        if (row["channel"] != 0)
+          continue;
+        assert(row["sampling"] == "linear-color-udim-extend-float-bilinear-v1");
+        const auto taps = row["taps"].toArray();
+        assert(taps.size() == 4 && taps[0] == row["node"]);
+        std::set<int> identifiers;
+        for (const auto &tap : taps)
+          assert(tap.toInt() != 0 && identifiers.insert(tap.toInt()).second);
+        if (target_row < 0)
+          target_row = i;
+      }
+      assert(target_row >= 0);
+      for (bool duplicate : {false, true}) {
+        auto changed = original_json;
+        auto rows = original_bindings;
+        auto row = rows[target_row].toObject();
+        auto taps = row["taps"].toArray();
+        if (duplicate) {
+          const QJsonValue primary = taps[0];
+          taps[3] = primary;
+        }
+        else
+          taps.removeLast();
+        row["taps"] = taps;
+        rows[target_row] = row;
+        changed["bindings"] = rows;
+        const auto bytes = QJsonDocument(changed).toJson(QJsonDocument::Compact);
+        IDP_ReplaceInGroup(properties,
+                           IDP_NewString(bytes.constData(), "bts_material_layer_sources"));
+        reject_cold();
+        IDP_ReplaceInGroup(properties,
+                           IDP_NewString(original_rows.constData(), "bts_material_layer_sources"));
+      }
+    }
+    {
+      auto *node = bke::node_find_node_by_name(*copy_material->nodetree,
+                                               "__BTS_LayerMaterial0ColorUdimTile1002ToAP10");
+      auto *value = static_cast<bNodeSocketValueVector *>(
+                        static_cast<bNodeSocket *>(node->inputs.first)->next->default_value)
+                        ->value;
+      const float saved = value[0];
+      value[0] += .125f;
+      reject_cold();
+      value[0] = saved;
+    }
+    {
+      auto *extra = bke::node_add_node(
+          nullptr, *copy_material->nodetree, UString("ShaderNodeTexImage"));
+      extra->id = &resources.by_key.at(color->asset + "_1002")->id;
+      id_us_plus(extra->id);
+      reject_cold();
+      bke::node_remove_node(&snapshot.bmain, *copy_material->nodetree, *extra, true);
+    }
+    // Package tables are reconstructed from actual member metadata, then every
+    // hydrated member is checked by the same native admission helper.
+    auto mask_asset = asset(QString("mask-%1").arg(packages.size()));
+    for (int tile : {1001, 1002})
+      encode(mask_asset, tile, 128, 128, true);
+    const auto mask = decode_fill_texture(mask_asset, true);
+    MaterialLayerParameters parameters;
+    parameters.name = "Linear Color UDIM package";
+    parameters.working_space = QString::fromUtf8(live->colorspace.scene_linear_name);
+    for (int r = 0; r < 3; ++r)
+      for (int c = 0; c < 3; ++c)
+        parameters.scene_linear_to_xyz[r * 3 + c] = live->colorspace.scene_linear_to_xyz[c][r];
+    parameters.materials = set.material_layering.materials;
+    parameters.tiles = {{1001, {128, 128}}, {1002, {128, 128}}};
+    parameters.masks.fill(mask);
+    for (int i = 0; i < 3; ++i)
+      for (const auto &[tile, transform] : transforms)
+        parameters.color_members[i].emplace(
+            tile,
+            MaterialParameterColorMember{
+                QString::fromStdString(color->tiles->at(tile)->input_space),
+                QString::fromStdString(transform.processor)});
+    for (const auto *asset : {&original, &mask_asset}) {
+      MaterialParameterOriginal entry;
+      entry.asset = asset->id;
+      for (const auto &file : asset->texture_files)
+        entry.files.push_back({file, {}});
+      parameters.originals.push_back(std::move(entry));
+    }
+    const auto decode =
+        [](const FillTexture &descriptor, const MaterialParameterOriginal &original, bool) {
+          StudioAsset asset;
+          asset.id = original.asset;
+          asset.name = QString::fromStdString(descriptor.name);
+          asset.scope = AssetScope::Project;
+          asset.usages = {"texture"};
+          for (const auto &file : original.files)
+            asset.texture_files.push_back(file.descriptor);
+          return decode_fill_texture(asset, descriptor.raw, descriptor.source_space);
+        };
+    const auto processor = [](const FillTexture &source) {
+      return QString::fromStdString(material_layer_source_color_transform(source).processor);
+    };
+    // Reconstruction admission must inspect an ordinary target, not the layered
+    // material whose saved graph the rest of this fixture deliberately owns.
+    auto *package_material = BKE_material_add(live.get(), "Ordinary package target");
+    auto &package_tree = *package_material->nodetree;
+    auto *package_surface = bke::node_add_node(
+             nullptr, package_tree, UString("ShaderNodeBsdfPrincipled")),
+         *package_output = bke::node_add_node(
+             nullptr, package_tree, UString("ShaderNodeOutputMaterial"));
+    BKE_ntree_update_after_single_tree_change(*live, package_tree);
+    bke::node_add_link(package_tree,
+                       *package_surface,
+                       socket(*package_surface, "BSDF", false),
+                       *package_output,
+                       socket(*package_output, "Surface", true));
+    BKE_ntree_update_after_single_tree_change(*live, package_tree);
+    auto package_target = target;
+    package_target.material_session_uid = package_material->id.session_uid;
+    const auto package_gate = [&](const TextureSet &candidate) {
+      assert(candidate.material_session_uid == package_material->id.session_uid);
+      require_material_parameter_surface(*live, *package_material);
+    };
+    packages.append(verify_linear_color_udim_package(
+        parameters, package_target, decode, processor, package_gate));
+    const auto path = directory.filePath(QString("color-%1.blend").arg(packages.size()));
+    ReportList reports{};
+    BKE_reports_init(&reports, RPT_STORE);
+    const auto report_cleanup = qScopeGuard([&] { BKE_reports_free(&reports); });
+    BlendFileWriteParams write{};
+    write.use_save_as_copy = true;
+    assert(BLO_write_file(&snapshot.bmain, path.toUtf8().constData(), 0, &write, &reports));
+    for (const auto &file : original.texture_files)
+      assert(QFile::remove(file.path));
+    BlendFileReadReport report{};
+    report.reports = &reports;
+    std::unique_ptr<BlendFileData, decltype(&BLO_blendfiledata_free)> read(
+        BLO_read_from_file(path.toUtf8().constData(), BLO_READ_SKIP_USERDEF, &report),
+        BLO_blendfiledata_free);
+    assert(read && read->main);
+    auto &cold = *read->main;
+    auto &cold_scene = *static_cast<Scene *>(cold.scenes.first);
+    auto &cold_material = *static_cast<Material *>(cold.materials.first);
+    ProjectResourceImages cold_resources;
+    const auto assets = read_project_assets(cold_scene, &cold_resources);
+    assert(assets.size() == 1 && cold_resources.by_key.size() == 2);
+    const std::array<TextureSetBinding, 1> cold_bindings{
+        {{set.id, cold_material.id.session_uid, set.name}}};
+    auto restored = TextureDocument::from_json(before, cold_bindings);
+    resolve_fill_textures(restored, assets);
+    assert(validate_packed_material_layer_sources(cold, cold_scene, restored, cold_resources));
+    for (int input = 0; input < 3; ++input)
+      for (int tile : {1001, 1002})
+        require_taps(cold_material,
+                     input,
+                     tile,
+                     *cold_resources.by_key.at(color->asset + "_" + std::to_string(tile)));
+    auto &cold_set = restored.set(cold_material.id.session_uid);
+    MaterialLayerImages reopened_images{};
+    std::map<std::string, Image *> reopened_aliases;
+    for (int input = 0; input < 4; ++input)
+      for (int channel : {0, 4})
+        if (const auto &source = cold_set.material_layering.materials[input].textures[channel])
+          for (const auto &[tile, member] : *source->tiles) {
+            auto [at, fresh] = reopened_aliases.try_emplace(gpu_texture_resource_key(*member));
+            if (fresh) {
+              auto *image = reinterpret_cast<Image *>(
+                  BKE_id_new(&cold, ID_IM, "Reopened Color UDIM alias"));
+              id_us_min(&image->id);
+              describe_source(*image, member->width, member->height);
+              Buffer header(material_layer_source_pixel_view(*member), IMB_freeImBuf);
+              assert(BKE_image_assign_hosted_immutable_source(image, 1001, header.get()));
+              at->second = image;
+            }
+            reopened_images.members[input][channel].emplace(tile, at->second);
+          }
+    assert(reopened_aliases.size() == 4);
+    MaterialLayerShader reopened;
+    reopened.apply(cold, cold_material, cold_set.material_layering, 1, 1, false, reopened_images);
+    const auto next_bindings = capture_material_layer_source_bindings(cold, restored);
+    assert(next_bindings.size() == 8);
+    for (int input = 0; input < 3; ++input)
+      for (int tile : {1001, 1002})
+        require_taps(cold_material, input, tile, *reopened_images.members[input][0].at(tile));
+    for (auto &layer : cold_scene.view_layers)
+      BKE_view_layer_synced_ensure(cold, &cold_scene, &layer);
+    Context again(cold);
+    again.bmain.colorspace = cold.colorspace;
+    auto *again_scene = reinterpret_cast<Scene *>(
+        again.id_add(&cold_scene.id, {Context::ADD_DEPENDENCIES}));
+    again.id_add(&cold_material.id, {Context::ADD_DEPENDENCIES});
+    auto next_owners = retain_material_layer_source_snapshot_headers(cold, again.bmain);
+    ProjectResourceImages next_resources;
+    pack_project_assets(again.bmain, *again_scene, assets, &next_resources, &again);
+    pack_material_layer_source_bindings(again, *again_scene, next_bindings, next_resources);
+    assert(again.is_valid() && next_resources.by_key.size() == 2);
+    auto *again_material = static_cast<Material *>(again.bmain.materials.first);
+    assert(again_material);
+    for (int input = 0; input < 3; ++input)
+      for (int tile : {1001, 1002})
+        require_taps(*again_material,
+                     input,
+                     tile,
+                     *next_resources.by_key.at(color->asset + "_" + std::to_string(tile)));
+    // SRT changes rebuild only the owned graph, reusing the exact typed Images.
+    set.material_layering.materials[0].tiling = {.5, .5};
+    set.material_layering.materials[0].offset = {.25, .25};
+    shader.apply(*live, *material, set.material_layering, 1, 1, false, images);
+    assert(capture().size() == 8);
+    set.material_layering.enabled = false;
+    shader.apply(*live, *material, set.material_layering, 1, 1, false, {});
+    for (const auto &node : tree.nodes)
+      assert(!STRPREFIX(node.name, "__BTS_LayerMaterial0ColorUdim"));
+    set.material_layering.enabled = true;
+    shader.apply(*live, *material, set.material_layering, 1, 1, false, images);
+    assert(capture().size() == 8);
   }
-  {auto *node=bke::node_find_node_by_name(*copy_material->nodetree,"__BTS_LayerMaterial0ColorUdimTile1002ToAP10");auto *value=static_cast<bNodeSocketValueVector *>(static_cast<bNodeSocket *>(node->inputs.first)->next->default_value)->value;const float saved=value[0];value[0]+=.125f;reject_cold();value[0]=saved;}
-  {auto *extra=bke::node_add_node(nullptr,*copy_material->nodetree,UString("ShaderNodeTexImage"));extra->id=&resources.by_key.at(color->asset+"_1002")->id;id_us_plus(extra->id);reject_cold();bke::node_remove_node(&snapshot.bmain,*copy_material->nodetree,*extra,true);}
-  // Package tables are reconstructed from actual member metadata, then every
-  // hydrated member is checked by the same native admission helper.
-  auto mask_asset=asset(QString("mask-%1").arg(packages.size()));for(int tile:{1001,1002})encode(mask_asset,tile,128,128,true);const auto mask=decode_fill_texture(mask_asset,true);
-  MaterialLayerParameters parameters;parameters.name="Linear Color UDIM package";parameters.working_space=QString::fromUtf8(live->colorspace.scene_linear_name);for(int r=0;r<3;++r)for(int c=0;c<3;++c)parameters.scene_linear_to_xyz[r*3+c]=live->colorspace.scene_linear_to_xyz[c][r];parameters.materials=set.material_layering.materials;parameters.tiles={{1001,{128,128}},{1002,{128,128}}};parameters.masks.fill(mask);
-  for(int i=0;i<3;++i)for(const auto &[tile,transform]:transforms)parameters.color_members[i].emplace(tile,MaterialParameterColorMember{QString::fromStdString(color->tiles->at(tile)->input_space),QString::fromStdString(transform.processor)});
-  for(const auto *asset:{&original,&mask_asset}){MaterialParameterOriginal entry;entry.asset=asset->id;for(const auto &file:asset->texture_files)entry.files.push_back({file,{}});parameters.originals.push_back(std::move(entry));}
-  const auto decode=[](const FillTexture &descriptor,const MaterialParameterOriginal &original,bool){StudioAsset asset;asset.id=original.asset;asset.name=QString::fromStdString(descriptor.name);asset.scope=AssetScope::Project;asset.usages={"texture"};for(const auto &file:original.files)asset.texture_files.push_back(file.descriptor);return decode_fill_texture(asset,descriptor.raw,descriptor.source_space);};const auto processor=[](const FillTexture &source){return QString::fromStdString(material_layer_source_color_transform(source).processor);};
-  // Reconstruction admission must inspect an ordinary target, not the layered
-  // material whose saved graph the rest of this fixture deliberately owns.
-  auto *package_material=BKE_material_add(live.get(),"Ordinary package target");auto &package_tree=*package_material->nodetree;auto *package_surface=bke::node_add_node(nullptr,package_tree,UString("ShaderNodeBsdfPrincipled")),*package_output=bke::node_add_node(nullptr,package_tree,UString("ShaderNodeOutputMaterial"));BKE_ntree_update_after_single_tree_change(*live,package_tree);bke::node_add_link(package_tree,*package_surface,socket(*package_surface,"BSDF",false),*package_output,socket(*package_output,"Surface",true));BKE_ntree_update_after_single_tree_change(*live,package_tree);auto package_target=target;package_target.material_session_uid=package_material->id.session_uid;
-  const auto package_gate=[&](const TextureSet &candidate){assert(candidate.material_session_uid==package_material->id.session_uid);require_material_parameter_surface(*live,*package_material);};packages.append(verify_linear_color_udim_package(parameters,package_target,decode,processor,package_gate));
-  const auto path=directory.filePath(QString("color-%1.blend").arg(packages.size()));ReportList reports{};BKE_reports_init(&reports,RPT_STORE);const auto report_cleanup=qScopeGuard([&]{BKE_reports_free(&reports);});BlendFileWriteParams write{};write.use_save_as_copy=true;assert(BLO_write_file(&snapshot.bmain,path.toUtf8().constData(),0,&write,&reports));for(const auto &file:original.texture_files)assert(QFile::remove(file.path));BlendFileReadReport report{};report.reports=&reports;std::unique_ptr<BlendFileData,decltype(&BLO_blendfiledata_free)> read(BLO_read_from_file(path.toUtf8().constData(),BLO_READ_SKIP_USERDEF,&report),BLO_blendfiledata_free);assert(read&&read->main);auto &cold=*read->main;auto &cold_scene=*static_cast<Scene *>(cold.scenes.first);auto &cold_material=*static_cast<Material *>(cold.materials.first);ProjectResourceImages cold_resources;const auto assets=read_project_assets(cold_scene,&cold_resources);assert(assets.size()==1&&cold_resources.by_key.size()==2);const std::array<TextureSetBinding,1> cold_bindings{{{set.id,cold_material.id.session_uid,set.name}}};auto restored=TextureDocument::from_json(before,cold_bindings);resolve_fill_textures(restored,assets);assert(validate_packed_material_layer_sources(cold,cold_scene,restored,cold_resources));
-  for(int input=0;input<3;++input)for(int tile:{1001,1002})require_taps(cold_material,input,tile,*cold_resources.by_key.at(color->asset+"_"+std::to_string(tile)));
-  auto &cold_set=restored.set(cold_material.id.session_uid);MaterialLayerImages reopened_images{};std::map<std::string,Image *> reopened_aliases;
-  for(int input=0;input<4;++input)for(int channel:{0,4})if(const auto &source=cold_set.material_layering.materials[input].textures[channel])for(const auto &[tile,member]:*source->tiles){auto [at,fresh]=reopened_aliases.try_emplace(gpu_texture_resource_key(*member));if(fresh){auto *image=reinterpret_cast<Image *>(BKE_id_new(&cold,ID_IM,"Reopened Color UDIM alias"));id_us_min(&image->id);describe_source(*image,member->width,member->height);Buffer header(material_layer_source_pixel_view(*member),IMB_freeImBuf);assert(BKE_image_assign_hosted_immutable_source(image,1001,header.get()));at->second=image;}reopened_images.members[input][channel].emplace(tile,at->second);}
-  assert(reopened_aliases.size()==4);MaterialLayerShader reopened;reopened.apply(cold,cold_material,cold_set.material_layering,1,1,false,reopened_images);const auto next_bindings=capture_material_layer_source_bindings(cold,restored);assert(next_bindings.size()==8);
-  for(int input=0;input<3;++input)for(int tile:{1001,1002})require_taps(cold_material,input,tile,*reopened_images.members[input][0].at(tile));
-  for(auto &layer:cold_scene.view_layers)BKE_view_layer_synced_ensure(cold,&cold_scene,&layer);Context again(cold);again.bmain.colorspace=cold.colorspace;auto *again_scene=reinterpret_cast<Scene *>(again.id_add(&cold_scene.id,{Context::ADD_DEPENDENCIES}));again.id_add(&cold_material.id,{Context::ADD_DEPENDENCIES});auto next_owners=retain_material_layer_source_snapshot_headers(cold,again.bmain);ProjectResourceImages next_resources;pack_project_assets(again.bmain,*again_scene,assets,&next_resources,&again);pack_material_layer_source_bindings(again,*again_scene,next_bindings,next_resources);assert(again.is_valid()&&next_resources.by_key.size()==2);
-  auto *again_material=static_cast<Material *>(again.bmain.materials.first);assert(again_material);for(int input=0;input<3;++input)for(int tile:{1001,1002})require_taps(*again_material,input,tile,*next_resources.by_key.at(color->asset+"_"+std::to_string(tile)));
-  // SRT changes rebuild only the owned graph, reusing the exact typed Images.
-  set.material_layering.materials[0].tiling={.5,.5};set.material_layering.materials[0].offset={.25,.25};shader.apply(*live,*material,set.material_layering,1,1,false,images);assert(capture().size()==8);set.material_layering.enabled=false;shader.apply(*live,*material,set.material_layering,1,1,false,{});for(const auto &node:tree.nodes)assert(!STRPREFIX(node.name,"__BTS_LayerMaterial0ColorUdim"));set.material_layering.enabled=true;shader.apply(*live,*material,set.material_layering,1,1,false,images);assert(capture().size()==8);
- }
- return {{"linear_spaces",2},{"asymmetric_original_sizes",true},{"native_graph_and_cold_rejections",graph_negatives},{"source_hidden_cpu_cold",true},{"float_bilinear_four_tap_ownership",true},{"parameter_packages",packages}};
+  return {{"linear_spaces", 2},
+          {"asymmetric_original_sizes", true},
+          {"native_graph_and_cold_rejections", graph_negatives},
+          {"source_hidden_cpu_cold", true},
+          {"float_bilinear_four_tap_ownership", true},
+          {"parameter_packages", packages}};
 }

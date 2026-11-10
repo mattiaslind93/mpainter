@@ -17,44 +17,51 @@ struct Lower {
   const s::Preset &p;
   PreparedSpsm result;
   std::uint64_t used = 0;
-  static std::size_t primary(const PreparedSpsm &o) {
+  static std::size_t primary(const PreparedSpsm &o)
+  {
     if (!o.source || !o.source->primary_preset ||
         *o.source->primary_preset >= o.source->presets.size() ||
         *o.source->primary_preset >= o.source->source().presets.size())
-      throw s::Error(
-          "Mesh-map preparation requires retained primary source IR");
+      throw s::Error("Mesh-map preparation requires retained primary source IR");
     return *o.source->primary_preset;
   }
   Lower(const PreparedSpsm &o, SpsmMeshMapOptions v)
-      : original(o), options(v), pi(primary(o)), ir(o.source->presets.at(pi)),
-        p(o.source->source().presets.at(pi)) {
-    add(resource_product(o.material.set.layers.size(),
-                         sizeof(TextureLayer) * 2));
+      : original(o),
+        options(v),
+        pi(primary(o)),
+        ir(o.source->presets.at(pi)),
+        p(o.source->source().presets.at(pi))
+  {
+    add(resource_product(o.material.set.layers.size(), sizeof(TextureLayer) * 2));
     add(resource_product(o.layers.size(), sizeof(SpsmLayerBinding) * 2));
     add(resource_product(o.actions.size(), sizeof(SpsmActionBinding) * 2));
-    add(resource_product(o.diagnostics.size(),
-                         sizeof(SpsmImportDiagnostic) * 2));
+    add(resource_product(o.diagnostics.size(), sizeof(SpsmImportDiagnostic) * 2));
     for (const auto &l : o.material.set.layers) {
       add(resource_product(l.name.size(), 2));
       add(resource_product(l.effects.size(), sizeof(LevelsEffect) * 2));
       if (l.mask)
         add(resource_product(l.mask->effects.size(), sizeof(MaskEffect) * 2));
     }
-    result = o; // Pixels, source inspection and immutable resource owners are
-                // shared.
+    result = o;  // Pixels, source inspection and immutable resource owners are
+                 // shared.
   }
-  void add(std::uint64_t n) {
+  void add(std::uint64_t n)
+  {
     used = resource_sum(used, n);
-
   }
-  const s::Node &node(s::NodeId id) const { return p.nodes.at(id); }
-  const s::Object &object(s::NodeId id) const {
+  const s::Node &node(s::NodeId id) const
+  {
+    return p.nodes.at(id);
+  }
+  const s::Object &object(s::NodeId id) const
+  {
     auto *v = std::get_if<s::Object>(&node(id).value);
     if (!v)
       throw Unsupported{id};
     return *v;
   }
-  std::optional<s::NodeId> field(s::NodeId id, std::string_view key) const {
+  std::optional<s::NodeId> field(s::NodeId id, std::string_view key) const
+  {
     std::optional<s::NodeId> found;
     for (const auto &f : object(id).fields)
       if (f.name == key) {
@@ -64,52 +71,54 @@ struct Lower {
       }
     return found;
   }
-  s::NodeId required(s::NodeId id, std::string_view key) const {
+  s::NodeId required(s::NodeId id, std::string_view key) const
+  {
     auto f = field(id, key);
     if (!f)
       throw Unsupported{id};
     return *f;
   }
-  void fields(s::NodeId id,
-              std::initializer_list<std::string_view> allowed) const {
+  void fields(s::NodeId id, std::initializer_list<std::string_view> allowed) const
+  {
     const auto &all = object(id).fields;
     for (std::size_t i = 0; i < all.size(); ++i) {
       for (std::size_t j = 0; j < i; ++j)
         if (all[j].name == all[i].name)
           throw s::Error("Duplicate mesh-map source field");
-      if (std::find(allowed.begin(), allowed.end(), all[i].name) ==
-          allowed.end())
+      if (std::find(allowed.begin(), allowed.end(), all[i].name) == allowed.end())
         throw Unsupported{all[i].value};
     }
   }
-  std::uint64_t bits(s::NodeId id) const {
+  std::uint64_t bits(s::NodeId id) const
+  {
     const auto &v = node(id).value;
     if (auto n = std::get_if<std::uint64_t>(&v))
       return *n;
     if (auto n = std::get_if<std::int64_t>(&v); n && *n >= 0)
       return *n;
-    if (auto n = std::get_if<s::IntValues>(&v);
-        n && n->count == 1 && n->values[0] >= 0)
+    if (auto n = std::get_if<s::IntValues>(&v); n && n->count == 1 && n->values[0] >= 0)
       return n->values[0];
     throw Unsupported{id};
   }
-  double number(s::NodeId id) const {
-    if (auto n = std::get_if<s::FloatValues>(&node(id).value);
-        n && n->count == 1) {
+  double number(s::NodeId id) const
+  {
+    if (auto n = std::get_if<s::FloatValues>(&node(id).value); n && n->count == 1) {
       if (!std::isfinite(n->values[0]))
         throw Unsupported{id};
       return n->values[0];
     }
     return double(bits(id));
   }
-  bool boolean(std::optional<s::NodeId> id, bool fallback = true) const {
+  bool boolean(std::optional<s::NodeId> id, bool fallback = true) const
+  {
     if (!id)
       return fallback;
     if (auto n = std::get_if<bool>(&node(*id).value))
       return *n;
     throw Unsupported{*id};
   }
-  float unit(std::optional<s::NodeId> id, float fallback = 1) const {
+  float unit(std::optional<s::NodeId> id, float fallback = 1) const
+  {
     if (!id)
       return fallback;
     auto n = number(*id);
@@ -117,23 +126,26 @@ struct Lower {
       throw Unsupported{*id};
     return float(n);
   }
-  bool text(s::NodeId id, std::string_view expected) const {
+  bool text(s::NodeId id, std::string_view expected) const
+  {
     auto n = std::get_if<std::string>(&node(id).value);
     return n && *n == expected;
   }
-  void pair(s::NodeId id, double x, double y) const {
+  void pair(s::NodeId id, double x, double y) const
+  {
     auto n = std::get_if<s::FloatValues>(&node(id).value);
     if (!n || n->count != 2 || n->values[0] != x || n->values[1] != y)
       throw Unsupported{id};
   }
-  void note(s::NodeId id, SpsmDiagnosticKind kind, std::string_view code,
-            std::string_view detail) {
+  void note(s::NodeId id, SpsmDiagnosticKind kind, std::string_view code, std::string_view detail)
+  {
     add(sizeof(SpsmImportDiagnostic) * 2);
     result.diagnostics.push_back({pi, id, kind, code, detail});
     result.partial = true;
     result.appearance_verified = false;
   }
-  SpsmLayerBinding &binding(s::NodeId id) {
+  SpsmLayerBinding &binding(s::NodeId id)
+  {
     SpsmLayerBinding *found = nullptr;
     for (auto &b : result.layers)
       if (b.source == id) {
@@ -145,7 +157,8 @@ struct Lower {
       throw s::Error("Missing mesh-map layer binding");
     return *found;
   }
-  TextureLayer &native(const QUuid &id) {
+  TextureLayer &native(const QUuid &id)
+  {
     TextureLayer *found = nullptr;
     for (auto &l : result.material.set.layers)
       if (l.id == id) {
@@ -157,7 +170,8 @@ struct Lower {
       throw s::Error("Missing mesh-map native layer");
     return *found;
   }
-  const sem::Source &source(s::NodeId id) const {
+  const sem::Source &source(s::NodeId id) const
+  {
     const sem::Source *found = nullptr;
     for (const auto &v : ir.sources)
       if (v.source == id) {
@@ -169,7 +183,8 @@ struct Lower {
       throw s::Error("Missing mesh-map semantic source");
     return *found;
   }
-  const sem::Source *candidate(const sem::Layer &l) const {
+  const sem::Source *candidate(const sem::Layer &l) const
+  {
     if (l.group)
       return nullptr;
     // Only direct action sources. Never recurse into procedural input sources.
@@ -190,7 +205,8 @@ struct Lower {
     return nullptr;
   }
   std::pair<float, LayerBlend> blend(const std::vector<sem::Blending> &rows,
-                                     bool initial = false) const {
+                                     bool initial = false) const
+  {
     bool found = false;
     float opacity = 1;
     auto mode = LayerBlend::Normal;
@@ -202,20 +218,20 @@ struct Lower {
         throw Unsupported{r.source};
       found = true;
       switch (bits(required(r.source, "blendingMode"))) {
-      case 0:
-        mode = LayerBlend::Disabled;
-        break;
-      case 1:
-        mode = LayerBlend::Replace;
-        break;
-      case 2:
-        mode = LayerBlend::Normal;
-        break;
-      case 4:
-        mode = LayerBlend::Multiply;
-        break;
-      default:
-        throw Unsupported{r.source};
+        case 0:
+          mode = LayerBlend::Disabled;
+          break;
+        case 1:
+          mode = LayerBlend::Replace;
+          break;
+        case 2:
+          mode = LayerBlend::Normal;
+          break;
+        case 4:
+          mode = LayerBlend::Multiply;
+          break;
+        default:
+          throw Unsupported{r.source};
       }
       if (initial && mode != LayerBlend::Normal && mode != LayerBlend::Replace)
         throw Unsupported{r.source};
@@ -223,32 +239,33 @@ struct Lower {
     }
     return {opacity, mode};
   }
-  void coverage(const sem::Layer &l) const {
-    fields(l.source, {"GUIcollapsedState",
-                      "colorTag",
-                      "enabled",
-                      "enabledUVTileDefault",
-                      "enabledUVTileList",
-                      "enabledUVTileMask",
-                      "gammaCompensation",
-                      "label",
-                      "maskActions",
-                      "maskEnabled",
-                      "maskInitial",
-                      "perChannelBlending",
-                      "subStack",
-                      "uid",
-                      "actions",
-                      "enabledGeometryMask",
-                      "enabledMeshDefault",
-                      "enabledMeshList",
-                      "explicitPersistentCachePin",
-                      "geometryMaskType"});
+  void coverage(const sem::Layer &l) const
+  {
+    fields(l.source,
+           {"GUIcollapsedState",
+            "colorTag",
+            "enabled",
+            "enabledUVTileDefault",
+            "enabledUVTileList",
+            "enabledUVTileMask",
+            "gammaCompensation",
+            "label",
+            "maskActions",
+            "maskEnabled",
+            "maskInitial",
+            "perChannelBlending",
+            "subStack",
+            "uid",
+            "actions",
+            "enabledGeometryMask",
+            "enabledMeshDefault",
+            "enabledMeshList",
+            "explicitPersistentCachePin",
+            "geometryMaskType"});
     boolean(l.enabled);
     if (boolean(field(l.source, "gammaCompensation"), false))
       throw Unsupported{l.source};
-    for (auto key :
-         {"enabledMeshDefault", "enabledUVTileDefault", "enabledUVTileMask"})
+    for (auto key : {"enabledMeshDefault", "enabledUVTileDefault", "enabledUVTileMask"})
       if (!boolean(field(l.source, key)))
         throw Unsupported{l.source};
     boolean(field(l.source, "enabledGeometryMask"));
@@ -267,30 +284,32 @@ struct Lower {
           throw Unsupported{ir.actions.at(ai).source};
     blend(l.blending);
   }
-  void mapping(const sem::Action &a) const {
-    fields(a.source, {"backfaceCulling",
-                      "backfaceCullingAngle",
-                      "backfaceCullingHardness",
-                      "channelTypes",
-                      "dddEulerAngles",
-                      "dddPosition",
-                      "dddSize",
-                      "dddWrap",
-                      "depthCulling",
-                      "depthCullingHardness",
-                      "enabled",
-                      "filtering",
-                      "label",
-                      "perChannelBlending",
-                      "projection",
-                      "selection",
-                      "sideHardness",
-                      "sources",
-                      "tags",
-                      "uid",
-                      "uvSamplingWrap",
-                      "uvTransformation0",
-                      "uvTransformation1"});
+  void mapping(const sem::Action &a) const
+  {
+    fields(a.source,
+           {"backfaceCulling",
+            "backfaceCullingAngle",
+            "backfaceCullingHardness",
+            "channelTypes",
+            "dddEulerAngles",
+            "dddPosition",
+            "dddSize",
+            "dddWrap",
+            "depthCulling",
+            "depthCullingHardness",
+            "enabled",
+            "filtering",
+            "label",
+            "perChannelBlending",
+            "projection",
+            "selection",
+            "sideHardness",
+            "sources",
+            "tags",
+            "uid",
+            "uvSamplingWrap",
+            "uvTransformation0",
+            "uvTransformation1"});
     if (object(a.source).class_name != "DataActionFill" ||
         bits(required(a.source, "projection")) != 0)
       throw Unsupported{a.source};
@@ -308,10 +327,8 @@ struct Lower {
     // source alpha/color enums are converted to native ordinals.
     for (auto key : {"uvTransformation0", "uvTransformation1"}) {
       const auto id = required(a.source, key);
-      fields(id, {"GUIPivot", "GUIScaleRatioLocked", "rotation", "scale",
-                  "translation"});
-      if (object(id).class_name != "Data2DTransformation" ||
-          number(required(id, "rotation")) != 0)
+      fields(id, {"GUIPivot", "GUIScaleRatioLocked", "rotation", "scale", "translation"});
+      if (object(id).class_name != "Data2DTransformation" || number(required(id, "rotation")) != 0)
         throw Unsupported{id};
       boolean(field(id, "GUIScaleRatioLocked"));
       pair(required(id, "scale"), 1, 1);
@@ -321,23 +338,21 @@ struct Lower {
     bits(required(a.source, "filtering"));
     bits(required(a.source, "uvSamplingWrap"));
   }
-  void restore(std::size_t li, const sem::Source &v) {
+  void restore(std::size_t li, const sem::Source &v)
+  {
     const auto &l = ir.layers.at(li);
     auto &b = binding(l.source);
     auto &out = native(b.native_layer);
-    if (!b.disabled || out.kind != LayerKind::Fill ||
-        !out.effects.empty() || (out.mask && !out.mask->effects.empty()) ||
-        !out.pixels.tiles().empty() || out.strokes || out.instance ||
-        out.quick_overlay || fill_has_texture(out.fill) ||
+    if (!b.disabled || out.kind != LayerKind::Fill || !out.effects.empty() ||
+        (out.mask && !out.mask->effects.empty()) || !out.pixels.tiles().empty() || out.strokes ||
+        out.instance || out.quick_overlay || fill_has_texture(out.fill) ||
         fill_has_anchors(out.fill) || out.fill.native_material || out.fill.atom)
       throw Unsupported{l.source};
     coverage(l);
-    auto expected_parent =
-        l.parent ? binding(ir.layers.at(*l.parent).source).native_layer
-                 : QUuid{};
+    auto expected_parent = l.parent ? binding(ir.layers.at(*l.parent).source).native_layer :
+                                      QUuid{};
     if (out.parent != expected_parent)
-      throw s::Error(
-          "Mesh-map preparation hierarchy differs from retained source");
+      throw s::Error("Mesh-map preparation hierarchy differs from retained source");
     std::set<std::size_t> visited;
     auto parent = l.parent;
     while (parent) {
@@ -347,24 +362,20 @@ struct Lower {
       const auto &ancestor = ir.layers.at(*parent);
       auto &pb = binding(ancestor.source);
       const auto &n = native(pb.native_layer);
-      if (!ancestor.group || pb.disabled || !n.channels[0] ||
-          !n.effects.empty() || (n.mask && !n.mask->effects.empty()))
+      if (!ancestor.group || pb.disabled || !n.channels[0] || !n.effects.empty() ||
+          (n.mask && !n.mask->effects.empty()))
         throw Unsupported{ancestor.source};
       coverage(ancestor);
       const auto [op, mode] = blend(ancestor.blending);
-      if (n.visible != boolean(ancestor.enabled) || n.opacity[0] != op ||
-          n.blending[0] != mode || !n.mask ||
-          n.mask->enabled != boolean(ancestor.mask_enabled) ||
+      if (n.visible != boolean(ancestor.enabled) || n.opacity[0] != op || n.blending[0] != mode ||
+          !n.mask || n.mask->enabled != boolean(ancestor.mask_enabled) ||
           n.mask->background != unit(ancestor.mask_initial))
-        throw s::Error(
-            "Mesh-map ancestor metadata differs from retained source");
-      const auto gp =
-          ancestor.parent
-              ? binding(ir.layers.at(*ancestor.parent).source).native_layer
-              : QUuid{};
+        throw s::Error("Mesh-map ancestor metadata differs from retained source");
+      const auto gp = ancestor.parent ?
+                          binding(ir.layers.at(*ancestor.parent).source).native_layer :
+                          QUuid{};
       if (n.parent != gp)
-        throw s::Error(
-            "Mesh-map ancestor hierarchy differs from retained source");
+        throw s::Error("Mesh-map ancestor hierarchy differs from retained source");
       parent = ancestor.parent;
     }
     const sem::Action *fill = nullptr;
@@ -389,7 +400,8 @@ struct Lower {
         ++count;
         if (id != v.source || channels != 1)
           throw Unsupported{id};
-      } else if (src.kind != sem::Source::Kind::Uniform)
+      }
+      else if (src.kind != sem::Source::Kind::Uniform)
         throw Unsupported{id};
     }
     if (count != 1)
@@ -397,8 +409,7 @@ struct Lower {
     fields(v.source, {"bitmap", "channelTypes", "opacity", "uid"});
     fields(*v.bitmap, {"alphaType", "colorSpace", "uid", "urlToBitmapRes"});
     if (object(*v.bitmap).class_name != "DataBitmap" ||
-        !text(required(*v.bitmap, "urlToBitmapRes"),
-              "resourcealias:AmbientOcclusion"))
+        !text(required(*v.bitmap, "urlToBitmapRes"), "resourcealias:AmbientOcclusion"))
       throw Unsupported{v.source};
     // Explicit policy overrides these source ordinal contracts, not other
     // unknown fields/dependencies. Preserve numeric source values in the IR.
@@ -449,7 +460,9 @@ struct Lower {
     out.visible = boolean(l.enabled);
     b.disabled = false;
     ab->lowered = true;
-    note(v.source, SpsmDiagnosticKind::Assumption, "meshmap-ao-color-restored",
+    note(v.source,
+         SpsmDiagnosticKind::Assumption,
+         "meshmap-ao-color-restored",
          "Only direct independent AmbientOcclusion alias restored into Base "
          "Color, not AO output. Live same-set/matching-tile native AO scalar R "
          "decoded from premultiplied map storage, clamped [0,1], replicated "
@@ -458,7 +471,8 @@ struct Lower {
          "policy; source color/alpha/filter/wrap ordinals remain "
          "uninterpreted. Appearance unverified; prior omissions and "
          "unsupported Gloss/Diffuse/Specular remain retained/off");
-    note(fill->source, SpsmDiagnosticKind::Assumption,
+    note(fill->source,
+         SpsmDiagnosticKind::Assumption,
          "meshmap-ao-color-contract",
          "Single Fill action Normal/Replace, layer named blend/opacity, source "
          "opacity, original enabled state and ancestor masks/visibility "
@@ -466,7 +480,8 @@ struct Lower {
          "required on every destination tile before atomic preset apply; no "
          "procedural graph inputs are unwrapped");
   }
-  PreparedSpsm run() {
+  PreparedSpsm run()
+  {
     for (std::size_t li = 0; li < ir.layers.size(); ++li) {
       const auto before = used;
       try {
@@ -476,18 +491,18 @@ struct Lower {
         // Detect our prior restoration without treating compiler defaults in
         // disabled unsupported stacks as authored/enabled Color.
         const auto &output = native(binding(ir.layers[li].source).native_layer);
-        const bool restored =
-            std::any_of(result.diagnostics.begin(), result.diagnostics.end(),
-                        [&](const auto &d) {
-                          return d.preset == pi && d.source == v->source &&
-                                 d.code == "meshmap-ao-color-restored";
-                        });
+        const bool restored = std::any_of(
+            result.diagnostics.begin(), result.diagnostics.end(), [&](const auto &d) {
+              return d.preset == pi && d.source == v->source &&
+                     d.code == "meshmap-ao-color-restored";
+            });
         if (restored || (output.visible && output.channels[0]))
-          throw s::Error("Mesh-map Color candidate is not a fresh disabled "
-                         "source preparation");
-        if (options.policy !=
-            SpsmMeshMapPolicy::NativeAOGeneratorUVIdentityNearest) {
-          note(v->source, SpsmDiagnosticKind::Omission,
+          throw s::Error(
+              "Mesh-map Color candidate is not a fresh disabled "
+              "source preparation");
+        if (options.policy != SpsmMeshMapPolicy::NativeAOGeneratorUVIdentityNearest) {
+          note(v->source,
+               SpsmDiagnosticKind::Omission,
                "meshmap-ao-color-policy-required",
                "Direct AO alias Color branch remains disabled: explicit native "
                "AO Generator, matching tile, identity UV and nearest/clamp "
@@ -496,9 +511,11 @@ struct Lower {
           continue;
         }
         restore(li, *v);
-      } catch (Unsupported u) {
+      }
+      catch (Unsupported u) {
         used = before;
-        note(u.source, SpsmDiagnosticKind::Omission,
+        note(u.source,
+             SpsmDiagnosticKind::Omission,
              "meshmap-ao-color-unsupported-dependency",
              "AO alias Color remains disabled: unknown "
              "source/action/geometry/UV field, nonindependent source sequence, "
@@ -509,9 +526,9 @@ struct Lower {
     return std::move(result);
   }
 };
-} // namespace
-PreparedSpsm enhance_prepared_spsm_mesh_maps(const PreparedSpsm &p,
-                                             SpsmMeshMapOptions o) {
+}  // namespace
+PreparedSpsm enhance_prepared_spsm_mesh_maps(const PreparedSpsm &p, SpsmMeshMapOptions o)
+{
   return Lower(p, o).run();
 }
-} // namespace bts
+}  // namespace bts

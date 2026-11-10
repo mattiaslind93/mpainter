@@ -2,20 +2,131 @@
 // Direct Program diagnostic only: exercise Blender's actual tiled image node.
 // This does not broaden the production single-image preparation admission.
 {
- const float first_color[4]{.13f,.21f,.34f,1};auto *image=BKE_image_add_generated(main.get(),8,8,"Native projected UDIM oracle",32,1,IMA_GENTYPE_BLANK,first_color,false,true,true);require(image&&image->source==IMA_SRC_TILED,"Native UDIM fixture missing");image->flag|=IMA_HIGH_BITDEPTH;auto *first=static_cast<ImageTile *>(image->tiles.first);
- const std::array<std::array<float,4>,3> colors{{{.13f,.21f,.34f,1},{.72f,.41f,.17f,1},{.29f,.83f,.61f,1}}};
- for(int number:{1002,1011}){auto *tile=BKE_image_add_tile(image,number,nullptr);require(tile,"Native UDIM fixture tile missing");tile->gen_x=first->gen_x;tile->gen_y=first->gen_y;tile->gen_type=first->gen_type;tile->gen_flag=first->gen_flag;tile->gen_depth=first->gen_depth;const auto &color=colors[number==1002?1:2];std::copy_n(color.data(),4,tile->gen_color);require(BKE_image_fill_tile(image,tile),"Native UDIM fixture tile buffer missing");}
- auto *tree=bke::node_tree_add_tree(main.get(),"Native UV graph UDIM oracle","ShaderNodeTree");tree->flag|=NTREE_IS_GPU_SHADER_INTERNAL;auto *attribute=bke::node_add_node(nullptr,*tree,UString("ShaderNodeAttribute"));STRNCPY(static_cast<NodeShaderAttribute *>(attribute->storage)->name,"BTS_Coord_UV");auto *sample=bke::node_add_node(nullptr,*tree,UString("ShaderNodeTexImage"));sample->id=&image->id;id_us_plus(sample->id);auto *settings=static_cast<NodeTexImage *>(sample->storage);settings->interpolation=SHD_INTERP_CLOSEST;settings->extension=SHD_IMAGE_EXTENSION_REPEAT;auto *aov=bke::node_add_node(nullptr,*tree,UString("ShaderNodeOutputAOV"));STRNCPY(static_cast<NodeShaderOutputAOV *>(aov->storage)->name,"BTS_Channel");bke::node_add_link(*tree,*attribute,socket(*attribute,"Vector",false),*sample,socket(*sample,"Vector",true));bke::node_add_link(*tree,*sample,socket(*sample,"Color",false),*aov,socket(*aov,"Color",true));bke::node_add_node(nullptr,*tree,UString("ShaderNodeOutputMaterial"));BKE_ntree_update_after_single_tree_change(*main,*tree);NativeMaterialGpuProgram program(*tree,0,0);
- const auto compiled=GPU_pass_global_compilation_count();std::uint64_t checks=0;
- for(int tile:{1001,1002,1011})for(const auto offset:{std::array<double,2>{0,0},std::array<double,2>{1,0},std::array<double,2>{-1,0},std::array<double,2>{0,1},std::array<double,2>{0,-1}}){
-  context.tile=tile;FillProjection p;p.offset=offset;context.projection=native_material_projection(p,&atlas,set);context.map_u={1,0,0};context.map_v={0,1,0};program.dispatch(target.get(),{},context,{0,0,width,height});if(checks==0){const auto resident=BKE_image_get_gpu_material_texture(image,nullptr,true);require(resident.texture&&*resident.texture&&GPU_texture_format(*resident.texture)==gpu::TextureFormat::SFLOAT_32_32_32_32,"Native UDIM Float32 fixture has a lower-precision GPU allocation");}auto *actual=pixels();require(actual,"Native UDIM transformed graph readback missing");const auto release=qScopeGuard([&]{MEM_delete(actual);});
-  // Independently select the source tile from integer affine translation.
-  // The retained Blender tiled-image node returns magenta RGB(1,0,1) for a
-  // missing/negative tile (gpu_shader_material_tex_image.glsl node_tex_tile_linear).
-  // Preserve that source-graph sentinel; projection does not replace it with black.
-  const int selected=tile-int(offset[0])-10*int(offset[1]);const int index=selected==1001?0:selected==1002?1:selected==1011?2:-1;
-  for(int i=0;i<width*height;++i)for(int c=0;c<3;++c){const float wanted=index<0?(c==1?0.f:1.f):colors[index][c];if(!(std::abs(actual[i*4+c]-wanted)<2e-6)){const auto resident=BKE_image_get_gpu_material_texture(image,nullptr,true);const int format=resident.texture&&*resident.texture?int(GPU_texture_format(*resident.texture)):-1;throw std::runtime_error(QString("Fill affine UV source UDIM mismatch tile=%1 offset=(%2,%3) pixel=%4 component=%5 selected=%6 actual=%7 wanted=%8 gpu_format=%9 high_bitdepth=%10").arg(tile).arg(offset[0]).arg(offset[1]).arg(i).arg(c).arg(selected).arg(double(actual[i*4+c]),0,'g',17).arg(double(wanted),0,'g',17).arg(format).arg(bool(image->flag&IMA_HIGH_BITDEPTH)).toStdString());}++checks;}
-  context.projection.reset();context.map_u={1,0,float(-offset[0])};context.map_v={0,1,float(-offset[1])};program.dispatch(target.get(),{},context,{0,0,width,height});auto *legacy=pixels();require(legacy,"Legacy native UDIM graph readback missing");const auto release_legacy=qScopeGuard([&]{MEM_delete(legacy);});for(int i=0;i<width*height*4;++i){require(actual[i]==legacy[i],"Mode0 changed the established global affine native UDIM graph");++checks;}
- }
- require(GPU_pass_global_compilation_count()==compiled,"UV tile shifts recompiled the source graph");context.map_u={1,0,0};context.map_v={0,1,0};projection_report["actual_source_udim_checks"]=qint64(checks);
+  const float first_color[4]{.13f, .21f, .34f, 1};
+  auto *image = BKE_image_add_generated(main.get(),
+                                        8,
+                                        8,
+                                        "Native projected UDIM oracle",
+                                        32,
+                                        1,
+                                        IMA_GENTYPE_BLANK,
+                                        first_color,
+                                        false,
+                                        true,
+                                        true);
+  require(image && image->source == IMA_SRC_TILED, "Native UDIM fixture missing");
+  image->flag |= IMA_HIGH_BITDEPTH;
+  auto *first = static_cast<ImageTile *>(image->tiles.first);
+  const std::array<std::array<float, 4>, 3> colors{
+      {{.13f, .21f, .34f, 1}, {.72f, .41f, .17f, 1}, {.29f, .83f, .61f, 1}}};
+  for (int number : {1002, 1011}) {
+    auto *tile = BKE_image_add_tile(image, number, nullptr);
+    require(tile, "Native UDIM fixture tile missing");
+    tile->gen_x = first->gen_x;
+    tile->gen_y = first->gen_y;
+    tile->gen_type = first->gen_type;
+    tile->gen_flag = first->gen_flag;
+    tile->gen_depth = first->gen_depth;
+    const auto &color = colors[number == 1002 ? 1 : 2];
+    std::copy_n(color.data(), 4, tile->gen_color);
+    require(BKE_image_fill_tile(image, tile), "Native UDIM fixture tile buffer missing");
+  }
+  auto *tree = bke::node_tree_add_tree(
+      main.get(), "Native UV graph UDIM oracle", "ShaderNodeTree");
+  tree->flag |= NTREE_IS_GPU_SHADER_INTERNAL;
+  auto *attribute = bke::node_add_node(nullptr, *tree, UString("ShaderNodeAttribute"));
+  STRNCPY(static_cast<NodeShaderAttribute *>(attribute->storage)->name, "BTS_Coord_UV");
+  auto *sample = bke::node_add_node(nullptr, *tree, UString("ShaderNodeTexImage"));
+  sample->id = &image->id;
+  id_us_plus(sample->id);
+  auto *settings = static_cast<NodeTexImage *>(sample->storage);
+  settings->interpolation = SHD_INTERP_CLOSEST;
+  settings->extension = SHD_IMAGE_EXTENSION_REPEAT;
+  auto *aov = bke::node_add_node(nullptr, *tree, UString("ShaderNodeOutputAOV"));
+  STRNCPY(static_cast<NodeShaderOutputAOV *>(aov->storage)->name, "BTS_Channel");
+  bke::node_add_link(*tree,
+                     *attribute,
+                     socket(*attribute, "Vector", false),
+                     *sample,
+                     socket(*sample, "Vector", true));
+  bke::node_add_link(
+      *tree, *sample, socket(*sample, "Color", false), *aov, socket(*aov, "Color", true));
+  bke::node_add_node(nullptr, *tree, UString("ShaderNodeOutputMaterial"));
+  BKE_ntree_update_after_single_tree_change(*main, *tree);
+  NativeMaterialGpuProgram program(*tree, 0, 0);
+  const auto compiled = GPU_pass_global_compilation_count();
+  std::uint64_t checks = 0;
+  for (int tile : {1001, 1002, 1011})
+    for (const auto offset : {std::array<double, 2>{0, 0},
+                              std::array<double, 2>{1, 0},
+                              std::array<double, 2>{-1, 0},
+                              std::array<double, 2>{0, 1},
+                              std::array<double, 2>{0, -1}})
+    {
+      context.tile = tile;
+      FillProjection p;
+      p.offset = offset;
+      context.projection = native_material_projection(p, &atlas, set);
+      context.map_u = {1, 0, 0};
+      context.map_v = {0, 1, 0};
+      program.dispatch(target.get(), {}, context, {0, 0, width, height});
+      if (checks == 0) {
+        const auto resident = BKE_image_get_gpu_material_texture(image, nullptr, true);
+        require(resident.texture && *resident.texture &&
+                    GPU_texture_format(*resident.texture) ==
+                        gpu::TextureFormat::SFLOAT_32_32_32_32,
+                "Native UDIM Float32 fixture has a lower-precision GPU allocation");
+      }
+      auto *actual = pixels();
+      require(actual, "Native UDIM transformed graph readback missing");
+      const auto release = qScopeGuard([&] { MEM_delete(actual); });
+      // Independently select the source tile from integer affine translation.
+      // The retained Blender tiled-image node returns magenta RGB(1,0,1) for a
+      // missing/negative tile (gpu_shader_material_tex_image.glsl node_tex_tile_linear).
+      // Preserve that source-graph sentinel; projection does not replace it with black.
+      const int selected = tile - int(offset[0]) - 10 * int(offset[1]);
+      const int index = selected == 1001 ? 0 : selected == 1002 ? 1 : selected == 1011 ? 2 : -1;
+      for (int i = 0; i < width * height; ++i)
+        for (int c = 0; c < 3; ++c) {
+          const float wanted = index < 0 ? (c == 1 ? 0.f : 1.f) : colors[index][c];
+          if (!(std::abs(actual[i * 4 + c] - wanted) < 2e-6)) {
+            const auto resident = BKE_image_get_gpu_material_texture(image, nullptr, true);
+            const int format = resident.texture && *resident.texture ?
+                                   int(GPU_texture_format(*resident.texture)) :
+                                   -1;
+            throw std::runtime_error(
+                QString(
+                    "Fill affine UV source UDIM mismatch tile=%1 offset=(%2,%3) pixel=%4 component=%5 selected=%6 actual=%7 wanted=%8 gpu_format=%9 high_bitdepth=%10")
+                    .arg(tile)
+                    .arg(offset[0])
+                    .arg(offset[1])
+                    .arg(i)
+                    .arg(c)
+                    .arg(selected)
+                    .arg(double(actual[i * 4 + c]), 0, 'g', 17)
+                    .arg(double(wanted), 0, 'g', 17)
+                    .arg(format)
+                    .arg(bool(image->flag & IMA_HIGH_BITDEPTH))
+                    .toStdString());
+          }
+          ++checks;
+        }
+      context.projection.reset();
+      context.map_u = {1, 0, float(-offset[0])};
+      context.map_v = {0, 1, float(-offset[1])};
+      program.dispatch(target.get(), {}, context, {0, 0, width, height});
+      auto *legacy = pixels();
+      require(legacy, "Legacy native UDIM graph readback missing");
+      const auto release_legacy = qScopeGuard([&] { MEM_delete(legacy); });
+      for (int i = 0; i < width * height * 4; ++i) {
+        require(actual[i] == legacy[i],
+                "Mode0 changed the established global affine native UDIM graph");
+        ++checks;
+      }
+    }
+  require(GPU_pass_global_compilation_count() == compiled,
+          "UV tile shifts recompiled the source graph");
+  context.map_u = {1, 0, 0};
+  context.map_v = {0, 1, 0};
+  projection_report["actual_source_udim_checks"] = qint64(checks);
 }

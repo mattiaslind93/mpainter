@@ -4,15 +4,163 @@
 #include <cassert>
 #include <iostream>
 using namespace bts;
-int main(){
- SceneSnapshot scene;MaterialSummary material;material.session_id=1;material.name="Geometry";material.uniform_editable=true;scene.materials={material};ImportSummary imported;imported.materials={{1,material.name}};TextureDocument doc({},imported,scene);auto &set=doc.set(1);TextureDocument::set_resolution(set,128);set.precision[0]=ChannelPrecision::RGB32F;set.geometry_names={{11,"LeftPart"},{22,"RightPart"}};auto atlas=std::make_shared<GeometryOwnershipTile>();atlas->width=atlas->height=128;atlas->owners.resize(128*128);for(int y=0;y<128;++y)for(int x=0;x<128;++x)atlas->owners[y*128+x]=x<64?11:22;set.geometry_ownership[1001]=atlas;
- TextureDocument::add_fill(set);const auto lower=set.selected_layer;TextureDocument::layer(set,lower).values.base_color={.8,.1,.05,1};TextureDocument::add_fill(set);const auto upper=set.selected_layer;TextureDocument::layer(set,upper).values.base_color={.05,.2,.8,1};auto original=doc;TextureDocument::set_geometry_mesh(set,upper,"RightPart",false);assert(TextureDocument::evaluate(set,32,64).material.base_color==TextureDocument::layer(set,upper).values.base_color&&TextureDocument::evaluate(set,96,64).material.base_color==TextureDocument::layer(set,lower).values.base_color);assert(!TextureDocument::layer(original.set(1),upper).geometry.active());
- TextureDocument::layer(set,upper).blending[0]=LayerBlend::Replace;TextureDocument::layer(set,upper).opacity[0]=.4;assert(TextureDocument::evaluate(set,96,64).material.base_color==TextureDocument::layer(set,lower).values.base_color);TextureDocument::layer(set,upper).blending[0]=LayerBlend::Normal;TextureDocument::layer(set,upper).opacity[0]=1;TextureDocument::set_geometry_all(set,upper,false);assert(TextureDocument::evaluate(set,32,64).material.base_color==TextureDocument::layer(set,lower).values.base_color);TextureDocument::set_geometry_mesh(set,upper,"LeftPart",true);
- set.users[0].present=set.users[0].allocated=true;TextureDocument::layer(set,lower).users[0].enabled=true;TextureDocument::layer(set,upper).users[0].enabled=true;TextureDocument::layer(set,lower).users[0].value=.2;TextureDocument::layer(set,upper).users[0].value=.8;assert(std::abs(TextureDocument::composite_user(set,0,32,64)[0]-.8)<1e-6&&std::abs(TextureDocument::composite_user(set,0,96,64)[0]-.2)<1e-6);const auto json=doc.to_json();std::vector<TextureSetBinding> bindings{{set.id,1,set.name}};auto restored=TextureDocument::from_json(json,bindings);assert(restored.to_json()==json);bool context_required=false;try{TextureDocument::evaluate(restored.set(1),32,64);}catch(const std::logic_error &){context_required=true;}assert(context_required);restored.set(1).geometry_names=set.geometry_names;restored.set(1).geometry_ownership=set.geometry_ownership;assert(TextureDocument::evaluate(restored.set(1),32,64).material==TextureDocument::evaluate(set,32,64).material);
- const auto before=doc.to_json();bool rejected=false;try{TextureDocument::set_geometry_mesh(set,upper,"OtherSetMesh",false);}catch(const std::exception &){rejected=true;}assert(rejected&&doc.to_json()==before);auto bad=geometry_mask_json(TextureDocument::layer(set,upper).geometry);bad["meshes"]=QJsonArray{QJsonObject{{"name","X"},{"included",false}}};rejected=false;try{read_geometry_mask(bad);}catch(const std::exception &){rejected=true;}assert(rejected);
- TextureDocument::set_geometry_all(set,upper,true);TextureDocument::add_folder(set);auto &folder=TextureDocument::layer(set,set.selected_layer);folder.blending[0]=LayerBlend::Passthrough;LevelsEffect invert;invert.output_low=1;invert.output_high=0;folder.effects.push_back(invert);folder.geometry.default_include=false;assert(TextureDocument::evaluate(set,32,64).material.base_color==TextureDocument::layer(set,upper).values.base_color);
- TextureLayer group,child;group.kind=LayerKind::Folder;group.geometry.default_include=false;child=TextureDocument::layer(set,upper);child.geometry={};child.parent=group.id;child.depth=1;auto backdrop=TextureDocument::layer(set,lower);set.layers={backdrop,child,group};set.selected_layer=group.id;assert(TextureDocument::evaluate(set,32,64).material.base_color==backdrop.values.base_color&&std::abs(TextureDocument::composite_user(set,0,32,64)[0]-.2)<1e-6);// Tile masks do not need a mesh ownership grid and retain independent mesh selections.
- set.layers={backdrop,child};set.layers.back().parent=QUuid();set.layers.back().depth=0;set.tiles={1001,1002};set.geometry_ownership.clear();auto &tile_layer=set.layers.back();tile_layer.geometry.type=1;tile_layer.geometry.set_tile(1001,false);assert(TextureDocument::evaluate(set,32,64,1001).material.base_color==backdrop.values.base_color);assert(TextureDocument::evaluate(set,32,64,1002).material.base_color==child.values.base_color);const auto tile_json=geometry_mask_json(tile_layer.geometry);const auto decoded=read_geometry_mask(tile_json);assert(decoded.type==1&&!decoded.includes_tile(1001)&&decoded.includes_tile(1002));auto malformed=tile_json;malformed["tiles"]=QJsonArray{QJsonObject{{"tile",1001.5},{"included",false}}};rejected=false;try{read_geometry_mask(malformed);}catch(const std::exception &){rejected=true;}assert(rejected);TextureDocument::set_geometry_all(set,tile_layer.id,false);assert(!TextureDocument::evaluate(set,32,64,1002).coverage[0]||TextureDocument::evaluate(set,32,64,1002).material.base_color==backdrop.values.base_color);TextureDocument::set_geometry_all(set,tile_layer.id,true);assert(TextureDocument::evaluate(set,32,64,1001).material.base_color==child.values.base_color);
- UvFaceTriangle crossing;crossing.corners={{{.5f,0},{1.5f,0},{.5f,1}}};crossing.positions={{{.5f,0,2},{1.5f,0,2},{.5f,1,2}}};for(int tile:{1001,1002}){const auto clipped=geometry_tile_polygon(crossing,tile);assert(clipped.size()>=3);for(const auto &v:clipped){assert(v.uv[0]>=tile-1001&&v.uv[0]<=tile-1000&&v.uv[1]>=0&&v.uv[1]<=1);assert(std::abs(v.position[0]-v.uv[0])<1e-9&&v.position[2]==2);}}assert(geometry_tile_polygon(crossing,1003).empty());
- std::cout<<"Named UV ownership, nondestructive include/exclude, Replace/Passthrough/folder gating, custom channels, runtime-context restoration, invalid names and metadata passed\n";
+int main()
+{
+  SceneSnapshot scene;
+  MaterialSummary material;
+  material.session_id = 1;
+  material.name = "Geometry";
+  material.uniform_editable = true;
+  scene.materials = {material};
+  ImportSummary imported;
+  imported.materials = {{1, material.name}};
+  TextureDocument doc({}, imported, scene);
+  auto &set = doc.set(1);
+  TextureDocument::set_resolution(set, 128);
+  set.precision[0] = ChannelPrecision::RGB32F;
+  set.geometry_names = {{11, "LeftPart"}, {22, "RightPart"}};
+  auto atlas = std::make_shared<GeometryOwnershipTile>();
+  atlas->width = atlas->height = 128;
+  atlas->owners.resize(128 * 128);
+  for (int y = 0; y < 128; ++y)
+    for (int x = 0; x < 128; ++x)
+      atlas->owners[y * 128 + x] = x < 64 ? 11 : 22;
+  set.geometry_ownership[1001] = atlas;
+  TextureDocument::add_fill(set);
+  const auto lower = set.selected_layer;
+  TextureDocument::layer(set, lower).values.base_color = {.8, .1, .05, 1};
+  TextureDocument::add_fill(set);
+  const auto upper = set.selected_layer;
+  TextureDocument::layer(set, upper).values.base_color = {.05, .2, .8, 1};
+  auto original = doc;
+  TextureDocument::set_geometry_mesh(set, upper, "RightPart", false);
+  assert(TextureDocument::evaluate(set, 32, 64).material.base_color ==
+             TextureDocument::layer(set, upper).values.base_color &&
+         TextureDocument::evaluate(set, 96, 64).material.base_color ==
+             TextureDocument::layer(set, lower).values.base_color);
+  assert(!TextureDocument::layer(original.set(1), upper).geometry.active());
+  TextureDocument::layer(set, upper).blending[0] = LayerBlend::Replace;
+  TextureDocument::layer(set, upper).opacity[0] = .4;
+  assert(TextureDocument::evaluate(set, 96, 64).material.base_color ==
+         TextureDocument::layer(set, lower).values.base_color);
+  TextureDocument::layer(set, upper).blending[0] = LayerBlend::Normal;
+  TextureDocument::layer(set, upper).opacity[0] = 1;
+  TextureDocument::set_geometry_all(set, upper, false);
+  assert(TextureDocument::evaluate(set, 32, 64).material.base_color ==
+         TextureDocument::layer(set, lower).values.base_color);
+  TextureDocument::set_geometry_mesh(set, upper, "LeftPart", true);
+  set.users[0].present = set.users[0].allocated = true;
+  TextureDocument::layer(set, lower).users[0].enabled = true;
+  TextureDocument::layer(set, upper).users[0].enabled = true;
+  TextureDocument::layer(set, lower).users[0].value = .2;
+  TextureDocument::layer(set, upper).users[0].value = .8;
+  assert(std::abs(TextureDocument::composite_user(set, 0, 32, 64)[0] - .8) < 1e-6 &&
+         std::abs(TextureDocument::composite_user(set, 0, 96, 64)[0] - .2) < 1e-6);
+  const auto json = doc.to_json();
+  std::vector<TextureSetBinding> bindings{{set.id, 1, set.name}};
+  auto restored = TextureDocument::from_json(json, bindings);
+  assert(restored.to_json() == json);
+  bool context_required = false;
+  try {
+    TextureDocument::evaluate(restored.set(1), 32, 64);
+  }
+  catch (const std::logic_error &) {
+    context_required = true;
+  }
+  assert(context_required);
+  restored.set(1).geometry_names = set.geometry_names;
+  restored.set(1).geometry_ownership = set.geometry_ownership;
+  assert(TextureDocument::evaluate(restored.set(1), 32, 64).material ==
+         TextureDocument::evaluate(set, 32, 64).material);
+  const auto before = doc.to_json();
+  bool rejected = false;
+  try {
+    TextureDocument::set_geometry_mesh(set, upper, "OtherSetMesh", false);
+  }
+  catch (const std::exception &) {
+    rejected = true;
+  }
+  assert(rejected && doc.to_json() == before);
+  auto bad = geometry_mask_json(TextureDocument::layer(set, upper).geometry);
+  bad["meshes"] = QJsonArray{QJsonObject{{"name", "X"}, {"included", false}}};
+  rejected = false;
+  try {
+    read_geometry_mask(bad);
+  }
+  catch (const std::exception &) {
+    rejected = true;
+  }
+  assert(rejected);
+  TextureDocument::set_geometry_all(set, upper, true);
+  TextureDocument::add_folder(set);
+  auto &folder = TextureDocument::layer(set, set.selected_layer);
+  folder.blending[0] = LayerBlend::Passthrough;
+  LevelsEffect invert;
+  invert.output_low = 1;
+  invert.output_high = 0;
+  folder.effects.push_back(invert);
+  folder.geometry.default_include = false;
+  assert(TextureDocument::evaluate(set, 32, 64).material.base_color ==
+         TextureDocument::layer(set, upper).values.base_color);
+  TextureLayer group, child;
+  group.kind = LayerKind::Folder;
+  group.geometry.default_include = false;
+  child = TextureDocument::layer(set, upper);
+  child.geometry = {};
+  child.parent = group.id;
+  child.depth = 1;
+  auto backdrop = TextureDocument::layer(set, lower);
+  set.layers = {backdrop, child, group};
+  set.selected_layer = group.id;
+  assert(TextureDocument::evaluate(set, 32, 64).material.base_color ==
+             backdrop.values.base_color &&
+         std::abs(TextureDocument::composite_user(set, 0, 32, 64)[0] - .2) <
+             1e-6);  // Tile masks do not need a mesh ownership grid and retain independent mesh
+                     // selections.
+  set.layers = {backdrop, child};
+  set.layers.back().parent = QUuid();
+  set.layers.back().depth = 0;
+  set.tiles = {1001, 1002};
+  set.geometry_ownership.clear();
+  auto &tile_layer = set.layers.back();
+  tile_layer.geometry.type = 1;
+  tile_layer.geometry.set_tile(1001, false);
+  assert(TextureDocument::evaluate(set, 32, 64, 1001).material.base_color ==
+         backdrop.values.base_color);
+  assert(TextureDocument::evaluate(set, 32, 64, 1002).material.base_color ==
+         child.values.base_color);
+  const auto tile_json = geometry_mask_json(tile_layer.geometry);
+  const auto decoded = read_geometry_mask(tile_json);
+  assert(decoded.type == 1 && !decoded.includes_tile(1001) && decoded.includes_tile(1002));
+  auto malformed = tile_json;
+  malformed["tiles"] = QJsonArray{QJsonObject{{"tile", 1001.5}, {"included", false}}};
+  rejected = false;
+  try {
+    read_geometry_mask(malformed);
+  }
+  catch (const std::exception &) {
+    rejected = true;
+  }
+  assert(rejected);
+  TextureDocument::set_geometry_all(set, tile_layer.id, false);
+  assert(!TextureDocument::evaluate(set, 32, 64, 1002).coverage[0] ||
+         TextureDocument::evaluate(set, 32, 64, 1002).material.base_color ==
+             backdrop.values.base_color);
+  TextureDocument::set_geometry_all(set, tile_layer.id, true);
+  assert(TextureDocument::evaluate(set, 32, 64, 1001).material.base_color ==
+         child.values.base_color);
+  UvFaceTriangle crossing;
+  crossing.corners = {{{.5f, 0}, {1.5f, 0}, {.5f, 1}}};
+  crossing.positions = {{{.5f, 0, 2}, {1.5f, 0, 2}, {.5f, 1, 2}}};
+  for (int tile : {1001, 1002}) {
+    const auto clipped = geometry_tile_polygon(crossing, tile);
+    assert(clipped.size() >= 3);
+    for (const auto &v : clipped) {
+      assert(v.uv[0] >= tile - 1001 && v.uv[0] <= tile - 1000 && v.uv[1] >= 0 && v.uv[1] <= 1);
+      assert(std::abs(v.position[0] - v.uv[0]) < 1e-9 && v.position[2] == 2);
+    }
+  }
+  assert(geometry_tile_polygon(crossing, 1003).empty());
+  std::cout
+      << "Named UV ownership, nondestructive include/exclude, Replace/Passthrough/folder gating, custom channels, runtime-context restoration, invalid names and metadata passed\n";
 }

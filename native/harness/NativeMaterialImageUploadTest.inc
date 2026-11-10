@@ -1,17 +1,129 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // First GPU residency is packetized before a native source can be activated.
 {
- std::unique_ptr<Main,decltype(&BKE_main_free)> owner(BKE_main_new(),BKE_main_free);
- const float clear[4]{.25f,.5f,.75f,1};auto *image=BKE_image_add_generated(owner.get(),4096,4096,"Native upload fixture",32,1,IMA_GENTYPE_BLANK,clear,false,true,false);require(image,"Native upload image fixture missing");
- auto *material=BKE_material_add(owner.get(),"Native upload material");auto &tree=*material->nodetree;
- auto *pbr=bke::node_add_node(nullptr,tree,UString("ShaderNodeBsdfPrincipled"));auto *out=bke::node_add_node(nullptr,tree,UString("ShaderNodeOutputMaterial"));auto *sample=bke::node_add_node(nullptr,tree,UString("ShaderNodeTexImage"));sample->id=&image->id;id_us_plus(&image->id);
- bke::node_add_link(tree,*sample,socket(*sample,"Color",false),*pbr,socket(*pbr,"Base Color",true));bke::node_add_link(tree,*pbr,socket(*pbr,"BSDF",false),*out,socket(*out,"Surface",true));BKE_ntree_update_after_single_tree_change(*owner,tree);
- NativeMaterialDescription description;description.material="Native upload material";description.surface_type="ShaderNodeBsdfPrincipled";std::atomic_bool cancel=false;auto graph=std::make_shared<NativeMaterialGraph>(std::move(owner),material,description,cancel);
- {NativeMaterialImageUpload cancelled(graph);require(!cancelled.step(512*1024)&&!cancelled.step(512*1024),"Native source upload completed before a cancellation could be tested");}require(!image->runtime->gputexture[TEXTARGET_2D][0],"Cancelled native source upload published a partial image");
- NativeMaterialImageUpload upload(graph);int steps=0;while(!upload.step(512*1024)){require(++steps<10000,"Native source image upload did not finish");}const auto progress=upload.progress();require(progress.total==1&&progress.completed==1&&progress.transfer_budget_bytes==4096ULL*4096*16&&steps>2,"Native source upload was not bounded by transfer packets");
- auto *published=image->runtime->gputexture[TEXTARGET_2D][0];require(published&&GPU_texture_width(published)==4096,"Native source upload lost its full resolution");auto cached=BKE_image_get_gpu_material_texture(image,nullptr,false);require(cached.texture&&*cached.texture==published,"Native image lookup replaced the staged allocation");
- bNodeTree *color=nullptr;for(const auto &channel:graph->channels)if(channel.channel==0)color=channel.tree;require(color,"Native upload source channel missing");NativeMaterialGpuProgram program(*color,0,0);NativeMaterialGpuContext context;program.dispatch(target.get(),{},context,{0,0,width,height});GPU_memory_barrier(GPU_BARRIER_TEXTURE_UPDATE);auto *pixels=static_cast<float *>(GPU_texture_read(target.get(),GPU_DATA_FLOAT,0));require(pixels,"Native staged source readback missing");const auto release=qScopeGuard([&]{MEM_delete(pixels);});++reads;
- for(int p=0;p<width*height;++p)for(int c=0;c<4;++c)require(std::abs(pixels[p*4+c]-clear[c])<2e-6,"Staged source image differs from its native color output");
- NativeMaterialGpuLibrary library;NativeMaterialGpuPreparation preparation(library,"prepared-source","prepared-hash",graph);int frames=0;while(!preparation.step()){require(++frames<10000,"Native material preparation did not finish");}require(preparation.ready()&&library.statistics().programs>=3,"Native resource was activated before channel programs were ready");const auto compiled=GPU_pass_global_compilation_count();library.render("prepared-source",0,description,target.get(),context,{0,0,width,height});require(GPU_pass_global_compilation_count()==compiled,"First native layer evaluation compiled a program after activation");preparation_step_ms=preparation.maximum_step_ms(); NativeMaterialPreparationQueue queue(library);queue.request("queued-a","queue-source-a",graph);queue.request("queued-b","queue-source-b",graph);int ticks=0;while(queue.pending()){queue.step();require(++ticks<10000,"Native preparation queue did not drain");}require(queue.status("queued-a").ready&&queue.status("queued-b").ready,"Round-robin native sources were not published");const auto stable=library.revision("queued-a"),other=library.revision("queued-b");queue.request("queued-a","superseded",graph);queue.step();queue.request("queued-a","latest",graph);while(queue.pending())queue.step();require(queue.status("queued-a").ready&&library.revision("queued-a")>stable&&library.revision("queued-b")==other,"Native queue did not preserve latest-wins/resource isolation");queue.request("queued-a","cancelled",graph);queue.step();queue.cancel("queued-a");require(!queue.pending()&&library.contains("queued-a"),"Cancelled native preparation removed an existing source");const auto previous_revision=library.revision("prepared-source"),previous_resources=library.statistics().resources;{NativeMaterialGpuPreparation cancelled(library,"prepared-source","cancelled-replacement",graph);int frames=0;while(library.statistics().resources==previous_resources){require(!cancelled.step()&&++frames<100,"Cancelled replacement did not reach staged publication");}require(library.revision("prepared-source")==previous_revision,"Unprepared replacement changed the active resource");}require(library.revision("prepared-source")==previous_revision&&library.statistics().resources==previous_resources,"Cancelled replacement erased the active material");
- image_upload_steps=steps;image_upload_step_ms=progress.maximum_step_ms;
+  std::unique_ptr<Main, decltype(&BKE_main_free)> owner(BKE_main_new(), BKE_main_free);
+  const float clear[4]{.25f, .5f, .75f, 1};
+  auto *image = BKE_image_add_generated(owner.get(),
+                                        4096,
+                                        4096,
+                                        "Native upload fixture",
+                                        32,
+                                        1,
+                                        IMA_GENTYPE_BLANK,
+                                        clear,
+                                        false,
+                                        true,
+                                        false);
+  require(image, "Native upload image fixture missing");
+  auto *material = BKE_material_add(owner.get(), "Native upload material");
+  auto &tree = *material->nodetree;
+  auto *pbr = bke::node_add_node(nullptr, tree, UString("ShaderNodeBsdfPrincipled"));
+  auto *out = bke::node_add_node(nullptr, tree, UString("ShaderNodeOutputMaterial"));
+  auto *sample = bke::node_add_node(nullptr, tree, UString("ShaderNodeTexImage"));
+  sample->id = &image->id;
+  id_us_plus(&image->id);
+  bke::node_add_link(
+      tree, *sample, socket(*sample, "Color", false), *pbr, socket(*pbr, "Base Color", true));
+  bke::node_add_link(tree, *pbr, socket(*pbr, "BSDF", false), *out, socket(*out, "Surface", true));
+  BKE_ntree_update_after_single_tree_change(*owner, tree);
+  NativeMaterialDescription description;
+  description.material = "Native upload material";
+  description.surface_type = "ShaderNodeBsdfPrincipled";
+  std::atomic_bool cancel = false;
+  auto graph = std::make_shared<NativeMaterialGraph>(
+      std::move(owner), material, description, cancel);
+  {
+    NativeMaterialImageUpload cancelled(graph);
+    require(!cancelled.step(512 * 1024) && !cancelled.step(512 * 1024),
+            "Native source upload completed before a cancellation could be tested");
+  }
+  require(!image->runtime->gputexture[TEXTARGET_2D][0],
+          "Cancelled native source upload published a partial image");
+  NativeMaterialImageUpload upload(graph);
+  int steps = 0;
+  while (!upload.step(512 * 1024)) {
+    require(++steps < 10000, "Native source image upload did not finish");
+  }
+  const auto progress = upload.progress();
+  require(progress.total == 1 && progress.completed == 1 &&
+              progress.transfer_budget_bytes == 4096ULL * 4096 * 16 && steps > 2,
+          "Native source upload was not bounded by transfer packets");
+  auto *published = image->runtime->gputexture[TEXTARGET_2D][0];
+  require(published && GPU_texture_width(published) == 4096,
+          "Native source upload lost its full resolution");
+  auto cached = BKE_image_get_gpu_material_texture(image, nullptr, false);
+  require(cached.texture && *cached.texture == published,
+          "Native image lookup replaced the staged allocation");
+  bNodeTree *color = nullptr;
+  for (const auto &channel : graph->channels)
+    if (channel.channel == 0)
+      color = channel.tree;
+  require(color, "Native upload source channel missing");
+  NativeMaterialGpuProgram program(*color, 0, 0);
+  NativeMaterialGpuContext context;
+  program.dispatch(target.get(), {}, context, {0, 0, width, height});
+  GPU_memory_barrier(GPU_BARRIER_TEXTURE_UPDATE);
+  auto *pixels = static_cast<float *>(GPU_texture_read(target.get(), GPU_DATA_FLOAT, 0));
+  require(pixels, "Native staged source readback missing");
+  const auto release = qScopeGuard([&] { MEM_delete(pixels); });
+  ++reads;
+  for (int p = 0; p < width * height; ++p)
+    for (int c = 0; c < 4; ++c)
+      require(std::abs(pixels[p * 4 + c] - clear[c]) < 2e-6,
+              "Staged source image differs from its native color output");
+  NativeMaterialGpuLibrary library;
+  NativeMaterialGpuPreparation preparation(library, "prepared-source", "prepared-hash", graph);
+  int frames = 0;
+  while (!preparation.step()) {
+    require(++frames < 10000, "Native material preparation did not finish");
+  }
+  require(preparation.ready() && library.statistics().programs >= 3,
+          "Native resource was activated before channel programs were ready");
+  const auto compiled = GPU_pass_global_compilation_count();
+  library.render("prepared-source", 0, description, target.get(), context, {0, 0, width, height});
+  require(GPU_pass_global_compilation_count() == compiled,
+          "First native layer evaluation compiled a program after activation");
+  preparation_step_ms = preparation.maximum_step_ms();
+  NativeMaterialPreparationQueue queue(library);
+  queue.request("queued-a", "queue-source-a", graph);
+  queue.request("queued-b", "queue-source-b", graph);
+  int ticks = 0;
+  while (queue.pending()) {
+    queue.step();
+    require(++ticks < 10000, "Native preparation queue did not drain");
+  }
+  require(queue.status("queued-a").ready && queue.status("queued-b").ready,
+          "Round-robin native sources were not published");
+  const auto stable = library.revision("queued-a"), other = library.revision("queued-b");
+  queue.request("queued-a", "superseded", graph);
+  queue.step();
+  queue.request("queued-a", "latest", graph);
+  while (queue.pending())
+    queue.step();
+  require(queue.status("queued-a").ready && library.revision("queued-a") > stable &&
+              library.revision("queued-b") == other,
+          "Native queue did not preserve latest-wins/resource isolation");
+  queue.request("queued-a", "cancelled", graph);
+  queue.step();
+  queue.cancel("queued-a");
+  require(!queue.pending() && library.contains("queued-a"),
+          "Cancelled native preparation removed an existing source");
+  const auto previous_revision = library.revision("prepared-source"),
+             previous_resources = library.statistics().resources;
+  {
+    NativeMaterialGpuPreparation cancelled(
+        library, "prepared-source", "cancelled-replacement", graph);
+    int frames = 0;
+    while (library.statistics().resources == previous_resources) {
+      require(!cancelled.step() && ++frames < 100,
+              "Cancelled replacement did not reach staged publication");
+    }
+    require(library.revision("prepared-source") == previous_revision,
+            "Unprepared replacement changed the active resource");
+  }
+  require(library.revision("prepared-source") == previous_revision &&
+              library.statistics().resources == previous_resources,
+          "Cancelled replacement erased the active material");
+  image_upload_steps = steps;
+  image_upload_step_ms = progress.maximum_step_ms;
 }

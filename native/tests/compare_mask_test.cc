@@ -3,6 +3,81 @@
 #include "MaskPreset.hh"
 #include <cassert>
 #include <iostream>
-int main(){using namespace bts;MaskEffect effect;effect.kind=MaskEffectKind::Compare;effect.hardness=.9;effect.left=1;effect.right=3;effect.operation=2;assert(compare_mask_values(effect,0,.5)==0);effect.operation=0;assert(compare_mask_values(effect,0,.5)==1);effect.operation=1;assert(compare_mask_values(effect,0,.5)==0);effect.tolerance=.75;assert(compare_mask_values(effect,0,.5)==1);effect.operation=2;assert(compare_mask_values(effect,.5,.5)==1);effect.hardness=0;const float soft=compare_mask_values(effect,0,.5);assert(soft>0&&soft<1);
- SceneSnapshot scene;MaterialSummary m;m.session_id=1;m.name="Compare";m.uniform_editable=true;scene.materials={m};ImportSummary imported;imported.materials={{1,"Compare"}};TextureDocument doc({},imported,scene);auto &set=doc.set(1);set.precision[4]=ChannelPrecision::L32F;TextureDocument::add_fill(set);const auto lower=set.selected_layer;TextureDocument::layer(set,lower).values.bump=.8;TextureDocument::add_fill(set);const auto upper=set.selected_layer;auto &layer=TextureDocument::layer(set,upper);layer.values.bump=.2;TextureDocument::add_mask(set,0);layer.mask->effects.push_back(MaskEffect{});const auto old=doc;TextureDocument::add_compare_mask(set);assert(layer.mask->effects.size()==1&&layer.effects.empty()&&layer.blending[4]==LayerBlend::Normal&&layer.mask->background==0);auto &compare=layer.mask->effects[0];assert(TextureDocument::mask_value(set,upper,0,0)<1e-6);compare.operation=0;assert(TextureDocument::mask_value(set,upper,0,0)==1);compare.left=2;compare.right=3;compare.constant=.5;MaskEffect fill;fill.kind=MaskEffectKind::Fill;fill.fill=.25;layer.mask->effects.insert(layer.mask->effects.begin(),fill);assert(TextureDocument::mask_value(set,upper,0,0)==1);layer.mask->effects[0].fill=.75;assert(TextureDocument::mask_value(set,upper,0,0)<1e-6);layer.mask->effects[1].left=1;layer.mask->effects[1].right=0;assert(TextureDocument::mask_value(set,upper,0,0)==1);TextureDocument::layer(set,lower).values.bump=.1;assert(TextureDocument::mask_value(set,upper,0,0)<1e-6);const auto inputs=TextureDocument::comparison_inputs(set,upper,0,0);assert(std::abs(inputs.layer[4]-.2)<1e-6&&std::abs(inputs.below[4]-.1)<1e-6);const auto signature=TextureDocument::mask_dependency_signature(set);TextureDocument::layer(set,lower).values.bump=.9;assert(signature!=TextureDocument::mask_dependency_signature(set));std::vector<TextureSetBinding> bindings{{set.id,1,set.name}};assert(TextureDocument::from_json(doc.to_json(),bindings).to_json()==doc.to_json());assert(mask_effects_json(read_mask_preset(write_mask_preset(*layer.mask)).effects)==mask_effects_json(layer.mask->effects));assert(old.texture_sets()[0].layers.back().mask->effects[0].kind==MaskEffectKind::ColorSelection);std::cout<<"Three comparison operators, boundary/hardness rule, live cross-channel lower/current inputs, preceding-mask input, atomic creation, dependency signature and metadata/preset roundtrip passed\n";
+int main()
+{
+  using namespace bts;
+  MaskEffect effect;
+  effect.kind = MaskEffectKind::Compare;
+  effect.hardness = .9;
+  effect.left = 1;
+  effect.right = 3;
+  effect.operation = 2;
+  assert(compare_mask_values(effect, 0, .5) == 0);
+  effect.operation = 0;
+  assert(compare_mask_values(effect, 0, .5) == 1);
+  effect.operation = 1;
+  assert(compare_mask_values(effect, 0, .5) == 0);
+  effect.tolerance = .75;
+  assert(compare_mask_values(effect, 0, .5) == 1);
+  effect.operation = 2;
+  assert(compare_mask_values(effect, .5, .5) == 1);
+  effect.hardness = 0;
+  const float soft = compare_mask_values(effect, 0, .5);
+  assert(soft > 0 && soft < 1);
+  SceneSnapshot scene;
+  MaterialSummary m;
+  m.session_id = 1;
+  m.name = "Compare";
+  m.uniform_editable = true;
+  scene.materials = {m};
+  ImportSummary imported;
+  imported.materials = {{1, "Compare"}};
+  TextureDocument doc({}, imported, scene);
+  auto &set = doc.set(1);
+  set.precision[4] = ChannelPrecision::L32F;
+  TextureDocument::add_fill(set);
+  const auto lower = set.selected_layer;
+  TextureDocument::layer(set, lower).values.bump = .8;
+  TextureDocument::add_fill(set);
+  const auto upper = set.selected_layer;
+  auto &layer = TextureDocument::layer(set, upper);
+  layer.values.bump = .2;
+  TextureDocument::add_mask(set, 0);
+  layer.mask->effects.push_back(MaskEffect{});
+  const auto old = doc;
+  TextureDocument::add_compare_mask(set);
+  assert(layer.mask->effects.size() == 1 && layer.effects.empty() &&
+         layer.blending[4] == LayerBlend::Normal && layer.mask->background == 0);
+  auto &compare = layer.mask->effects[0];
+  assert(TextureDocument::mask_value(set, upper, 0, 0) < 1e-6);
+  compare.operation = 0;
+  assert(TextureDocument::mask_value(set, upper, 0, 0) == 1);
+  compare.left = 2;
+  compare.right = 3;
+  compare.constant = .5;
+  MaskEffect fill;
+  fill.kind = MaskEffectKind::Fill;
+  fill.fill = .25;
+  layer.mask->effects.insert(layer.mask->effects.begin(), fill);
+  assert(TextureDocument::mask_value(set, upper, 0, 0) == 1);
+  layer.mask->effects[0].fill = .75;
+  assert(TextureDocument::mask_value(set, upper, 0, 0) < 1e-6);
+  layer.mask->effects[1].left = 1;
+  layer.mask->effects[1].right = 0;
+  assert(TextureDocument::mask_value(set, upper, 0, 0) == 1);
+  TextureDocument::layer(set, lower).values.bump = .1;
+  assert(TextureDocument::mask_value(set, upper, 0, 0) < 1e-6);
+  const auto inputs = TextureDocument::comparison_inputs(set, upper, 0, 0);
+  assert(std::abs(inputs.layer[4] - .2) < 1e-6 && std::abs(inputs.below[4] - .1) < 1e-6);
+  const auto signature = TextureDocument::mask_dependency_signature(set);
+  TextureDocument::layer(set, lower).values.bump = .9;
+  assert(signature != TextureDocument::mask_dependency_signature(set));
+  std::vector<TextureSetBinding> bindings{{set.id, 1, set.name}};
+  assert(TextureDocument::from_json(doc.to_json(), bindings).to_json() == doc.to_json());
+  assert(mask_effects_json(read_mask_preset(write_mask_preset(*layer.mask)).effects) ==
+         mask_effects_json(layer.mask->effects));
+  assert(old.texture_sets()[0].layers.back().mask->effects[0].kind ==
+         MaskEffectKind::ColorSelection);
+  std::cout
+      << "Three comparison operators, boundary/hardness rule, live cross-channel lower/current inputs, preceding-mask input, atomic creation, dependency signature and metadata/preset roundtrip passed\n";
 }

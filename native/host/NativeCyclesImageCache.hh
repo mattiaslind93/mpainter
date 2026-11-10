@@ -7,5 +7,5 @@ struct ImBuf;
 // Owner validates session/revision externally. Replaces one immutable CPU cache
 // entry without changing GPU storage, partial updates, source or authored dirt.
 // Returns an owned old-buffer reference for retirement outside the cache lock.
-bool BKE_image_publish_hosted_gpu_buffer(Image *,int tile,ImBuf *,ImBuf **previous);
-}
+bool BKE_image_publish_hosted_gpu_buffer(Image *, int tile, ImBuf *, ImBuf **previous);
+}  // namespace blender

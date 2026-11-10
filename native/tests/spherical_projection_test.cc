@@ -4,8 +4,72 @@
 #include <cassert>
 #include <iostream>
 using namespace bts;
-int main(){FillProjection p;p.mode=3;p.filtering=2;FillSurfaceAtlas atlas;atlas.extent=2;FillSurfacePoint point;point.valid=true;point.normal={0,0,1};point.position={0,-1,0};auto uv=fill_spherical_uv({0,-1,0});assert(uv[0]==.5&&uv[1]==.5);assert(fill_spherical_uv({0,0,1})[1]==1&&fill_spherical_uv({0,0,-1})[1]==0);assert(fill_spherical_uv({0,0,0})==(std::array<double,2>{.5,.5}));const auto left=fill_spherical_uv({-1e-8,1,0}),right=fill_spherical_uv({1e-8,1,0});assert(left[0]<1e-7&&right[0]>1-1e-7);
- auto image=std::make_shared<FillTexture>();image->asset="c0a80001-1234-4000-8000-000000000001";image->hash=std::string(64,'1');image->name="Directions";image->width=4;image->height=1;image->pixels=std::make_shared<const std::vector<FillTexture::Pixel>>(std::vector<FillTexture::Pixel>{{1,0,0,1},{0,1,0,1},{0,0,1,1},{1,1,1,1}});p.texture=image;assert(fill_spatial_sample(p,point,atlas)[2]==1);p.rotation3[2]=90;assert(fill_spatial_sample(p,point,atlas)[1]==1);p.rotation3={};p.depth_culling=p.backface_culling=true;point.normal={0,1,0};assert(fill_spatial_sample(p,point,atlas)[3]==1);p.shape_crop=true;point.position[1]=-2;assert(fill_spatial_sample(p,point,atlas)[3]==0);p.shape_crop=false;assert(fill_spatial_sample(p,point,atlas)[3]==1);p.filtering=0;point.position={0,0,1};point.footprint=.01;const auto pole=fill_spatial_sample(p,point,atlas);for(float v:pole)assert(std::isfinite(v));
- SceneSnapshot scene;MaterialSummary material;material.session_id=1;material.name="Sphere";scene.materials.push_back(material);ImportSummary imported;imported.materials={{1,"Sphere"}};TextureDocument doc({},imported,scene);auto &set=doc.set(1);TextureDocument::add_fill(set);auto &fill=TextureDocument::layer(set,set.selected_layer);fill.fill.mode=3;fill.fill.scale={4,4};fill.fill.rotation=30;fill.fill.offset={.1,0};fill.fill.offset3={.2,0,0};const auto json=doc.to_json();const std::array bindings{TextureSetBinding{set.id,1,"Sphere"}};auto loaded=TextureDocument::from_json(json,bindings);const auto &restored=TextureDocument::layer(loaded.set(1),loaded.set(1).selected_layer).fill;assert(restored.mode==3&&restored.scale==fill.fill.scale&&restored.rotation==30&&restored.offset3==fill.fill.offset3);
- std::cout<<"Spherical longitude/seam/poles/center, rotated resources, cropping, hidden planar culling ignored, finite HQ poles and transform persistence passed\n";
+int main()
+{
+  FillProjection p;
+  p.mode = 3;
+  p.filtering = 2;
+  FillSurfaceAtlas atlas;
+  atlas.extent = 2;
+  FillSurfacePoint point;
+  point.valid = true;
+  point.normal = {0, 0, 1};
+  point.position = {0, -1, 0};
+  auto uv = fill_spherical_uv({0, -1, 0});
+  assert(uv[0] == .5 && uv[1] == .5);
+  assert(fill_spherical_uv({0, 0, 1})[1] == 1 && fill_spherical_uv({0, 0, -1})[1] == 0);
+  assert(fill_spherical_uv({0, 0, 0}) == (std::array<double, 2>{.5, .5}));
+  const auto left = fill_spherical_uv({-1e-8, 1, 0}), right = fill_spherical_uv({1e-8, 1, 0});
+  assert(left[0] < 1e-7 && right[0] > 1 - 1e-7);
+  auto image = std::make_shared<FillTexture>();
+  image->asset = "c0a80001-1234-4000-8000-000000000001";
+  image->hash = std::string(64, '1');
+  image->name = "Directions";
+  image->width = 4;
+  image->height = 1;
+  image->pixels = std::make_shared<const std::vector<FillTexture::Pixel>>(
+      std::vector<FillTexture::Pixel>{{1, 0, 0, 1}, {0, 1, 0, 1}, {0, 0, 1, 1}, {1, 1, 1, 1}});
+  p.texture = image;
+  assert(fill_spatial_sample(p, point, atlas)[2] == 1);
+  p.rotation3[2] = 90;
+  assert(fill_spatial_sample(p, point, atlas)[1] == 1);
+  p.rotation3 = {};
+  p.depth_culling = p.backface_culling = true;
+  point.normal = {0, 1, 0};
+  assert(fill_spatial_sample(p, point, atlas)[3] == 1);
+  p.shape_crop = true;
+  point.position[1] = -2;
+  assert(fill_spatial_sample(p, point, atlas)[3] == 0);
+  p.shape_crop = false;
+  assert(fill_spatial_sample(p, point, atlas)[3] == 1);
+  p.filtering = 0;
+  point.position = {0, 0, 1};
+  point.footprint = .01;
+  const auto pole = fill_spatial_sample(p, point, atlas);
+  for (float v : pole)
+    assert(std::isfinite(v));
+  SceneSnapshot scene;
+  MaterialSummary material;
+  material.session_id = 1;
+  material.name = "Sphere";
+  scene.materials.push_back(material);
+  ImportSummary imported;
+  imported.materials = {{1, "Sphere"}};
+  TextureDocument doc({}, imported, scene);
+  auto &set = doc.set(1);
+  TextureDocument::add_fill(set);
+  auto &fill = TextureDocument::layer(set, set.selected_layer);
+  fill.fill.mode = 3;
+  fill.fill.scale = {4, 4};
+  fill.fill.rotation = 30;
+  fill.fill.offset = {.1, 0};
+  fill.fill.offset3 = {.2, 0, 0};
+  const auto json = doc.to_json();
+  const std::array bindings{TextureSetBinding{set.id, 1, "Sphere"}};
+  auto loaded = TextureDocument::from_json(json, bindings);
+  const auto &restored = TextureDocument::layer(loaded.set(1), loaded.set(1).selected_layer).fill;
+  assert(restored.mode == 3 && restored.scale == fill.fill.scale && restored.rotation == 30 &&
+         restored.offset3 == fill.fill.offset3);
+  std::cout
+      << "Spherical longitude/seam/poles/center, rotated resources, cropping, hidden planar culling ignored, finite HQ poles and transform persistence passed\n";
 }

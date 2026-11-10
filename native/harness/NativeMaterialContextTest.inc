@@ -1,11 +1,74 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 {
- std::unique_ptr<Main,decltype(&BKE_main_free)> objects(BKE_main_new(),BKE_main_free);auto *material=BKE_material_add(objects.get(),"Native object context fixture");auto *mesh=BKE_mesh_add(objects.get(),"Native object context mesh");mesh->texspace_flag=0;mesh->texspace_location[0]=.25;mesh->texspace_size[0]=2;auto *object=BKE_object_add_only_object(objects.get(),OB_MESH,"Native object context object");object->data=&mesh->id;BKE_object_material_assign(objects.get(),object,material,1,BKE_MAT_ASSIGN_OBDATA);auto &matrix=object->runtime->object_to_world;matrix=blender::float4x4::identity();matrix[0][0]=2;matrix[1][1]=3;matrix[2][2]=4;matrix[3][0]=5;object->color[0]=.25;NativeMaterialGpuContext context;bind_native_material_object(*objects,nullptr,material->id.session_uid,context);require(context.object_to_world[0]==2&&context.world_to_object[0]==.5&&context.world_to_object[12]==-2.5,"Native object matrices differ from evaluated object");require(context.bounds_min[0]==-1.75&&context.bounds_max[0]==2.25&&context.object_color[0]==.25,"Native object texspace/color was replaced by a generic bound");
- std::array<float,16> view{1,0,0,0,0,1,0,0,0,0,1,0,-2,-3,-4,1},projection{1,0,0,0,0,1,0,0,0,0,-1,-1,0,0,-.2f,0};bind_native_material_view(view,projection,context);require(context.perspective&&context.camera_position==std::array<float,3>{2,3,4}&&context.camera_forward==std::array<float,3>{0,0,1},"Native camera position/direction differ from inverse view");projection={1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};bind_native_material_view(view,projection,context);require(!context.perspective,"Native orthographic view was treated as perspective");
- auto *second=BKE_object_add_only_object(objects.get(),OB_MESH,"Second native context object");second->data=&mesh->id;BKE_object_material_assign(objects.get(),second,material,1,BKE_MAT_ASSIGN_OBDATA);bool rejected=false;try{bind_native_material_object(*objects,nullptr,material->id.session_uid,context);}catch(const std::runtime_error &){rejected=true;}require(rejected,"Shared-material objects silently used the first transform");
- second->runtime->object_to_world=float4x4::identity();second->runtime->object_to_world[0][0]=4;second->runtime->object_to_world[3][1]=-3;second->color[0]=.75;
- bind_native_material_objects(*objects,nullptr,material->id.session_uid,context);require(context.objects&&context.objects->size()==2,"Native owner binder omitted a shared-material object");
- const auto &rows=context.objects->rows();bool first_found=false,second_found=false;for(int i=0;i<context.objects->size();++i){const int base=i*NativeMaterialObjectTable::stride;const auto uid=std::bit_cast<std::uint32_t>(rows[base][0]);if(uid==object->id.session_uid){first_found=true;require(rows[base+1][0]==2&&rows[base+8][0]==-2.5&&rows[base+11][0]==.25,"First native object's context changed in table");}else if(uid==second->id.session_uid){second_found=true;require(rows[base+1][0]==4&&rows[base+8][1]==3&&rows[base+11][0]==.75,"Second native object's context was replaced by the first");}}
- require(first_found&&second_found,"Native context owner UID differs from original project Object identity");
-
+  std::unique_ptr<Main, decltype(&BKE_main_free)> objects(BKE_main_new(), BKE_main_free);
+  auto *material = BKE_material_add(objects.get(), "Native object context fixture");
+  auto *mesh = BKE_mesh_add(objects.get(), "Native object context mesh");
+  mesh->texspace_flag = 0;
+  mesh->texspace_location[0] = .25;
+  mesh->texspace_size[0] = 2;
+  auto *object = BKE_object_add_only_object(
+      objects.get(), OB_MESH, "Native object context object");
+  object->data = &mesh->id;
+  BKE_object_material_assign(objects.get(), object, material, 1, BKE_MAT_ASSIGN_OBDATA);
+  auto &matrix = object->runtime->object_to_world;
+  matrix = blender::float4x4::identity();
+  matrix[0][0] = 2;
+  matrix[1][1] = 3;
+  matrix[2][2] = 4;
+  matrix[3][0] = 5;
+  object->color[0] = .25;
+  NativeMaterialGpuContext context;
+  bind_native_material_object(*objects, nullptr, material->id.session_uid, context);
+  require(context.object_to_world[0] == 2 && context.world_to_object[0] == .5 &&
+              context.world_to_object[12] == -2.5,
+          "Native object matrices differ from evaluated object");
+  require(context.bounds_min[0] == -1.75 && context.bounds_max[0] == 2.25 &&
+              context.object_color[0] == .25,
+          "Native object texspace/color was replaced by a generic bound");
+  std::array<float, 16> view{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -2, -3, -4, 1},
+      projection{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, -1, 0, 0, -.2f, 0};
+  bind_native_material_view(view, projection, context);
+  require(context.perspective && context.camera_position == std::array<float, 3>{2, 3, 4} &&
+              context.camera_forward == std::array<float, 3>{0, 0, 1},
+          "Native camera position/direction differ from inverse view");
+  projection = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+  bind_native_material_view(view, projection, context);
+  require(!context.perspective, "Native orthographic view was treated as perspective");
+  auto *second = BKE_object_add_only_object(
+      objects.get(), OB_MESH, "Second native context object");
+  second->data = &mesh->id;
+  BKE_object_material_assign(objects.get(), second, material, 1, BKE_MAT_ASSIGN_OBDATA);
+  bool rejected = false;
+  try {
+    bind_native_material_object(*objects, nullptr, material->id.session_uid, context);
+  }
+  catch (const std::runtime_error &) {
+    rejected = true;
+  }
+  require(rejected, "Shared-material objects silently used the first transform");
+  second->runtime->object_to_world = float4x4::identity();
+  second->runtime->object_to_world[0][0] = 4;
+  second->runtime->object_to_world[3][1] = -3;
+  second->color[0] = .75;
+  bind_native_material_objects(*objects, nullptr, material->id.session_uid, context);
+  require(context.objects && context.objects->size() == 2,
+          "Native owner binder omitted a shared-material object");
+  const auto &rows = context.objects->rows();
+  bool first_found = false, second_found = false;
+  for (int i = 0; i < context.objects->size(); ++i) {
+    const int base = i * NativeMaterialObjectTable::stride;
+    const auto uid = std::bit_cast<std::uint32_t>(rows[base][0]);
+    if (uid == object->id.session_uid) {
+      first_found = true;
+      require(rows[base + 1][0] == 2 && rows[base + 8][0] == -2.5 && rows[base + 11][0] == .25,
+              "First native object's context changed in table");
+    }
+    else if (uid == second->id.session_uid) {
+      second_found = true;
+      require(rows[base + 1][0] == 4 && rows[base + 8][1] == 3 && rows[base + 11][0] == .75,
+              "Second native object's context was replaced by the first");
+    }
+  }
+  require(first_found && second_found,
+          "Native context owner UID differs from original project Object identity");
 }

@@ -1,75 +1,422 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Test-only native publication of the portable values. No interactive Import.
- bool roundtrip_=qEnvironmentVariableIsSet("BTS_PD149_PARAMETER_RECONSTRUCT")||qEnvironmentVariableIsSet("BTS_PD149_PARAMETER_IMPORT");
- bool roundtrip_producer_=qEnvironmentVariableIsSet("BTS_PD149_PARAMETER_ROUNDTRIP_PRODUCER");
- struct ReconstructedParameters {std::unique_ptr<TextureDocument> document;std::vector<StudioAsset> assets;MaterialLayerParameters parameters;int decoder_calls=0;bool catalog_metadata_preflight=false,missing_filename_rejected=false;};
- std::future<ReconstructedParameters> reconstruction_;
- std::shared_ptr<std::atomic_bool> reconstruction_cancel_=std::make_shared<std::atomic_bool>(false);
- ReconstructedParameters reconstructed_;QJsonObject reconstruction_before_,reconstruction_after_,reconstruction_others_,reconstruction_old_library_,reconstruction_new_library_,reconstruction_proof_;
- std::array<std::vector<std::array<float,4>>,2> reconstruction_baseline_;std::uint64_t reconstruction_revision_=0;int reconstruction_history_=0;bool reconstruction_preparing_=false;
- QJsonObject other_sets()const{QJsonObject result;const auto state=hooks_.document()->to_json();for(const auto &other:hooks_.document()->texture_sets())if(other.id!=set().id)result[other.id.toString()]=edit_set_state(state,other.id);return result;}
- std::array<std::vector<std::array<float,4>>,2> ordinary_colors(){std::array<std::vector<std::array<float,4>>,2> values;hooks_.host.with_gpu([&]{GpuTap tap(material(),Output::Color,128,128);for(int tile:{1001,1002})values[tile-1001]=tap.sample(tile);});return values;}
- void begin_reconstruction(){
-  require(!QFileInfo(source_).exists()&&set().users[0].present&&!set().material_layering.allocated(),"Reconstruction needs fresh New with an unrelated local slot and hidden original");
-  require(bool(hooks_.publish_parameters),"Missing full-document diagnostic publisher");require_material_parameter_main(set());require_material_parameter_surface(*G_MAIN,material());hooks_.host.validate_material_layering(set());
-  reconstruction_before_=hooks_.document()->to_json();reconstruction_others_=other_sets();reconstruction_old_library_=hooks_.document()->shader_instances().to_json();reconstruction_baseline_=ordinary_colors();
-  reconstruction_revision_=hooks_.state()["document_revision"].toVariant().toULongLong();reconstruction_history_=hooks_.state()["undo_count"].toInt();
-  auto document=*hooks_.document();const auto signature=reconstruction_before_;const auto uid=hooks_.material();const auto id=set().id;const auto space=QString::fromUtf8(G_MAIN->colorspace.scene_linear_name);std::array<double,9> matrix{};for(int r=0;r<3;++r)for(int c=0;c<3;++c)matrix[r*3+c]=G_MAIN->colorspace.scene_linear_to_xyz[c][r];
-  const auto path=parameter_path();const auto cancel=reconstruction_cancel_;
-  reconstruction_=std::async(std::launch::async,[document=std::move(document),signature,uid,id,space,matrix,path,cancel]()mutable{
-   // Only detached values and immutable source storage cross this boundary.
-   // The actual native owner gate ran before dispatch; this signature binds
-   // the helper's mandatory gate to exactly that admitted target before decode.
-   ReconstructedParameters result;require(document.to_json()==signature,"Detached admitted document changed");result.parameters=read_material_layer_parameter_package(path,*cancel);bool admitted=false;
-   const auto gate=[&](const TextureSet &target){require(&target==&document.set(uid)&&target.id==id&&target.material_session_uid==uid,"Detached native admission target differs");if(cancel->load())throw std::runtime_error("Reconstruction cancelled");admitted=true;};
-   std::map<QUuid,std::string> original_names;
-   const auto asset=[](const MaterialParameterOriginal &original,const std::string &name){StudioAsset value;value.id=original.asset;value.name=QString::fromStdString(name);value.filename=original.files.front().descriptor.filename;value.path=original.files.front().descriptor.path;value.scope=AssetScope::Project;value.usages={"texture"};for(const auto &file:original.files)value.texture_files.push_back(file.descriptor);return value;};
-   const auto decode=[&](const FillTexture &source,const MaterialParameterOriginal &original,bool mask){require(admitted,"Decoder ran before actual owner admission/signature gate");if(cancel->load())throw std::runtime_error("Reconstruction cancelled");++result.decoder_calls;const auto [name,inserted]=original_names.emplace(original.asset,source.name);require(inserted||name->second==source.name,"Roundtrip fixture original has conflicting descriptor names");return decode_fill_texture(asset(original,source.name),mask||source.raw,source.source_space);};
-   const auto processor=[](const FillTexture &source){return QString::fromStdString(material_layer_source_color_transform(source).processor);};
-   result.document=std::make_unique<TextureDocument>(reconstruct_material_layer_document(document,uid,result.parameters,space,matrix,decode,processor,gate));
-   for(const auto &original:result.parameters.originals)result.assets.push_back(asset(original,original_names.at(original.asset)));
-   AssetCatalog validated_catalog(QString{});require(!result.assets.empty(),"Roundtrip original catalog is empty");const auto before=validated_catalog.assets().size();auto invalid=result.assets.front();invalid.filename.clear();try{validated_catalog.add(std::move(invalid));}catch(const std::invalid_argument &error){result.missing_filename_rejected=std::string(error.what())=="Invalid resource metadata";}require(result.missing_filename_rejected&&validated_catalog.assets().size()==before,"Missing original filename was not rejected without catalog mutation");for(const auto &original:result.assets)validated_catalog.add(original);require(validated_catalog.assets().size()==before+result.assets.size(),"Worker catalog did not admit originals exactly once");result.catalog_metadata_preflight=true;
-   if(cancel->load())throw std::runtime_error("Reconstruction cancelled");require(admitted&&result.decoder_calls>0,"Reconstruction did not use the real shared decoder");return result;
+bool roundtrip_ = qEnvironmentVariableIsSet("BTS_PD149_PARAMETER_RECONSTRUCT") ||
+                  qEnvironmentVariableIsSet("BTS_PD149_PARAMETER_IMPORT");
+bool roundtrip_producer_ = qEnvironmentVariableIsSet("BTS_PD149_PARAMETER_ROUNDTRIP_PRODUCER");
+struct ReconstructedParameters {
+  std::unique_ptr<TextureDocument> document;
+  std::vector<StudioAsset> assets;
+  MaterialLayerParameters parameters;
+  int decoder_calls = 0;
+  bool catalog_metadata_preflight = false, missing_filename_rejected = false;
+};
+std::future<ReconstructedParameters> reconstruction_;
+std::shared_ptr<std::atomic_bool> reconstruction_cancel_ = std::make_shared<std::atomic_bool>(
+    false);
+ReconstructedParameters reconstructed_;
+QJsonObject reconstruction_before_, reconstruction_after_, reconstruction_others_,
+    reconstruction_old_library_, reconstruction_new_library_, reconstruction_proof_;
+std::array<std::vector<std::array<float, 4>>, 2> reconstruction_baseline_;
+std::uint64_t reconstruction_revision_ = 0;
+int reconstruction_history_ = 0;
+bool reconstruction_preparing_ = false;
+QJsonObject other_sets() const
+{
+  QJsonObject result;
+  const auto state = hooks_.document()->to_json();
+  for (const auto &other : hooks_.document()->texture_sets())
+    if (other.id != set().id)
+      result[other.id.toString()] = edit_set_state(state, other.id);
+  return result;
+}
+std::array<std::vector<std::array<float, 4>>, 2> ordinary_colors()
+{
+  std::array<std::vector<std::array<float, 4>>, 2> values;
+  hooks_.host.with_gpu([&] {
+    GpuTap tap(material(), Output::Color, 128, 128);
+    for (int tile : {1001, 1002})
+      values[tile - 1001] = tap.sample(tile);
   });
- }
- void verify_reconstructed_values(bool cold){
-  require(set().material_layering.mask_slots==std::array<int,3>{1,2,3}&&set().users[0].present,"Portable masks did not remap around unrelated local slot0");
-  const auto &library=hooks_.document()->shader_instances();require(library.to_json()==reconstruction_new_library_&&set().shader_parameters==library.for_set(set().id).parameters,"Reconstructed shader library/assignment changed on ordinary refresh");
-  require(other_sets()==reconstruction_others_,"Reconstruction modified either unrelated Texture Set");
-  auto *normal=blender::bke::node_find_node_by_name(*material().nodetree,"__BTS_LayeredNormal"),*amount=blender::bke::node_find_node_by_name(*material().nodetree,"__BTS_LayeredAOAmount");require(normal&&amount,"Reconstructed native shader parameters missing");
-  require(static_cast<bNodeSocketValueFloat *>(input(*normal,"Strength").default_value)->value==set().shader_parameters.normal_intensity&&static_cast<bNodeSocketValueFloat *>(output(*amount,"Value").default_value)->value==set().shader_parameters.ao_intensity,"Native shader parameters differ from local instance values");
-  require(set().shader_parameters.normal_intensity==.5f&&set().shader_parameters.ao_intensity==.75f,"Reconstruction fixture must retain nondefault shader values");
-  QFile reference(parameter_reference());require(reference.open(QIODevice::ReadOnly),"Original opacity reference missing");const auto bytes=reference.readAll();require(bytes.size()==3*2*128*128*sizeof(float),"Original opacity reference shape");double maximum=0,tile_difference=0,reference_difference=0;int components=0;std::array<std::vector<float>,2> first_mask;for(int i=0;i<128*128;++i){float a=0,b=0;std::memcpy(&a,bytes.constData()+i*sizeof(float),sizeof(float));std::memcpy(&b,bytes.constData()+(128*128+i)*sizeof(float),sizeof(float));require(std::isfinite(a)&&std::isfinite(b),"Original asymmetric mask reference is nonfinite");reference_difference=std::max(reference_difference,std::abs(double(a)-b));}require(reference_difference>.1,"Original roundtrip mask0 reference does not distinguish tiles");
-  hooks_.host.with_gpu([&]{for(int stack=0;stack<3;++stack)for(int tile:{1001,1002}){const auto values=masks_[stack]->sample(tile);require(values.size()==128*128,"Reconstructed mask AOV shape");for(std::size_t i=0;i<values.size();++i){float expected=0;std::memcpy(&expected,bytes.constData()+((stack*2+tile-1001)*128*128+i)*sizeof(float),sizeof(float));require(std::isfinite(expected)&&std::isfinite(values[i][0]),"Reconstructed mask nonfinite");maximum=std::max(maximum,std::abs(double(values[i][0])-expected));if(stack==0)first_mask[tile-1001].push_back(values[i][0]);++components;}}});
-  require(first_mask[0].size()==128*128&&first_mask[1].size()==first_mask[0].size(),"Reconstructed asymmetric mask tile shape");for(std::size_t i=0;i<first_mask[0].size();++i)tile_difference=std::max(tile_difference,std::abs(double(first_mask[0][i])-first_mask[1][i]));require(tile_difference>.1,"Reconstructed native mask0 does not distinguish tiles");reconstruction_proof_["distinct_tile_masks"]=true;reconstruction_proof_["mask0_tile_maximum_difference"]=tile_difference;reconstruction_proof_["reference_mask0_tile_maximum_difference"]=reference_difference;
-  reconstruction_proof_["observed"]=true;reconstruction_proof_["cold"]=cold;reconstruction_proof_["mask_components"]=components;reconstruction_proof_["mask_maximum_error"]=maximum;reconstruction_proof_["fixed_tolerance"]=3e-5;reconstruction_proof_["local_mask_slots"]=QJsonArray{1,2,3};reconstruction_proof_["fresh_shader_assignment"]=true;reconstruction_proof_["native_shader_parameters"]=true;reconstruction_proof_["unrelated_sets_unchanged"]=true;reconstruction_proof_["original_source_hidden"]=!QFileInfo(source_).exists();reconstruction_proof_["package_hidden"]=!QFileInfo(parameter_path()).exists();
-  write(false);require(components==98304&&maximum<3e-5,"Reconstructed native mask AOV differs from original shader-mask reference");
- }
- void write_reconstruction_expected(){QFile f(output_+"/roundtrip-expected.json");require(f.open(QIODevice::WriteOnly),"Reconstruction expected state open");f.write(QJsonDocument(QJsonObject{{"shader_library",reconstruction_new_library_},{"other_sets",reconstruction_others_},{"proof",reconstruction_proof_}}).toJson());}
- void cold_reconstruction(){
-  require(!QFileInfo(parameter_path()).exists()&&!QFileInfo(source_).exists(),"Cold reconstruction must not access package or original source");
-  QFile expected(qEnvironmentVariable("BTS_PD149_PARAMETER_ROUNDTRIP_EXPECTED"));require(expected.open(QIODevice::ReadOnly),"Cold reconstructed shader expectations missing");const auto value=QJsonDocument::fromJson(expected.readAll()).object();reconstruction_new_library_=value["shader_library"].toObject();reconstruction_others_=value["other_sets"].toObject();reconstruction_proof_=value["proof"].toObject();
-  make_gpu();capture("source-package-hidden-cold");verify_reconstructed_values(true);
- }
- void advance_reconstruction(){
-  switch(stage_){
-   case 300:begin_reconstruction();stage_=301;break;
-   case 301:{if(reconstruction_.wait_for(std::chrono::seconds(0))!=std::future_status::ready)return;reconstructed_=reconstruction_.get();require(hooks_.document()->to_json()==reconstruction_before_&&hooks_.state()["document_revision"].toVariant().toULongLong()==reconstruction_revision_,"Worker result target became stale");
-    const auto before_catalog=catalog();bool rejected=false;try{hooks_.publish_parameters(reconstruction_revision_-1,hooks_.material(),reconstructed_.document,reconstructed_.assets);}catch(const std::exception &){rejected=true;}require(rejected&&reconstructed_.document&&hooks_.document()->to_json()==reconstruction_before_&&catalog()==before_catalog&&hooks_.state()["undo_count"].toInt()==reconstruction_history_,"Stale reconstruction publication mutated live state");reconstruction_proof_["stale_result_rejected"]=true;reconstruction_proof_["owner_admitted_before_worker_decode"]=true;reconstruction_proof_["decoder_calls"]=reconstructed_.decoder_calls;reconstruction_proof_["catalog_metadata_preflight"]=reconstructed_.catalog_metadata_preflight;reconstruction_proof_["missing_filename_rejected"]=reconstructed_.missing_filename_rejected;stage_=302;break;}
-   case 302:{require_material_parameter_surface(*G_MAIN,material());reconstruction_preparing_=true;if(!hooks_.publish_parameters(reconstruction_revision_,hooks_.material(),reconstructed_.document,reconstructed_.assets))return;reconstruction_preparing_=false;reconstruction_proof_["actual_full_document_publication"]=true;reconstruction_proof_["one_history_commit"]=true;reconstruction_proof_["catalog_original_rows"]=int(reconstructed_.assets.size());require(!reconstructed_.document&&hooks_.state()["undo_count"].toInt()==reconstruction_history_+1,"Reconstruction was not one full-document Undo");const auto rows=hooks_.state()["project_resources"].toArray();for(const auto &asset:reconstructed_.assets){int count=0;for(const auto &row:rows){const auto value=row.toObject();if(QUuid(value["id"].toString())==asset.id){require(value["hash"].toString()==asset.hash(),"Published original hash changed");++count;}}require(count==1,"Original resource was not published exactly once");}reconstruction_proof_["catalog_originals_once"]=true;reconstruction_after_=hooks_.document()->to_json();reconstruction_new_library_=hooks_.document()->shader_instances().to_json();require(reconstruction_new_library_!=reconstruction_old_library_,"Reconstruction reused the old shader library");for(int i=0;i<4;++i)require(layer_material_json(set().material_layering.materials[i])==layer_material_json(reconstructed_.parameters.materials[i]),"Portable material input/source/SRT changed");stage_=303;break;}
-   case 303:make_gpu();capture("reconstructed");verify_reconstructed_values(false);clear_gpu();click("addPaintLayer");stage_=304;break;
-   case 304:require(hooks_.document()->shader_instances().to_json()==reconstruction_new_library_,"Ordinary layer edit changed imported shader library");action("undoDocument");stage_=305;break;
-   case 305:require(hooks_.document()->to_json()==reconstruction_after_&&hooks_.document()->shader_instances().to_json()==reconstruction_new_library_,"Ordinary layer Undo failed to retain current shader library");reconstruction_proof_["ordinary_layer_undo_retains_shader"]=true;make_gpu();capture("ordinary-layer-undo",true);clear_gpu();action("undoDocument");stage_=306;break;
-   case 306:{require(hooks_.document()->to_json()==reconstruction_before_&&hooks_.document()->shader_instances().to_json()==reconstruction_old_library_&&hooks_.state()["undo_count"].toInt()==reconstruction_history_,"Reconstruction Undo did not restore exact old document/library/assignment");const auto actual=ordinary_colors();require(actual==reconstruction_baseline_,"Reconstruction Undo did not restore ordinary native Color AOV");reconstruction_proof_["undo_exact_document_and_library"]=true;action("redoDocument");stage_=307;break;}
-   case 307:require(hooks_.document()->to_json()==reconstruction_after_&&hooks_.document()->shader_instances().to_json()==reconstruction_new_library_,"Reconstruction Redo did not restore exact document/library/assignment");reconstruction_proof_["redo_exact_document_and_library"]=true;make_gpu();capture("redo",true);verify_reconstructed_values(false);hooks_.save(project_);stage_=308;break;
-   case 308:if(hooks_.state()["save_pending"].toBool()||!QFileInfo(project_).isFile())return;require(hooks_.state()["save_error"].toString().isEmpty(),"Reconstruction Save failed");make_gpu();capture("saved",true);verify_reconstructed_values(false);write_reconstruction_expected();{QFile f(output_+"/expected-materials.json");require(f.open(QIODevice::WriteOnly),"Reconstruction input expectations open");f.write(QJsonDocument(material_layering_json(set().material_layering)).toJson());}finish();return;
-   default:throw std::logic_error("Unknown parameter reconstruction stage");
+  return values;
+}
+void begin_reconstruction()
+{
+  require(!QFileInfo(source_).exists() && set().users[0].present &&
+              !set().material_layering.allocated(),
+          "Reconstruction needs fresh New with an unrelated local slot and hidden original");
+  require(bool(hooks_.publish_parameters), "Missing full-document diagnostic publisher");
+  require_material_parameter_main(set());
+  require_material_parameter_surface(*G_MAIN, material());
+  hooks_.host.validate_material_layering(set());
+  reconstruction_before_ = hooks_.document()->to_json();
+  reconstruction_others_ = other_sets();
+  reconstruction_old_library_ = hooks_.document()->shader_instances().to_json();
+  reconstruction_baseline_ = ordinary_colors();
+  reconstruction_revision_ = hooks_.state()["document_revision"].toVariant().toULongLong();
+  reconstruction_history_ = hooks_.state()["undo_count"].toInt();
+  auto document = *hooks_.document();
+  const auto signature = reconstruction_before_;
+  const auto uid = hooks_.material();
+  const auto id = set().id;
+  const auto space = QString::fromUtf8(G_MAIN->colorspace.scene_linear_name);
+  std::array<double, 9> matrix{};
+  for (int r = 0; r < 3; ++r)
+    for (int c = 0; c < 3; ++c)
+      matrix[r * 3 + c] = G_MAIN->colorspace.scene_linear_to_xyz[c][r];
+  const auto path = parameter_path();
+  const auto cancel = reconstruction_cancel_;
+  reconstruction_ = std::async(
+      std::launch::async,
+      [document = std::move(document), signature, uid, id, space, matrix, path, cancel]() mutable {
+        // Only detached values and immutable source storage cross this boundary.
+        // The actual native owner gate ran before dispatch; this signature binds
+        // the helper's mandatory gate to exactly that admitted target before decode.
+        ReconstructedParameters result;
+        require(document.to_json() == signature, "Detached admitted document changed");
+        result.parameters = read_material_layer_parameter_package(path, *cancel);
+        bool admitted = false;
+        const auto gate = [&](const TextureSet &target) {
+          require(&target == &document.set(uid) && target.id == id &&
+                      target.material_session_uid == uid,
+                  "Detached native admission target differs");
+          if (cancel->load())
+            throw std::runtime_error("Reconstruction cancelled");
+          admitted = true;
+        };
+        std::map<QUuid, std::string> original_names;
+        const auto asset = [](const MaterialParameterOriginal &original, const std::string &name) {
+          StudioAsset value;
+          value.id = original.asset;
+          value.name = QString::fromStdString(name);
+          value.filename = original.files.front().descriptor.filename;
+          value.path = original.files.front().descriptor.path;
+          value.scope = AssetScope::Project;
+          value.usages = {"texture"};
+          for (const auto &file : original.files)
+            value.texture_files.push_back(file.descriptor);
+          return value;
+        };
+        const auto decode =
+            [&](const FillTexture &source, const MaterialParameterOriginal &original, bool mask) {
+              require(admitted, "Decoder ran before actual owner admission/signature gate");
+              if (cancel->load())
+                throw std::runtime_error("Reconstruction cancelled");
+              ++result.decoder_calls;
+              const auto [name, inserted] = original_names.emplace(original.asset, source.name);
+              require(inserted || name->second == source.name,
+                      "Roundtrip fixture original has conflicting descriptor names");
+              return decode_fill_texture(
+                  asset(original, source.name), mask || source.raw, source.source_space);
+            };
+        const auto processor = [](const FillTexture &source) {
+          return QString::fromStdString(material_layer_source_color_transform(source).processor);
+        };
+        result.document = std::make_unique<TextureDocument>(reconstruct_material_layer_document(
+            document, uid, result.parameters, space, matrix, decode, processor, gate));
+        for (const auto &original : result.parameters.originals)
+          result.assets.push_back(asset(original, original_names.at(original.asset)));
+        AssetCatalog validated_catalog(QString{});
+        require(!result.assets.empty(), "Roundtrip original catalog is empty");
+        const auto before = validated_catalog.assets().size();
+        auto invalid = result.assets.front();
+        invalid.filename.clear();
+        try {
+          validated_catalog.add(std::move(invalid));
+        }
+        catch (const std::invalid_argument &error) {
+          result.missing_filename_rejected = std::string(error.what()) ==
+                                             "Invalid resource metadata";
+        }
+        require(result.missing_filename_rejected && validated_catalog.assets().size() == before,
+                "Missing original filename was not rejected without catalog mutation");
+        for (const auto &original : result.assets)
+          validated_catalog.add(original);
+        require(validated_catalog.assets().size() == before + result.assets.size(),
+                "Worker catalog did not admit originals exactly once");
+        result.catalog_metadata_preflight = true;
+        if (cancel->load())
+          throw std::runtime_error("Reconstruction cancelled");
+        require(admitted && result.decoder_calls > 0,
+                "Reconstruction did not use the real shared decoder");
+        return result;
+      });
+}
+void verify_reconstructed_values(bool cold)
+{
+  require(set().material_layering.mask_slots == std::array<int, 3>{1, 2, 3} &&
+              set().users[0].present,
+          "Portable masks did not remap around unrelated local slot0");
+  const auto &library = hooks_.document()->shader_instances();
+  require(library.to_json() == reconstruction_new_library_ &&
+              set().shader_parameters == library.for_set(set().id).parameters,
+          "Reconstructed shader library/assignment changed on ordinary refresh");
+  require(other_sets() == reconstruction_others_,
+          "Reconstruction modified either unrelated Texture Set");
+  auto *normal = blender::bke::node_find_node_by_name(*material().nodetree, "__BTS_LayeredNormal"),
+       *amount = blender::bke::node_find_node_by_name(*material().nodetree,
+                                                      "__BTS_LayeredAOAmount");
+  require(normal && amount, "Reconstructed native shader parameters missing");
+  require(
+      static_cast<bNodeSocketValueFloat *>(input(*normal, "Strength").default_value)->value ==
+              set().shader_parameters.normal_intensity &&
+          static_cast<bNodeSocketValueFloat *>(output(*amount, "Value").default_value)->value ==
+              set().shader_parameters.ao_intensity,
+      "Native shader parameters differ from local instance values");
+  require(set().shader_parameters.normal_intensity == .5f &&
+              set().shader_parameters.ao_intensity == .75f,
+          "Reconstruction fixture must retain nondefault shader values");
+  QFile reference(parameter_reference());
+  require(reference.open(QIODevice::ReadOnly), "Original opacity reference missing");
+  const auto bytes = reference.readAll();
+  require(bytes.size() == 3 * 2 * 128 * 128 * sizeof(float), "Original opacity reference shape");
+  double maximum = 0, tile_difference = 0, reference_difference = 0;
+  int components = 0;
+  std::array<std::vector<float>, 2> first_mask;
+  for (int i = 0; i < 128 * 128; ++i) {
+    float a = 0, b = 0;
+    std::memcpy(&a, bytes.constData() + i * sizeof(float), sizeof(float));
+    std::memcpy(&b, bytes.constData() + (128 * 128 + i) * sizeof(float), sizeof(float));
+    require(std::isfinite(a) && std::isfinite(b),
+            "Original asymmetric mask reference is nonfinite");
+    reference_difference = std::max(reference_difference, std::abs(double(a) - b));
   }
-  frame_=hooks_.state()["render_frames"].toInt()+2;viewport_->update();
- }
- void retire_reconstruction()noexcept{
+  require(reference_difference > .1,
+          "Original roundtrip mask0 reference does not distinguish tiles");
+  hooks_.host.with_gpu([&] {
+    for (int stack = 0; stack < 3; ++stack)
+      for (int tile : {1001, 1002}) {
+        const auto values = masks_[stack]->sample(tile);
+        require(values.size() == 128 * 128, "Reconstructed mask AOV shape");
+        for (std::size_t i = 0; i < values.size(); ++i) {
+          float expected = 0;
+          std::memcpy(&expected,
+                      bytes.constData() +
+                          ((stack * 2 + tile - 1001) * 128 * 128 + i) * sizeof(float),
+                      sizeof(float));
+          require(std::isfinite(expected) && std::isfinite(values[i][0]),
+                  "Reconstructed mask nonfinite");
+          maximum = std::max(maximum, std::abs(double(values[i][0]) - expected));
+          if (stack == 0)
+            first_mask[tile - 1001].push_back(values[i][0]);
+          ++components;
+        }
+      }
+  });
+  require(first_mask[0].size() == 128 * 128 && first_mask[1].size() == first_mask[0].size(),
+          "Reconstructed asymmetric mask tile shape");
+  for (std::size_t i = 0; i < first_mask[0].size(); ++i)
+    tile_difference = std::max(tile_difference,
+                               std::abs(double(first_mask[0][i]) - first_mask[1][i]));
+  require(tile_difference > .1, "Reconstructed native mask0 does not distinguish tiles");
+  reconstruction_proof_["distinct_tile_masks"] = true;
+  reconstruction_proof_["mask0_tile_maximum_difference"] = tile_difference;
+  reconstruction_proof_["reference_mask0_tile_maximum_difference"] = reference_difference;
+  reconstruction_proof_["observed"] = true;
+  reconstruction_proof_["cold"] = cold;
+  reconstruction_proof_["mask_components"] = components;
+  reconstruction_proof_["mask_maximum_error"] = maximum;
+  reconstruction_proof_["fixed_tolerance"] = 3e-5;
+  reconstruction_proof_["local_mask_slots"] = QJsonArray{1, 2, 3};
+  reconstruction_proof_["fresh_shader_assignment"] = true;
+  reconstruction_proof_["native_shader_parameters"] = true;
+  reconstruction_proof_["unrelated_sets_unchanged"] = true;
+  reconstruction_proof_["original_source_hidden"] = !QFileInfo(source_).exists();
+  reconstruction_proof_["package_hidden"] = !QFileInfo(parameter_path()).exists();
+  write(false);
+  require(components == 98304 && maximum < 3e-5,
+          "Reconstructed native mask AOV differs from original shader-mask reference");
+}
+void write_reconstruction_expected()
+{
+  QFile f(output_ + "/roundtrip-expected.json");
+  require(f.open(QIODevice::WriteOnly), "Reconstruction expected state open");
+  f.write(QJsonDocument(QJsonObject{{"shader_library", reconstruction_new_library_},
+                                    {"other_sets", reconstruction_others_},
+                                    {"proof", reconstruction_proof_}})
+              .toJson());
+}
+void cold_reconstruction()
+{
+  require(!QFileInfo(parameter_path()).exists() && !QFileInfo(source_).exists(),
+          "Cold reconstruction must not access package or original source");
+  QFile expected(qEnvironmentVariable("BTS_PD149_PARAMETER_ROUNDTRIP_EXPECTED"));
+  require(expected.open(QIODevice::ReadOnly), "Cold reconstructed shader expectations missing");
+  const auto value = QJsonDocument::fromJson(expected.readAll()).object();
+  reconstruction_new_library_ = value["shader_library"].toObject();
+  reconstruction_others_ = value["other_sets"].toObject();
+  reconstruction_proof_ = value["proof"].toObject();
+  make_gpu();
+  capture("source-package-hidden-cold");
+  verify_reconstructed_values(true);
+}
+void advance_reconstruction()
+{
+  switch (stage_) {
+    case 300:
+      begin_reconstruction();
+      stage_ = 301;
+      break;
+    case 301: {
+      if (reconstruction_.wait_for(std::chrono::seconds(0)) != std::future_status::ready)
+        return;
+      reconstructed_ = reconstruction_.get();
+      require(hooks_.document()->to_json() == reconstruction_before_ &&
+                  hooks_.state()["document_revision"].toVariant().toULongLong() ==
+                      reconstruction_revision_,
+              "Worker result target became stale");
+      const auto before_catalog = catalog();
+      bool rejected = false;
+      try {
+        hooks_.publish_parameters(reconstruction_revision_ - 1,
+                                  hooks_.material(),
+                                  reconstructed_.document,
+                                  reconstructed_.assets);
+      }
+      catch (const std::exception &) {
+        rejected = true;
+      }
+      require(rejected && reconstructed_.document &&
+                  hooks_.document()->to_json() == reconstruction_before_ &&
+                  catalog() == before_catalog &&
+                  hooks_.state()["undo_count"].toInt() == reconstruction_history_,
+              "Stale reconstruction publication mutated live state");
+      reconstruction_proof_["stale_result_rejected"] = true;
+      reconstruction_proof_["owner_admitted_before_worker_decode"] = true;
+      reconstruction_proof_["decoder_calls"] = reconstructed_.decoder_calls;
+      reconstruction_proof_["catalog_metadata_preflight"] =
+          reconstructed_.catalog_metadata_preflight;
+      reconstruction_proof_["missing_filename_rejected"] =
+          reconstructed_.missing_filename_rejected;
+      stage_ = 302;
+      break;
+    }
+    case 302: {
+      require_material_parameter_surface(*G_MAIN, material());
+      reconstruction_preparing_ = true;
+      if (!hooks_.publish_parameters(reconstruction_revision_,
+                                     hooks_.material(),
+                                     reconstructed_.document,
+                                     reconstructed_.assets))
+        return;
+      reconstruction_preparing_ = false;
+      reconstruction_proof_["actual_full_document_publication"] = true;
+      reconstruction_proof_["one_history_commit"] = true;
+      reconstruction_proof_["catalog_original_rows"] = int(reconstructed_.assets.size());
+      require(!reconstructed_.document &&
+                  hooks_.state()["undo_count"].toInt() == reconstruction_history_ + 1,
+              "Reconstruction was not one full-document Undo");
+      const auto rows = hooks_.state()["project_resources"].toArray();
+      for (const auto &asset : reconstructed_.assets) {
+        int count = 0;
+        for (const auto &row : rows) {
+          const auto value = row.toObject();
+          if (QUuid(value["id"].toString()) == asset.id) {
+            require(value["hash"].toString() == asset.hash(), "Published original hash changed");
+            ++count;
+          }
+        }
+        require(count == 1, "Original resource was not published exactly once");
+      }
+      reconstruction_proof_["catalog_originals_once"] = true;
+      reconstruction_after_ = hooks_.document()->to_json();
+      reconstruction_new_library_ = hooks_.document()->shader_instances().to_json();
+      require(reconstruction_new_library_ != reconstruction_old_library_,
+              "Reconstruction reused the old shader library");
+      for (int i = 0; i < 4; ++i)
+        require(layer_material_json(set().material_layering.materials[i]) ==
+                    layer_material_json(reconstructed_.parameters.materials[i]),
+                "Portable material input/source/SRT changed");
+      stage_ = 303;
+      break;
+    }
+    case 303:
+      make_gpu();
+      capture("reconstructed");
+      verify_reconstructed_values(false);
+      clear_gpu();
+      click("addPaintLayer");
+      stage_ = 304;
+      break;
+    case 304:
+      require(hooks_.document()->shader_instances().to_json() == reconstruction_new_library_,
+              "Ordinary layer edit changed imported shader library");
+      action("undoDocument");
+      stage_ = 305;
+      break;
+    case 305:
+      require(hooks_.document()->to_json() == reconstruction_after_ &&
+                  hooks_.document()->shader_instances().to_json() == reconstruction_new_library_,
+              "Ordinary layer Undo failed to retain current shader library");
+      reconstruction_proof_["ordinary_layer_undo_retains_shader"] = true;
+      make_gpu();
+      capture("ordinary-layer-undo", true);
+      clear_gpu();
+      action("undoDocument");
+      stage_ = 306;
+      break;
+    case 306: {
+      require(hooks_.document()->to_json() == reconstruction_before_ &&
+                  hooks_.document()->shader_instances().to_json() == reconstruction_old_library_ &&
+                  hooks_.state()["undo_count"].toInt() == reconstruction_history_,
+              "Reconstruction Undo did not restore exact old document/library/assignment");
+      const auto actual = ordinary_colors();
+      require(actual == reconstruction_baseline_,
+              "Reconstruction Undo did not restore ordinary native Color AOV");
+      reconstruction_proof_["undo_exact_document_and_library"] = true;
+      action("redoDocument");
+      stage_ = 307;
+      break;
+    }
+    case 307:
+      require(hooks_.document()->to_json() == reconstruction_after_ &&
+                  hooks_.document()->shader_instances().to_json() == reconstruction_new_library_,
+              "Reconstruction Redo did not restore exact document/library/assignment");
+      reconstruction_proof_["redo_exact_document_and_library"] = true;
+      make_gpu();
+      capture("redo", true);
+      verify_reconstructed_values(false);
+      hooks_.save(project_);
+      stage_ = 308;
+      break;
+    case 308:
+      if (hooks_.state()["save_pending"].toBool() || !QFileInfo(project_).isFile())
+        return;
+      require(hooks_.state()["save_error"].toString().isEmpty(), "Reconstruction Save failed");
+      make_gpu();
+      capture("saved", true);
+      verify_reconstructed_values(false);
+      write_reconstruction_expected();
+      {
+        QFile f(output_ + "/expected-materials.json");
+        require(f.open(QIODevice::WriteOnly), "Reconstruction input expectations open");
+        f.write(QJsonDocument(material_layering_json(set().material_layering)).toJson());
+      }
+      finish();
+      return;
+    default:
+      throw std::logic_error("Unknown parameter reconstruction stage");
+  }
+  frame_ = hooks_.state()["render_frames"].toInt() + 2;
+  viewport_->update();
+}
+void retire_reconstruction() noexcept
+{
   reconstruction_cancel_->store(true);
   // Terminal actor retirement only; no worker retains native IDs/GPU owners.
-  if(reconstruction_.valid()){try{reconstructed_=reconstruction_.get();}catch(...){}}
-  if(reconstruction_preparing_){try{hooks_.host.cancel_texture_preparation();}catch(...){qFatal("Reconstruction preparation escaped owner cleanup");}reconstruction_preparing_=false;}
- }
+  if (reconstruction_.valid()) {
+    try {
+      reconstructed_ = reconstruction_.get();
+    }
+    catch (...) {
+    }
+  }
+  if (reconstruction_preparing_) {
+    try {
+      hooks_.host.cancel_texture_preparation();
+    }
+    catch (...) {
+      qFatal("Reconstruction preparation escaped owner cleanup");
+    }
+    reconstruction_preparing_ = false;
+  }
+}

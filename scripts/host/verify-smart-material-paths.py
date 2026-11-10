@@ -10,7 +10,7 @@ for forbidden in ('std::vector<float>', 'assign_channel(', 'sample_id_map(', 'sa
     assert forbidden not in source, ('CPU smart-material mask evaluation',forbidden)
 # The bundled worn-metal recipe was deliberately removed. User-owned preset
 # capture still must use GPU readback and asynchronous publication below.
-assert 'bool worn_metal_ready(const TextureSet &){return false;}' in source
+assert compact('bool worn_metal_ready(const TextureSet &){return false;}') in compact(source)
 assert 'Import a user-owned Material Preset before applying it' in source
 thumbnail=(root/'native/host/AssetThumbnail.cc').read_text()
 assert 'worn_metal_color(' not in thumbnail, 'Smart-material thumbnails may not evaluate a CPU layered stack'

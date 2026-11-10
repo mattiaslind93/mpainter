@@ -12,25 +12,184 @@
 #include <thread>
 namespace bts {
 namespace adjustment_cold {
-inline void require(bool okay,const char *reason){if(!okay)throw std::runtime_error(reason);}
-inline QJsonValue logical(QJsonValue value){if(value.isObject()){auto object=value.toObject();object.remove("paint_hashes");object.remove("hashes");object.remove("immutable_storage");for(auto i=object.begin();i!=object.end();++i)i.value()=logical(i.value());return object;}if(value.isArray()){QJsonArray array;for(const auto &item:value.toArray())array.append(logical(item));return array;}return value;}
-inline QString sha(const QString &path){QFile file(path);require(file.open(QIODevice::ReadOnly),"BM packed project unavailable");QCryptographicHash hash(QCryptographicHash::Sha256);require(hash.addData(&file),"BM packed project hash read failed");return QString::fromLatin1(hash.result().toHex());}
+inline void require(bool okay, const char *reason)
+{
+  if (!okay)
+    throw std::runtime_error(reason);
 }
+inline QJsonValue logical(QJsonValue value)
+{
+  if (value.isObject()) {
+    auto object = value.toObject();
+    object.remove("paint_hashes");
+    object.remove("hashes");
+    object.remove("immutable_storage");
+    for (auto i = object.begin(); i != object.end(); ++i)
+      i.value() = logical(i.value());
+    return object;
+  }
+  if (value.isArray()) {
+    QJsonArray array;
+    for (const auto &item : value.toArray())
+      array.append(logical(item));
+    return array;
+  }
+  return value;
+}
+inline QString sha(const QString &path)
+{
+  QFile file(path);
+  require(file.open(QIODevice::ReadOnly), "BM packed project unavailable");
+  QCryptographicHash hash(QCryptographicHash::Sha256);
+  require(hash.addData(&file), "BM packed project hash read failed");
+  return QString::fromLatin1(hash.result().toHex());
+}
+}  // namespace adjustment_cold
 // Explicit private batch only: no AssetCatalog and no stroke token survives
 // this process boundary. Validate canonical archive data before normal frames.
-inline int run_adjustment_paint_cold_proof(BlenderHost &host,const QString &directory){
- using namespace adjustment_cold;require(!qEnvironmentVariableIsSet("BTS_VERIFY_GPU_STACK"),"BM cold must not run diagnostic stack oracles");
- QFile file(qEnvironmentVariable("BTS_BM_ADJUSTMENT_EXPECTED"));require(file.open(QIODevice::ReadOnly),"BM warm packed witness unavailable");const auto expected=QJsonDocument::fromJson(file.readAll()).object();const auto project=expected["document_path"].toString();require(!project.isEmpty()&&sha(project)==expected["packed_file_sha256"].toString(),"BM packed project bytes changed");
- const auto cpu=PaintPixels::recipe_materializations(),compositions=local_paint_materializations;auto document=host.open_project(project.toStdString());const TextureSet *target=nullptr;for(const auto &set:document.texture_sets())if(set.id==QUuid(expected["set"].toString()))target=&set;require(target,"BM packed persistent set missing");require(target->selected_layer==QUuid(expected["selected_layer"].toString()),"BM packed selected adjustment layer differs");QJsonArray tiles;for(int tile:target->tiles)tiles.append(tile);require(tiles==expected["tiles"].toArray()&&tiles==QJsonArray{1001,1002},"BM actual two-UDIM membership differs");
- QJsonArray layers;{EditStateScope metadata;for(const auto &value:document.edit_state()["texture_sets"].toArray()){auto set=value.toObject();if(QUuid(set["id"].toString())==target->id)layers=logical(set["layers"]).toArray();}}
- require(layers==expected["layers"].toArray(),"BM stored canonical layer metadata differs");int stored_pages=0;
- const auto stored=[&](const TilePaintPixels &pixels){for(const auto &[tile,plane]:pixels.tiles()){require(!plane.recipe(),"BM cold archive retained an unevaluated transient GPU token");for(int c=0;c<5;++c)stored_pages+=int(plane.page_count(c));}};
- for(const auto &layer:target->layers){stored(layer.pixels);stored(layer.ao_pixels);stored(layer.displacement.pixels);for(const auto &user:layer.users)stored(user.pixels);}
- require(stored_pages>0,"BM cold archive lost authored stroke pages");QJsonObject data{{"data_first",true},{"explicit_draws_before_validation",0},{"canonical_stored_pages",stored_pages},{"persistent_set",target->id.toString()},{"packed_file_sha256",sha(project)},{"transient_gpu_recipes",0}};QFile data_file(directory+"/bm-adjustment-cold-data.json");require(data_file.open(QIODevice::WriteOnly),"BM cold data receipt write failed");data_file.write(QJsonDocument(data).toJson());data_file.close();
- host.rebind_texture_sets(document);host.set_selected_material(target->material_session_uid);const auto scene=host.scene_snapshot();OrbitCamera camera;camera.frame_bounds({scene.minimum[0],scene.minimum[1],scene.minimum[2]},{scene.maximum[0],scene.maximum[1],scene.maximum[2]},{1000,700});ViewFrame frame;frame.pane={ViewKind::Scene,0,0,1000,700};const auto view=camera.view_matrix(),projection=camera.projection_matrix({1000,700});std::copy_n(view.constData(),16,frame.view.begin());std::copy_n(projection.constData(),16,frame.projection.begin());const auto clip=camera.clipping_range();frame.clipping={clip.first,clip.second};int frames=0;const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(120);
- do{host.draw(std::span<const ViewFrame>(&frame,1),1000,700);++frames;host.flush_texture_updates();QCoreApplication::processEvents();require(host.shader_failures().empty(),"BM cold shader compilation failed");require(std::chrono::steady_clock::now()<deadline,"BM cold publication timed out");if(host.texture_updates_pending())std::this_thread::sleep_for(std::chrono::milliseconds(1));}while(frames<8||host.texture_updates_pending());
- QJsonArray actual;int components=0;double maximum=0;const auto packets=expected["gpu"].toArray();require(packets.size()==4,"BM cold needs two channels on two real UDIMs");
- for(const auto &value:packets){const auto packet=value.toObject();const int tile=packet["tile"].toInt(),channel=packet["channel"].toInt();require(target->tiles.contains(tile)&&(channel==0||channel==2),"BM cold GPU packet owner differs");const auto points=packet["points"].toArray();require(points.size()==4,"BM cold GPU witness point count differs");std::array<std::array<int,2>,4> xy;for(int i=0;i<4;++i){const auto p=points[i].toObject()["xy"].toArray();require(p.size()==2,"BM GPU coordinates absent");xy[i]={p[0].toInt(),p[1].toInt()};}const auto pixels=host.diagnostic_gpu_pixels(target->material_session_uid,channel,xy,tile);require(pixels.size()==4,"BM cold canonical GPU channel unavailable");for(int i=0;i<4;++i){const auto expected_pixel=points[i].toObject()["rgba"].toArray();require(expected_pixel.size()==4,"BM warm RGBA absent");for(int c=0;c<4;++c){require(std::isfinite(pixels[i][c]),"BM cold nonfinite GPU pixel");maximum=std::max(maximum,std::abs(double(pixels[i][c])-expected_pixel[c].toDouble()));++components;}}actual.append(QJsonObject{{"tile",tile},{"channel",channel}});}
- require(maximum<3e-6,"BM packed cold GPU output changed");require(PaintPixels::recipe_materializations()==cpu&&local_paint_materializations==compositions,"BM cold used CPU material/paint evaluation");require(sha(project)==expected["packed_file_sha256"].toString(),"BM cold changed project bytes");QJsonObject result{{"data",data},{"pid",QCoreApplication::applicationPid()},{"normal_frames",frames},{"components",components},{"maximum_error",maximum},{"tolerance",3e-6},{"gpu",actual},{"cpu_materializations",0},{"cpu_layer_compositions",0}};QFile output(directory+"/bm-adjustment-cold.json");require(output.open(QIODevice::WriteOnly),"BM cold receipt write failed");output.write(QJsonDocument(result).toJson());std::printf("BTS_BM_ADJUSTMENT_COLD_VERIFIED components=%d frames=%d maximum=%.9g cpu_fallback=0\n",components,frames,maximum);return 0;
+inline int run_adjustment_paint_cold_proof(BlenderHost &host, const QString &directory)
+{
+  using namespace adjustment_cold;
+  require(!qEnvironmentVariableIsSet("BTS_VERIFY_GPU_STACK"),
+          "BM cold must not run diagnostic stack oracles");
+  QFile file(qEnvironmentVariable("BTS_BM_ADJUSTMENT_EXPECTED"));
+  require(file.open(QIODevice::ReadOnly), "BM warm packed witness unavailable");
+  const auto expected = QJsonDocument::fromJson(file.readAll()).object();
+  const auto project = expected["document_path"].toString();
+  require(!project.isEmpty() && sha(project) == expected["packed_file_sha256"].toString(),
+          "BM packed project bytes changed");
+  const auto cpu = PaintPixels::recipe_materializations(),
+             compositions = local_paint_materializations;
+  auto document = host.open_project(project.toStdString());
+  const TextureSet *target = nullptr;
+  for (const auto &set : document.texture_sets())
+    if (set.id == QUuid(expected["set"].toString()))
+      target = &set;
+  require(target, "BM packed persistent set missing");
+  require(target->selected_layer == QUuid(expected["selected_layer"].toString()),
+          "BM packed selected adjustment layer differs");
+  QJsonArray tiles;
+  for (int tile : target->tiles)
+    tiles.append(tile);
+  require(tiles == expected["tiles"].toArray() && tiles == QJsonArray{1001, 1002},
+          "BM actual two-UDIM membership differs");
+  QJsonArray layers;
+  {
+    EditStateScope metadata;
+    for (const auto &value : document.edit_state()["texture_sets"].toArray()) {
+      auto set = value.toObject();
+      if (QUuid(set["id"].toString()) == target->id)
+        layers = logical(set["layers"]).toArray();
+    }
+  }
+  require(layers == expected["layers"].toArray(), "BM stored canonical layer metadata differs");
+  int stored_pages = 0;
+  const auto stored = [&](const TilePaintPixels &pixels) {
+    for (const auto &[tile, plane] : pixels.tiles()) {
+      require(!plane.recipe(), "BM cold archive retained an unevaluated transient GPU token");
+      for (int c = 0; c < 5; ++c)
+        stored_pages += int(plane.page_count(c));
+    }
+  };
+  for (const auto &layer : target->layers) {
+    stored(layer.pixels);
+    stored(layer.ao_pixels);
+    stored(layer.displacement.pixels);
+    for (const auto &user : layer.users)
+      stored(user.pixels);
+  }
+  require(stored_pages > 0, "BM cold archive lost authored stroke pages");
+  QJsonObject data{{"data_first", true},
+                   {"explicit_draws_before_validation", 0},
+                   {"canonical_stored_pages", stored_pages},
+                   {"persistent_set", target->id.toString()},
+                   {"packed_file_sha256", sha(project)},
+                   {"transient_gpu_recipes", 0}};
+  QFile data_file(directory + "/bm-adjustment-cold-data.json");
+  require(data_file.open(QIODevice::WriteOnly), "BM cold data receipt write failed");
+  data_file.write(QJsonDocument(data).toJson());
+  data_file.close();
+  host.rebind_texture_sets(document);
+  host.set_selected_material(target->material_session_uid);
+  const auto scene = host.scene_snapshot();
+  OrbitCamera camera;
+  camera.frame_bounds({scene.minimum[0], scene.minimum[1], scene.minimum[2]},
+                      {scene.maximum[0], scene.maximum[1], scene.maximum[2]},
+                      {1000, 700});
+  ViewFrame frame;
+  frame.pane = {ViewKind::Scene, 0, 0, 1000, 700};
+  const auto view = camera.view_matrix(), projection = camera.projection_matrix({1000, 700});
+  std::copy_n(view.constData(), 16, frame.view.begin());
+  std::copy_n(projection.constData(), 16, frame.projection.begin());
+  const auto clip = camera.clipping_range();
+  frame.clipping = {clip.first, clip.second};
+  int frames = 0;
+  const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(120);
+  do {
+    host.draw(std::span<const ViewFrame>(&frame, 1), 1000, 700);
+    ++frames;
+    host.flush_texture_updates();
+    QCoreApplication::processEvents();
+    require(host.shader_failures().empty(), "BM cold shader compilation failed");
+    require(std::chrono::steady_clock::now() < deadline, "BM cold publication timed out");
+    if (host.texture_updates_pending())
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  } while (frames < 8 || host.texture_updates_pending());
+  QJsonArray actual;
+  int components = 0;
+  double maximum = 0;
+  const auto packets = expected["gpu"].toArray();
+  require(packets.size() == 4, "BM cold needs two channels on two real UDIMs");
+  for (const auto &value : packets) {
+    const auto packet = value.toObject();
+    const int tile = packet["tile"].toInt(), channel = packet["channel"].toInt();
+    require(target->tiles.contains(tile) && (channel == 0 || channel == 2),
+            "BM cold GPU packet owner differs");
+    const auto points = packet["points"].toArray();
+    require(points.size() == 4, "BM cold GPU witness point count differs");
+    std::array<std::array<int, 2>, 4> xy;
+    for (int i = 0; i < 4; ++i) {
+      const auto p = points[i].toObject()["xy"].toArray();
+      require(p.size() == 2, "BM GPU coordinates absent");
+      xy[i] = {p[0].toInt(), p[1].toInt()};
+    }
+    const auto pixels = host.diagnostic_gpu_pixels(
+        target->material_session_uid, channel, xy, tile);
+    require(pixels.size() == 4, "BM cold canonical GPU channel unavailable");
+    for (int i = 0; i < 4; ++i) {
+      const auto expected_pixel = points[i].toObject()["rgba"].toArray();
+      require(expected_pixel.size() == 4, "BM warm RGBA absent");
+      for (int c = 0; c < 4; ++c) {
+        require(std::isfinite(pixels[i][c]), "BM cold nonfinite GPU pixel");
+        maximum = std::max(maximum, std::abs(double(pixels[i][c]) - expected_pixel[c].toDouble()));
+        ++components;
+      }
+    }
+    actual.append(QJsonObject{{"tile", tile}, {"channel", channel}});
+  }
+  require(maximum < 3e-6, "BM packed cold GPU output changed");
+  require(PaintPixels::recipe_materializations() == cpu &&
+              local_paint_materializations == compositions,
+          "BM cold used CPU material/paint evaluation");
+  require(sha(project) == expected["packed_file_sha256"].toString(),
+          "BM cold changed project bytes");
+  QJsonObject result{{"data", data},
+                     {"pid", QCoreApplication::applicationPid()},
+                     {"normal_frames", frames},
+                     {"components", components},
+                     {"maximum_error", maximum},
+                     {"tolerance", 3e-6},
+                     {"gpu", actual},
+                     {"cpu_materializations", 0},
+                     {"cpu_layer_compositions", 0}};
+  QFile output(directory + "/bm-adjustment-cold.json");
+  require(output.open(QIODevice::WriteOnly), "BM cold receipt write failed");
+  output.write(QJsonDocument(result).toJson());
+  std::printf(
+      "BTS_BM_ADJUSTMENT_COLD_VERIFIED components=%d frames=%d maximum=%.9g cpu_fallback=0\n",
+      components,
+      frames,
+      maximum);
+  return 0;
 }
-}
+}  // namespace bts

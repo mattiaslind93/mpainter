@@ -1,10 +1,57 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-    if(parser.isSet("gui-fix-demo")&&workspace&&qEnvironmentVariableIsSet("BTS_UV_TEXTURE_DEMO")){
-      auto *probe=new QAction(workspace);probe->setObjectName("guiUvTextureProbe");QObject::connect(probe,&QAction::triggered,workspace,[&]{
-        const auto &set=document->set(snapshot.materials[selected_material].session_id);const int channel=workspace->property("uvProofChannel").toInt();QJsonArray values;workspace->setProperty("uvDocumentState",document->edit_state());const auto summary=host.uv_preview_summary();workspace->setProperty("uvContourCount",summary.contours?int(summary.contours->size()):0);if(!workspace->property("uvProofVisible").toBool()){workspace->setProperty("uvTextureProbe",values);return;}
-        const auto origin=viewport->uv_point({0,0})*viewport->devicePixelRatioF(),unit=viewport->uv_point({1,1})*viewport->devicePixelRatioF();
-        for(double v:{.17,.33,.5,.67,.83})for(double u:{.17,.33,.5,.67,.83}){const auto point=viewport->uv_point({u,v})*viewport->devicePixelRatioF();const int ix=int(std::round(point.x())),iy=int(std::round(point.y()));const double effective_u=(ix+.5-origin.x())/(unit.x()-origin.x()),effective_v=(iy+.5-origin.y())/(unit.y()-origin.y());const int x=int(std::floor(effective_u*set.width()-.5)),y=int(std::floor(effective_v*set.rows()-.5));const auto pixel=host.diagnostic_gpu_pixel(set.material_session_uid,channel,x,y);if(!pixel)qFatal("UV proof has no GPU channel image");bool stable=true;for(auto offset:std::array<std::array<int,2>,3>{{{1,0},{0,1},{1,1}}}){const auto next=host.diagnostic_gpu_pixel(set.material_session_uid,channel,x+offset[0],y+offset[1]);if(!next)qFatal("UV proof neighbor missing");for(int c=0;c<4;++c)stable&=std::abs((*pixel)[c]-(*next)[c])<1e-5f;}if(!stable)continue;
-          std::vector<float> color(4,1);for(int c=0;c<3;++c){const float neutral=channel==0?set.base_values.base_color[c]:set.base_values.roughness;color[c]=(*pixel)[c]+neutral*(1-(*pixel)[3]);}if(channel==0)host.display_rgba(color);values.append(QJsonObject{{"u",u},{"v",v},{"x",ix},{"y",iy},{"expected",QJsonArray{color[0],color[1],color[2]}}});}
-        workspace->setProperty("uvTextureProbe",values);
-      });
+if (parser.isSet("gui-fix-demo") && workspace && qEnvironmentVariableIsSet("BTS_UV_TEXTURE_DEMO"))
+{
+  auto *probe = new QAction(workspace);
+  probe->setObjectName("guiUvTextureProbe");
+  QObject::connect(probe, &QAction::triggered, workspace, [&] {
+    const auto &set = document->set(snapshot.materials[selected_material].session_id);
+    const int channel = workspace->property("uvProofChannel").toInt();
+    QJsonArray values;
+    workspace->setProperty("uvDocumentState", document->edit_state());
+    const auto summary = host.uv_preview_summary();
+    workspace->setProperty("uvContourCount", summary.contours ? int(summary.contours->size()) : 0);
+    if (!workspace->property("uvProofVisible").toBool()) {
+      workspace->setProperty("uvTextureProbe", values);
+      return;
     }
+    const auto origin = viewport->uv_point({0, 0}) * viewport->devicePixelRatioF(),
+               unit = viewport->uv_point({1, 1}) * viewport->devicePixelRatioF();
+    for (double v : {.17, .33, .5, .67, .83})
+      for (double u : {.17, .33, .5, .67, .83}) {
+        const auto point = viewport->uv_point({u, v}) * viewport->devicePixelRatioF();
+        const int ix = int(std::round(point.x())), iy = int(std::round(point.y()));
+        const double effective_u = (ix + .5 - origin.x()) / (unit.x() - origin.x()),
+                     effective_v = (iy + .5 - origin.y()) / (unit.y() - origin.y());
+        const int x = int(std::floor(effective_u * set.width() - .5)),
+                  y = int(std::floor(effective_v * set.rows() - .5));
+        const auto pixel = host.diagnostic_gpu_pixel(set.material_session_uid, channel, x, y);
+        if (!pixel)
+          qFatal("UV proof has no GPU channel image");
+        bool stable = true;
+        for (auto offset : std::array<std::array<int, 2>, 3>{{{1, 0}, {0, 1}, {1, 1}}}) {
+          const auto next = host.diagnostic_gpu_pixel(
+              set.material_session_uid, channel, x + offset[0], y + offset[1]);
+          if (!next)
+            qFatal("UV proof neighbor missing");
+          for (int c = 0; c < 4; ++c)
+            stable &= std::abs((*pixel)[c] - (*next)[c]) < 1e-5f;
+        }
+        if (!stable)
+          continue;
+        std::vector<float> color(4, 1);
+        for (int c = 0; c < 3; ++c) {
+          const float neutral = channel == 0 ? set.base_values.base_color[c] :
+                                               set.base_values.roughness;
+          color[c] = (*pixel)[c] + neutral * (1 - (*pixel)[3]);
+        }
+        if (channel == 0)
+          host.display_rgba(color);
+        values.append(QJsonObject{{"u", u},
+                                  {"v", v},
+                                  {"x", ix},
+                                  {"y", iy},
+                                  {"expected", QJsonArray{color[0], color[1], color[2]}}});
+      }
+    workspace->setProperty("uvTextureProbe", values);
+  });
+}

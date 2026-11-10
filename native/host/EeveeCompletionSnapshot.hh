@@ -3,11 +3,20 @@
 #include <cstdint>
 #include <type_traits>
 
-namespace blender { struct GPUViewport; }
+namespace blender {
+struct GPUViewport;
+}
 namespace bts {
 enum class EeveeCompletionStatus {
-  NoSceneDraw, Deferred, OtherBackend, NoGpuContext, NoViewportData,
-  NoEngine, NotViewport, Captured, DrawFailed
+  NoSceneDraw,
+  Deferred,
+  OtherBackend,
+  NoGpuContext,
+  NoViewportData,
+  NoEngine,
+  NotViewport,
+  Captured,
+  DrawFailed
 };
 
 // Copied immediately after the actual Scene draw; no Blender/GL owner escapes.
@@ -31,5 +40,5 @@ namespace detail {
 // Owner GPU context only, immediately after ED_view3d_draw_offscreen returns.
 // Reads existing viewport data; never creates engines, polls workers or submits GL.
 EeveeCompletionSnapshot capture_eevee_completion(blender::GPUViewport &) noexcept;
-}
-}
+}  // namespace detail
+}  // namespace bts

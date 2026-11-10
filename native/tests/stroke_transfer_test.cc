@@ -2,6 +2,53 @@
 #include "StrokeReproject.hh"
 #include <cassert>
 #include <iostream>
-int main(){using namespace bts;UvTransferMap map;map.resolution=128;auto &samples=map.tiles[1001];samples.resize(128*128);for(int y=0;y<128;++y)for(int x=0;x<128;++x){auto &sample=samples[y*128+x];sample.valid=true;sample.source={1-(x+.5f)/128,(y+.5f)/128};sample.normal={-1,0,0,0,1,0,0,0,1};}StrokeRaster ink;PaintPixels::Stamp stamp{{.75,.4},{.1,0},{0,.1}};stamp.channels={true,false,false,true,false};stamp.values.base_color={1,.2,.3,1};stamp.values.normal={.6,.2,.77};ink.paint.stamp(128,stamp);stamp.channels={false,false,true,false,false};stamp.values.roughness=.5;ink.ao.stamp(128,stamp);auto moved=transfer_stroke_raster(ink,map,{1001});for(int y=0;y<128;++y)for(int x=0;x<128;++x){assert(moved.paint.sample(0,x,y)==ink.paint.sample(0,127-x,y));auto normal=ink.paint.sample(3,127-x,y);if(normal[3])normal[0]=-normal[0];assert(moved.paint.sample(3,x,y)==normal);assert(moved.ao.sample(2,x,y)==ink.ao.sample(2,127-x,y));}
- StrokeRaster blank,painted;painted.paint.over_stroke(blank.paint,ink.paint,1,{0,0,128,128});auto history=append_stroke({},blank,painted,ink,true,false,1);StrokeRaster uv;stamp.channels={true,false,false,false,false};stamp.center={.8,.8};stamp.values.base_color={0,1,0,1};uv.paint.stamp(128,stamp);auto before=painted;painted.paint.over_stroke(before.paint,uv.paint,.5,{0,0,128,128});history=append_stroke(history,before,painted,uv,false,false,.5);auto [flat,transferred]=transfer_stroke_history(history,painted,map,{1001});assert(transferred->operations[1]==history->operations[1]);assert(transferred->operations[0]!=history->operations[0]);assert(flat.paint.sample(0,32,51)[3]>.8&&flat.paint.sample(0,102,102)[1]>.3);std::cout<<"Mirrored sparse RGB/normal/AO and mixed spatial/UV replay passed\n";
+int main()
+{
+  using namespace bts;
+  UvTransferMap map;
+  map.resolution = 128;
+  auto &samples = map.tiles[1001];
+  samples.resize(128 * 128);
+  for (int y = 0; y < 128; ++y)
+    for (int x = 0; x < 128; ++x) {
+      auto &sample = samples[y * 128 + x];
+      sample.valid = true;
+      sample.source = {1 - (x + .5f) / 128, (y + .5f) / 128};
+      sample.normal = {-1, 0, 0, 0, 1, 0, 0, 0, 1};
+    }
+  StrokeRaster ink;
+  PaintPixels::Stamp stamp{{.75, .4}, {.1, 0}, {0, .1}};
+  stamp.channels = {true, false, false, true, false};
+  stamp.values.base_color = {1, .2, .3, 1};
+  stamp.values.normal = {.6, .2, .77};
+  ink.paint.stamp(128, stamp);
+  stamp.channels = {false, false, true, false, false};
+  stamp.values.roughness = .5;
+  ink.ao.stamp(128, stamp);
+  auto moved = transfer_stroke_raster(ink, map, {1001});
+  for (int y = 0; y < 128; ++y)
+    for (int x = 0; x < 128; ++x) {
+      assert(moved.paint.sample(0, x, y) == ink.paint.sample(0, 127 - x, y));
+      auto normal = ink.paint.sample(3, 127 - x, y);
+      if (normal[3])
+        normal[0] = -normal[0];
+      assert(moved.paint.sample(3, x, y) == normal);
+      assert(moved.ao.sample(2, x, y) == ink.ao.sample(2, 127 - x, y));
+    }
+  StrokeRaster blank, painted;
+  painted.paint.over_stroke(blank.paint, ink.paint, 1, {0, 0, 128, 128});
+  auto history = append_stroke({}, blank, painted, ink, true, false, 1);
+  StrokeRaster uv;
+  stamp.channels = {true, false, false, false, false};
+  stamp.center = {.8, .8};
+  stamp.values.base_color = {0, 1, 0, 1};
+  uv.paint.stamp(128, stamp);
+  auto before = painted;
+  painted.paint.over_stroke(before.paint, uv.paint, .5, {0, 0, 128, 128});
+  history = append_stroke(history, before, painted, uv, false, false, .5);
+  auto [flat, transferred] = transfer_stroke_history(history, painted, map, {1001});
+  assert(transferred->operations[1] == history->operations[1]);
+  assert(transferred->operations[0] != history->operations[0]);
+  assert(flat.paint.sample(0, 32, 51)[3] > .8 && flat.paint.sample(0, 102, 102)[1] > .3);
+  std::cout << "Mirrored sparse RGB/normal/AO and mixed spatial/UV replay passed\n";
 }

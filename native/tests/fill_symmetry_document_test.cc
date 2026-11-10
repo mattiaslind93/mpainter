@@ -7,15 +7,133 @@
 using namespace bts;
 int main()
 {
- SceneSnapshot scene;MaterialSummary material;material.session_id=1;material.name="Symmetric";material.uniform_editable=true;scene.materials.push_back(material);ImportSummary imported;imported.materials={{1,"Symmetric"}};NewProjectOptions options;options.resolution=DocumentResolution::Pixels128;TextureDocument document(options,imported,scene);auto &set=document.set(1);TextureDocument::add_fill(set);auto &layer=TextureDocument::layer(set,set.selected_layer);
- auto atlas=std::make_shared<FillSurfaceAtlas>();atlas->resolution=128;atlas->extent=2;auto &points=atlas->tiles[1001];points.resize(128*128);for(int y=0;y<128;++y)for(int x=0;x<128;++x){auto &point=points[y*128+x];point.valid=true;point.position={float((x+.5)/64-1),0,float((y+.5)/64-1)};point.normal={0,-1,0};}set.projection_geometry=atlas;
- auto symmetry=std::make_shared<FillSymmetry>();symmetry->constraint.enabled=true;symmetry->constraint.axis=0;layer.fill.symmetry=symmetry;layer.fill.mode=2;layer.fill.offset3={.25,0,0};layer.fill.scale3={.3,.3,.3};layer.fill.shape_crop=true;layer.fill.depth_culling=false;layer.fill.atom=true;layer.fill.invert=true;
- bool patterned=false;for(int y=50;y<78;++y)for(int x=83;x<109;++x){const auto right=TextureDocument::fill_sample(set,layer,0,x,y,1001),left=TextureDocument::fill_sample(set,layer,0,127-x,y,1001);assert(right==left);patterned|=right[0]>0&&right[3]>0;}assert(patterned);
- layer.mask.emplace();layer.mask->background=0;MaskEffect effect;effect.kind=MaskEffectKind::Fill;effect.fill=1;effect.mapping.projection=layer.fill;layer.mask->effects.push_back(effect);
- bool masked=false;for(int y=50;y<78;++y)for(int x=83;x<109;++x){const float right=TextureDocument::mask_value(set,layer.id,x,y),left=TextureDocument::mask_value(set,layer.id,127-x,y);assert(std::abs(right-left)<1e-6);masked|=right>0;}assert(masked);
- auto physical=set;physical.cm_per_native=100;auto &physical_mask=physical.layers.back().mask->effects.front().mapping.projection;physical_mask.physical=true;physical_mask.custom_size=true;physical_mask.custom_size_cm={200,200,200};for(int y=50;y<78;y+=3)for(int x=83;x<109;x+=3)assert(std::abs(TextureDocument::mask_value(physical,layer.id,x,y)-TextureDocument::mask_value(set,layer.id,x,y))<1e-6);
- const auto encoded=document.to_json();assert(encoded["schema"]==texture_document_schema);const auto bindings=std::array{TextureSetBinding{set.id,1,set.name}};auto restored=TextureDocument::from_json(encoded,bindings);auto &loaded=TextureDocument::layer(restored.set(1),set.selected_layer);assert(loaded.fill.symmetry&&loaded.fill.symmetry->constraint.enabled&&loaded.mask->effects.front().mapping.projection.mode==2&&loaded.mask->effects.front().mapping.projection.symmetry->constraint.enabled);assert(restored.to_json()==encoded);
- auto legacy=encoded;legacy["schema"]=60;auto sets=legacy["texture_sets"].toArray();auto item=sets[0].toObject();auto layers=item["layers"].toArray();for(int i=0;i<layers.size();++i){auto l=layers[i].toObject();auto fill=l["fill_projection"].toObject();fill.remove("symmetry");l["fill_projection"]=fill;if(l["mask"].isObject()){auto mask=l["mask"].toObject();auto effects=mask["effects"].toArray();for(int n=0;n<effects.size();++n){auto e=effects[n].toObject();if(e["type"]=="fill"){auto mapping=e["mapping"].toObject();mapping.remove("spatial");e["mapping"]=mapping;}effects[n]=e;}mask["effects"]=effects;l["mask"]=mask;}layers[i]=l;}item["layers"]=layers;sets[0]=item;legacy["texture_sets"]=sets;auto old=TextureDocument::from_json(legacy,bindings);const auto &old_layer=TextureDocument::layer(old.set(1),set.selected_layer);assert(!old_layer.fill.symmetry&&old_layer.mask->effects.front().mapping.projection.mode==0&&!old_layer.mask->effects.front().mapping.projection.symmetry);
- auto invalid=fill_symmetry_json(symmetry).toObject();invalid["copies"]=0;bool rejected=false;try{read_fill_symmetry(invalid);}catch(const std::invalid_argument &){rejected=true;}assert(rejected&&document.to_json()==encoded);
- std::cout<<"Fill/mask spatial symmetry, shared geometry context, schema61 roundtrip, schema60 defaults and invalid settings PASS\n";
+  SceneSnapshot scene;
+  MaterialSummary material;
+  material.session_id = 1;
+  material.name = "Symmetric";
+  material.uniform_editable = true;
+  scene.materials.push_back(material);
+  ImportSummary imported;
+  imported.materials = {{1, "Symmetric"}};
+  NewProjectOptions options;
+  options.resolution = DocumentResolution::Pixels128;
+  TextureDocument document(options, imported, scene);
+  auto &set = document.set(1);
+  TextureDocument::add_fill(set);
+  auto &layer = TextureDocument::layer(set, set.selected_layer);
+  auto atlas = std::make_shared<FillSurfaceAtlas>();
+  atlas->resolution = 128;
+  atlas->extent = 2;
+  auto &points = atlas->tiles[1001];
+  points.resize(128 * 128);
+  for (int y = 0; y < 128; ++y)
+    for (int x = 0; x < 128; ++x) {
+      auto &point = points[y * 128 + x];
+      point.valid = true;
+      point.position = {float((x + .5) / 64 - 1), 0, float((y + .5) / 64 - 1)};
+      point.normal = {0, -1, 0};
+    }
+  set.projection_geometry = atlas;
+  auto symmetry = std::make_shared<FillSymmetry>();
+  symmetry->constraint.enabled = true;
+  symmetry->constraint.axis = 0;
+  layer.fill.symmetry = symmetry;
+  layer.fill.mode = 2;
+  layer.fill.offset3 = {.25, 0, 0};
+  layer.fill.scale3 = {.3, .3, .3};
+  layer.fill.shape_crop = true;
+  layer.fill.depth_culling = false;
+  layer.fill.atom = true;
+  layer.fill.invert = true;
+  bool patterned = false;
+  for (int y = 50; y < 78; ++y)
+    for (int x = 83; x < 109; ++x) {
+      const auto right = TextureDocument::fill_sample(set, layer, 0, x, y, 1001),
+                 left = TextureDocument::fill_sample(set, layer, 0, 127 - x, y, 1001);
+      assert(right == left);
+      patterned |= right[0] > 0 && right[3] > 0;
+    }
+  assert(patterned);
+  layer.mask.emplace();
+  layer.mask->background = 0;
+  MaskEffect effect;
+  effect.kind = MaskEffectKind::Fill;
+  effect.fill = 1;
+  effect.mapping.projection = layer.fill;
+  layer.mask->effects.push_back(effect);
+  bool masked = false;
+  for (int y = 50; y < 78; ++y)
+    for (int x = 83; x < 109; ++x) {
+      const float right = TextureDocument::mask_value(set, layer.id, x, y),
+                  left = TextureDocument::mask_value(set, layer.id, 127 - x, y);
+      assert(std::abs(right - left) < 1e-6);
+      masked |= right > 0;
+    }
+  assert(masked);
+  auto physical = set;
+  physical.cm_per_native = 100;
+  auto &physical_mask = physical.layers.back().mask->effects.front().mapping.projection;
+  physical_mask.physical = true;
+  physical_mask.custom_size = true;
+  physical_mask.custom_size_cm = {200, 200, 200};
+  for (int y = 50; y < 78; y += 3)
+    for (int x = 83; x < 109; x += 3)
+      assert(std::abs(TextureDocument::mask_value(physical, layer.id, x, y) -
+                      TextureDocument::mask_value(set, layer.id, x, y)) < 1e-6);
+  const auto encoded = document.to_json();
+  assert(encoded["schema"] == texture_document_schema);
+  const auto bindings = std::array{TextureSetBinding{set.id, 1, set.name}};
+  auto restored = TextureDocument::from_json(encoded, bindings);
+  auto &loaded = TextureDocument::layer(restored.set(1), set.selected_layer);
+  assert(loaded.fill.symmetry && loaded.fill.symmetry->constraint.enabled &&
+         loaded.mask->effects.front().mapping.projection.mode == 2 &&
+         loaded.mask->effects.front().mapping.projection.symmetry->constraint.enabled);
+  assert(restored.to_json() == encoded);
+  auto legacy = encoded;
+  legacy["schema"] = 60;
+  auto sets = legacy["texture_sets"].toArray();
+  auto item = sets[0].toObject();
+  auto layers = item["layers"].toArray();
+  for (int i = 0; i < layers.size(); ++i) {
+    auto l = layers[i].toObject();
+    auto fill = l["fill_projection"].toObject();
+    fill.remove("symmetry");
+    l["fill_projection"] = fill;
+    if (l["mask"].isObject()) {
+      auto mask = l["mask"].toObject();
+      auto effects = mask["effects"].toArray();
+      for (int n = 0; n < effects.size(); ++n) {
+        auto e = effects[n].toObject();
+        if (e["type"] == "fill") {
+          auto mapping = e["mapping"].toObject();
+          mapping.remove("spatial");
+          e["mapping"] = mapping;
+        }
+        effects[n] = e;
+      }
+      mask["effects"] = effects;
+      l["mask"] = mask;
+    }
+    layers[i] = l;
+  }
+  item["layers"] = layers;
+  sets[0] = item;
+  legacy["texture_sets"] = sets;
+  auto old = TextureDocument::from_json(legacy, bindings);
+  const auto &old_layer = TextureDocument::layer(old.set(1), set.selected_layer);
+  assert(!old_layer.fill.symmetry &&
+         old_layer.mask->effects.front().mapping.projection.mode == 0 &&
+         !old_layer.mask->effects.front().mapping.projection.symmetry);
+  auto invalid = fill_symmetry_json(symmetry).toObject();
+  invalid["copies"] = 0;
+  bool rejected = false;
+  try {
+    read_fill_symmetry(invalid);
+  }
+  catch (const std::invalid_argument &) {
+    rejected = true;
+  }
+  assert(rejected && document.to_json() == encoded);
+  std::cout
+      << "Fill/mask spatial symmetry, shared geometry context, schema61 roundtrip, schema60 defaults and invalid settings PASS\n";
 }

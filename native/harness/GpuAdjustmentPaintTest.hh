@@ -20,96 +20,694 @@
 #include "DNA_node_types.h"
 namespace bts::gpu_adjustment_test {
 using namespace blender;
-using Image=std::unique_ptr<gpu::Texture,decltype(&GPU_texture_free)>;
-inline void require(bool ok,const char *why){if(!ok)throw std::runtime_error(why);}
+using Image = std::unique_ptr<gpu::Texture, decltype(&GPU_texture_free)>;
+inline void require(bool ok, const char *why)
+{
+  if (!ok)
+    throw std::runtime_error(why);
+}
 struct Renderer {
- GpuLayerPreview preview;std::map<std::pair<int,int>,Image> targets;std::uint64_t ticket=0;
- gpu::Texture *render(const TextureSet &set,int channel,int tile=1001){auto &target=targets.try_emplace({channel,tile},nullptr,GPU_texture_free).first->second;if(!target)target.reset(GPU_texture_create_2d("BM diagnostic final",128,128,1,gpu::TextureFormat::SFLOAT_32_32_32_32,GPU_TEXTURE_USAGE_GENERAL,nullptr));require(bool(target),"BM target allocation failed");const auto deadline=performance::Clock::now()+std::chrono::seconds(60);for(;;){preview.begin_frame();const auto status=preview.update(set,channel,target.get(),tile);if(status==GpuPreviewUpdate::Updated)return target.get();if(status==GpuPreviewUpdate::Unsupported)throw std::runtime_error("BM production stack rejected diagnostic fixture channel="+std::to_string(channel)+" tile="+std::to_string(tile));require(performance::Clock::now()<deadline,"BM GPU preparation timed out");QCoreApplication::processEvents();std::this_thread::sleep_for(std::chrono::milliseconds(1));}}
- std::array<float,4> own(const TextureSet &set,int channel,int x,int y,int tile=1001,bool final=false,bool authored_ao=false){LayerCaptureRequest request;request.layer=set.selected_layer;request.final_composite=final;request.authored_ao=authored_ao;request.channel=final?channel:channel==6?3:channel==16?14:channel>=7?channel-1:channel;request.tile=tile;request.x=x;request.y=y;request.width=request.height=1;request.canvas_width=request.canvas_height=128;const auto id=++ticket;const auto deadline=performance::Clock::now()+std::chrono::seconds(60);bool submitted=false;for(;;){preview.begin_frame();if(!submitted){const auto status=preview.capture_layer(set,request,id);require(status!=GpuPreviewUpdate::Unsupported,"BM raw author capture unsupported");submitted=status==GpuPreviewUpdate::Updated;}preview.displacement_summaries();if(auto result=preview.layer_capture_result();result&&result->ticket==id){require(result->valid&&result->pixels&&result->pixels->size()==1,"BM raw author packet invalid");return result->pixels->front();}require(performance::Clock::now()<deadline,"BM raw author capture timed out");std::this_thread::sleep_for(std::chrono::milliseconds(1));}}
+  GpuLayerPreview preview;
+  std::map<std::pair<int, int>, Image> targets;
+  std::uint64_t ticket = 0;
+  gpu::Texture *render(const TextureSet &set, int channel, int tile = 1001)
+  {
+    auto &target = targets.try_emplace({channel, tile}, nullptr, GPU_texture_free).first->second;
+    if (!target)
+      target.reset(GPU_texture_create_2d("BM diagnostic final",
+                                         128,
+                                         128,
+                                         1,
+                                         gpu::TextureFormat::SFLOAT_32_32_32_32,
+                                         GPU_TEXTURE_USAGE_GENERAL,
+                                         nullptr));
+    require(bool(target), "BM target allocation failed");
+    const auto deadline = performance::Clock::now() + std::chrono::seconds(60);
+    for (;;) {
+      preview.begin_frame();
+      const auto status = preview.update(set, channel, target.get(), tile);
+      if (status == GpuPreviewUpdate::Updated)
+        return target.get();
+      if (status == GpuPreviewUpdate::Unsupported)
+        throw std::runtime_error("BM production stack rejected diagnostic fixture channel=" +
+                                 std::to_string(channel) + " tile=" + std::to_string(tile));
+      require(performance::Clock::now() < deadline, "BM GPU preparation timed out");
+      QCoreApplication::processEvents();
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+  }
+  std::array<float, 4> own(const TextureSet &set,
+                           int channel,
+                           int x,
+                           int y,
+                           int tile = 1001,
+                           bool final = false,
+                           bool authored_ao = false)
+  {
+    LayerCaptureRequest request;
+    request.layer = set.selected_layer;
+    request.final_composite = final;
+    request.authored_ao = authored_ao;
+    request.channel = final         ? channel :
+                      channel == 6  ? 3 :
+                      channel == 16 ? 14 :
+                      channel >= 7  ? channel - 1 :
+                                      channel;
+    request.tile = tile;
+    request.x = x;
+    request.y = y;
+    request.width = request.height = 1;
+    request.canvas_width = request.canvas_height = 128;
+    const auto id = ++ticket;
+    const auto deadline = performance::Clock::now() + std::chrono::seconds(60);
+    bool submitted = false;
+    for (;;) {
+      preview.begin_frame();
+      if (!submitted) {
+        const auto status = preview.capture_layer(set, request, id);
+        require(status != GpuPreviewUpdate::Unsupported, "BM raw author capture unsupported");
+        submitted = status == GpuPreviewUpdate::Updated;
+      }
+      preview.displacement_summaries();
+      if (auto result = preview.layer_capture_result(); result && result->ticket == id) {
+        require(result->valid && result->pixels && result->pixels->size() == 1,
+                "BM raw author packet invalid");
+        return result->pixels->front();
+      }
+      require(performance::Clock::now() < deadline, "BM raw author capture timed out");
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+  }
 };
-inline std::vector<float> pixels(bool left_only,float left,float right){std::vector<float> values(128*128*4);for(int y=0;y<128;++y)for(int x=0;x<128;++x){const auto i=(std::size_t(y)*128+x)*4;const float a=left_only&&x>=64?0:1;values[i]=values[i+1]=values[i+2]=(x<64?left:right)*a;values[i+3]=a;}return values;}
-inline PaintPixels::Stamp stamp(double x,double y){PaintPixels::Stamp s{{x,y},{.08,0},{0,.08}};s.channels={false,false,true,false,false};s.hardness=1;s.flow=1;return s;}
-inline void close(float actual,float expected,const char *what){if(!std::isfinite(actual)||std::abs(actual-expected)>2e-6)throw std::runtime_error(std::string("BM ")+what+" actual="+std::to_string(actual)+" expected="+std::to_string(expected));}
-inline QJsonObject run(){
- const auto cpu_before=local_paint_materializations;QJsonArray proof;int cases=0;Renderer renderer;
- // Fixed independent algebra: .8 own over .2 under, q=.5 -> .5; visible-source reuse -> wrong .35.
- for(bool smudge:{false,true})for(bool own_ink:{false,true})for(bool isolated:{false,true}){
-  TextureSet set;set.texture_resolution=128;set.precision.fill(ChannelPrecision::RGB32F);set.precision[2]=ChannelPrecision::L32F;set.base_values.roughness=0;set.layers.clear();
-  TextureLayer lower;lower.kind=LayerKind::Paint;lower.channels.fill(false);lower.channels[2]=true;lower.pixels.assign_channel(128,2,pixels(false,own_ink?.2f:.8f,.2f));
-  TextureLayer layer;layer.kind=LayerKind::Paint;layer.channels.fill(false);layer.channels[2]=true;set_adjustment_layer(layer,true);layer.opacity[2]=.5f;if(own_ink)layer.pixels.assign_channel(128,2,pixels(true,.8f,0));
-  if(isolated){TextureLayer exterior;exterior.kind=LayerKind::Fill;exterior.values.roughness=.9f;lower.depth=layer.depth=1;TextureLayer folder;folder.kind=LayerKind::Folder;folder.blending.fill(LayerBlend::Normal);set.layers={exterior,lower,layer,folder};}else set.layers={lower,layer};
-  set.selected_layer=layer.id;const auto before=set;const auto lower_hash=lower.pixels.hash(2);renderer.render(set,2);auto token=renderer.preview.begin_adjustment_source(set,layer.id);auto view=adjustment_main_source(set,layer,token);
-  const auto copies_before=renderer.preview.adjustment_copy_statistics();auto &destination=set.layers[isolated?2:1];{PaintRecordingScope recording(true);if(smudge){SmudgeStroke stroke(layer.pixels,128,view);require(stroke.dab(stamp(.25,.5),set.tiles,1).empty(),"BM first Smudge dab wrote before pickup");stroke.dab(stamp(.75,.5),set.tiles,1);stroke.publish(1);destination.pixels=stroke.pixels();}else{CloneStroke stroke(layer.pixels,128,stamp(.25,.5),false,view);destination.pixels.stamp(128,stroke.dab(stamp(.75,.5)),set.tiles);}}
-  auto *output=renderer.render(set,2);require(renderer.preview.adjustment_copy_statistics()==copies_before,"BM first dab copied a destination/upper full image");const std::array<std::array<int,3>,2> points{{{96,64,0},{124,124,0}}};const auto samples=probe_gpu_texture(output,points);close(samples[0][0],.5f,"own/local lower/q algebra");close(samples[1][0],.2f,"untouched final texel");close(renderer.own(set,2,124,124)[3],0,"untouched authored alpha");close(renderer.own(set,2,96,64)[3],1,"dab authored coverage");require(set.layers[isolated?1:0].pixels.hash(2)==lower_hash,"BM modified lower paint");
-  renderer.render(before,2);const auto undone=probe_gpu_texture(renderer.targets.at({2,1001}).get(),points);close(undone[0][0],.2f,"Undo baseline");renderer.render(set,2);const auto redone=probe_gpu_texture(renderer.targets.at({2,1001}).get(),points);close(redone[0][0],.5f,"Redo retained source");token.reset();view={};renderer.preview.reset();renderer.render(set,2);const auto reset=probe_gpu_texture(renderer.targets.at({2,1001}).get(),points);close(reset[0][0],.5f,"cache reset retained source");
-  proof.append(QJsonObject{{"tool",smudge?"Smudge":"Clone"},{"existing_own",own_ink},{"isolated_folder",isolated},{"expected",.5},{"forbidden_double_mask",.35},{"actual",samples[0][0]},{"untouched_alpha",0},{"first_dab_full_copies",qint64(renderer.preview.adjustment_copy_statistics()[0]-copies_before[0])}});++cases;
- }
- // Mixed channels share a stroke but only PT channels obtain lower sources.
- {TextureSet set;set.texture_resolution=128;set.precision.fill(ChannelPrecision::RGB32F);set.precision[2]=ChannelPrecision::L32F;set.base_values.base_color={0,0,0,1};set.base_values.roughness=0;auto &lower=set.layers.front();lower.kind=LayerKind::Paint;lower.pixels.assign_channel(128,0,pixels(false,.8,.2));lower.pixels.assign_channel(128,2,pixels(false,.8,.2));TextureDocument::add_paint(set);auto &layer=set.layers.back();layer.blending[0]=LayerBlend::Passthrough;layer.blending[2]=LayerBlend::Normal;layer.opacity[0]=layer.opacity[2]=.5;const auto id=layer.id;renderer.render(set,0);renderer.render(set,2);auto token=renderer.preview.begin_adjustment_source(set,id);auto source=stamp(.25,.5),dest=stamp(.75,.5);source.channels=dest.channels={true,false,true,false,false};{PaintRecordingScope recording(true);CloneStroke stroke({},128,source,false,adjustment_main_source(set,layer,token));layer.pixels.stamp(128,stroke.dab(dest),set.tiles);}const std::array<std::array<int,3>,1> points{{{96,64,0}}};close(probe_gpu_texture(renderer.render(set,0),points)[0][0],.5,"PT Color source");close(probe_gpu_texture(renderer.render(set,2),points)[0][0],.2,"nonPT Roughness own-only source");++cases;}
- // Scalar source namespaces are independent; a cross-UDIM Clone keeps signed data.
- for(int logical:{5,7,16}){
-  TextureSet set;set.texture_resolution=128;set.tiles=logical==5?std::set<int>{1001}:std::set<int>{1001,1002,1011};set.precision.fill(ChannelPrecision::RGB32F);set.precision[5]=ChannelPrecision::L32F;set.ao_channel=true;set.users[0].present=true;set.users[0].precision=ChannelPrecision::L32F;set.displacement.channel=true;set.displacement.precision=ChannelPrecision::L32F;set.layers.clear();
-  TextureLayer lower,layer;lower.kind=layer.kind=LayerKind::Paint;const auto scalar=[&](auto &l)->auto &{return logical==16?l.displacement:l.users[0];};const auto data=[&](auto &l)->TilePaintPixels &{return logical==5?l.ao_pixels:scalar(l).pixels;};
-  if(logical==5){lower.ao_enabled=layer.ao_enabled=true;layer.ao_opacity=.5;layer.ao_blending=LayerBlend::Passthrough;}else{scalar(lower).enabled=scalar(layer).enabled=true;scalar(layer).opacity=.5;scalar(layer).blending=LayerBlend::Passthrough;}
-  const float sign=logical==16?-1 : 1;data(lower).assign_channel(128,2,pixels(false,.8f*sign,.2f*sign));for(int tile:{1002,1011})data(lower).assign_channel(128,2,pixels(false,.2f*sign,.2f*sign),tile);
-  set.layers={lower,layer};set.selected_layer=layer.id;const auto before=data(set.layers[0]).hash(2);for(int tile:set.tiles)renderer.render(set,logical,tile);auto token=renderer.preview.begin_adjustment_source(set,layer.id);const int destination_tile=logical==5?1001 : 1002;auto from=stamp(.25,.5),to=stamp(logical==5?.75:1.75,.5);
-  {PaintRecordingScope recording(true);CloneStroke stroke({},128,from,false,adjustment_scalar_source(set,layer,logical,token));data(set.layers[1]).stamp(128,stroke.dab(to),set.tiles);}
-  const std::array<std::array<int,3>,1> point{{{96,64,0}}};close(probe_gpu_texture(renderer.render(set,logical,destination_tile),point)[0][0],.5f*sign,"scalar cross-UDIM underlying source");close(renderer.own(set,logical,124,124,destination_tile)[3],0,"scalar untouched alpha");require(data(set.layers[0]).hash(2)==before,"Scalar Clone changed lower pages");++cases;
- }
- // Public single-tile Displacement updates must not dereference unprepared
- // UDIM stacks or publish partial bounds as a whole-material range.
- {Renderer ranges;TextureSet set;set.texture_resolution=128;set.material_session_uid=428317;set.tiles={1001,1002,1011};set.displacement.channel=true;set.displacement.precision=ChannelPrecision::L32F;TextureLayer layer;layer.displacement.enabled=true;
-  const std::array<std::pair<int,float>,3> values{{{1001,-.75f},{1002,1.5f},{1011,.25f}}};for(auto [tile,value]:values)layer.displacement.pixels.assign_channel(128,2,pixels(false,value,value),tile);set.layers={layer};set.selected_layer=layer.id;
-  for(auto [tile,value]:values){const auto output=probe_gpu_texture(ranges.render(set,16,tile),std::array<std::array<int,3>,1>{{{64,64,0}}});close(output[0][0],value,"public single-tile signed Displacement");require(ranges.preview.displacement_summaries().empty(),"Partial UDIM update published an incomplete whole-material range");}
-  Image target(GPU_texture_create_2d_array("BM complete Displacement range fixture",128,128,3,1,gpu::TextureFormat::SFLOAT_32_32_32_32,GPU_TEXTURE_USAGE_GENERAL,nullptr),GPU_texture_free);require(bool(target),"BM range target allocation failed");const std::map<int,std::array<int,3>> regions{{1001,{0,0,0}},{1002,{0,0,1}},{1011,{0,0,2}}};
-  const auto complete=[&]{const auto deadline=performance::Clock::now()+std::chrono::seconds(60);for(;;){ranges.preview.begin_frame();const auto status=ranges.preview.update_tiles(set,16,target.get(),regions);require(status!=GpuPreviewUpdate::Unsupported,"Complete Displacement batch rejected");if(status==GpuPreviewUpdate::Updated)break;require(performance::Clock::now()<deadline,"Complete Displacement batch timed out");std::this_thread::sleep_for(std::chrono::milliseconds(1));}for(;;){for(const auto &summary:ranges.preview.displacement_summaries())if(summary.uid==set.material_session_uid)return summary;require(performance::Clock::now()<deadline,"Complete Displacement summary was not published");std::this_thread::sleep_for(std::chrono::milliseconds(1));}};
-  auto summary=complete();require(summary.present,"Complete Displacement range lost authored presence");close(summary.minimum,-.75,"complete three-UDIM minimum");close(summary.maximum,1.5,"complete three-UDIM maximum");
-  set.layers.back().displacement.pixels.assign_channel(128,2,pixels(false,-2.5,-2.5),1011);ranges.render(set,16,1011);require(ranges.preview.displacement_summaries().empty(),"Partial edit published a mixture of old and new tile bounds");summary=complete();close(summary.minimum,-2.5,"later complete three-UDIM minimum");close(summary.maximum,1.5,"later complete three-UDIM maximum");++cases;
- }
- // Real canonical array targets: nested 2D adjustment queries must not
- // replace the caller's array/format final shader or corrupt another UDIM.
- // Binary-exact values keep the same strict oracle in Float16 and Float32.
- for(bool smudge:{false,true})for(bool half:{false,true}){
-  GpuLayerPreview preview;TextureSet set;set.texture_resolution=128;set.tiles={1001,1002};set.precision[0]=ChannelPrecision::RGB32F;set.layers.clear();TextureLayer lower,layer;lower.channels.fill(false);lower.channels[0]=true;lower.pixels.assign_channel(128,0,pixels(false,.75,.75),1001);lower.pixels.assign_channel(128,0,pixels(false,.125,.125),1002);layer.channels.fill(false);layer.channels[0]=true;layer.blending[0]=LayerBlend::Passthrough;layer.opacity[0]=.5;set.layers={lower,layer};set.selected_layer=layer.id;
-  Image target(GPU_texture_create_2d_array("BM real two-UDIM canonical target",128,128,2,1,half?gpu::TextureFormat::SFLOAT_16_16_16_16:gpu::TextureFormat::SFLOAT_32_32_32_32,GPU_TEXTURE_USAGE_GENERAL,nullptr),GPU_texture_free);require(bool(target),"BM canonical array target allocation failed");const std::map<int,std::array<int,3>> regions{{1001,{0,0,0}},{1002,{0,0,1}}};
-  const auto render=[&](const TextureSet &current){const auto deadline=performance::Clock::now()+std::chrono::seconds(60);for(;;){preview.begin_frame();const auto status=preview.update_tiles(current,0,target.get(),regions);require(status!=GpuPreviewUpdate::Unsupported,"BM canonical array stack rejected");if(status==GpuPreviewUpdate::Updated)break;require(performance::Clock::now()<deadline,"BM canonical array stack timed out");std::this_thread::sleep_for(std::chrono::milliseconds(1));}
-   auto *data=static_cast<float *>(GPU_texture_read(target.get(),GPU_DATA_FLOAT,0));require(data,"BM explicit array diagnostic readback failed");std::vector<float> values(data,data+2*128*128*4);MEM_delete(data);return values;};
-  const auto before=set;const auto baseline=render(set);const auto lower_hash=set.layers.front().pixels.hash(0);auto token=preview.begin_adjustment_source(set,layer.id);auto from=stamp(.25,.5),to=stamp(1.75,.5);from.channels=to.channels={true,false,false,false,false};
-  {PaintRecordingScope recording(true);auto source=adjustment_main_source(set,set.layers.back(),token);if(smudge){SmudgeStroke stroke({},128,source);require(stroke.dab(from,set.tiles,0).empty(),"Array Smudge first contact must only capture");stroke.dab(to,set.tiles,0);stroke.publish(1);set.layers.back().pixels=stroke.pixels();}else{CloneStroke stroke({},128,from,false,source);set.layers.back().pixels.stamp(128,stroke.dab(to),set.tiles);}}
-  const auto painted=set;const auto image=render(set);const auto component=(std::size_t(128)*128+64*128+96)*4;
-  close(image[component],.4375,"array destination own-over-lower q=.5");close(image[component+3],1,"array destination final coverage");
-  require(std::equal(baseline.begin(),baseline.begin()+128*128*4,image.begin()),"BM array Clone/Smudge corrupted untouched UDIM1001");require(set.layers.front().pixels.hash(0)==lower_hash,"BM array gesture changed lower Paint data");
-  const auto undo=render(before);require(undo==baseline,"BM array empty adjustment Undo did not restore both complete tiles exactly");
-  const auto redo=render(painted);require(redo==image,"BM array Redo did not restore both complete tiles exactly");
-  proof.append(QJsonObject{{"tool",smudge?"smudge":"clone"},{"array_tiles",2},{"target",half?"RGBA16F":"RGBA32F"},{"source",.75},{"backdrop",.125},{"opacity",.5},{"expected_destination",.4375},{"unchanged_1001_components",128*128*4},{"exact_undo_redo_components",2*128*128*4},{"scope","Actual production array target with nested 2D source queries; explicit diagnostic GPU readback, no CPU composition"}});++cases;
- }
- // Frozen resource aliases share the original native program/cache identity.
- {std::unique_ptr<Main,decltype(&BKE_main_free)> main(BKE_main_new(),BKE_main_free);auto *material=BKE_material_add(main.get(),"BM immutable native prefix");auto &tree=*material->nodetree;auto *pbr=bke::node_add_node(nullptr,tree,UString("ShaderNodeBsdfPrincipled"));auto *out=bke::node_add_node(nullptr,tree,UString("ShaderNodeOutputMaterial"));bke::node_add_link(tree,*pbr,*static_cast<bNodeSocket *>(pbr->outputs.first),*out,*bke::node_find_enabled_input_socket(*out,"Surface"));BKE_ntree_update_after_single_tree_change(*main,tree);
-  NativeMaterialDescription description;description.material="BM immutable native prefix";description.surface_type="ShaderNodeBsdfPrincipled";NativeMaterialParameter rough;rough.identifier="Roughness";rough.name="Roughness";rough.value[0]=.2;description.parameters.push_back(rough);std::atomic_bool cancel=false;auto graph=std::make_shared<NativeMaterialGraph>(std::move(main),material,description,cancel);
-  TextureSet set;set.texture_resolution=128;set.precision[2]=ChannelPrecision::L32F;set.layers.clear();TextureLayer lower,layer;lower.kind=LayerKind::Fill;lower.fill.material_resource=QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();lower.fill.native_material=std::make_shared<const NativeMaterialDescription>(description);layer.blending[2]=LayerBlend::Passthrough;layer.opacity[2]=.5;layer.pixels.assign_channel(128,2,pixels(true,.8,0));set.layers={lower,layer};set.selected_layer=layer.id;renderer.preview.install_native_material(lower.fill.material_resource,"bm-native-constant-prefix",graph);renderer.render(set,2);const auto warm=renderer.preview.native_statistics();
-  for(int gesture=0;gesture<2;++gesture){auto token=renderer.preview.begin_adjustment_source(set,layer.id);auto &target=set.layers.back();{PaintRecordingScope recording(true);CloneStroke stroke(target.pixels,128,stamp(.25,.5),false,adjustment_main_source(set,target,token));target.pixels.stamp(128,stroke.dab(stamp(gesture?.65:.75,.5)),set.tiles);}renderer.render(set,2);require(renderer.preview.native_statistics()==warm,"BM gesture recompiled or rerendered an unchanged native lower prefix");++cases;}
- }
- // A two-page soft budget evicts replayable prefix pages, not historical
- // metadata. A later lower edit cannot change the immutable Clone pickup.
- {TextureSet set;set.texture_resolution=128;set.precision[2]=ChannelPrecision::L32F;set.layers.clear();TextureLayer lower,layer;lower.pixels.assign_channel(128,2,pixels(false,.8,.2));layer.blending[2]=LayerBlend::Passthrough;layer.opacity[2]=.5;set.layers={lower,layer};set.selected_layer=layer.id;renderer.render(set,2);auto token=renderer.preview.begin_adjustment_source(set,layer.id);{PaintRecordingScope recording(true);CloneStroke stroke({},128,stamp(.25,.5),false,adjustment_main_source(set,layer,token));set.layers.back().pixels.stamp(128,stroke.dab(stamp(.75,.5)),set.tiles);}set.layers.front().pixels.assign_channel(128,2,pixels(false,.1,.2));renderer.preview.diagnostic_adjustment_budget(2*adjustment_page_bytes);const std::array<std::array<int,3>,1> point{{{96,64,0}}};close(probe_gpu_texture(renderer.render(set,2),point)[0][0],.5,"frozen pickup after lower edit/LRU eviction");token.reset();renderer.preview.reset();close(probe_gpu_texture(renderer.render(set,2),point)[0][0],.5,"evicted snapshot reconstructs after cache reset");renderer.preview.diagnostic_adjustment_budget(std::nullopt);++cases;}
- // Actual explicit-export completion, including global derived presence
- // over all three UDIMs. RGB/H are never clamped and Bump is biased once.
- {TextureSet set;set.texture_resolution=128;set.tiles={1001,1002,1011};set.precision.fill(ChannelPrecision::RGB32F);for(int c:{1,2,4,5})set.precision[c]=ChannelPrecision::L32F;set.ao_channel=true;set.base_values.base_color={.2,.3,.4,1};set.base_values.metallic=.3;set.base_values.roughness=.4;set.base_values.ambient_occlusion=.7;set.base_values.bump=.5;set.layers.clear();
-  for(int tile:set.tiles){const auto bump=renderer.own(set,4,64,64,tile,true);close(bump[0],.5,"empty exported Bump neutral");close(bump[3],0,"empty Bump authored coverage");const auto ao=renderer.own(set,5,64,64,tile,true,true),mixed=renderer.own(set,5,64,64,tile,true,false);close(ao[0],.7,"authored AO base completion");close(ao[3],0,"authored AO empty coverage");close(mixed[0],1,"mixed AO without authored coverage");const auto normal=renderer.own(set,3,64,64,tile,true);close(normal[0],.5,"internal Normal X");close(normal[1],.5,"internal Normal Y");close(normal[2],1,"internal Normal Z");++cases;}
-  TextureLayer layer;layer.kind=LayerKind::Paint;layer.opacity[0]=.5;auto color=pixels(false,0,0);for(std::size_t i=0;i<color.size();i+=4){color[i]=-.4;color[i+1]=2.4;color[i+2]=.8;}
-  layer.pixels.assign_channel(128,0,color,1011);layer.ao_pixels.assign_channel(128,2,pixels(false,.6,.6),1011);set.displacement.channel=true;set.displacement.precision=ChannelPrecision::L32F;layer.displacement.enabled=true;layer.displacement.pixels.assign_channel(128,2,pixels(false,-.75,-.75),1011);set.layers={layer};set.selected_layer=layer.id;
-  {auto partial=set;partial.displacement.midlevel=.5;auto &scalar=partial.layers.back().displacement;scalar.opacity=.25;scalar.pixels.assign_channel(128,2,pixels(false,.8,.8),1002);const auto value=renderer.own(partial,16,64,64,1002,true);close(value[0],.575,"partial Displacement midlevel completion");close(value[3],.25,"partial Displacement coverage");++cases;}
-  const auto full=renderer.own(set,0,64,64,1011,true);close(full[0],-.1,"export signed Color completion");close(full[1],1.35,"export HDR Color completion");close(full[2],.6,"export partial Color completion");close(full[3],.5,"export authored Color coverage");close(renderer.own(set,16,64,64,1011,true)[0],-.75,"export signed Displacement");close(renderer.own(set,5,64,64,1001,true,false)[0],.7,"global AO presence affects other UDIM");++cases;
- }
- // A refused allocation crosses the real GPU owner boundary as Unsupported,
- // never as an exception from draw. The existing target stays intact.
- {TextureSet set;set.texture_resolution=128;set.precision[2]=ChannelPrecision::L32F;set.layers.clear();TextureLayer lower,layer;lower.kind=LayerKind::Fill;lower.values.roughness=.2;layer.blending[2]=LayerBlend::Passthrough;layer.opacity[2]=.5;layer.pixels.assign_channel(128,2,pixels(true,.8,0));set.layers={lower,layer};set.selected_layer=layer.id;auto *target=renderer.render(set,2);const std::array<std::array<int,3>,1> point{{{96,64,0}}};const auto before=probe_gpu_texture(target,point);auto token=renderer.preview.begin_adjustment_source(set,layer.id);
-  {PaintRecordingScope recording(true);CloneStroke stroke(layer.pixels,128,stamp(.25,.5),false,adjustment_main_source(set,layer,token));set.layers.back().pixels.stamp(128,stroke.dab(stamp(.75,.5)),set.tiles);}
-  renderer.preview.diagnostic_adjustment_budget(0);renderer.preview.begin_frame();require(renderer.preview.update(set,2,target)==GpuPreviewUpdate::Unsupported,"BM allocation refusal did not terminate the GPU request");require(pending_adjustment_failure&&pending_adjustment_failure->snapshot==token->id,"BM allocation refusal lost gesture identity");require(pending_adjustment_failure->message.find("MiB")!=std::string::npos,"BM refusal lacks needed/available memory reason");require(probe_gpu_texture(target,point)==before,"BM refusal changed the previous GPU frame");pending_adjustment_failure.reset();renderer.preview.diagnostic_adjustment_budget(std::nullopt);renderer.preview.begin_frame();require(renderer.preview.update(set,2,target)==GpuPreviewUpdate::Unsupported&&!pending_adjustment_failure,"BM rejected recipe retried allocation or queued another rollback");++cases;
- }
- // Terminal retirement is distinct from the earlier ordinary reset/replay
- // witnesses. It executes while this test still owns a live GPU context.
- renderer.preview.reset(true);GpuLayerPreview::collect_retired(true);require(!renderer.preview.programs_pending(),"BM terminal GPU retirement left running shader owners");
- require(local_paint_materializations==cpu_before,"BM GPU diagnostic materialized CPU paint");std::printf("BTS_BM_GPU_ADJUSTMENT_VERIFIED cases=%d own=.8 lower=.2 q=.5 expected=.5 wrong=.35 sparse=1 mixed=1 undo_redo_reset=1 cpu_materializations=0\n",cases);return QJsonObject{{"cases",cases},{"proof",proof},{"terminal_gpu_retirement",true},{"cpu_materializations",qint64(local_paint_materializations-cpu_before)},{"scope","Production GPU transport and canonical stack; explicit diagnostic probes only. Persistence/UI/Cycles acceptance separate."}};
+inline std::vector<float> pixels(bool left_only, float left, float right)
+{
+  std::vector<float> values(128 * 128 * 4);
+  for (int y = 0; y < 128; ++y)
+    for (int x = 0; x < 128; ++x) {
+      const auto i = (std::size_t(y) * 128 + x) * 4;
+      const float a = left_only && x >= 64 ? 0 : 1;
+      values[i] = values[i + 1] = values[i + 2] = (x < 64 ? left : right) * a;
+      values[i + 3] = a;
+    }
+  return values;
 }
+inline PaintPixels::Stamp stamp(double x, double y)
+{
+  PaintPixels::Stamp s{{x, y}, {.08, 0}, {0, .08}};
+  s.channels = {false, false, true, false, false};
+  s.hardness = 1;
+  s.flow = 1;
+  return s;
 }
+inline void close(float actual, float expected, const char *what)
+{
+  if (!std::isfinite(actual) || std::abs(actual - expected) > 2e-6)
+    throw std::runtime_error(std::string("BM ") + what + " actual=" + std::to_string(actual) +
+                             " expected=" + std::to_string(expected));
+}
+inline QJsonObject run()
+{
+  const auto cpu_before = local_paint_materializations;
+  QJsonArray proof;
+  int cases = 0;
+  Renderer renderer;
+  // Fixed independent algebra: .8 own over .2 under, q=.5 -> .5; visible-source reuse -> wrong
+  // .35.
+  for (bool smudge : {false, true})
+    for (bool own_ink : {false, true})
+      for (bool isolated : {false, true}) {
+        TextureSet set;
+        set.texture_resolution = 128;
+        set.precision.fill(ChannelPrecision::RGB32F);
+        set.precision[2] = ChannelPrecision::L32F;
+        set.base_values.roughness = 0;
+        set.layers.clear();
+        TextureLayer lower;
+        lower.kind = LayerKind::Paint;
+        lower.channels.fill(false);
+        lower.channels[2] = true;
+        lower.pixels.assign_channel(128, 2, pixels(false, own_ink ? .2f : .8f, .2f));
+        TextureLayer layer;
+        layer.kind = LayerKind::Paint;
+        layer.channels.fill(false);
+        layer.channels[2] = true;
+        set_adjustment_layer(layer, true);
+        layer.opacity[2] = .5f;
+        if (own_ink)
+          layer.pixels.assign_channel(128, 2, pixels(true, .8f, 0));
+        if (isolated) {
+          TextureLayer exterior;
+          exterior.kind = LayerKind::Fill;
+          exterior.values.roughness = .9f;
+          lower.depth = layer.depth = 1;
+          TextureLayer folder;
+          folder.kind = LayerKind::Folder;
+          folder.blending.fill(LayerBlend::Normal);
+          set.layers = {exterior, lower, layer, folder};
+        }
+        else
+          set.layers = {lower, layer};
+        set.selected_layer = layer.id;
+        const auto before = set;
+        const auto lower_hash = lower.pixels.hash(2);
+        renderer.render(set, 2);
+        auto token = renderer.preview.begin_adjustment_source(set, layer.id);
+        auto view = adjustment_main_source(set, layer, token);
+        const auto copies_before = renderer.preview.adjustment_copy_statistics();
+        auto &destination = set.layers[isolated ? 2 : 1];
+        {
+          PaintRecordingScope recording(true);
+          if (smudge) {
+            SmudgeStroke stroke(layer.pixels, 128, view);
+            require(stroke.dab(stamp(.25, .5), set.tiles, 1).empty(),
+                    "BM first Smudge dab wrote before pickup");
+            stroke.dab(stamp(.75, .5), set.tiles, 1);
+            stroke.publish(1);
+            destination.pixels = stroke.pixels();
+          }
+          else {
+            CloneStroke stroke(layer.pixels, 128, stamp(.25, .5), false, view);
+            destination.pixels.stamp(128, stroke.dab(stamp(.75, .5)), set.tiles);
+          }
+        }
+        auto *output = renderer.render(set, 2);
+        require(renderer.preview.adjustment_copy_statistics() == copies_before,
+                "BM first dab copied a destination/upper full image");
+        const std::array<std::array<int, 3>, 2> points{{{96, 64, 0}, {124, 124, 0}}};
+        const auto samples = probe_gpu_texture(output, points);
+        close(samples[0][0], .5f, "own/local lower/q algebra");
+        close(samples[1][0], .2f, "untouched final texel");
+        close(renderer.own(set, 2, 124, 124)[3], 0, "untouched authored alpha");
+        close(renderer.own(set, 2, 96, 64)[3], 1, "dab authored coverage");
+        require(set.layers[isolated ? 1 : 0].pixels.hash(2) == lower_hash,
+                "BM modified lower paint");
+        renderer.render(before, 2);
+        const auto undone = probe_gpu_texture(renderer.targets.at({2, 1001}).get(), points);
+        close(undone[0][0], .2f, "Undo baseline");
+        renderer.render(set, 2);
+        const auto redone = probe_gpu_texture(renderer.targets.at({2, 1001}).get(), points);
+        close(redone[0][0], .5f, "Redo retained source");
+        token.reset();
+        view = {};
+        renderer.preview.reset();
+        renderer.render(set, 2);
+        const auto reset = probe_gpu_texture(renderer.targets.at({2, 1001}).get(), points);
+        close(reset[0][0], .5f, "cache reset retained source");
+        proof.append(QJsonObject{
+            {"tool", smudge ? "Smudge" : "Clone"},
+            {"existing_own", own_ink},
+            {"isolated_folder", isolated},
+            {"expected", .5},
+            {"forbidden_double_mask", .35},
+            {"actual", samples[0][0]},
+            {"untouched_alpha", 0},
+            {"first_dab_full_copies",
+             qint64(renderer.preview.adjustment_copy_statistics()[0] - copies_before[0])}});
+        ++cases;
+      }
+  // Mixed channels share a stroke but only PT channels obtain lower sources.
+  {
+    TextureSet set;
+    set.texture_resolution = 128;
+    set.precision.fill(ChannelPrecision::RGB32F);
+    set.precision[2] = ChannelPrecision::L32F;
+    set.base_values.base_color = {0, 0, 0, 1};
+    set.base_values.roughness = 0;
+    auto &lower = set.layers.front();
+    lower.kind = LayerKind::Paint;
+    lower.pixels.assign_channel(128, 0, pixels(false, .8, .2));
+    lower.pixels.assign_channel(128, 2, pixels(false, .8, .2));
+    TextureDocument::add_paint(set);
+    auto &layer = set.layers.back();
+    layer.blending[0] = LayerBlend::Passthrough;
+    layer.blending[2] = LayerBlend::Normal;
+    layer.opacity[0] = layer.opacity[2] = .5;
+    const auto id = layer.id;
+    renderer.render(set, 0);
+    renderer.render(set, 2);
+    auto token = renderer.preview.begin_adjustment_source(set, id);
+    auto source = stamp(.25, .5), dest = stamp(.75, .5);
+    source.channels = dest.channels = {true, false, true, false, false};
+    {
+      PaintRecordingScope recording(true);
+      CloneStroke stroke({}, 128, source, false, adjustment_main_source(set, layer, token));
+      layer.pixels.stamp(128, stroke.dab(dest), set.tiles);
+    }
+    const std::array<std::array<int, 3>, 1> points{{{96, 64, 0}}};
+    close(probe_gpu_texture(renderer.render(set, 0), points)[0][0], .5, "PT Color source");
+    close(probe_gpu_texture(renderer.render(set, 2), points)[0][0],
+          .2,
+          "nonPT Roughness own-only source");
+    ++cases;
+  }
+  // Scalar source namespaces are independent; a cross-UDIM Clone keeps signed data.
+  for (int logical : {5, 7, 16}) {
+    TextureSet set;
+    set.texture_resolution = 128;
+    set.tiles = logical == 5 ? std::set<int>{1001} : std::set<int>{1001, 1002, 1011};
+    set.precision.fill(ChannelPrecision::RGB32F);
+    set.precision[5] = ChannelPrecision::L32F;
+    set.ao_channel = true;
+    set.users[0].present = true;
+    set.users[0].precision = ChannelPrecision::L32F;
+    set.displacement.channel = true;
+    set.displacement.precision = ChannelPrecision::L32F;
+    set.layers.clear();
+    TextureLayer lower, layer;
+    lower.kind = layer.kind = LayerKind::Paint;
+    const auto scalar = [&](auto &l) -> auto & {
+      return logical == 16 ? l.displacement : l.users[0];
+    };
+    const auto data = [&](auto &l) -> TilePaintPixels & {
+      return logical == 5 ? l.ao_pixels : scalar(l).pixels;
+    };
+    if (logical == 5) {
+      lower.ao_enabled = layer.ao_enabled = true;
+      layer.ao_opacity = .5;
+      layer.ao_blending = LayerBlend::Passthrough;
+    }
+    else {
+      scalar(lower).enabled = scalar(layer).enabled = true;
+      scalar(layer).opacity = .5;
+      scalar(layer).blending = LayerBlend::Passthrough;
+    }
+    const float sign = logical == 16 ? -1 : 1;
+    data(lower).assign_channel(128, 2, pixels(false, .8f * sign, .2f * sign));
+    for (int tile : {1002, 1011})
+      data(lower).assign_channel(128, 2, pixels(false, .2f * sign, .2f * sign), tile);
+    set.layers = {lower, layer};
+    set.selected_layer = layer.id;
+    const auto before = data(set.layers[0]).hash(2);
+    for (int tile : set.tiles)
+      renderer.render(set, logical, tile);
+    auto token = renderer.preview.begin_adjustment_source(set, layer.id);
+    const int destination_tile = logical == 5 ? 1001 : 1002;
+    auto from = stamp(.25, .5), to = stamp(logical == 5 ? .75 : 1.75, .5);
+    {
+      PaintRecordingScope recording(true);
+      CloneStroke stroke(
+          {}, 128, from, false, adjustment_scalar_source(set, layer, logical, token));
+      data(set.layers[1]).stamp(128, stroke.dab(to), set.tiles);
+    }
+    const std::array<std::array<int, 3>, 1> point{{{96, 64, 0}}};
+    close(probe_gpu_texture(renderer.render(set, logical, destination_tile), point)[0][0],
+          .5f * sign,
+          "scalar cross-UDIM underlying source");
+    close(renderer.own(set, logical, 124, 124, destination_tile)[3], 0, "scalar untouched alpha");
+    require(data(set.layers[0]).hash(2) == before, "Scalar Clone changed lower pages");
+    ++cases;
+  }
+  // Public single-tile Displacement updates must not dereference unprepared
+  // UDIM stacks or publish partial bounds as a whole-material range.
+  {
+    Renderer ranges;
+    TextureSet set;
+    set.texture_resolution = 128;
+    set.material_session_uid = 428317;
+    set.tiles = {1001, 1002, 1011};
+    set.displacement.channel = true;
+    set.displacement.precision = ChannelPrecision::L32F;
+    TextureLayer layer;
+    layer.displacement.enabled = true;
+    const std::array<std::pair<int, float>, 3> values{{{1001, -.75f}, {1002, 1.5f}, {1011, .25f}}};
+    for (auto [tile, value] : values)
+      layer.displacement.pixels.assign_channel(128, 2, pixels(false, value, value), tile);
+    set.layers = {layer};
+    set.selected_layer = layer.id;
+    for (auto [tile, value] : values) {
+      const auto output = probe_gpu_texture(ranges.render(set, 16, tile),
+                                            std::array<std::array<int, 3>, 1>{{{64, 64, 0}}});
+      close(output[0][0], value, "public single-tile signed Displacement");
+      require(ranges.preview.displacement_summaries().empty(),
+              "Partial UDIM update published an incomplete whole-material range");
+    }
+    Image target(GPU_texture_create_2d_array("BM complete Displacement range fixture",
+                                             128,
+                                             128,
+                                             3,
+                                             1,
+                                             gpu::TextureFormat::SFLOAT_32_32_32_32,
+                                             GPU_TEXTURE_USAGE_GENERAL,
+                                             nullptr),
+                 GPU_texture_free);
+    require(bool(target), "BM range target allocation failed");
+    const std::map<int, std::array<int, 3>> regions{
+        {1001, {0, 0, 0}}, {1002, {0, 0, 1}}, {1011, {0, 0, 2}}};
+    const auto complete = [&] {
+      const auto deadline = performance::Clock::now() + std::chrono::seconds(60);
+      for (;;) {
+        ranges.preview.begin_frame();
+        const auto status = ranges.preview.update_tiles(set, 16, target.get(), regions);
+        require(status != GpuPreviewUpdate::Unsupported, "Complete Displacement batch rejected");
+        if (status == GpuPreviewUpdate::Updated)
+          break;
+        require(performance::Clock::now() < deadline, "Complete Displacement batch timed out");
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      }
+      for (;;) {
+        for (const auto &summary : ranges.preview.displacement_summaries())
+          if (summary.uid == set.material_session_uid)
+            return summary;
+        require(performance::Clock::now() < deadline,
+                "Complete Displacement summary was not published");
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      }
+    };
+    auto summary = complete();
+    require(summary.present, "Complete Displacement range lost authored presence");
+    close(summary.minimum, -.75, "complete three-UDIM minimum");
+    close(summary.maximum, 1.5, "complete three-UDIM maximum");
+    set.layers.back().displacement.pixels.assign_channel(128, 2, pixels(false, -2.5, -2.5), 1011);
+    ranges.render(set, 16, 1011);
+    require(ranges.preview.displacement_summaries().empty(),
+            "Partial edit published a mixture of old and new tile bounds");
+    summary = complete();
+    close(summary.minimum, -2.5, "later complete three-UDIM minimum");
+    close(summary.maximum, 1.5, "later complete three-UDIM maximum");
+    ++cases;
+  }
+  // Real canonical array targets: nested 2D adjustment queries must not
+  // replace the caller's array/format final shader or corrupt another UDIM.
+  // Binary-exact values keep the same strict oracle in Float16 and Float32.
+  for (bool smudge : {false, true})
+    for (bool half : {false, true}) {
+      GpuLayerPreview preview;
+      TextureSet set;
+      set.texture_resolution = 128;
+      set.tiles = {1001, 1002};
+      set.precision[0] = ChannelPrecision::RGB32F;
+      set.layers.clear();
+      TextureLayer lower, layer;
+      lower.channels.fill(false);
+      lower.channels[0] = true;
+      lower.pixels.assign_channel(128, 0, pixels(false, .75, .75), 1001);
+      lower.pixels.assign_channel(128, 0, pixels(false, .125, .125), 1002);
+      layer.channels.fill(false);
+      layer.channels[0] = true;
+      layer.blending[0] = LayerBlend::Passthrough;
+      layer.opacity[0] = .5;
+      set.layers = {lower, layer};
+      set.selected_layer = layer.id;
+      Image target(GPU_texture_create_2d_array("BM real two-UDIM canonical target",
+                                               128,
+                                               128,
+                                               2,
+                                               1,
+                                               half ? gpu::TextureFormat::SFLOAT_16_16_16_16 :
+                                                      gpu::TextureFormat::SFLOAT_32_32_32_32,
+                                               GPU_TEXTURE_USAGE_GENERAL,
+                                               nullptr),
+                   GPU_texture_free);
+      require(bool(target), "BM canonical array target allocation failed");
+      const std::map<int, std::array<int, 3>> regions{{1001, {0, 0, 0}}, {1002, {0, 0, 1}}};
+      const auto render = [&](const TextureSet &current) {
+        const auto deadline = performance::Clock::now() + std::chrono::seconds(60);
+        for (;;) {
+          preview.begin_frame();
+          const auto status = preview.update_tiles(current, 0, target.get(), regions);
+          require(status != GpuPreviewUpdate::Unsupported, "BM canonical array stack rejected");
+          if (status == GpuPreviewUpdate::Updated)
+            break;
+          require(performance::Clock::now() < deadline, "BM canonical array stack timed out");
+          std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        auto *data = static_cast<float *>(GPU_texture_read(target.get(), GPU_DATA_FLOAT, 0));
+        require(data, "BM explicit array diagnostic readback failed");
+        std::vector<float> values(data, data + 2 * 128 * 128 * 4);
+        MEM_delete(data);
+        return values;
+      };
+      const auto before = set;
+      const auto baseline = render(set);
+      const auto lower_hash = set.layers.front().pixels.hash(0);
+      auto token = preview.begin_adjustment_source(set, layer.id);
+      auto from = stamp(.25, .5), to = stamp(1.75, .5);
+      from.channels = to.channels = {true, false, false, false, false};
+      {
+        PaintRecordingScope recording(true);
+        auto source = adjustment_main_source(set, set.layers.back(), token);
+        if (smudge) {
+          SmudgeStroke stroke({}, 128, source);
+          require(stroke.dab(from, set.tiles, 0).empty(),
+                  "Array Smudge first contact must only capture");
+          stroke.dab(to, set.tiles, 0);
+          stroke.publish(1);
+          set.layers.back().pixels = stroke.pixels();
+        }
+        else {
+          CloneStroke stroke({}, 128, from, false, source);
+          set.layers.back().pixels.stamp(128, stroke.dab(to), set.tiles);
+        }
+      }
+      const auto painted = set;
+      const auto image = render(set);
+      const auto component = (std::size_t(128) * 128 + 64 * 128 + 96) * 4;
+      close(image[component], .4375, "array destination own-over-lower q=.5");
+      close(image[component + 3], 1, "array destination final coverage");
+      require(std::equal(baseline.begin(), baseline.begin() + 128 * 128 * 4, image.begin()),
+              "BM array Clone/Smudge corrupted untouched UDIM1001");
+      require(set.layers.front().pixels.hash(0) == lower_hash,
+              "BM array gesture changed lower Paint data");
+      const auto undo = render(before);
+      require(undo == baseline,
+              "BM array empty adjustment Undo did not restore both complete tiles exactly");
+      const auto redo = render(painted);
+      require(redo == image, "BM array Redo did not restore both complete tiles exactly");
+      proof.append(QJsonObject{
+          {"tool", smudge ? "smudge" : "clone"},
+          {"array_tiles", 2},
+          {"target", half ? "RGBA16F" : "RGBA32F"},
+          {"source", .75},
+          {"backdrop", .125},
+          {"opacity", .5},
+          {"expected_destination", .4375},
+          {"unchanged_1001_components", 128 * 128 * 4},
+          {"exact_undo_redo_components", 2 * 128 * 128 * 4},
+          {"scope",
+           "Actual production array target with nested 2D source queries; explicit diagnostic GPU readback, no CPU composition"}});
+      ++cases;
+    }
+  // Frozen resource aliases share the original native program/cache identity.
+  {
+    std::unique_ptr<Main, decltype(&BKE_main_free)> main(BKE_main_new(), BKE_main_free);
+    auto *material = BKE_material_add(main.get(), "BM immutable native prefix");
+    auto &tree = *material->nodetree;
+    auto *pbr = bke::node_add_node(nullptr, tree, UString("ShaderNodeBsdfPrincipled"));
+    auto *out = bke::node_add_node(nullptr, tree, UString("ShaderNodeOutputMaterial"));
+    bke::node_add_link(tree,
+                       *pbr,
+                       *static_cast<bNodeSocket *>(pbr->outputs.first),
+                       *out,
+                       *bke::node_find_enabled_input_socket(*out, "Surface"));
+    BKE_ntree_update_after_single_tree_change(*main, tree);
+    NativeMaterialDescription description;
+    description.material = "BM immutable native prefix";
+    description.surface_type = "ShaderNodeBsdfPrincipled";
+    NativeMaterialParameter rough;
+    rough.identifier = "Roughness";
+    rough.name = "Roughness";
+    rough.value[0] = .2;
+    description.parameters.push_back(rough);
+    std::atomic_bool cancel = false;
+    auto graph = std::make_shared<NativeMaterialGraph>(
+        std::move(main), material, description, cancel);
+    TextureSet set;
+    set.texture_resolution = 128;
+    set.precision[2] = ChannelPrecision::L32F;
+    set.layers.clear();
+    TextureLayer lower, layer;
+    lower.kind = LayerKind::Fill;
+    lower.fill.material_resource =
+        QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();
+    lower.fill.native_material = std::make_shared<const NativeMaterialDescription>(description);
+    layer.blending[2] = LayerBlend::Passthrough;
+    layer.opacity[2] = .5;
+    layer.pixels.assign_channel(128, 2, pixels(true, .8, 0));
+    set.layers = {lower, layer};
+    set.selected_layer = layer.id;
+    renderer.preview.install_native_material(
+        lower.fill.material_resource, "bm-native-constant-prefix", graph);
+    renderer.render(set, 2);
+    const auto warm = renderer.preview.native_statistics();
+    for (int gesture = 0; gesture < 2; ++gesture) {
+      auto token = renderer.preview.begin_adjustment_source(set, layer.id);
+      auto &target = set.layers.back();
+      {
+        PaintRecordingScope recording(true);
+        CloneStroke stroke(
+            target.pixels, 128, stamp(.25, .5), false, adjustment_main_source(set, target, token));
+        target.pixels.stamp(128, stroke.dab(stamp(gesture ? .65 : .75, .5)), set.tiles);
+      }
+      renderer.render(set, 2);
+      require(renderer.preview.native_statistics() == warm,
+              "BM gesture recompiled or rerendered an unchanged native lower prefix");
+      ++cases;
+    }
+  }
+  // A two-page soft budget evicts replayable prefix pages, not historical
+  // metadata. A later lower edit cannot change the immutable Clone pickup.
+  {
+    TextureSet set;
+    set.texture_resolution = 128;
+    set.precision[2] = ChannelPrecision::L32F;
+    set.layers.clear();
+    TextureLayer lower, layer;
+    lower.pixels.assign_channel(128, 2, pixels(false, .8, .2));
+    layer.blending[2] = LayerBlend::Passthrough;
+    layer.opacity[2] = .5;
+    set.layers = {lower, layer};
+    set.selected_layer = layer.id;
+    renderer.render(set, 2);
+    auto token = renderer.preview.begin_adjustment_source(set, layer.id);
+    {
+      PaintRecordingScope recording(true);
+      CloneStroke stroke(
+          {}, 128, stamp(.25, .5), false, adjustment_main_source(set, layer, token));
+      set.layers.back().pixels.stamp(128, stroke.dab(stamp(.75, .5)), set.tiles);
+    }
+    set.layers.front().pixels.assign_channel(128, 2, pixels(false, .1, .2));
+    renderer.preview.diagnostic_adjustment_budget(2 * adjustment_page_bytes);
+    const std::array<std::array<int, 3>, 1> point{{{96, 64, 0}}};
+    close(probe_gpu_texture(renderer.render(set, 2), point)[0][0],
+          .5,
+          "frozen pickup after lower edit/LRU eviction");
+    token.reset();
+    renderer.preview.reset();
+    close(probe_gpu_texture(renderer.render(set, 2), point)[0][0],
+          .5,
+          "evicted snapshot reconstructs after cache reset");
+    renderer.preview.diagnostic_adjustment_budget(std::nullopt);
+    ++cases;
+  }
+  // Actual explicit-export completion, including global derived presence
+  // over all three UDIMs. RGB/H are never clamped and Bump is biased once.
+  {
+    TextureSet set;
+    set.texture_resolution = 128;
+    set.tiles = {1001, 1002, 1011};
+    set.precision.fill(ChannelPrecision::RGB32F);
+    for (int c : {1, 2, 4, 5})
+      set.precision[c] = ChannelPrecision::L32F;
+    set.ao_channel = true;
+    set.base_values.base_color = {.2, .3, .4, 1};
+    set.base_values.metallic = .3;
+    set.base_values.roughness = .4;
+    set.base_values.ambient_occlusion = .7;
+    set.base_values.bump = .5;
+    set.layers.clear();
+    for (int tile : set.tiles) {
+      const auto bump = renderer.own(set, 4, 64, 64, tile, true);
+      close(bump[0], .5, "empty exported Bump neutral");
+      close(bump[3], 0, "empty Bump authored coverage");
+      const auto ao = renderer.own(set, 5, 64, 64, tile, true, true),
+                 mixed = renderer.own(set, 5, 64, 64, tile, true, false);
+      close(ao[0], .7, "authored AO base completion");
+      close(ao[3], 0, "authored AO empty coverage");
+      close(mixed[0], 1, "mixed AO without authored coverage");
+      const auto normal = renderer.own(set, 3, 64, 64, tile, true);
+      close(normal[0], .5, "internal Normal X");
+      close(normal[1], .5, "internal Normal Y");
+      close(normal[2], 1, "internal Normal Z");
+      ++cases;
+    }
+    TextureLayer layer;
+    layer.kind = LayerKind::Paint;
+    layer.opacity[0] = .5;
+    auto color = pixels(false, 0, 0);
+    for (std::size_t i = 0; i < color.size(); i += 4) {
+      color[i] = -.4;
+      color[i + 1] = 2.4;
+      color[i + 2] = .8;
+    }
+    layer.pixels.assign_channel(128, 0, color, 1011);
+    layer.ao_pixels.assign_channel(128, 2, pixels(false, .6, .6), 1011);
+    set.displacement.channel = true;
+    set.displacement.precision = ChannelPrecision::L32F;
+    layer.displacement.enabled = true;
+    layer.displacement.pixels.assign_channel(128, 2, pixels(false, -.75, -.75), 1011);
+    set.layers = {layer};
+    set.selected_layer = layer.id;
+    {
+      auto partial = set;
+      partial.displacement.midlevel = .5;
+      auto &scalar = partial.layers.back().displacement;
+      scalar.opacity = .25;
+      scalar.pixels.assign_channel(128, 2, pixels(false, .8, .8), 1002);
+      const auto value = renderer.own(partial, 16, 64, 64, 1002, true);
+      close(value[0], .575, "partial Displacement midlevel completion");
+      close(value[3], .25, "partial Displacement coverage");
+      ++cases;
+    }
+    const auto full = renderer.own(set, 0, 64, 64, 1011, true);
+    close(full[0], -.1, "export signed Color completion");
+    close(full[1], 1.35, "export HDR Color completion");
+    close(full[2], .6, "export partial Color completion");
+    close(full[3], .5, "export authored Color coverage");
+    close(renderer.own(set, 16, 64, 64, 1011, true)[0], -.75, "export signed Displacement");
+    close(renderer.own(set, 5, 64, 64, 1001, true, false)[0],
+          .7,
+          "global AO presence affects other UDIM");
+    ++cases;
+  }
+  // A refused allocation crosses the real GPU owner boundary as Unsupported,
+  // never as an exception from draw. The existing target stays intact.
+  {
+    TextureSet set;
+    set.texture_resolution = 128;
+    set.precision[2] = ChannelPrecision::L32F;
+    set.layers.clear();
+    TextureLayer lower, layer;
+    lower.kind = LayerKind::Fill;
+    lower.values.roughness = .2;
+    layer.blending[2] = LayerBlend::Passthrough;
+    layer.opacity[2] = .5;
+    layer.pixels.assign_channel(128, 2, pixels(true, .8, 0));
+    set.layers = {lower, layer};
+    set.selected_layer = layer.id;
+    auto *target = renderer.render(set, 2);
+    const std::array<std::array<int, 3>, 1> point{{{96, 64, 0}}};
+    const auto before = probe_gpu_texture(target, point);
+    auto token = renderer.preview.begin_adjustment_source(set, layer.id);
+    {
+      PaintRecordingScope recording(true);
+      CloneStroke stroke(
+          layer.pixels, 128, stamp(.25, .5), false, adjustment_main_source(set, layer, token));
+      set.layers.back().pixels.stamp(128, stroke.dab(stamp(.75, .5)), set.tiles);
+    }
+    renderer.preview.diagnostic_adjustment_budget(0);
+    renderer.preview.begin_frame();
+    require(renderer.preview.update(set, 2, target) == GpuPreviewUpdate::Unsupported,
+            "BM allocation refusal did not terminate the GPU request");
+    require(pending_adjustment_failure && pending_adjustment_failure->snapshot == token->id,
+            "BM allocation refusal lost gesture identity");
+    require(pending_adjustment_failure->message.find("MiB") != std::string::npos,
+            "BM refusal lacks needed/available memory reason");
+    require(probe_gpu_texture(target, point) == before,
+            "BM refusal changed the previous GPU frame");
+    pending_adjustment_failure.reset();
+    renderer.preview.diagnostic_adjustment_budget(std::nullopt);
+    renderer.preview.begin_frame();
+    require(renderer.preview.update(set, 2, target) == GpuPreviewUpdate::Unsupported &&
+                !pending_adjustment_failure,
+            "BM rejected recipe retried allocation or queued another rollback");
+    ++cases;
+  }
+  // Terminal retirement is distinct from the earlier ordinary reset/replay
+  // witnesses. It executes while this test still owns a live GPU context.
+  renderer.preview.reset(true);
+  GpuLayerPreview::collect_retired(true);
+  require(!renderer.preview.programs_pending(),
+          "BM terminal GPU retirement left running shader owners");
+  require(local_paint_materializations == cpu_before, "BM GPU diagnostic materialized CPU paint");
+  std::printf(
+      "BTS_BM_GPU_ADJUSTMENT_VERIFIED cases=%d own=.8 lower=.2 q=.5 expected=.5 wrong=.35 sparse=1 mixed=1 undo_redo_reset=1 cpu_materializations=0\n",
+      cases);
+  return QJsonObject{
+      {"cases", cases},
+      {"proof", proof},
+      {"terminal_gpu_retirement", true},
+      {"cpu_materializations", qint64(local_paint_materializations - cpu_before)},
+      {"scope",
+       "Production GPU transport and canonical stack; explicit diagnostic probes only. Persistence/UI/Cycles acceptance separate."}};
+}
+}  // namespace bts::gpu_adjustment_test

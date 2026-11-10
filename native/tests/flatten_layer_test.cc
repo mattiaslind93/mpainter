@@ -6,58 +6,362 @@
 #include <cassert>
 #include <cstdio>
 using namespace bts;
-static void bind(FlattenedLayer &bake){for(int c=0;c<15;++c)if(!bake.images[c].empty()){auto members=std::make_shared<std::map<int,std::shared_ptr<const FillTexture>>>();const auto id=QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();for(auto &[tile,image]:bake.images[c]){auto texture=std::make_shared<FillTexture>();texture->asset=id;texture->hash=std::string(64,'0');texture->name="flattened";texture->width=image.width;texture->height=image.height;texture->raw=c!=0;texture->pixels=image.pixels;members->emplace(tile,texture);}auto texture=std::make_shared<FillTexture>(*members->begin()->second);texture->tiles=members;fill_channel_texture(bake.layer.fill,c)=texture;}}
-static void same(const TextureSet &a,const TextureSet &b,int tile=1001){for(int y:{0,23,78,127})for(int x:{0,31,84,127}){const auto va=TextureDocument::evaluate(a,x,y,tile),vb=TextureDocument::evaluate(b,x,y,tile);for(int c=0;c<3;++c)assert(std::abs(va.material.base_color[c]-vb.material.base_color[c])<1e-5);assert(std::abs(va.material.roughness-vb.material.roughness)<1e-5);assert(std::abs(va.material.bump-vb.material.bump)<1e-5);assert(std::abs(TextureDocument::displacement_value(a,x,y,tile)-TextureDocument::displacement_value(b,x,y,tile))<1e-5);}}
-int main(){std::atomic_bool cancel=false;
- // Pre-compose captures all channels/tiles without deleting the prefix.
- {TextureSet source;source.texture_resolution=128;source.uniform_editable=true;source.tiles={1001,1002};source.ao_channel=true;source.displacement.channel=true;
- source.layers[0].kind=LayerKind::Fill;source.layers[0].values.base_color={.2f,.3f,.4f,1};source.layers[0].opacity[0]=.4f;source.layers[0].values.normal={1,0,0};source.layers[0].blending[3]=LayerBlend::Normal;source.layers[0].opacity[3]=.4f;
- TextureDocument::add_fill(source);source.layers.back().values.normal={0,1,0};source.layers.back().blending[3]=LayerBlend::Normal;source.layers.back().opacity[3]=.6f;source.layers.back().values.roughness=.23f;source.layers.back().opacity[0]=.6f;source.layers.back().displacement.enabled=true;source.layers.back().displacement.value=-.3f;
- for(int c=0;c<8;++c){TextureDocument::add_user_channel(source,c);source.layers.back().users[c].value=.05f*(c+1);}
- const int k=int(source.layers.size());auto capture=precompose_capture_source(source,k);auto cache=flatten_layer_pixels(capture,capture.selected_layer,cancel);assert(cache);bind(*cache);
- auto cached=source;install_precompose_layer(cached,cache->layer,k);assert(precompose_start(cached.layers)==k);same(source,cached,1001);same(source,cached,1002);
- for(int tile:source.tiles)for(int c=0;c<8;++c){const auto a=TextureDocument::composite_user(source,c,33,55,tile),b=TextureDocument::composite_user(cached,c,33,55,tile);assert(std::abs(a[0]-b[0])<1e-6&&std::abs(a[1]-b[1])<1e-6);}
- // Blend intermediates may exceed one even in bounded material channels.
- auto hdr=source;hdr.precision[1]=hdr.precision[2]=hdr.precision[5]=ChannelPrecision::L32F;hdr.layers[0].values.roughness=hdr.layers[0].values.metallic=hdr.layers[0].values.ambient_occlusion=.8f;hdr.layers.back().values.roughness=hdr.layers.back().values.metallic=hdr.layers.back().values.ambient_occlusion=.9f;hdr.layers.back().blending[1]=hdr.layers.back().blending[2]=hdr.layers.back().ao_blending=LayerBlend::LinearDodge;auto hdr_source=precompose_capture_source(hdr,k);auto hdr_bake=flatten_layer_pixels(hdr_source,hdr_source.selected_layer,cancel);assert(hdr_bake);bind(*hdr_bake);auto hdr_cached=hdr;install_precompose_layer(hdr_cached,hdr_bake->layer,k);const auto before_hdr=TextureDocument::evaluate(hdr,20,30),after_hdr=TextureDocument::evaluate(hdr_cached,20,30);assert(before_hdr.material.roughness>1&&std::abs(before_hdr.material.roughness-after_hdr.material.roughness)<1e-6f&&std::abs(before_hdr.material.metallic-after_hdr.material.metallic)<1e-6f&&std::abs(before_hdr.material.ambient_occlusion-after_hdr.material.ambient_occlusion)<1e-6f);
- // A completed top-level prefix may precede the first child of another group.
- auto boundary=source;TextureLayer group_above;group_above.kind=LayerKind::Folder;TextureLayer child_above;child_above.depth=1;child_above.parent=group_above.id;boundary.layers.push_back(child_above);boundary.layers.push_back(group_above);TextureDocument::validate_hierarchy(boundary);const auto boundary_source=precompose_capture_source(boundary,k);assert(boundary_source.layers.size()==std::size_t(k+1));install_precompose_layer(boundary,cache->layer,k);assert(boundary.layers[k+1].parent==group_above.id);
- // Refreshing/stacking caches captures the already frozen prefix once.
- auto twice_source=precompose_capture_source(cached,int(cached.layers.size()));auto twice_bake=flatten_layer_pixels(twice_source,twice_source.selected_layer,cancel);assert(twice_bake);bind(*twice_bake);auto twice=cached;install_precompose_layer(twice,twice_bake->layer,int(twice.layers.size()));same(source,twice);
- for(int tile:source.tiles){const auto a=TextureDocument::evaluate(source,40,60,tile),b=TextureDocument::evaluate(cached,40,60,tile);assert(std::abs(a.material.metallic-b.material.metallic)<1e-6f&&std::abs(a.material.ambient_occlusion-b.material.ambient_occlusion)<1e-6f);for(int c=0;c<3;++c)assert(std::abs(a.material.normal[c]-b.material.normal[c])<1e-6f);}
- for(int i=0;i<k;++i){assert(layer_is_cached(cached,cached.layers[i].id));bool locked=false;try{require_uncached_layer(cached,cached.layers[i].id);}catch(const std::invalid_argument &){locked=true;}assert(locked);}
- assert(precompose_evaluation_start(cached.layers,nullptr,0)==0);assert(precompose_evaluation_start(cached.layers,nullptr,-1,&cached.layers[0].id)==0);
- // Poison the hidden prefix: a full composite must bypass it completely.
- cached.layers[0].values.base_color={1,0,0,1};same(source,cached);cached.layers[0]=source.layers[0];
- cached.layers.back().visible=false;assert(precompose_start(cached.layers)==0);assert(!layer_is_cached(cached,cached.layers[0].id));same(source,cached);
- cached.layers.back().visible=true;
- SceneSnapshot scene;MaterialSummary material;material.session_id=1;material.name="Cache";material.uniform_editable=true;scene.materials.push_back(material);ImportSummary imported;imported.materials={{1,"Cache",{1001,1002}}};NewProjectOptions options;options.resolution=DocumentResolution::Pixels128;options.uv_workflow=UvWorkflow::PreserveTiles;TextureDocument document(options,imported,scene);document.set(1).layers=cached.layers;document.set(1).selected_layer=cached.selected_layer;
- const std::array<TextureSetBinding,1> bindings{{{document.set(1).id,1,"Cache"}}};const auto json=document.to_json();auto reopened=TextureDocument::from_json(json,bindings);assert(reopened.set(1).layers.back().precompose_below&&layer_is_cached(reopened.set(1),cached.layers[0].id));
- auto legacy=json;auto sets=legacy["texture_sets"].toArray();auto set_json=sets[0].toObject();auto layers=set_json["layers"].toArray();for(int i=0;i<layers.size();++i){auto l=layers[i].toObject();l.remove("precompose_below");layers[i]=l;}set_json["layers"]=layers;sets[0]=set_json;legacy["texture_sets"]=sets;assert(!TextureDocument::from_json(legacy,bindings).set(1).layers.back().precompose_below);
- cached.layers.pop_back();same(source,cached);
- std::puts("pre-compose: all channels, two tiles, exact prefix, lock/release, skipped evaluation and retained originals PASS");}
- // Planning uses explicit native capabilities, never a CPU native compositor.
- {TextureSet native;native.layers[0].kind=LayerKind::Fill;auto description=std::make_shared<NativeMaterialDescription>();description->channels={0,1,2,4};native.layers[0].fill.native_material=description;
- auto plan=prepare_flatten_layer(native,native.layers[0].id);assert(plan.enabled[0]&&plan.enabled[4]&&!plan.enabled[3]);
- description->channels={0,1,2};plan=prepare_flatten_layer(native,native.layers[0].id);assert(plan.enabled[0]&&!plan.enabled[3]&&!plan.enabled[4]&&!plan.result.layer.channels[3]&&!plan.result.layer.channels[4]&&native.layers[0].channels[4]);
- description->channels.clear();bool unknown=false;try{prepare_flatten_layer(native,native.layers[0].id);}catch(const std::invalid_argument &){unknown=true;}assert(unknown);
- description->channels={0,1,2};const auto native_id=native.layers[0].id;TextureDocument::add_paint(native);const auto paint_id=native.selected_layer;TextureDocument::group_layers(native,{native_id,paint_id});const auto mixed=prepare_flatten_layer(native,native.selected_layer);assert(mixed.enabled[3]&&mixed.enabled[4]);
-
- }
+static void bind(FlattenedLayer &bake)
+{
+  for (int c = 0; c < 15; ++c)
+    if (!bake.images[c].empty()) {
+      auto members = std::make_shared<std::map<int, std::shared_ptr<const FillTexture>>>();
+      const auto id = QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();
+      for (auto &[tile, image] : bake.images[c]) {
+        auto texture = std::make_shared<FillTexture>();
+        texture->asset = id;
+        texture->hash = std::string(64, '0');
+        texture->name = "flattened";
+        texture->width = image.width;
+        texture->height = image.height;
+        texture->raw = c != 0;
+        texture->pixels = image.pixels;
+        members->emplace(tile, texture);
+      }
+      auto texture = std::make_shared<FillTexture>(*members->begin()->second);
+      texture->tiles = members;
+      fill_channel_texture(bake.layer.fill, c) = texture;
+    }
+}
+static void same(const TextureSet &a, const TextureSet &b, int tile = 1001)
+{
+  for (int y : {0, 23, 78, 127})
+    for (int x : {0, 31, 84, 127}) {
+      const auto va = TextureDocument::evaluate(a, x, y, tile),
+                 vb = TextureDocument::evaluate(b, x, y, tile);
+      for (int c = 0; c < 3; ++c)
+        assert(std::abs(va.material.base_color[c] - vb.material.base_color[c]) < 1e-5);
+      assert(std::abs(va.material.roughness - vb.material.roughness) < 1e-5);
+      assert(std::abs(va.material.bump - vb.material.bump) < 1e-5);
+      assert(std::abs(TextureDocument::displacement_value(a, x, y, tile) -
+                      TextureDocument::displacement_value(b, x, y, tile)) < 1e-5);
+    }
+}
+int main()
+{
+  std::atomic_bool cancel = false;
+  // Pre-compose captures all channels/tiles without deleting the prefix.
+  {
+    TextureSet source;
+    source.texture_resolution = 128;
+    source.uniform_editable = true;
+    source.tiles = {1001, 1002};
+    source.ao_channel = true;
+    source.displacement.channel = true;
+    source.layers[0].kind = LayerKind::Fill;
+    source.layers[0].values.base_color = {.2f, .3f, .4f, 1};
+    source.layers[0].opacity[0] = .4f;
+    source.layers[0].values.normal = {1, 0, 0};
+    source.layers[0].blending[3] = LayerBlend::Normal;
+    source.layers[0].opacity[3] = .4f;
+    TextureDocument::add_fill(source);
+    source.layers.back().values.normal = {0, 1, 0};
+    source.layers.back().blending[3] = LayerBlend::Normal;
+    source.layers.back().opacity[3] = .6f;
+    source.layers.back().values.roughness = .23f;
+    source.layers.back().opacity[0] = .6f;
+    source.layers.back().displacement.enabled = true;
+    source.layers.back().displacement.value = -.3f;
+    for (int c = 0; c < 8; ++c) {
+      TextureDocument::add_user_channel(source, c);
+      source.layers.back().users[c].value = .05f * (c + 1);
+    }
+    const int k = int(source.layers.size());
+    auto capture = precompose_capture_source(source, k);
+    auto cache = flatten_layer_pixels(capture, capture.selected_layer, cancel);
+    assert(cache);
+    bind(*cache);
+    auto cached = source;
+    install_precompose_layer(cached, cache->layer, k);
+    assert(precompose_start(cached.layers) == k);
+    same(source, cached, 1001);
+    same(source, cached, 1002);
+    for (int tile : source.tiles)
+      for (int c = 0; c < 8; ++c) {
+        const auto a = TextureDocument::composite_user(source, c, 33, 55, tile),
+                   b = TextureDocument::composite_user(cached, c, 33, 55, tile);
+        assert(std::abs(a[0] - b[0]) < 1e-6 && std::abs(a[1] - b[1]) < 1e-6);
+      }
+    // Blend intermediates may exceed one even in bounded material channels.
+    auto hdr = source;
+    hdr.precision[1] = hdr.precision[2] = hdr.precision[5] = ChannelPrecision::L32F;
+    hdr.layers[0].values.roughness = hdr.layers[0].values.metallic =
+        hdr.layers[0].values.ambient_occlusion = .8f;
+    hdr.layers.back().values.roughness = hdr.layers.back().values.metallic =
+        hdr.layers.back().values.ambient_occlusion = .9f;
+    hdr.layers.back().blending[1] = hdr.layers.back().blending[2] = hdr.layers.back().ao_blending =
+        LayerBlend::LinearDodge;
+    auto hdr_source = precompose_capture_source(hdr, k);
+    auto hdr_bake = flatten_layer_pixels(hdr_source, hdr_source.selected_layer, cancel);
+    assert(hdr_bake);
+    bind(*hdr_bake);
+    auto hdr_cached = hdr;
+    install_precompose_layer(hdr_cached, hdr_bake->layer, k);
+    const auto before_hdr = TextureDocument::evaluate(hdr, 20, 30),
+               after_hdr = TextureDocument::evaluate(hdr_cached, 20, 30);
+    assert(before_hdr.material.roughness > 1 &&
+           std::abs(before_hdr.material.roughness - after_hdr.material.roughness) < 1e-6f &&
+           std::abs(before_hdr.material.metallic - after_hdr.material.metallic) < 1e-6f &&
+           std::abs(before_hdr.material.ambient_occlusion - after_hdr.material.ambient_occlusion) <
+               1e-6f);
+    // A completed top-level prefix may precede the first child of another group.
+    auto boundary = source;
+    TextureLayer group_above;
+    group_above.kind = LayerKind::Folder;
+    TextureLayer child_above;
+    child_above.depth = 1;
+    child_above.parent = group_above.id;
+    boundary.layers.push_back(child_above);
+    boundary.layers.push_back(group_above);
+    TextureDocument::validate_hierarchy(boundary);
+    const auto boundary_source = precompose_capture_source(boundary, k);
+    assert(boundary_source.layers.size() == std::size_t(k + 1));
+    install_precompose_layer(boundary, cache->layer, k);
+    assert(boundary.layers[k + 1].parent == group_above.id);
+    // Refreshing/stacking caches captures the already frozen prefix once.
+    auto twice_source = precompose_capture_source(cached, int(cached.layers.size()));
+    auto twice_bake = flatten_layer_pixels(twice_source, twice_source.selected_layer, cancel);
+    assert(twice_bake);
+    bind(*twice_bake);
+    auto twice = cached;
+    install_precompose_layer(twice, twice_bake->layer, int(twice.layers.size()));
+    same(source, twice);
+    for (int tile : source.tiles) {
+      const auto a = TextureDocument::evaluate(source, 40, 60, tile),
+                 b = TextureDocument::evaluate(cached, 40, 60, tile);
+      assert(std::abs(a.material.metallic - b.material.metallic) < 1e-6f &&
+             std::abs(a.material.ambient_occlusion - b.material.ambient_occlusion) < 1e-6f);
+      for (int c = 0; c < 3; ++c)
+        assert(std::abs(a.material.normal[c] - b.material.normal[c]) < 1e-6f);
+    }
+    for (int i = 0; i < k; ++i) {
+      assert(layer_is_cached(cached, cached.layers[i].id));
+      bool locked = false;
+      try {
+        require_uncached_layer(cached, cached.layers[i].id);
+      }
+      catch (const std::invalid_argument &) {
+        locked = true;
+      }
+      assert(locked);
+    }
+    assert(precompose_evaluation_start(cached.layers, nullptr, 0) == 0);
+    assert(precompose_evaluation_start(cached.layers, nullptr, -1, &cached.layers[0].id) == 0);
+    // Poison the hidden prefix: a full composite must bypass it completely.
+    cached.layers[0].values.base_color = {1, 0, 0, 1};
+    same(source, cached);
+    cached.layers[0] = source.layers[0];
+    cached.layers.back().visible = false;
+    assert(precompose_start(cached.layers) == 0);
+    assert(!layer_is_cached(cached, cached.layers[0].id));
+    same(source, cached);
+    cached.layers.back().visible = true;
+    SceneSnapshot scene;
+    MaterialSummary material;
+    material.session_id = 1;
+    material.name = "Cache";
+    material.uniform_editable = true;
+    scene.materials.push_back(material);
+    ImportSummary imported;
+    imported.materials = {{1, "Cache", {1001, 1002}}};
+    NewProjectOptions options;
+    options.resolution = DocumentResolution::Pixels128;
+    options.uv_workflow = UvWorkflow::PreserveTiles;
+    TextureDocument document(options, imported, scene);
+    document.set(1).layers = cached.layers;
+    document.set(1).selected_layer = cached.selected_layer;
+    const std::array<TextureSetBinding, 1> bindings{{{document.set(1).id, 1, "Cache"}}};
+    const auto json = document.to_json();
+    auto reopened = TextureDocument::from_json(json, bindings);
+    assert(reopened.set(1).layers.back().precompose_below &&
+           layer_is_cached(reopened.set(1), cached.layers[0].id));
+    auto legacy = json;
+    auto sets = legacy["texture_sets"].toArray();
+    auto set_json = sets[0].toObject();
+    auto layers = set_json["layers"].toArray();
+    for (int i = 0; i < layers.size(); ++i) {
+      auto l = layers[i].toObject();
+      l.remove("precompose_below");
+      layers[i] = l;
+    }
+    set_json["layers"] = layers;
+    sets[0] = set_json;
+    legacy["texture_sets"] = sets;
+    assert(!TextureDocument::from_json(legacy, bindings).set(1).layers.back().precompose_below);
+    cached.layers.pop_back();
+    same(source, cached);
+    std::puts(
+        "pre-compose: all channels, two tiles, exact prefix, lock/release, skipped evaluation and retained originals PASS");
+  }
+  // Planning uses explicit native capabilities, never a CPU native compositor.
+  {
+    TextureSet native;
+    native.layers[0].kind = LayerKind::Fill;
+    auto description = std::make_shared<NativeMaterialDescription>();
+    description->channels = {0, 1, 2, 4};
+    native.layers[0].fill.native_material = description;
+    auto plan = prepare_flatten_layer(native, native.layers[0].id);
+    assert(plan.enabled[0] && plan.enabled[4] && !plan.enabled[3]);
+    description->channels = {0, 1, 2};
+    plan = prepare_flatten_layer(native, native.layers[0].id);
+    assert(plan.enabled[0] && !plan.enabled[3] && !plan.enabled[4] &&
+           !plan.result.layer.channels[3] && !plan.result.layer.channels[4] &&
+           native.layers[0].channels[4]);
+    description->channels.clear();
+    bool unknown = false;
+    try {
+      prepare_flatten_layer(native, native.layers[0].id);
+    }
+    catch (const std::invalid_argument &) {
+      unknown = true;
+    }
+    assert(unknown);
+    description->channels = {0, 1, 2};
+    const auto native_id = native.layers[0].id;
+    TextureDocument::add_paint(native);
+    const auto paint_id = native.selected_layer;
+    TextureDocument::group_layers(native, {native_id, paint_id});
+    const auto mixed = prepare_flatten_layer(native, native.selected_layer);
+    assert(mixed.enabled[3] && mixed.enabled[4]);
+  }
 
 #include "flatten_context_cases.inc"
-TextureSet s;s.texture_resolution=128;s.uniform_editable=true;TextureDocument::add_fill(s);auto first=s.selected_layer;auto &a=TextureDocument::layer(s,first);a.values.base_color={.12f,.3f,.6f,1};a.values.roughness=.23f;a.values.bump=-.25f;a.opacity[0]=.6f;TextureDocument::add_fill(s);auto second=s.selected_layer;auto &b=TextureDocument::layer(s,second);b.values.base_color={.8f,.2f,.1f,1};b.opacity[0]=.4f;b.channels[2]=false;
- TextureDocument::group_layers(s,{first,second});const auto group=s.selected_layer;auto &folder=TextureDocument::layer(s,group);folder.mask.emplace();folder.mask->background=.35f;folder.opacity[0]=.7f;
- auto bake=flatten_layer_pixels(s,group,cancel);assert(bake&&bake->layer.kind==LayerKind::Fill&&bake->layer.mask&&bake->images[0].size()==1);assert(bake->layer.mask->background==.35f&&bake->layer.mask->pixels.empty());bind(*bake);auto after=s;install_flattened_layer(after,bake->layer,group);same(s,after);assert(!TextureDocument::layer(after,group).visible&&TextureDocument::layer(s,group).visible&&after.layers.size()==s.layers.size()+1);
- // Hidden children do not contribute; source content remains recoverable.
- TextureDocument::layer(s,second).visible=false;auto hidden=flatten_layer_pixels(s,group,cancel);bind(*hidden);after=s;install_flattened_layer(after,hidden->layer,group);same(s,after);
- // Signed displacement, independent user channel and two tiles.
- TextureDocument::add_displacement_channel(s);s.displacement.midlevel=0;TextureDocument::layer(s,first).displacement.enabled=true;TextureDocument::layer(s,first).displacement.value=-.3f;TextureDocument::layer(s,group).displacement.enabled=true;s.tiles={1001,1002};auto tiled=flatten_layer_pixels(s,group,cancel);assert(tiled->images[14].size()==2);bind(*tiled);after=s;install_flattened_layer(after,tiled->layer,group);same(s,after,1001);same(s,after,1002);
+  TextureSet s;
+  s.texture_resolution = 128;
+  s.uniform_editable = true;
+  TextureDocument::add_fill(s);
+  auto first = s.selected_layer;
+  auto &a = TextureDocument::layer(s, first);
+  a.values.base_color = {.12f, .3f, .6f, 1};
+  a.values.roughness = .23f;
+  a.values.bump = -.25f;
+  a.opacity[0] = .6f;
+  TextureDocument::add_fill(s);
+  auto second = s.selected_layer;
+  auto &b = TextureDocument::layer(s, second);
+  b.values.base_color = {.8f, .2f, .1f, 1};
+  b.opacity[0] = .4f;
+  b.channels[2] = false;
+  TextureDocument::group_layers(s, {first, second});
+  const auto group = s.selected_layer;
+  auto &folder = TextureDocument::layer(s, group);
+  folder.mask.emplace();
+  folder.mask->background = .35f;
+  folder.opacity[0] = .7f;
+  auto bake = flatten_layer_pixels(s, group, cancel);
+  assert(bake && bake->layer.kind == LayerKind::Fill && bake->layer.mask &&
+         bake->images[0].size() == 1);
+  assert(bake->layer.mask->background == .35f && bake->layer.mask->pixels.empty());
+  bind(*bake);
+  auto after = s;
+  install_flattened_layer(after, bake->layer, group);
+  same(s, after);
+  assert(!TextureDocument::layer(after, group).visible &&
+         TextureDocument::layer(s, group).visible && after.layers.size() == s.layers.size() + 1);
+  // Hidden children do not contribute; source content remains recoverable.
+  TextureDocument::layer(s, second).visible = false;
+  auto hidden = flatten_layer_pixels(s, group, cancel);
+  bind(*hidden);
+  after = s;
+  install_flattened_layer(after, hidden->layer, group);
+  same(s, after);
+  // Signed displacement, independent user channel and two tiles.
+  TextureDocument::add_displacement_channel(s);
+  s.displacement.midlevel = 0;
+  TextureDocument::layer(s, first).displacement.enabled = true;
+  TextureDocument::layer(s, first).displacement.value = -.3f;
+  TextureDocument::layer(s, group).displacement.enabled = true;
+  s.tiles = {1001, 1002};
+  auto tiled = flatten_layer_pixels(s, group, cancel);
+  assert(tiled->images[14].size() == 2);
+  bind(*tiled);
+  after = s;
+  install_flattened_layer(after, tiled->layer, group);
+  same(s, after, 1001);
+  same(s, after, 1002);
 
- // Rectangular sets and per-tile sizes retain the independently rasterized mask.
- s.texture_height=256;s.size_linked=false;s.tile_resolutions[1002]=128;auto rectangular=flatten_layer_pixels(s,group,cancel);assert(rectangular->images[0].at(1001).height==256&&rectangular->images[0].at(1002).height==128);bind(*rectangular);after=s;install_flattened_layer(after,rectangular->layer,group);same(s,after,1001);same(s,after,1002);
- TextureDocument::add_user_channel(s,0);TextureDocument::layer(s,first).users[0].value=.73f;TextureDocument::layer(s,group).users[0].enabled=true;auto user=flatten_layer_pixels(s,group,cancel);bind(*user);after=s;install_flattened_layer(after,user->layer,group);const auto u=TextureDocument::composite_user(s,0,55,90),v=TextureDocument::composite_user(after,0,55,90);assert(std::abs(u[0]-v[0])<1e-5&&std::abs(u[1]-v[1])<1e-5);
- // A baked bitmap must not acquire a second bilinear/AA blur at texel centers.
- auto texture=std::make_shared<FillTexture>();texture->asset=QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();texture->hash=std::string(64,'0');texture->name="checker";texture->width=texture->height=128;auto checker=std::make_shared<std::vector<FillTexture::Pixel>>(128*128);for(int y=0;y<128;++y)for(int x=0;x<128;++x){const float value=((x+y)&1)?.1f:.9f;(*checker)[y*128+x]={value,value,value,1};}texture->pixels=checker;TextureDocument::layer(s,first).fill.texture=texture;auto detailed=flatten_layer_pixels(s,group,cancel);bind(*detailed);after=s;install_flattened_layer(after,detailed->layer,group);same(s,after);
- // Passthrough adjustments freeze their current backdrop, not an empty stack.
- TextureSet adjusted;adjusted.texture_resolution=128;adjusted.precision[0]=ChannelPrecision::RGB32F;adjusted.layers[0].kind=LayerKind::Fill;adjusted.layers[0].values.base_color={.2f,.3f,.4f,1};TextureDocument::add_paint(adjusted);const auto adjust=adjusted.selected_layer;auto &effect_layer=TextureDocument::layer(adjusted,adjust);effect_layer.blending[0]=LayerBlend::Passthrough;effect_layer.opacity[0]=.6f;LevelsEffect levels;levels.channel=0;levels.gamma=2;effect_layer.effects.push_back(levels);effect_layer.mask.emplace();effect_layer.mask->background=.4f;auto adjustment=flatten_layer_pixels(adjusted,adjust,cancel);assert(adjustment&&adjustment->layer.blending[0]==LayerBlend::Replace&&adjustment->layer.opacity[0]==1);bind(*adjustment);auto adjusted_after=adjusted;install_flattened_layer(adjusted_after,adjustment->layer,adjust);same(adjusted,adjusted_after);
- TextureSet empty;empty.texture_resolution=128;bool rejected=false;try{flatten_layer_pixels(empty,empty.selected_layer,cancel);}catch(const std::invalid_argument &){rejected=true;}assert(rejected);cancel=true;assert(!flatten_layer_pixels(s,group,cancel));std::puts("flatten: bitmap-backed fill, separate mask, retained group, hidden layers, signed displacement, UDIM, empty rejection and cancellation PASS");}
+  // Rectangular sets and per-tile sizes retain the independently rasterized mask.
+  s.texture_height = 256;
+  s.size_linked = false;
+  s.tile_resolutions[1002] = 128;
+  auto rectangular = flatten_layer_pixels(s, group, cancel);
+  assert(rectangular->images[0].at(1001).height == 256 &&
+         rectangular->images[0].at(1002).height == 128);
+  bind(*rectangular);
+  after = s;
+  install_flattened_layer(after, rectangular->layer, group);
+  same(s, after, 1001);
+  same(s, after, 1002);
+  TextureDocument::add_user_channel(s, 0);
+  TextureDocument::layer(s, first).users[0].value = .73f;
+  TextureDocument::layer(s, group).users[0].enabled = true;
+  auto user = flatten_layer_pixels(s, group, cancel);
+  bind(*user);
+  after = s;
+  install_flattened_layer(after, user->layer, group);
+  const auto u = TextureDocument::composite_user(s, 0, 55, 90),
+             v = TextureDocument::composite_user(after, 0, 55, 90);
+  assert(std::abs(u[0] - v[0]) < 1e-5 && std::abs(u[1] - v[1]) < 1e-5);
+  // A baked bitmap must not acquire a second bilinear/AA blur at texel centers.
+  auto texture = std::make_shared<FillTexture>();
+  texture->asset = QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();
+  texture->hash = std::string(64, '0');
+  texture->name = "checker";
+  texture->width = texture->height = 128;
+  auto checker = std::make_shared<std::vector<FillTexture::Pixel>>(128 * 128);
+  for (int y = 0; y < 128; ++y)
+    for (int x = 0; x < 128; ++x) {
+      const float value = ((x + y) & 1) ? .1f : .9f;
+      (*checker)[y * 128 + x] = {value, value, value, 1};
+    }
+  texture->pixels = checker;
+  TextureDocument::layer(s, first).fill.texture = texture;
+  auto detailed = flatten_layer_pixels(s, group, cancel);
+  bind(*detailed);
+  after = s;
+  install_flattened_layer(after, detailed->layer, group);
+  same(s, after);
+  // Passthrough adjustments freeze their current backdrop, not an empty stack.
+  TextureSet adjusted;
+  adjusted.texture_resolution = 128;
+  adjusted.precision[0] = ChannelPrecision::RGB32F;
+  adjusted.layers[0].kind = LayerKind::Fill;
+  adjusted.layers[0].values.base_color = {.2f, .3f, .4f, 1};
+  TextureDocument::add_paint(adjusted);
+  const auto adjust = adjusted.selected_layer;
+  auto &effect_layer = TextureDocument::layer(adjusted, adjust);
+  effect_layer.blending[0] = LayerBlend::Passthrough;
+  effect_layer.opacity[0] = .6f;
+  LevelsEffect levels;
+  levels.channel = 0;
+  levels.gamma = 2;
+  effect_layer.effects.push_back(levels);
+  effect_layer.mask.emplace();
+  effect_layer.mask->background = .4f;
+  auto adjustment = flatten_layer_pixels(adjusted, adjust, cancel);
+  assert(adjustment && adjustment->layer.blending[0] == LayerBlend::Replace &&
+         adjustment->layer.opacity[0] == 1);
+  bind(*adjustment);
+  auto adjusted_after = adjusted;
+  install_flattened_layer(adjusted_after, adjustment->layer, adjust);
+  same(adjusted, adjusted_after);
+  TextureSet empty;
+  empty.texture_resolution = 128;
+  bool rejected = false;
+  try {
+    flatten_layer_pixels(empty, empty.selected_layer, cancel);
+  }
+  catch (const std::invalid_argument &) {
+    rejected = true;
+  }
+  assert(rejected);
+  cancel = true;
+  assert(!flatten_layer_pixels(s, group, cancel));
+  std::puts(
+      "flatten: bitmap-backed fill, separate mask, retained group, hidden layers, signed displacement, UDIM, empty rejection and cancellation PASS");
+}

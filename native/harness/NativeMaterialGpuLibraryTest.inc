@@ -1,11 +1,116 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 {
- auto *raw=BKE_main_new();std::unique_ptr<Main,decltype(&BKE_main_free)> owner(raw,BKE_main_free);auto *material=BKE_material_add(raw,"Native shared instance fixture");auto &tree=*material->nodetree;auto *principled=bke::node_add_node(nullptr,tree,UString("ShaderNodeBsdfPrincipled"));auto *out=bke::node_add_node(nullptr,tree,UString("ShaderNodeOutputMaterial"));bke::node_add_link(tree,*principled,socket(*principled,"BSDF",false),*out,socket(*out,"Surface",true));BKE_ntree_update_after_single_tree_change(*owner,tree);NativeMaterialDescription description;description.material="Shared native material";description.surface_type="ShaderNodeBsdfPrincipled";NativeMaterialParameter color;color.identifier="Base Color";color.name="Color";color.type=NativeParameterType::Color;color.value={1,0,0,1};color.maximum=65504;description.parameters.push_back(color);NativeMaterialParameter roughness;roughness.identifier="Roughness";roughness.name="Roughness";roughness.value[0]=.2;description.parameters.push_back(roughness);std::atomic_bool cancel=false;auto graph=std::make_shared<NativeMaterialGraph>(std::move(owner),material,description,cancel);graph->resource_content_hash="canonical-shader-source-without-preview";NativeMaterialGpuLibrary library;library.install("resource-a","same-content-hash",graph);library.install("resource-b","same-content-hash",graph);auto other=description;other.parameters[0].value={0,0,1,1};other.parameters[1].value[0]=.8;
- // Warm both channels, then switch instance values without compilation/allocation.
- for(int c:{0,2})library.render("resource-a",c,description,target.get(),context,{0,0,width,height});const auto passes=GPU_pass_global_compilation_count();
- for(int pass=0;pass<4;++pass){const bool second=pass%2;for(int c:{0,2}){const auto &instance=second?other:description;library.render(second?"resource-b":"resource-a",c,instance,target.get(),context,{0,0,width,height});auto *actual=pixels();require(actual,"Native shared library oracle read failed");const auto free=qScopeGuard([&]{MEM_delete(actual);});for(int i=0;i<width*height;++i)for(int k=0;k<4;++k){const float expected=points[i].valid?(k==3?1:c==0?instance.parameters[0].value[k]:instance.parameters[1].value[0]):0;require(std::abs(actual[i*4+k]-expected)<1e-6,"Native instances overwrote each other's parameters");}}}
- auto stats=library.statistics();require(stats.resources==2&&stats.sources==1&&stats.programs==2,"Native aliases duplicated source Main/programs");require(GPU_pass_global_compilation_count()==passes,"Native instance switch recompiled programs");
- library.register_content_alias("resource-a","same-source-with-preview");library.install("resource-preview","same-source-with-preview",graph);auto preview_stats=library.statistics();require(preview_stats.sources==stats.sources&&preview_stats.programs==stats.programs&&GPU_pass_global_compilation_count()==passes,"Preview content identity duplicated source/programs");
- {std::unique_ptr<Main,decltype(&BKE_main_free)> distinct(BKE_main_new(),BKE_main_free);auto *different=BKE_material_add(distinct.get(),"Different native alias fixture");auto &nodes=*different->nodetree;auto *shader=bke::node_add_node(nullptr,nodes,UString("ShaderNodeBsdfPrincipled"));auto *output=bke::node_add_node(nullptr,nodes,UString("ShaderNodeOutputMaterial"));bke::node_add_link(nodes,*shader,socket(*shader,"BSDF",false),*output,socket(*output,"Surface",true));BKE_ntree_update_after_single_tree_change(*distinct,nodes);auto different_description=description;different_description.parameters[0].value={0,1,0,1};auto different_graph=std::make_shared<NativeMaterialGraph>(std::move(distinct),different,different_description,cancel);different_graph->resource_content_hash="different-shader-image-content";library.install("different-source","different-content",different_graph);bool rejected=false;try{library.register_content_alias("different-source","same-source-with-preview");}catch(const std::invalid_argument &){rejected=true;}require(rejected,"Preview alias accepted different graph/image content");library.erase("different-source");}
- auto wrong=description;wrong.parameters[0].identifier="Missing socket";bool rejected=false;try{library.render("resource-a",0,wrong,target.get(),context,{0,0,width,height});}catch(const std::invalid_argument &){rejected=true;}require(rejected,"Native library accepted a mismatched parameter interface");library.erase("resource-a");require(library.contains("resource-b")&&library.statistics().sources==1,"Native resource removal retired a shared source");library.clear();require(library.statistics().sources==0,"Native library did not retire unused sources");
+  auto *raw = BKE_main_new();
+  std::unique_ptr<Main, decltype(&BKE_main_free)> owner(raw, BKE_main_free);
+  auto *material = BKE_material_add(raw, "Native shared instance fixture");
+  auto &tree = *material->nodetree;
+  auto *principled = bke::node_add_node(nullptr, tree, UString("ShaderNodeBsdfPrincipled"));
+  auto *out = bke::node_add_node(nullptr, tree, UString("ShaderNodeOutputMaterial"));
+  bke::node_add_link(
+      tree, *principled, socket(*principled, "BSDF", false), *out, socket(*out, "Surface", true));
+  BKE_ntree_update_after_single_tree_change(*owner, tree);
+  NativeMaterialDescription description;
+  description.material = "Shared native material";
+  description.surface_type = "ShaderNodeBsdfPrincipled";
+  NativeMaterialParameter color;
+  color.identifier = "Base Color";
+  color.name = "Color";
+  color.type = NativeParameterType::Color;
+  color.value = {1, 0, 0, 1};
+  color.maximum = 65504;
+  description.parameters.push_back(color);
+  NativeMaterialParameter roughness;
+  roughness.identifier = "Roughness";
+  roughness.name = "Roughness";
+  roughness.value[0] = .2;
+  description.parameters.push_back(roughness);
+  std::atomic_bool cancel = false;
+  auto graph = std::make_shared<NativeMaterialGraph>(
+      std::move(owner), material, description, cancel);
+  graph->resource_content_hash = "canonical-shader-source-without-preview";
+  NativeMaterialGpuLibrary library;
+  library.install("resource-a", "same-content-hash", graph);
+  library.install("resource-b", "same-content-hash", graph);
+  auto other = description;
+  other.parameters[0].value = {0, 0, 1, 1};
+  other.parameters[1].value[0] = .8;
+  // Warm both channels, then switch instance values without compilation/allocation.
+  for (int c : {0, 2})
+    library.render("resource-a", c, description, target.get(), context, {0, 0, width, height});
+  const auto passes = GPU_pass_global_compilation_count();
+  for (int pass = 0; pass < 4; ++pass) {
+    const bool second = pass % 2;
+    for (int c : {0, 2}) {
+      const auto &instance = second ? other : description;
+      library.render(second ? "resource-b" : "resource-a",
+                     c,
+                     instance,
+                     target.get(),
+                     context,
+                     {0, 0, width, height});
+      auto *actual = pixels();
+      require(actual, "Native shared library oracle read failed");
+      const auto free = qScopeGuard([&] { MEM_delete(actual); });
+      for (int i = 0; i < width * height; ++i)
+        for (int k = 0; k < 4; ++k) {
+          const float expected = points[i].valid ? (k == 3 ? 1 :
+                                                    c == 0 ? instance.parameters[0].value[k] :
+                                                             instance.parameters[1].value[0]) :
+                                                   0;
+          require(std::abs(actual[i * 4 + k] - expected) < 1e-6,
+                  "Native instances overwrote each other's parameters");
+        }
+    }
+  }
+  auto stats = library.statistics();
+  require(stats.resources == 2 && stats.sources == 1 && stats.programs == 2,
+          "Native aliases duplicated source Main/programs");
+  require(GPU_pass_global_compilation_count() == passes,
+          "Native instance switch recompiled programs");
+  library.register_content_alias("resource-a", "same-source-with-preview");
+  library.install("resource-preview", "same-source-with-preview", graph);
+  auto preview_stats = library.statistics();
+  require(preview_stats.sources == stats.sources && preview_stats.programs == stats.programs &&
+              GPU_pass_global_compilation_count() == passes,
+          "Preview content identity duplicated source/programs");
+  {
+    std::unique_ptr<Main, decltype(&BKE_main_free)> distinct(BKE_main_new(), BKE_main_free);
+    auto *different = BKE_material_add(distinct.get(), "Different native alias fixture");
+    auto &nodes = *different->nodetree;
+    auto *shader = bke::node_add_node(nullptr, nodes, UString("ShaderNodeBsdfPrincipled"));
+    auto *output = bke::node_add_node(nullptr, nodes, UString("ShaderNodeOutputMaterial"));
+    bke::node_add_link(
+        nodes, *shader, socket(*shader, "BSDF", false), *output, socket(*output, "Surface", true));
+    BKE_ntree_update_after_single_tree_change(*distinct, nodes);
+    auto different_description = description;
+    different_description.parameters[0].value = {0, 1, 0, 1};
+    auto different_graph = std::make_shared<NativeMaterialGraph>(
+        std::move(distinct), different, different_description, cancel);
+    different_graph->resource_content_hash = "different-shader-image-content";
+    library.install("different-source", "different-content", different_graph);
+    bool rejected = false;
+    try {
+      library.register_content_alias("different-source", "same-source-with-preview");
+    }
+    catch (const std::invalid_argument &) {
+      rejected = true;
+    }
+    require(rejected, "Preview alias accepted different graph/image content");
+    library.erase("different-source");
+  }
+  auto wrong = description;
+  wrong.parameters[0].identifier = "Missing socket";
+  bool rejected = false;
+  try {
+    library.render("resource-a", 0, wrong, target.get(), context, {0, 0, width, height});
+  }
+  catch (const std::invalid_argument &) {
+    rejected = true;
+  }
+  require(rejected, "Native library accepted a mismatched parameter interface");
+  library.erase("resource-a");
+  require(library.contains("resource-b") && library.statistics().sources == 1,
+          "Native resource removal retired a shared source");
+  library.clear();
+  require(library.statistics().sources == 0, "Native library did not retire unused sources");
 }

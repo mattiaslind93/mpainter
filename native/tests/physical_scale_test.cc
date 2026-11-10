@@ -9,11 +9,170 @@
 #include <cassert>
 #include <cmath>
 #include <iostream>
-int main(){using namespace bts;assert(centimeters_per_native_unit({}, {})==1);assert(centimeters_per_native_unit({}, {.01,1})==100);assert(centimeters_per_native_unit({}, {1,100})==100);UnitSettings custom;custom.internal=false;assert(centimeters_per_native_unit(custom,{.01,1})==100);assert(centimeters_per_native_unit(custom,{1,100})==1);custom.custom_cm_per_file_unit=2;assert(centimeters_per_native_unit(custom,{.01,1})==200);bool rejected=false;custom.custom_cm_per_file_unit=0;try{centimeters_per_native_unit(custom,{});}catch(const std::exception &){rejected=true;}assert(rejected);
- SceneSnapshot scene;MaterialSummary material;material.session_id=4;scene.materials.push_back(material);UvFaceTriangle a,b;a.corners={{{0,0},{1,0},{1,1}}};b.corners={{{0,0},{1,1},{0,1}}};a.positions={{{0,0,0},{2,0,0},{2,1,0}}};b.positions={{{0,0,0},{2,1,0},{0,1,0}}};scene.uv_triangles={a,b};auto metric=native_length_per_uv(scene,4);assert(std::abs(metric[0]-2)<1e-12&&std::abs(metric[1]-1)<1e-12);FillProjection p;p.atom=true;p.physical=true;p.native_per_uv=metric;p.cm_per_native=100;p.custom_size_cm={20,10,5};validate_fill_projection(p);assert(fill_effective_uv_scale(p)==(std::array<double,2>{10,10}));const auto from=fill_uv_map(p,.133,.374),period=fill_uv_map(p,.233,.374);assert(std::abs(period[0]-from[0]-1)<1e-12&&period[1]==from[1]);const auto restored=fill_uv_frame(p,from[0],from[1]);assert(std::abs(restored[0]-.133)<1e-12&&std::abs(restored[1]-.374)<1e-12);
- p.rotation=90;const auto base=fill_uv_map(p,.133,.374),along_u=fill_uv_map(p,.183,.374),along_v=fill_uv_map(p,.133,.574);assert(std::abs(along_u[1]-base[1]+1)<1e-10&&std::abs(along_v[0]-base[0]-1)<1e-10);const auto inverse=fill_uv_frame(p,base[0],base[1]);assert(std::abs(inverse[0]-.133)<1e-12&&std::abs(inverse[1]-.374)<1e-12);p.rotation=0;
- for(auto &triangle:scene.uv_triangles){for(auto &uv:triangle.corners){const auto before=uv;uv={before[1],1-before[0]};}for(auto &position:triangle.positions){const auto before=position;position={float(before[0]*.6-before[1]*.8),float(before[0]*.8+before[1]*.6),0};}}metric=native_length_per_uv(scene,4);assert(std::abs(metric[0]-1)<1e-6&&std::abs(metric[1]-2)<1e-6);
- p.mode=1;p.custom_size_cm={20,20,20};FillSurfacePoint point;point.valid=true;point.position={.123f,.217f,.31f};point.footprint=.001;assert(fill_triplanar_sample(p,point,1)==fill_triplanar_sample(p,point,100));auto shifted=point;shifted.position[0]+=.2f;assert(std::abs(fill_triplanar_sample(p,point,1)-fill_triplanar_sample(p,shifted,1))<1e-6);bool sensitive=false;p.physical=false;for(int i=0;i<30;++i){point.position={float(i*.037),float(i*.021),0};sensitive|=fill_triplanar_sample(p,point,1)!=fill_triplanar_sample(p,point,100);}assert(sensitive);
- NewProjectOptions settings;settings.absolute_mesh_path="/unit.usda";settings.resolution=DocumentResolution::Pixels128;ImportSummary imported;imported.source_units={1,100};imported.materials={{4,"Surface"}};scene.materials[0].name="Surface";scene.materials[0].uniform_editable=true;scene.uv_triangles={a,b};TextureDocument document(settings,imported,scene);auto &set=document.set(4);TextureDocument::add_fill(set);auto &fill=TextureDocument::layer(set,set.selected_layer);fill.values.base_color={1,1,1,1};fill.fill.atom=true;fill.fill.physical=true;fill.fill.custom_size=false;fill.fill.asset_size_cm={10,10,10};double periodic=0;for(int y=0;y<128;++y)for(int x=0;x<64;++x)periodic+=std::abs(TextureDocument::composite(set,x,y).authored.base_color[0]-TextureDocument::composite(set,x+64,y).authored.base_color[0]);assert(periodic/8192<1e-4);const auto original_document=document.to_json();const std::array bindings{TextureSetBinding{set.id,4,"Surface"}};auto loaded=TextureDocument::from_json(original_document,bindings);loaded.set(4).native_per_uv=native_length_per_uv(scene,4);assert(loaded.to_json()==original_document&&loaded.set(4).cm_per_native==100);int changed=0;UnitSettings half;half.internal=false;half.custom_cm_per_file_unit=50;half.auto_physical=true;loaded.set_units(half);for(int y=0;y<128;++y)for(int x=0;x<128;++x)changed+=TextureDocument::composite(set,x,y).authored.base_color[0]!=TextureDocument::composite(loaded.set(4),x,y).authored.base_color[0];assert(changed>1000&&loaded.settings().units==half&&loaded.set(4).cm_per_native==50);auto legacy=original_document;legacy["schema"]=21;legacy.remove("units");auto old=TextureDocument::from_json(legacy,bindings);assert(!old.settings().source_units.exact&&old.set(4).cm_per_native==100&&!old.set(4).layers.back().fill.physical);rejected=false;try{old.set_units(half);}catch(const std::exception &){rejected=true;}assert(rejected);old.set_source_units({1,100});old.set_units(half);assert(old.set(4).cm_per_native==50);auto corrupt=original_document;auto unit=corrupt["units"].toObject();unit["native_per_file"]=0;corrupt["units"]=unit;rejected=false;try{TextureDocument::from_json(corrupt,bindings);}catch(const std::exception &){rejected=true;}assert(rejected);
- assert(inspect_source_units("unitless.obj")==SourceUnits{});assert(inspect_source_units("unitless.ABC")==SourceUnits{});const auto usd=inspect_source_units(BTS_PHYSICAL_USD_FIXTURE);assert(usd== (SourceUnits{1,100}));QTemporaryDir directory(QString(BTS_PHYSICAL_TEST_ROOT)+"/units-XXXXXX");assert(directory.isValid());QFile file(directory.path()+"/centimeters.dae");assert(file.open(QIODevice::WriteOnly));file.write("<COLLADA><asset><unit meter=\"0.01\"/></asset></COLLADA>");file.close();const auto dae=inspect_source_units(file.fileName().toStdString());assert(dae==(SourceUnits{.01,1}));std::cout<<"Source cm/meter/custom units, rotated anisotropic UV metric, physical period and extent-independent triplanar size passed\n";
+int main()
+{
+  using namespace bts;
+  assert(centimeters_per_native_unit({}, {}) == 1);
+  assert(centimeters_per_native_unit({}, {.01, 1}) == 100);
+  assert(centimeters_per_native_unit({}, {1, 100}) == 100);
+  UnitSettings custom;
+  custom.internal = false;
+  assert(centimeters_per_native_unit(custom, {.01, 1}) == 100);
+  assert(centimeters_per_native_unit(custom, {1, 100}) == 1);
+  custom.custom_cm_per_file_unit = 2;
+  assert(centimeters_per_native_unit(custom, {.01, 1}) == 200);
+  bool rejected = false;
+  custom.custom_cm_per_file_unit = 0;
+  try {
+    centimeters_per_native_unit(custom, {});
+  }
+  catch (const std::exception &) {
+    rejected = true;
+  }
+  assert(rejected);
+  SceneSnapshot scene;
+  MaterialSummary material;
+  material.session_id = 4;
+  scene.materials.push_back(material);
+  UvFaceTriangle a, b;
+  a.corners = {{{0, 0}, {1, 0}, {1, 1}}};
+  b.corners = {{{0, 0}, {1, 1}, {0, 1}}};
+  a.positions = {{{0, 0, 0}, {2, 0, 0}, {2, 1, 0}}};
+  b.positions = {{{0, 0, 0}, {2, 1, 0}, {0, 1, 0}}};
+  scene.uv_triangles = {a, b};
+  auto metric = native_length_per_uv(scene, 4);
+  assert(std::abs(metric[0] - 2) < 1e-12 && std::abs(metric[1] - 1) < 1e-12);
+  FillProjection p;
+  p.atom = true;
+  p.physical = true;
+  p.native_per_uv = metric;
+  p.cm_per_native = 100;
+  p.custom_size_cm = {20, 10, 5};
+  validate_fill_projection(p);
+  assert(fill_effective_uv_scale(p) == (std::array<double, 2>{10, 10}));
+  const auto from = fill_uv_map(p, .133, .374), period = fill_uv_map(p, .233, .374);
+  assert(std::abs(period[0] - from[0] - 1) < 1e-12 && period[1] == from[1]);
+  const auto restored = fill_uv_frame(p, from[0], from[1]);
+  assert(std::abs(restored[0] - .133) < 1e-12 && std::abs(restored[1] - .374) < 1e-12);
+  p.rotation = 90;
+  const auto base = fill_uv_map(p, .133, .374), along_u = fill_uv_map(p, .183, .374),
+             along_v = fill_uv_map(p, .133, .574);
+  assert(std::abs(along_u[1] - base[1] + 1) < 1e-10 && std::abs(along_v[0] - base[0] - 1) < 1e-10);
+  const auto inverse = fill_uv_frame(p, base[0], base[1]);
+  assert(std::abs(inverse[0] - .133) < 1e-12 && std::abs(inverse[1] - .374) < 1e-12);
+  p.rotation = 0;
+  for (auto &triangle : scene.uv_triangles) {
+    for (auto &uv : triangle.corners) {
+      const auto before = uv;
+      uv = {before[1], 1 - before[0]};
+    }
+    for (auto &position : triangle.positions) {
+      const auto before = position;
+      position = {
+          float(before[0] * .6 - before[1] * .8), float(before[0] * .8 + before[1] * .6), 0};
+    }
+  }
+  metric = native_length_per_uv(scene, 4);
+  assert(std::abs(metric[0] - 1) < 1e-6 && std::abs(metric[1] - 2) < 1e-6);
+  p.mode = 1;
+  p.custom_size_cm = {20, 20, 20};
+  FillSurfacePoint point;
+  point.valid = true;
+  point.position = {.123f, .217f, .31f};
+  point.footprint = .001;
+  assert(fill_triplanar_sample(p, point, 1) == fill_triplanar_sample(p, point, 100));
+  auto shifted = point;
+  shifted.position[0] += .2f;
+  assert(std::abs(fill_triplanar_sample(p, point, 1) - fill_triplanar_sample(p, shifted, 1)) <
+         1e-6);
+  bool sensitive = false;
+  p.physical = false;
+  for (int i = 0; i < 30; ++i) {
+    point.position = {float(i * .037), float(i * .021), 0};
+    sensitive |= fill_triplanar_sample(p, point, 1) != fill_triplanar_sample(p, point, 100);
+  }
+  assert(sensitive);
+  NewProjectOptions settings;
+  settings.absolute_mesh_path = "/unit.usda";
+  settings.resolution = DocumentResolution::Pixels128;
+  ImportSummary imported;
+  imported.source_units = {1, 100};
+  imported.materials = {{4, "Surface"}};
+  scene.materials[0].name = "Surface";
+  scene.materials[0].uniform_editable = true;
+  scene.uv_triangles = {a, b};
+  TextureDocument document(settings, imported, scene);
+  auto &set = document.set(4);
+  TextureDocument::add_fill(set);
+  auto &fill = TextureDocument::layer(set, set.selected_layer);
+  fill.values.base_color = {1, 1, 1, 1};
+  fill.fill.atom = true;
+  fill.fill.physical = true;
+  fill.fill.custom_size = false;
+  fill.fill.asset_size_cm = {10, 10, 10};
+  double periodic = 0;
+  for (int y = 0; y < 128; ++y)
+    for (int x = 0; x < 64; ++x)
+      periodic += std::abs(TextureDocument::composite(set, x, y).authored.base_color[0] -
+                           TextureDocument::composite(set, x + 64, y).authored.base_color[0]);
+  assert(periodic / 8192 < 1e-4);
+  const auto original_document = document.to_json();
+  const std::array bindings{TextureSetBinding{set.id, 4, "Surface"}};
+  auto loaded = TextureDocument::from_json(original_document, bindings);
+  loaded.set(4).native_per_uv = native_length_per_uv(scene, 4);
+  assert(loaded.to_json() == original_document && loaded.set(4).cm_per_native == 100);
+  int changed = 0;
+  UnitSettings half;
+  half.internal = false;
+  half.custom_cm_per_file_unit = 50;
+  half.auto_physical = true;
+  loaded.set_units(half);
+  for (int y = 0; y < 128; ++y)
+    for (int x = 0; x < 128; ++x)
+      changed += TextureDocument::composite(set, x, y).authored.base_color[0] !=
+                 TextureDocument::composite(loaded.set(4), x, y).authored.base_color[0];
+  assert(changed > 1000 && loaded.settings().units == half && loaded.set(4).cm_per_native == 50);
+  auto legacy = original_document;
+  legacy["schema"] = 21;
+  legacy.remove("units");
+  auto old = TextureDocument::from_json(legacy, bindings);
+  assert(!old.settings().source_units.exact && old.set(4).cm_per_native == 100 &&
+         !old.set(4).layers.back().fill.physical);
+  rejected = false;
+  try {
+    old.set_units(half);
+  }
+  catch (const std::exception &) {
+    rejected = true;
+  }
+  assert(rejected);
+  old.set_source_units({1, 100});
+  old.set_units(half);
+  assert(old.set(4).cm_per_native == 50);
+  auto corrupt = original_document;
+  auto unit = corrupt["units"].toObject();
+  unit["native_per_file"] = 0;
+  corrupt["units"] = unit;
+  rejected = false;
+  try {
+    TextureDocument::from_json(corrupt, bindings);
+  }
+  catch (const std::exception &) {
+    rejected = true;
+  }
+  assert(rejected);
+  assert(inspect_source_units("unitless.obj") == SourceUnits{});
+  assert(inspect_source_units("unitless.ABC") == SourceUnits{});
+  const auto usd = inspect_source_units(BTS_PHYSICAL_USD_FIXTURE);
+  assert(usd == (SourceUnits{1, 100}));
+  QTemporaryDir directory(QString(BTS_PHYSICAL_TEST_ROOT) + "/units-XXXXXX");
+  assert(directory.isValid());
+  QFile file(directory.path() + "/centimeters.dae");
+  assert(file.open(QIODevice::WriteOnly));
+  file.write("<COLLADA><asset><unit meter=\"0.01\"/></asset></COLLADA>");
+  file.close();
+  const auto dae = inspect_source_units(file.fileName().toStdString());
+  assert(dae == (SourceUnits{.01, 1}));
+  std::cout
+      << "Source cm/meter/custom units, rotated anisotropic UV metric, physical period and extent-independent triplanar size passed\n";
 }

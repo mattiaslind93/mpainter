@@ -2,22 +2,193 @@
 #include "NativeExportGuard.hh"
 #include <cassert>
 using namespace bts;
-int main(){TextureSet set;set.layers.clear();TextureLayer source;source.kind=LayerKind::Fill;auto description=std::make_shared<NativeMaterialDescription>();description->material="Source";description->channels={0,1,2};source.fill.native_material=description;set.layers.push_back(source);const auto needs=[&]{return texture_export_needs_native_capture(set,1001);};assert(needs());
- set.layers[0].visible=false;assert(!needs());set.layers[0].visible=true;set.layers[0].channels.fill(false);set.layers[0].ao_enabled=false;assert(!needs());set.layers[0].channels[0]=true;set.layers[0].blending[0]=LayerBlend::Disabled;assert(!needs());set.layers[0].blending[0]=LayerBlend::Normal;set.layers[0].opacity[0]=0;assert(!needs());set.layers[0].blending[0]=LayerBlend::Replace;assert(!needs());set.layers[0].opacity[0]=1;assert(needs());set.channels.fill(false);assert(!needs());set.channels[0]=true;
- set.layers[0].geometry.type=1;set.layers[0].geometry.set_tile(1001,false);assert(!needs());assert(texture_export_needs_native_capture(set,1002));set.layers[0].geometry={};set.layers[0].mask.emplace();set.layers[0].mask->background=0;assert(!needs());set.layers[0].mask.reset();
- TextureLayer folder;folder.kind=LayerKind::Folder;folder.visible=false;set.layers[0].parent=folder.id;set.layers[0].depth=1;set.layers.push_back(folder);assert(!needs());set.layers[1].visible=true;assert(needs());set.layers[1].channels[0]=false;assert(!needs());set.layers[1].channels[0]=true;set.layers[1].blending[0]=LayerBlend::Disabled;assert(!needs());set.layers[1].blending[0]=LayerBlend::Passthrough;set.layers[1].opacity[0]=0;assert(!needs());set.layers[1].opacity[0]=1;assert(needs());
- // A visible parent can contain hidden retained originals and an ordinary bake.
- set.layers[1].visible=false;TextureLayer baked;baked.kind=LayerKind::Fill;set.layers.push_back(baked);TextureLayer outer;outer.kind=LayerKind::Folder;for(int i:{1,2})set.layers[i].parent=outer.id;set.layers[0].depth=2;set.layers[1].depth=set.layers[2].depth=1;set.layers.push_back(outer);assert(!needs());
- // Expanded instance rows are the authority, not the original unexpanded vector.
- set.instance_layers=std::make_shared<const std::vector<TextureLayer>>(std::vector<TextureLayer>{source});assert(needs());auto hidden=source;hidden.visible=false;set.instance_layers=std::make_shared<const std::vector<TextureLayer>>(std::vector<TextureLayer>{hidden});assert(!needs());set.instance_layers.reset();
- // Hidden producer content anchors still carry native data; ordinary Levels do not.
- LevelsEffect point;point.kind=ContentEffectKind::Anchor;point.anchor_name="Source";set.layers[0].effects.push_back(point);set.layers[2].fill.anchors[0].source=point.id;assert(needs());set.layers[2].fill.anchors[0]={};LevelsEffect levels;set.layers[2].effects.push_back(levels);assert(!needs());
- // Generator and mask Fill references also retain the producer dependency.
- LevelsEffect generator;generator.kind=ContentEffectKind::Generator;generator.channel=0;generator.input_anchors[0].source=point.id;set.layers[2].effects.push_back(generator);assert(needs());set.layers[2].effects.back().blending=LayerBlend::Disabled;assert(!needs());set.layers[2].effects.back().blending=LayerBlend::Normal;set.layers[2].effects.back().enabled=false;assert(!needs());set.layers[2].mask.emplace();MaskEffect fill;fill.kind=MaskEffectKind::Fill;fill.anchor_source=point.id;set.layers[2].mask->effects.push_back(fill);assert(needs());set.layers[2].mask->enabled=false;assert(!needs());
- // A raw anchor of an ordinary parent also ignores the hidden original subtree.
- set.layers[2].mask.reset();LevelsEffect outer_point;outer_point.kind=ContentEffectKind::Anchor;outer_point.anchor_name="Flattened parent";set.layers.back().effects.push_back(outer_point);TextureLayer consumer;consumer.kind=LayerKind::Fill;consumer.fill.anchors[0].source=outer_point.id;set.layers.push_back(consumer);assert(!needs());set.layers[1].visible=true;assert(needs());
- // Long valid dependency chains use the actual stack budget, not a count cap.
- TextureSet chain;chain.layers.clear();chain.channels={true,false,false,false,false};TextureLayer previous=source;previous.visible=false;LevelsEffect anchor;anchor.kind=ContentEffectKind::Anchor;anchor.anchor_name="Lower source";previous.effects={anchor};chain.layers.push_back(previous);QUuid previous_point=anchor.id;for(int i=0;i<1000;++i){TextureLayer node;node.kind=LayerKind::Fill;node.visible=false;node.fill.anchors[0].source=previous_point;LevelsEffect next;next.kind=ContentEffectKind::Anchor;next.anchor_name="Chain";node.effects={next};previous_point=next.id;chain.layers.push_back(std::move(node));}TextureLayer top;top.kind=LayerKind::Fill;top.fill.anchors[0].source=previous_point;chain.layers.push_back(top);assert(texture_export_needs_native_capture(chain,1001));
- {TextureRamQueryScope low(+[]()->std::uint64_t{return 0;});bool rejected=false;try{texture_export_needs_native_capture(chain,1001);}catch(const std::length_error &e){rejected=std::string(e.what()).find("available")!=std::string::npos;}assert(!rejected);}
- puts("PASS native export visibility/folder/channels/blend/opacity/tile/mask/instance/anchor dependencies"); {TextureSet spatial;LevelsEffect effect;effect.kind=ContentEffectKind::Filter;effect.filter.resource=9;spatial.layers.front().effects={effect};assert(texture_export_needs_native_capture(spatial,1001));spatial.layers.front().effects.clear();MaskEffect filter;filter.kind=MaskEffectKind::Filter;filter.filter.resource=10;MaskEffect group;group.kind=MaskEffectKind::Group;group.group_effects=std::make_shared<const std::vector<MaskEffect>>(std::vector{filter});spatial.layers.front().mask=LayerMask{};spatial.layers.front().mask->effects={group};assert(texture_export_needs_native_capture(spatial,1001));spatial.layers.front().mask.reset();assert(!texture_export_needs_native_capture(spatial,1001));}
+int main()
+{
+  TextureSet set;
+  set.layers.clear();
+  TextureLayer source;
+  source.kind = LayerKind::Fill;
+  auto description = std::make_shared<NativeMaterialDescription>();
+  description->material = "Source";
+  description->channels = {0, 1, 2};
+  source.fill.native_material = description;
+  set.layers.push_back(source);
+  const auto needs = [&] { return texture_export_needs_native_capture(set, 1001); };
+  assert(needs());
+  set.layers[0].visible = false;
+  assert(!needs());
+  set.layers[0].visible = true;
+  set.layers[0].channels.fill(false);
+  set.layers[0].ao_enabled = false;
+  assert(!needs());
+  set.layers[0].channels[0] = true;
+  set.layers[0].blending[0] = LayerBlend::Disabled;
+  assert(!needs());
+  set.layers[0].blending[0] = LayerBlend::Normal;
+  set.layers[0].opacity[0] = 0;
+  assert(!needs());
+  set.layers[0].blending[0] = LayerBlend::Replace;
+  assert(!needs());
+  set.layers[0].opacity[0] = 1;
+  assert(needs());
+  set.channels.fill(false);
+  assert(!needs());
+  set.channels[0] = true;
+  set.layers[0].geometry.type = 1;
+  set.layers[0].geometry.set_tile(1001, false);
+  assert(!needs());
+  assert(texture_export_needs_native_capture(set, 1002));
+  set.layers[0].geometry = {};
+  set.layers[0].mask.emplace();
+  set.layers[0].mask->background = 0;
+  assert(!needs());
+  set.layers[0].mask.reset();
+  TextureLayer folder;
+  folder.kind = LayerKind::Folder;
+  folder.visible = false;
+  set.layers[0].parent = folder.id;
+  set.layers[0].depth = 1;
+  set.layers.push_back(folder);
+  assert(!needs());
+  set.layers[1].visible = true;
+  assert(needs());
+  set.layers[1].channels[0] = false;
+  assert(!needs());
+  set.layers[1].channels[0] = true;
+  set.layers[1].blending[0] = LayerBlend::Disabled;
+  assert(!needs());
+  set.layers[1].blending[0] = LayerBlend::Passthrough;
+  set.layers[1].opacity[0] = 0;
+  assert(!needs());
+  set.layers[1].opacity[0] = 1;
+  assert(needs());
+  // A visible parent can contain hidden retained originals and an ordinary bake.
+  set.layers[1].visible = false;
+  TextureLayer baked;
+  baked.kind = LayerKind::Fill;
+  set.layers.push_back(baked);
+  TextureLayer outer;
+  outer.kind = LayerKind::Folder;
+  for (int i : {1, 2})
+    set.layers[i].parent = outer.id;
+  set.layers[0].depth = 2;
+  set.layers[1].depth = set.layers[2].depth = 1;
+  set.layers.push_back(outer);
+  assert(!needs());
+  // Expanded instance rows are the authority, not the original unexpanded vector.
+  set.instance_layers = std::make_shared<const std::vector<TextureLayer>>(
+      std::vector<TextureLayer>{source});
+  assert(needs());
+  auto hidden = source;
+  hidden.visible = false;
+  set.instance_layers = std::make_shared<const std::vector<TextureLayer>>(
+      std::vector<TextureLayer>{hidden});
+  assert(!needs());
+  set.instance_layers.reset();
+  // Hidden producer content anchors still carry native data; ordinary Levels do not.
+  LevelsEffect point;
+  point.kind = ContentEffectKind::Anchor;
+  point.anchor_name = "Source";
+  set.layers[0].effects.push_back(point);
+  set.layers[2].fill.anchors[0].source = point.id;
+  assert(needs());
+  set.layers[2].fill.anchors[0] = {};
+  LevelsEffect levels;
+  set.layers[2].effects.push_back(levels);
+  assert(!needs());
+  // Generator and mask Fill references also retain the producer dependency.
+  LevelsEffect generator;
+  generator.kind = ContentEffectKind::Generator;
+  generator.channel = 0;
+  generator.input_anchors[0].source = point.id;
+  set.layers[2].effects.push_back(generator);
+  assert(needs());
+  set.layers[2].effects.back().blending = LayerBlend::Disabled;
+  assert(!needs());
+  set.layers[2].effects.back().blending = LayerBlend::Normal;
+  set.layers[2].effects.back().enabled = false;
+  assert(!needs());
+  set.layers[2].mask.emplace();
+  MaskEffect fill;
+  fill.kind = MaskEffectKind::Fill;
+  fill.anchor_source = point.id;
+  set.layers[2].mask->effects.push_back(fill);
+  assert(needs());
+  set.layers[2].mask->enabled = false;
+  assert(!needs());
+  // A raw anchor of an ordinary parent also ignores the hidden original subtree.
+  set.layers[2].mask.reset();
+  LevelsEffect outer_point;
+  outer_point.kind = ContentEffectKind::Anchor;
+  outer_point.anchor_name = "Flattened parent";
+  set.layers.back().effects.push_back(outer_point);
+  TextureLayer consumer;
+  consumer.kind = LayerKind::Fill;
+  consumer.fill.anchors[0].source = outer_point.id;
+  set.layers.push_back(consumer);
+  assert(!needs());
+  set.layers[1].visible = true;
+  assert(needs());
+  // Long valid dependency chains use the actual stack budget, not a count cap.
+  TextureSet chain;
+  chain.layers.clear();
+  chain.channels = {true, false, false, false, false};
+  TextureLayer previous = source;
+  previous.visible = false;
+  LevelsEffect anchor;
+  anchor.kind = ContentEffectKind::Anchor;
+  anchor.anchor_name = "Lower source";
+  previous.effects = {anchor};
+  chain.layers.push_back(previous);
+  QUuid previous_point = anchor.id;
+  for (int i = 0; i < 1000; ++i) {
+    TextureLayer node;
+    node.kind = LayerKind::Fill;
+    node.visible = false;
+    node.fill.anchors[0].source = previous_point;
+    LevelsEffect next;
+    next.kind = ContentEffectKind::Anchor;
+    next.anchor_name = "Chain";
+    node.effects = {next};
+    previous_point = next.id;
+    chain.layers.push_back(std::move(node));
+  }
+  TextureLayer top;
+  top.kind = LayerKind::Fill;
+  top.fill.anchors[0].source = previous_point;
+  chain.layers.push_back(top);
+  assert(texture_export_needs_native_capture(chain, 1001));
+  {
+    TextureRamQueryScope low(+[]() -> std::uint64_t { return 0; });
+    bool rejected = false;
+    try {
+      texture_export_needs_native_capture(chain, 1001);
+    }
+    catch (const std::length_error &e) {
+      rejected = std::string(e.what()).find("available") != std::string::npos;
+    }
+    assert(!rejected);
+  }
+  puts(
+      "PASS native export visibility/folder/channels/blend/opacity/tile/mask/instance/anchor dependencies");
+  {
+    TextureSet spatial;
+    LevelsEffect effect;
+    effect.kind = ContentEffectKind::Filter;
+    effect.filter.resource = 9;
+    spatial.layers.front().effects = {effect};
+    assert(texture_export_needs_native_capture(spatial, 1001));
+    spatial.layers.front().effects.clear();
+    MaskEffect filter;
+    filter.kind = MaskEffectKind::Filter;
+    filter.filter.resource = 10;
+    MaskEffect group;
+    group.kind = MaskEffectKind::Group;
+    group.group_effects = std::make_shared<const std::vector<MaskEffect>>(std::vector{filter});
+    spatial.layers.front().mask = LayerMask{};
+    spatial.layers.front().mask->effects = {group};
+    assert(texture_export_needs_native_capture(spatial, 1001));
+    spatial.layers.front().mask.reset();
+    assert(!texture_export_needs_native_capture(spatial, 1001));
+  }
 }

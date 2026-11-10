@@ -18,14 +18,38 @@ namespace bts::spsm {
 // Structural data, not an executable graph or a native material. Wire tags and
 // class/field names remain intact, including fields not understood by the app.
 using NodeId = std::size_t;
-struct FloatValues { std::array<float, 16> values{}; std::uint8_t count = 0; };
-struct IntValues { std::array<std::int32_t, 4> values{}; std::uint8_t count = 0; };
-struct Blob { std::uint64_t offset = 0, size = 0; };
-struct Array { std::vector<NodeId> elements; };
-struct Field { std::string name; NodeId value = 0; };
-struct Object { std::string class_name; std::vector<Field> fields; };
-using Value = std::variant<std::monostate, FloatValues, IntValues, std::int64_t,
-                           std::uint64_t, bool, std::string, Blob, Array, Object>;
+struct FloatValues {
+  std::array<float, 16> values{};
+  std::uint8_t count = 0;
+};
+struct IntValues {
+  std::array<std::int32_t, 4> values{};
+  std::uint8_t count = 0;
+};
+struct Blob {
+  std::uint64_t offset = 0, size = 0;
+};
+struct Array {
+  std::vector<NodeId> elements;
+};
+struct Field {
+  std::string name;
+  NodeId value = 0;
+};
+struct Object {
+  std::string class_name;
+  std::vector<Field> fields;
+};
+using Value = std::variant<std::monostate,
+                           FloatValues,
+                           IntValues,
+                           std::int64_t,
+                           std::uint64_t,
+                           bool,
+                           std::string,
+                           Blob,
+                           Array,
+                           Object>;
 struct Node {
   std::uint8_t wire_tag = 0;
   std::uint64_t offset = 0, end = 0;
@@ -69,8 +93,7 @@ struct Archive {
   // excludes HDF5's internal container/index IO.
   std::uint64_t payload_bytes_read = 0;
 };
-struct ReadOptions {
-};
+struct ReadOptions {};
 class Error : public std::runtime_error {
  public:
   using std::runtime_error::runtime_error;
@@ -94,13 +117,15 @@ struct ImageResource {
   ImageSourceStamp stamp;
 };
 using ImageBytes = std::vector<std::uint8_t>;
-ImageResource describe_image_resource(const Archive &, std::string_view dataset,
-                                      ReadOptions = {});
+ImageResource describe_image_resource(const Archive &, std::string_view dataset, ReadOptions = {});
 std::shared_ptr<const ImageBytes> read_image_range(const ImageResource &,
-    std::uint64_t offset, std::uint64_t count, ReadOptions = {});
+                                                   std::uint64_t offset,
+                                                   std::uint64_t count,
+                                                   ReadOptions = {});
 
 // Fixed metadata-only reader for the embedded Shelf previews. Never accepts a
 // resource path and cannot open compiled packages. Empty means no preview bank.
-std::shared_ptr<const ImageBytes> read_preview_metadata(const std::filesystem::path &,ReadOptions = {});
+std::shared_ptr<const ImageBytes> read_preview_metadata(const std::filesystem::path &,
+                                                        ReadOptions = {});
 
-} // namespace bts::spsm
+}  // namespace bts::spsm

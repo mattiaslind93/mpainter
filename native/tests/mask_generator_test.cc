@@ -4,27 +4,252 @@
 #include <cassert>
 #include <iostream>
 #include <limits>
-int main(){using namespace bts;LayerMask mask;mask.background=.75;MaskEffect generator;generator.kind=MaskEffectKind::Generator;mask.effects={generator};MeshMaps maps;assert(mask.value(0,0,1001,128,128,nullptr,&maps)==.75);mask.effects[0].generator=1;assert(mask.value(0,0,1001,128,128,nullptr,&maps)==.75);const auto plane=[](bool reversed){std::vector<float> rgba(32*32*4);for(int y=0;y<32;++y)for(int x=0;x<32;++x){const auto i=(y*32+x)*4;rgba[i]=.2;rgba[i+1]=.8;rgba[i+2]=reversed?1-x/31.f:x/31.f;rgba[i+3]=1;}auto data=std::make_shared<const MeshMapPixels>(32,std::move(rgba));return MeshMapPlane{32,data->hash,data};};MeshMap position;position.name="Position";position.tiles[1001]=plane(false);maps[5]=position;assert(mask.value(0,0,1001,32,32,nullptr,&maps)==0&&mask.value(31,0,1001,32,32,nullptr,&maps)==1);mask.effects[0].axis=0;assert(std::abs(mask.value(0,0,1001,32,32,nullptr,&maps)-.2)<1e-6);mask.effects[0].axis=2;mask.effects[0].invert=true;assert(mask.value(0,0,1001,32,32,nullptr,&maps)==1);mask.effects[0].invert=false;mask.effects[0].opacity=.5;assert(mask.value(31,0,1001,32,32,nullptr,&maps)==.875);mask.effects[0].opacity=1;maps[5]->tiles[1001]=plane(true);assert(mask.value(0,0,1001,32,32,nullptr,&maps)==1);mask.effects[0].generator=2;assert(mask.value(0,0,1001,32,32,nullptr,&maps)==.75);maps[4]=position;assert(std::abs(mask.value(0,0,1001,32,32,nullptr,&maps)-.2)<1e-6);mask.effects[0].contrast=2;mask.effects[0].bias=.1;assert(mask.value(0,0,1001,32,32,nullptr,&maps)<1e-6);
- mask.effects[0].generator=3;mask.effects[0].contrast=1;mask.effects[0].bias=0;mask.effects[0].invert=true;mask.effects[0].curve=2;maps[3]=position;assert(std::abs(mask.value(0,0,1001,32,32,nullptr,&maps)-.64f)<1e-6);
- mask.effects[0].invert=false;mask.effects[0].curve=1;assert(std::abs(mask.value(0,0,1001,32,32,nullptr,&maps)-.104f)<1e-6);
- auto legacy=mask_effects_json(mask.effects);auto old=legacy[0].toObject();old.remove("curve");old.remove("map_filter");legacy[0]=old;const auto restored=read_mask_effects(legacy);assert(restored[0].curve==0&&restored[0].map_filter==0);
- std::vector<float> gradient(32*32*4,1);for(int y=0;y<32;++y)for(int x=0;x<32;++x)gradient[(y*32+x)*4]=float(x)/31;auto data=std::make_shared<MeshMapPixels>(32,std::move(gradient));maps[3]->tiles[1001]={32,data->hash,data};mask.effects[0].curve=0;mask.effects[0].map_filter=0;const float nearest=mask.value(4,0,1001,128,128,nullptr,&maps);mask.effects[0].map_filter=1;const float linear=mask.value(4,0,1001,128,128,nullptr,&maps);assert(std::abs(nearest-1.f/31)<1e-6&&std::abs(linear-.625f/31)<1e-6);
- // Resource-specific mesh inputs and deterministic dirt/light equations.
- mask.effects[0].generator=4;mask.effects[0].curve=0;mask.effects[0].map_filter=0;maps[6]=position;assert(std::abs(mask.value(0,0,1001,32,32,nullptr,&maps)-.2f)<1e-6);
- mask.effects[0].generator=5;maps[3]=position;maps[4]=position;assert(std::abs(mask.value(0,0,1001,32,32,nullptr,&maps)-.72f)<1e-6);mask.effects[0].dirt_curvature=1;assert(std::abs(mask.value(0,0,1001,32,32,nullptr,&maps)-.64f)<1e-6);maps[4].reset();assert(mask.value(0,0,1001,32,32,nullptr,&maps)==mask.background);maps[4]=position;
- std::vector<float> normal_rgba(32*32*4);for(int i=0;i<32*32;++i){normal_rgba[i*4]=normal_rgba[i*4+1]=.5f;normal_rgba[i*4+2]=normal_rgba[i*4+3]=1;}auto normal_pixels=std::make_shared<MeshMapPixels>(32,std::move(normal_rgba));MeshMap world;world.name="World space normal";world.tiles[1001]={32,normal_pixels->hash,normal_pixels};maps[1]=world;
- mask.effects[0].generator=6;assert(mask.value(0,0,1001,32,32,nullptr,&maps)==1);mask.effects[0].light_direction={1,0,0};assert(mask.value(0,0,1001,32,32,nullptr,&maps)==0);mask.effects[0].light_direction={1,0,1};assert(std::abs(mask.value(0,0,1001,32,32,nullptr,&maps)-std::sqrt(.5f))<1e-6);mask.effects[0].light_direction={0,0,0};assert(mask.value(0,0,1001,32,32,nullptr,&maps)==0);
- auto old_settings=mask_effects_json(mask.effects);auto old_generator=old_settings[0].toObject();old_generator["generator"]=2;old_generator.remove("light_direction");old_generator.remove("dirt_curvature");old_settings[0]=old_generator;const auto legacy_generator=read_mask_effects(old_settings)[0];assert((legacy_generator.light_direction==std::array<float,3>({0,0,1})&&legacy_generator.dirt_curvature==.5f));
- auto invalid_settings=mask_effects_json(mask.effects);auto invalid_direction=invalid_settings[0].toObject();invalid_direction["light_direction"]=QJsonArray{0,2,1};invalid_settings[0]=invalid_direction;bool bad_direction=false;try{read_mask_effects(invalid_settings);}catch(const std::exception &){bad_direction=true;}assert(bad_direction);
- // Content resources create coverage on an empty Paint source and preserve
- // unrelated channels; the same maps/settings also roundtrip as mask resources.
- {LevelsEffect effect;effect.kind=ContentEffectKind::Generator;effect.generator=4;effect.channel=4;effect.opacity=.4f;float coverage=0;const auto value=apply_content_effects({effect},4,{0,0,0},coverage,0,0,1001,32,32,ChannelPrecision::L32F,nullptr,nullptr,&maps);assert(std::abs(value[0]-.2f)<1e-6&&std::abs(coverage-.4f)<1e-6);
-  float other_coverage=.3f;const auto other=apply_content_effects({effect},2,{.7f,.7f,.7f},other_coverage,0,0,1001,32,32,ChannelPrecision::L32F,nullptr,nullptr,&maps);assert(other[0]==.7f&&other_coverage==.3f);
-  const auto missing=maps[6];maps[6].reset();coverage=.6f;const auto untouched=apply_content_effects({effect},4,{.8f,.8f,.8f},coverage,0,0,1001,32,32,ChannelPrecision::L32F,nullptr,nullptr,&maps);assert(untouched[0]==.8f&&coverage==.6f);maps[6]=missing;
-  effect.generator=5;effect.light_direction={.3f,.4f,.5f};effect.dirt_curvature=.7f;effect.name="Content dirt";assert(effects_json(read_effects(effects_json({effect})))==effects_json({effect}));
-  for(const int kind:{7,8,9}){effect.generator=kind;assert(read_effects(effects_json({effect}))[0].generator==kind);}
-  auto invalid=effects_json({effect});auto bad=invalid[0].toObject();bad["generator"]=std::numeric_limits<int>::max();invalid[0]=bad;bool rejected=false;try{read_effects(invalid);}catch(const std::exception &){rejected=true;}assert(rejected);
- }
- {TextureSet generated;generated.texture_resolution=128;generated.precision[4]=ChannelPrecision::L32F;generated.mesh_maps=maps;auto &layer=generated.layers.front();layer.channels[4]=true;LevelsEffect effect;effect.kind=ContentEffectKind::Generator;effect.generator=4;effect.channel=4;effect.opacity=.4f;layer.effects={effect};const auto result=TextureDocument::composite(generated,0,0);assert(std::abs(result.coverage[4]-.4f)<1e-6&&std::abs(result.authored.bump-.2f)<1e-6);}
- SceneSnapshot scene;MaterialSummary m;m.session_id=1;m.name="Generator";m.uniform_editable=true;scene.materials={m};ImportSummary imported;imported.materials={{1,"Generator"}};TextureDocument doc({},imported,scene);auto &set=doc.set(1);set.layers[0].mask=mask;set.mesh_maps=maps;set.selected_mask=true;set.selected_effect=mask.effects[0].id;std::vector<TextureSetBinding> bindings{{set.id,1,set.name}};assert(TextureDocument::from_json(doc.to_json(),bindings).to_json()==doc.to_json());mask.background=0;const auto bytes=write_mask_preset(mask);assert(mask_effects_json(read_mask_preset(bytes).effects)==mask_effects_json(mask.effects));std::cout<<"Empty/missing-input no-op, baked Position axis, Curvature, contrast/bias/inversion/opacity, controlled input substitution and editable metadata/preset roundtrip passed\n";
+int main()
+{
+  using namespace bts;
+  LayerMask mask;
+  mask.background = .75;
+  MaskEffect generator;
+  generator.kind = MaskEffectKind::Generator;
+  mask.effects = {generator};
+  MeshMaps maps;
+  assert(mask.value(0, 0, 1001, 128, 128, nullptr, &maps) == .75);
+  mask.effects[0].generator = 1;
+  assert(mask.value(0, 0, 1001, 128, 128, nullptr, &maps) == .75);
+  const auto plane = [](bool reversed) {
+    std::vector<float> rgba(32 * 32 * 4);
+    for (int y = 0; y < 32; ++y)
+      for (int x = 0; x < 32; ++x) {
+        const auto i = (y * 32 + x) * 4;
+        rgba[i] = .2;
+        rgba[i + 1] = .8;
+        rgba[i + 2] = reversed ? 1 - x / 31.f : x / 31.f;
+        rgba[i + 3] = 1;
+      }
+    auto data = std::make_shared<const MeshMapPixels>(32, std::move(rgba));
+    return MeshMapPlane{32, data->hash, data};
+  };
+  MeshMap position;
+  position.name = "Position";
+  position.tiles[1001] = plane(false);
+  maps[5] = position;
+  assert(mask.value(0, 0, 1001, 32, 32, nullptr, &maps) == 0 &&
+         mask.value(31, 0, 1001, 32, 32, nullptr, &maps) == 1);
+  mask.effects[0].axis = 0;
+  assert(std::abs(mask.value(0, 0, 1001, 32, 32, nullptr, &maps) - .2) < 1e-6);
+  mask.effects[0].axis = 2;
+  mask.effects[0].invert = true;
+  assert(mask.value(0, 0, 1001, 32, 32, nullptr, &maps) == 1);
+  mask.effects[0].invert = false;
+  mask.effects[0].opacity = .5;
+  assert(mask.value(31, 0, 1001, 32, 32, nullptr, &maps) == .875);
+  mask.effects[0].opacity = 1;
+  maps[5]->tiles[1001] = plane(true);
+  assert(mask.value(0, 0, 1001, 32, 32, nullptr, &maps) == 1);
+  mask.effects[0].generator = 2;
+  assert(mask.value(0, 0, 1001, 32, 32, nullptr, &maps) == .75);
+  maps[4] = position;
+  assert(std::abs(mask.value(0, 0, 1001, 32, 32, nullptr, &maps) - .2) < 1e-6);
+  mask.effects[0].contrast = 2;
+  mask.effects[0].bias = .1;
+  assert(mask.value(0, 0, 1001, 32, 32, nullptr, &maps) < 1e-6);
+  mask.effects[0].generator = 3;
+  mask.effects[0].contrast = 1;
+  mask.effects[0].bias = 0;
+  mask.effects[0].invert = true;
+  mask.effects[0].curve = 2;
+  maps[3] = position;
+  assert(std::abs(mask.value(0, 0, 1001, 32, 32, nullptr, &maps) - .64f) < 1e-6);
+  mask.effects[0].invert = false;
+  mask.effects[0].curve = 1;
+  assert(std::abs(mask.value(0, 0, 1001, 32, 32, nullptr, &maps) - .104f) < 1e-6);
+  auto legacy = mask_effects_json(mask.effects);
+  auto old = legacy[0].toObject();
+  old.remove("curve");
+  old.remove("map_filter");
+  legacy[0] = old;
+  const auto restored = read_mask_effects(legacy);
+  assert(restored[0].curve == 0 && restored[0].map_filter == 0);
+  std::vector<float> gradient(32 * 32 * 4, 1);
+  for (int y = 0; y < 32; ++y)
+    for (int x = 0; x < 32; ++x)
+      gradient[(y * 32 + x) * 4] = float(x) / 31;
+  auto data = std::make_shared<MeshMapPixels>(32, std::move(gradient));
+  maps[3]->tiles[1001] = {32, data->hash, data};
+  mask.effects[0].curve = 0;
+  mask.effects[0].map_filter = 0;
+  const float nearest = mask.value(4, 0, 1001, 128, 128, nullptr, &maps);
+  mask.effects[0].map_filter = 1;
+  const float linear = mask.value(4, 0, 1001, 128, 128, nullptr, &maps);
+  assert(std::abs(nearest - 1.f / 31) < 1e-6 && std::abs(linear - .625f / 31) < 1e-6);
+  // Resource-specific mesh inputs and deterministic dirt/light equations.
+  mask.effects[0].generator = 4;
+  mask.effects[0].curve = 0;
+  mask.effects[0].map_filter = 0;
+  maps[6] = position;
+  assert(std::abs(mask.value(0, 0, 1001, 32, 32, nullptr, &maps) - .2f) < 1e-6);
+  mask.effects[0].generator = 5;
+  maps[3] = position;
+  maps[4] = position;
+  assert(std::abs(mask.value(0, 0, 1001, 32, 32, nullptr, &maps) - .72f) < 1e-6);
+  mask.effects[0].dirt_curvature = 1;
+  assert(std::abs(mask.value(0, 0, 1001, 32, 32, nullptr, &maps) - .64f) < 1e-6);
+  maps[4].reset();
+  assert(mask.value(0, 0, 1001, 32, 32, nullptr, &maps) == mask.background);
+  maps[4] = position;
+  std::vector<float> normal_rgba(32 * 32 * 4);
+  for (int i = 0; i < 32 * 32; ++i) {
+    normal_rgba[i * 4] = normal_rgba[i * 4 + 1] = .5f;
+    normal_rgba[i * 4 + 2] = normal_rgba[i * 4 + 3] = 1;
+  }
+  auto normal_pixels = std::make_shared<MeshMapPixels>(32, std::move(normal_rgba));
+  MeshMap world;
+  world.name = "World space normal";
+  world.tiles[1001] = {32, normal_pixels->hash, normal_pixels};
+  maps[1] = world;
+  mask.effects[0].generator = 6;
+  assert(mask.value(0, 0, 1001, 32, 32, nullptr, &maps) == 1);
+  mask.effects[0].light_direction = {1, 0, 0};
+  assert(mask.value(0, 0, 1001, 32, 32, nullptr, &maps) == 0);
+  mask.effects[0].light_direction = {1, 0, 1};
+  assert(std::abs(mask.value(0, 0, 1001, 32, 32, nullptr, &maps) - std::sqrt(.5f)) < 1e-6);
+  mask.effects[0].light_direction = {0, 0, 0};
+  assert(mask.value(0, 0, 1001, 32, 32, nullptr, &maps) == 0);
+  auto old_settings = mask_effects_json(mask.effects);
+  auto old_generator = old_settings[0].toObject();
+  old_generator["generator"] = 2;
+  old_generator.remove("light_direction");
+  old_generator.remove("dirt_curvature");
+  old_settings[0] = old_generator;
+  const auto legacy_generator = read_mask_effects(old_settings)[0];
+  assert((legacy_generator.light_direction == std::array<float, 3>({0, 0, 1}) &&
+          legacy_generator.dirt_curvature == .5f));
+  auto invalid_settings = mask_effects_json(mask.effects);
+  auto invalid_direction = invalid_settings[0].toObject();
+  invalid_direction["light_direction"] = QJsonArray{0, 2, 1};
+  invalid_settings[0] = invalid_direction;
+  bool bad_direction = false;
+  try {
+    read_mask_effects(invalid_settings);
+  }
+  catch (const std::exception &) {
+    bad_direction = true;
+  }
+  assert(bad_direction);
+  // Content resources create coverage on an empty Paint source and preserve
+  // unrelated channels; the same maps/settings also roundtrip as mask resources.
+  {
+    LevelsEffect effect;
+    effect.kind = ContentEffectKind::Generator;
+    effect.generator = 4;
+    effect.channel = 4;
+    effect.opacity = .4f;
+    float coverage = 0;
+    const auto value = apply_content_effects({effect},
+                                             4,
+                                             {0, 0, 0},
+                                             coverage,
+                                             0,
+                                             0,
+                                             1001,
+                                             32,
+                                             32,
+                                             ChannelPrecision::L32F,
+                                             nullptr,
+                                             nullptr,
+                                             &maps);
+    assert(std::abs(value[0] - .2f) < 1e-6 && std::abs(coverage - .4f) < 1e-6);
+    float other_coverage = .3f;
+    const auto other = apply_content_effects({effect},
+                                             2,
+                                             {.7f, .7f, .7f},
+                                             other_coverage,
+                                             0,
+                                             0,
+                                             1001,
+                                             32,
+                                             32,
+                                             ChannelPrecision::L32F,
+                                             nullptr,
+                                             nullptr,
+                                             &maps);
+    assert(other[0] == .7f && other_coverage == .3f);
+    const auto missing = maps[6];
+    maps[6].reset();
+    coverage = .6f;
+    const auto untouched = apply_content_effects({effect},
+                                                 4,
+                                                 {.8f, .8f, .8f},
+                                                 coverage,
+                                                 0,
+                                                 0,
+                                                 1001,
+                                                 32,
+                                                 32,
+                                                 ChannelPrecision::L32F,
+                                                 nullptr,
+                                                 nullptr,
+                                                 &maps);
+    assert(untouched[0] == .8f && coverage == .6f);
+    maps[6] = missing;
+    effect.generator = 5;
+    effect.light_direction = {.3f, .4f, .5f};
+    effect.dirt_curvature = .7f;
+    effect.name = "Content dirt";
+    assert(effects_json(read_effects(effects_json({effect}))) == effects_json({effect}));
+    for (const int kind : {7, 8, 9}) {
+      effect.generator = kind;
+      assert(read_effects(effects_json({effect}))[0].generator == kind);
+    }
+    auto invalid = effects_json({effect});
+    auto bad = invalid[0].toObject();
+    bad["generator"] = std::numeric_limits<int>::max();
+    invalid[0] = bad;
+    bool rejected = false;
+    try {
+      read_effects(invalid);
+    }
+    catch (const std::exception &) {
+      rejected = true;
+    }
+    assert(rejected);
+  }
+  {
+    TextureSet generated;
+    generated.texture_resolution = 128;
+    generated.precision[4] = ChannelPrecision::L32F;
+    generated.mesh_maps = maps;
+    auto &layer = generated.layers.front();
+    layer.channels[4] = true;
+    LevelsEffect effect;
+    effect.kind = ContentEffectKind::Generator;
+    effect.generator = 4;
+    effect.channel = 4;
+    effect.opacity = .4f;
+    layer.effects = {effect};
+    const auto result = TextureDocument::composite(generated, 0, 0);
+    assert(std::abs(result.coverage[4] - .4f) < 1e-6 &&
+           std::abs(result.authored.bump - .2f) < 1e-6);
+  }
+  SceneSnapshot scene;
+  MaterialSummary m;
+  m.session_id = 1;
+  m.name = "Generator";
+  m.uniform_editable = true;
+  scene.materials = {m};
+  ImportSummary imported;
+  imported.materials = {{1, "Generator"}};
+  TextureDocument doc({}, imported, scene);
+  auto &set = doc.set(1);
+  set.layers[0].mask = mask;
+  set.mesh_maps = maps;
+  set.selected_mask = true;
+  set.selected_effect = mask.effects[0].id;
+  std::vector<TextureSetBinding> bindings{{set.id, 1, set.name}};
+  assert(TextureDocument::from_json(doc.to_json(), bindings).to_json() == doc.to_json());
+  mask.background = 0;
+  const auto bytes = write_mask_preset(mask);
+  assert(mask_effects_json(read_mask_preset(bytes).effects) == mask_effects_json(mask.effects));
+  std::cout
+      << "Empty/missing-input no-op, baked Position axis, Curvature, contrast/bias/inversion/opacity, controlled input substitution and editable metadata/preset roundtrip passed\n";
 }

@@ -2,4 +2,50 @@
 #include "TextureDocument.hh"
 #include <cassert>
 #include <iostream>
-int main(){using namespace bts;SceneSnapshot scene;MaterialSummary material;material.session_id=1;material.name="Replace";material.uniform_editable=true;scene.materials={material};ImportSummary imported;imported.materials={{1,"Replace"}};TextureDocument doc({},imported,scene);auto &set=doc.set(1);TextureDocument::add_mask(set,0);auto &mask=*set.layers[0].mask;mask.author_resolution=128;PaintPixels::Stamp stamp{{.5,.5},{.1,0},{0,.1},{}};stamp.channels={false,false,true,false,false};stamp.values.roughness=1;mask.pixels.stamp(128,stamp);mask.effects.push_back(MaskEffect{});mask.enabled=false;set.selected_effect=mask.effects[0].id;const auto before=doc;for(float value:{1.f,0.f}){TextureDocument::add_mask(set,value);const auto &replacement=*set.layers[0].mask;assert(replacement.background==value&&replacement.enabled&&replacement.effects.empty()&&replacement.pixels.empty()&&!replacement.strokes&&replacement.author_resolution==0&&set.selected_mask&&set.selected_effect.isNull());assert(before.texture_sets()[0].layers[0].mask->pixels.page_count(2)>0&&before.texture_sets()[0].layers[0].mask->effects.size()==1);}assert(set.layers.size()==1);const auto unchanged=doc.to_json();bool rejected=false;try{TextureDocument::add_mask(set,-1);}catch(const std::invalid_argument &){rejected=true;}assert(rejected&&doc.to_json()==unchanged);std::cout<<"Atomic white/black mask replacement clears old paint/effects/history/authoring grid, enables new mask, resets effect selection and preserves COW snapshot\n";}
+int main()
+{
+  using namespace bts;
+  SceneSnapshot scene;
+  MaterialSummary material;
+  material.session_id = 1;
+  material.name = "Replace";
+  material.uniform_editable = true;
+  scene.materials = {material};
+  ImportSummary imported;
+  imported.materials = {{1, "Replace"}};
+  TextureDocument doc({}, imported, scene);
+  auto &set = doc.set(1);
+  TextureDocument::add_mask(set, 0);
+  auto &mask = *set.layers[0].mask;
+  mask.author_resolution = 128;
+  PaintPixels::Stamp stamp{{.5, .5}, {.1, 0}, {0, .1}, {}};
+  stamp.channels = {false, false, true, false, false};
+  stamp.values.roughness = 1;
+  mask.pixels.stamp(128, stamp);
+  mask.effects.push_back(MaskEffect{});
+  mask.enabled = false;
+  set.selected_effect = mask.effects[0].id;
+  const auto before = doc;
+  for (float value : {1.f, 0.f}) {
+    TextureDocument::add_mask(set, value);
+    const auto &replacement = *set.layers[0].mask;
+    assert(replacement.background == value && replacement.enabled && replacement.effects.empty() &&
+           replacement.pixels.empty() && !replacement.strokes &&
+           replacement.author_resolution == 0 && set.selected_mask &&
+           set.selected_effect.isNull());
+    assert(before.texture_sets()[0].layers[0].mask->pixels.page_count(2) > 0 &&
+           before.texture_sets()[0].layers[0].mask->effects.size() == 1);
+  }
+  assert(set.layers.size() == 1);
+  const auto unchanged = doc.to_json();
+  bool rejected = false;
+  try {
+    TextureDocument::add_mask(set, -1);
+  }
+  catch (const std::invalid_argument &) {
+    rejected = true;
+  }
+  assert(rejected && doc.to_json() == unchanged);
+  std::cout
+      << "Atomic white/black mask replacement clears old paint/effects/history/authoring grid, enables new mask, resets effect selection and preserves COW snapshot\n";
+}

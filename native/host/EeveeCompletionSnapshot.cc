@@ -18,7 +18,8 @@ EeveeCompletionSnapshot capture_eevee_completion(blender::GPUViewport &viewport)
   result.active_view = GPU_viewport_active_view_get(&viewport);
   auto **data = GPU_viewport_data_get(&viewport);
   if (!data || !*data || result.active_view < 0 || result.active_view > 1 ||
-      !(*data)->view_data[result.active_view]) {
+      !(*data)->view_data[result.active_view])
+  {
     result.status = EeveeCompletionStatus::NoViewportData;
     return result;
   }
@@ -59,4 +60,4 @@ EeveeCompletionSnapshot capture_eevee_completion(blender::GPUViewport &viewport)
   result.status = EeveeCompletionStatus::Captured;
   return result;
 }
-}
+}  // namespace bts::detail

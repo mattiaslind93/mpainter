@@ -24,14 +24,14 @@ int main(int argc, char **argv)
   maps.setChecked(false);
   assert(maps.policy_tags().empty());
   maps.setChecked(true);
-  assert(maps.policy_tags() == QStringList{
-      "spsm:policy:meshmap-ao-color=native-ao-generator-uv-identity-nearest"});
+  assert(maps.policy_tags() ==
+         QStringList{"spsm:policy:meshmap-ao-color=native-ao-generator-uv-identity-nearest"});
   maps.setChecked(false);
   assert(maps.policy_tags().empty());
   bts::SpsmBitmapOptions options(body);
   form->addWidget(&options);
   assert(options.isChecked());
-  const auto defaults=options.policy_tags();
+  const auto defaults = options.policy_tags();
   assert(defaults.contains("spsm:policy:bitmap-color=native-linear-rec709-rgb-levels-ignore-a"));
   assert(defaults.contains("spsm:policy:bitmap-bytes=little-endian"));
   assert(defaults.contains("spsm:policy:bitmap-rows=first-row-v0"));
@@ -39,7 +39,13 @@ int main(int argc, char **argv)
   assert(defaults.contains("spsm:policy:mask-bitmap=native-ordered-fill-levels-raw-r-ignore-a"));
   options.findChild<QCheckBox *>("spsmNativeScalarLevels")->setChecked(false);
   options.findChild<QCheckBox *>("spsmNativeBitmapMask")->setChecked(false);
-  for(const char *name:{"spsmBitmapColor","spsmBitmapBytes","spsmBitmapRows","spsmBitmapAlpha","spsmBitmapUv","spsmBitmapSampling"})options.findChild<QComboBox *>(name)->setCurrentIndex(0);
+  for (const char *name : {"spsmBitmapColor",
+                           "spsmBitmapBytes",
+                           "spsmBitmapRows",
+                           "spsmBitmapAlpha",
+                           "spsmBitmapUv",
+                           "spsmBitmapSampling"})
+    options.findChild<QComboBox *>(name)->setCurrentIndex(0);
   options.setChecked(false);
   assert(options.policy_tags().empty());
   auto *color = options.findChild<QComboBox *>("spsmBitmapColor");
@@ -56,21 +62,24 @@ int main(int argc, char **argv)
   assert(tags.contains("spsm:policy:bitmap-alpha=unknown"));
   assert(tags.contains("spsm:policy:bitmap-uv=unknown"));
   assert(tags.contains("spsm:policy:bitmap-sampling=unknown"));
-  for (const char *name : {"spsmBitmapBytes", "spsmBitmapRows", "spsmBitmapAlpha",
-                           "spsmBitmapUv", "spsmBitmapSampling"}) {
+  for (const char *name : {"spsmBitmapBytes",
+                           "spsmBitmapRows",
+                           "spsmBitmapAlpha",
+                           "spsmBitmapUv",
+                           "spsmBitmapSampling"})
+  {
     auto *combo = options.findChild<QComboBox *>(name);
     assert(combo);
     assert(combo->currentIndex() == 0);
     combo->setCurrentIndex(1);
   }
-  const QStringList selected{
-      "spsm:policy:bitmap-roughness=raw-r-ignore-a",
-      "spsm:policy:bitmap-color=unknown",
-      "spsm:policy:bitmap-bytes=little-endian",
-      "spsm:policy:bitmap-rows=first-row-v0",
-      "spsm:policy:bitmap-alpha=data-components",
-      "spsm:policy:bitmap-uv=projection0-centered-repeat-factors",
-      "spsm:policy:bitmap-sampling=hq-repeat"};
+  const QStringList selected{"spsm:policy:bitmap-roughness=raw-r-ignore-a",
+                             "spsm:policy:bitmap-color=unknown",
+                             "spsm:policy:bitmap-bytes=little-endian",
+                             "spsm:policy:bitmap-rows=first-row-v0",
+                             "spsm:policy:bitmap-alpha=data-components",
+                             "spsm:policy:bitmap-uv=projection0-centered-repeat-factors",
+                             "spsm:policy:bitmap-sampling=hq-repeat"};
   assert(options.policy_tags() == selected);
   auto *mask = options.findChild<QCheckBox *>("spsmNativeBitmapMask");
   assert(mask && !mask->isChecked());
@@ -101,8 +110,9 @@ int main(int argc, char **argv)
   auto *rows = options.findChild<QComboBox *>("spsmBitmapRows");
   rows->setCurrentIndex(rows->findData("first-row-v1"));
   assert(options.policy_tags().contains("spsm:policy:bitmap-rows=first-row-v1"));
-  for (const char *policy : {"native-linear-rec709-rgb-levels-ignore-a",
-                              "native-acescg-rgb-levels-ignore-a"}) {
+  for (const char *policy :
+       {"native-linear-rec709-rgb-levels-ignore-a", "native-acescg-rgb-levels-ignore-a"})
+  {
     const int index = color->findData(QString::fromLatin1(policy));
     assert(index > 0);
     color->setCurrentIndex(index);
@@ -115,7 +125,8 @@ int main(int argc, char **argv)
     assert(options.policy_tags().contains("spsm:policy:bitmap-roughness=unknown"));
     assert(options.policy_tags().contains("spsm:policy:bitmap-color=" + QString(policy)));
     assert(!options.policy_tags().contains("spsm:policy:levels=native-scalar"));
-    assert(!options.policy_tags().contains("spsm:policy:mask-bitmap=native-ordered-fill-levels-raw-r-ignore-a"));
+    assert(!options.policy_tags().contains(
+        "spsm:policy:mask-bitmap=native-ordered-fill-levels-raw-r-ignore-a"));
     options.setChecked(false);
     assert(options.policy_tags().empty());
     options.setChecked(true);
@@ -124,7 +135,8 @@ int main(int argc, char **argv)
     roughness->setChecked(true);
     assert(levels->isEnabled() && mask->isEnabled());
     assert(options.policy_tags().contains("spsm:policy:levels=native-scalar"));
-    assert(options.policy_tags().contains("spsm:policy:mask-bitmap=native-ordered-fill-levels-raw-r-ignore-a"));
+    assert(options.policy_tags().contains(
+        "spsm:policy:mask-bitmap=native-ordered-fill-levels-raw-r-ignore-a"));
     levels->setChecked(false);
     mask->setChecked(false);
   }
@@ -137,9 +149,9 @@ int main(int argc, char **argv)
   app.processEvents();
   assert(preview.width() == 560);
   assert(body->width() <= scroll->viewport()->width());
-  auto *hint=options.findChild<QLabel *>("spsmBitmapInterpretationHint");
-  assert(hint && hint->height() >= hint->fontMetrics().lineSpacing() *
-                                   int(hint->text().count('\n') + 1));
+  auto *hint = options.findChild<QLabel *>("spsmBitmapInterpretationHint");
+  assert(hint &&
+         hint->height() >= hint->fontMetrics().lineSpacing() * int(hint->text().count('\n') + 1));
   assert(hint->geometry().bottom() < roughness->geometry().top());
   for (auto *combo : options.findChildren<QComboBox *>()) {
     const auto bounds = QRect(combo->mapTo(body, QPoint(0, 0)), combo->size());

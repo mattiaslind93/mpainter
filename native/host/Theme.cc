@@ -18,11 +18,17 @@ namespace {
 class OptionStyle final : public QProxyStyle {
  public:
   OptionStyle() : QProxyStyle(QStyleFactory::create("Fusion")) {}
-  void drawControl(ControlElement element, const QStyleOption *option,
-                   QPainter *painter, const QWidget *widget = nullptr) const override {
+  void drawControl(ControlElement element,
+                   const QStyleOption *option,
+                   QPainter *painter,
+                   const QWidget *widget = nullptr) const override
+  {
     const auto *menu = qstyleoption_cast<const QStyleOptionMenuItem *>(option);
-    if (element != CE_MenuItem || !menu || qobject_cast<const QComboBox *>(widget) || menu->checkType == QStyleOptionMenuItem::NotCheckable) {
-      QProxyStyle::drawControl(element, option, painter, widget); return;
+    if (element != CE_MenuItem || !menu || qobject_cast<const QComboBox *>(widget) ||
+        menu->checkType == QStyleOptionMenuItem::NotCheckable)
+    {
+      QProxyStyle::drawControl(element, option, painter, widget);
+      return;
     }
     auto text = *menu;
     text.checked = false;
@@ -31,16 +37,24 @@ class OptionStyle final : public QProxyStyle {
     indicator.state = menu->state;
     indicator.state &= ~(State_On | State_Off);
     indicator.state |= menu->checked ? State_On : State_Off;
-    if(menu->state & State_Selected) indicator.state |= State_MouseOver;
-    const QRect logical(menu->rect.left()+7, menu->rect.center().y()-7, 16, 16);
+    if (menu->state & State_Selected)
+      indicator.state |= State_MouseOver;
+    const QRect logical(menu->rect.left() + 7, menu->rect.center().y() - 7, 16, 16);
     indicator.rect = visualRect(menu->direction, menu->rect, logical);
-    drawPrimitive(menu->checkType == QStyleOptionMenuItem::Exclusive ? PE_IndicatorRadioButton : PE_IndicatorCheckBox,
-                  &indicator, painter, widget);
+    drawPrimitive(menu->checkType == QStyleOptionMenuItem::Exclusive ? PE_IndicatorRadioButton :
+                                                                       PE_IndicatorCheckBox,
+                  &indicator,
+                  painter,
+                  widget);
   }
-  void drawPrimitive(PrimitiveElement element, const QStyleOption *option,
-                     QPainter *painter, const QWidget *widget = nullptr) const override {
+  void drawPrimitive(PrimitiveElement element,
+                     const QStyleOption *option,
+                     QPainter *painter,
+                     const QWidget *widget = nullptr) const override
+  {
     if (element != PE_IndicatorCheckBox && element != PE_IndicatorItemViewItemCheck &&
-        element != PE_IndicatorRadioButton && element != PE_IndicatorMenuCheckMark) {
+        element != PE_IndicatorRadioButton && element != PE_IndicatorMenuCheckMark)
+    {
       QProxyStyle::drawPrimitive(element, option, painter, widget);
       return;
     }
@@ -52,11 +66,16 @@ class OptionStyle final : public QProxyStyle {
     const QRectF box = QRectF(option->rect).adjusted(1, 1, -1, -1);
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing);
-    const bool texture_row=widget && widget->objectName()=="textureSetLoaded";
-    painter->setPen(QPen(QColor(hovered ? Accent : texture_row ? Muted : OptionOutline), hovered ? 2 : 1));
+    const bool texture_row = widget && widget->objectName() == "textureSetLoaded";
+    painter->setPen(QPen(QColor(hovered     ? Accent :
+                                texture_row ? Muted :
+                                              OptionOutline),
+                         hovered ? 2 : 1));
     painter->setBrush(QColor(enabled ? OptionInner : Raised));
-    if (radio) painter->drawEllipse(box);
-    else painter->drawRoundedRect(box, RadiusPx, RadiusPx);
+    if (radio)
+      painter->drawEllipse(box);
+    else
+      painter->drawRoundedRect(box, RadiusPx, RadiusPx);
     if (checked || mixed || element == PE_IndicatorMenuCheckMark) {
       // XML's item is white; Mattias requests the XML turquoise accent for the mark.
       const QColor mark = enabled ? QColor(Accent) : QColor(Accent).lighter(125);
@@ -65,9 +84,12 @@ class OptionStyle final : public QProxyStyle {
         painter->setPen(Qt::NoPen);
         painter->setBrush(mark);
         painter->drawEllipse(box.adjusted(3, 3, -3, -3));
-      } else if (mixed) {
-        painter->drawLine(QPointF(box.left() + 3, box.center().y()), QPointF(box.right() - 3, box.center().y()));
-      } else {
+      }
+      else if (mixed) {
+        painter->drawLine(QPointF(box.left() + 3, box.center().y()),
+                          QPointF(box.right() - 3, box.center().y()));
+      }
+      else {
         QPainterPath check;
         check.moveTo(box.left() + box.width() * .22, box.top() + box.height() * .52);
         check.lineTo(box.left() + box.width() * .43, box.top() + box.height() * .73);
@@ -85,22 +107,31 @@ class SliderHitFilter final : public QObject {
   QPointer<QWidget> active_;
   QPointF offset_;
   bool forwarding_ = false;
+
  public:
   explicit SliderHitFilter(QObject *parent) : QObject(parent) {}
-  bool eventFilter(QObject *object, QEvent *event) override {
-    if (forwarding_) return false;
+  bool eventFilter(QObject *object, QEvent *event) override
+  {
+    if (forwarding_)
+      return false;
     const auto type = event->type();
-    const bool tablet = type == QEvent::TabletPress || type == QEvent::TabletMove || type == QEvent::TabletRelease;
-    const bool mouse = type == QEvent::MouseButtonPress || type == QEvent::MouseMove || type == QEvent::MouseButtonRelease;
-    if (!mouse && !tablet) return false;
+    const bool tablet = type == QEvent::TabletPress || type == QEvent::TabletMove ||
+                        type == QEvent::TabletRelease;
+    const bool mouse = type == QEvent::MouseButtonPress || type == QEvent::MouseMove ||
+                       type == QEvent::MouseButtonRelease;
+    if (!mouse && !tablet)
+      return false;
     auto *receiver = qobject_cast<QWidget *>(object);
-    if (!receiver) return false;
+    if (!receiver)
+      return false;
     auto *pointer = static_cast<QSinglePointEvent *>(event);
     const bool press = type == QEvent::MouseButtonPress || type == QEvent::TabletPress;
     const bool release = type == QEvent::MouseButtonRelease || type == QEvent::TabletRelease;
-    if (release && pointer->button() != Qt::LeftButton) return false;
+    if (release && pointer->button() != Qt::LeftButton)
+      return false;
     if (press) {
-      if (pointer->button() != Qt::LeftButton || active_) return false;
+      if (pointer->button() != Qt::LeftButton || active_)
+        return false;
       QWidget *best = nullptr;
       QPointF center;
       double distance = std::numeric_limits<double>::max();
@@ -108,55 +139,84 @@ class SliderHitFilter final : public QObject {
       auto candidates = window->findChildren<QWidget *>();
       candidates.prepend(window);
       for (auto *widget : candidates) {
-        if (widget->window() != window || !widget->isVisible() || !widget->isEnabled()) continue;
+        if (widget->window() != window || !widget->isVisible() || !widget->isEnabled())
+          continue;
         const auto local = widget->mapFromGlobal(pointer->globalPosition());
         for (const auto &visual : slider_handles(widget)) {
-          if (!doubled_handle(visual).contains(local) || !widget->visibleRegion().contains(visual.center().toPoint())) continue;
+          if (!doubled_handle(visual).contains(local) ||
+              !widget->visibleRegion().contains(visual.center().toPoint()))
+            continue;
           const auto delta = local - visual.center();
-          const double d = delta.x()*delta.x() + delta.y()*delta.y();
-          if (d < distance) { best = widget; center = visual.center(); distance = d; }
+          const double d = delta.x() * delta.x() + delta.y() * delta.y();
+          if (d < distance) {
+            best = widget;
+            center = visual.center();
+            distance = d;
+          }
         }
       }
-      if (!best) return false; // Track clicks, keyboard and wheel retain their existing behavior.
+      if (!best)
+        return false;  // Track clicks, keyboard and wheel retain their existing behavior.
       active_ = best;
       offset_ = best->mapFromGlobal(pointer->globalPosition()) - center;
       best->grabMouse();
     }
-    if (!active_) return false;
+    if (!active_)
+      return false;
     auto target = active_;
     const auto position = target->mapFromGlobal(pointer->globalPosition()) - offset_;
-    const auto mapped = press ? QEvent::MouseButtonPress : release ? QEvent::MouseButtonRelease : QEvent::MouseMove;
-    QMouseEvent forwarded(mapped, position, target->mapToGlobal(position),
+    const auto mapped = press   ? QEvent::MouseButtonPress :
+                        release ? QEvent::MouseButtonRelease :
+                                  QEvent::MouseMove;
+    QMouseEvent forwarded(mapped,
+                          position,
+                          target->mapToGlobal(position),
                           press || release ? Qt::LeftButton : Qt::NoButton,
-                          release ? Qt::NoButton : Qt::LeftButton, pointer->modifiers());
+                          release ? Qt::NoButton : Qt::LeftButton,
+                          pointer->modifiers());
     forwarding_ = true;
     QCoreApplication::sendEvent(target, &forwarded);
     forwarding_ = false;
     if (release) {
       active_.clear();
-      if (target && QWidget::mouseGrabber() == target) target->releaseMouse();
+      if (target && QWidget::mouseGrabber() == target)
+        target->releaseMouse();
     }
     event->accept();
     return true;
   }
 };
-}
+}  // namespace
 
 QPalette palette()
 {
   QPalette p;
-  const auto set = [&](QPalette::ColorRole role, const char *token) { p.setColor(role, QColor(token)); };
-  set(QPalette::Window, Surface); set(QPalette::WindowText, Text);
-  set(QPalette::Base, Canvas); set(QPalette::AlternateBase, ListAlternate);
-  set(QPalette::Text, Text); set(QPalette::Button, Raised); set(QPalette::ButtonText, ButtonText);
-  set(QPalette::BrightText, Heading); set(QPalette::Highlight, Selection);
-  set(QPalette::HighlightedText, Heading); set(QPalette::Link, Accent);
-  set(QPalette::LinkVisited, Accent); set(QPalette::ToolTipBase, Menu);
-  set(QPalette::ToolTipText, Heading); set(QPalette::PlaceholderText, Muted);
-  set(QPalette::Light, Border); set(QPalette::Midlight, Hover);
-  set(QPalette::Mid, Border); set(QPalette::Dark, Canvas); set(QPalette::Shadow, Separator);
+  const auto set = [&](QPalette::ColorRole role, const char *token) {
+    p.setColor(role, QColor(token));
+  };
+  set(QPalette::Window, Surface);
+  set(QPalette::WindowText, Text);
+  set(QPalette::Base, Canvas);
+  set(QPalette::AlternateBase, ListAlternate);
+  set(QPalette::Text, Text);
+  set(QPalette::Button, Raised);
+  set(QPalette::ButtonText, ButtonText);
+  set(QPalette::BrightText, Heading);
+  set(QPalette::Highlight, Selection);
+  set(QPalette::HighlightedText, Heading);
+  set(QPalette::Link, Accent);
+  set(QPalette::LinkVisited, Accent);
+  set(QPalette::ToolTipBase, Menu);
+  set(QPalette::ToolTipText, Heading);
+  set(QPalette::PlaceholderText, Muted);
+  set(QPalette::Light, Border);
+  set(QPalette::Midlight, Hover);
+  set(QPalette::Mid, Border);
+  set(QPalette::Dark, Canvas);
+  set(QPalette::Shadow, Separator);
   set(QPalette::Accent, Accent);
-  for (auto role : {QPalette::WindowText, QPalette::Text, QPalette::ButtonText, QPalette::PlaceholderText})
+  for (auto role :
+       {QPalette::WindowText, QPalette::Text, QPalette::ButtonText, QPalette::PlaceholderText})
     p.setColor(QPalette::Disabled, role, QColor(Disabled));
   p.setColor(QPalette::Disabled, QPalette::Highlight, QColor(Raised));
   p.setColor(QPalette::Disabled, QPalette::HighlightedText, QColor(Muted));
@@ -167,8 +227,9 @@ void apply(QApplication &app)
   app.installEventFilter(new SliderHitFilter(&app));
   app.setStyle(new OptionStyle);
   app.setPalette(palette());
-  auto menu_palette=palette();menu_palette.setColor(QPalette::Window,QColor(Menu));
-  app.setPalette(menu_palette,"QMenu");
+  auto menu_palette = palette();
+  menu_palette.setColor(QPalette::Window, QColor(Menu));
+  app.setPalette(menu_palette, "QMenu");
   app.setStyleSheet(qss(QString::fromLatin1(R"(
   QWidget { color: @Text@; }
   QDialog, QMessageBox, QMainWindow, QDockWidget, QScrollArea, QStackedWidget {
@@ -326,4 +387,4 @@ void apply(QApplication &app)
   QScrollBar::handle:hover { background: @ScrollHover@; }
 )")));
 }
-} // namespace bts::theme
+}  // namespace bts::theme

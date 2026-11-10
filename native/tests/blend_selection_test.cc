@@ -12,7 +12,12 @@ int main()
   assert(BlendMeshSelection::from_json(BlendMeshSelection{}.to_json()).empty());
   const auto rejects = [](const auto &operation) {
     bool rejected = false;
-    try { operation(); } catch (const std::invalid_argument &) { rejected = true; }
+    try {
+      operation();
+    }
+    catch (const std::invalid_argument &) {
+      rejected = true;
+    }
     assert(rejected);
   };
   rejects([] { BlendMeshSelection{}.validate(true); });
@@ -31,8 +36,21 @@ int main()
   data["unknown"] = true;
   rejects([&] { BlendMeshSelection::from_json(data); });
   BlendMeshSelection large;
-  for (int i = 0; i < 4097; ++i) large.objects.push_back("Object " + std::to_string(i));
-  large.validate();assert(BlendMeshSelection::from_json(large.to_json())==large);
-  {TextureRamQueryScope low(+[]()->std::uint64_t{return 0;});bool denied=false;try{BlendMeshSelection::from_json(large.to_json());}catch(const std::length_error &){denied=true;}assert(!denied);}
-  std::puts("Blender library selection: exact Unicode roundtrip, empty/default and invalid selection cases PASS");
+  for (int i = 0; i < 4097; ++i)
+    large.objects.push_back("Object " + std::to_string(i));
+  large.validate();
+  assert(BlendMeshSelection::from_json(large.to_json()) == large);
+  {
+    TextureRamQueryScope low(+[]() -> std::uint64_t { return 0; });
+    bool denied = false;
+    try {
+      BlendMeshSelection::from_json(large.to_json());
+    }
+    catch (const std::length_error &) {
+      denied = true;
+    }
+    assert(!denied);
+  }
+  std::puts(
+      "Blender library selection: exact Unicode roundtrip, empty/default and invalid selection cases PASS");
 }

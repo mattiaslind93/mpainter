@@ -3,10 +3,74 @@
 #include <cassert>
 #include <iostream>
 using namespace bts;
-int main(){SurfacePath path;path.id="c0a80001-1234-4000-8000-000000000001";path.points={{{-.6,0,0},{0,0,1},{.2,.5},1},{{0,.5,0},{0,0,1},{.5,.75},.5},{{.6,0,0},{0,0,1},{.8,.5},1}};auto linear=surface_path_at(path,0,.5);assert(std::abs(linear.position[1]-.25)<1e-10);path.points[1].smooth=true;auto smooth=surface_path_at(path,0,.5);assert(smooth.position[1]>linear.position[1]);const auto handles=surface_path_handles(path,1);assert(std::abs(handles[0][1])<1e-10&&handles[0][0]<0&&handles[1][0]>0);
-  path.points[1].custom=true;path.points[1].tangent_in={-.4,.2,0};path.points[1].tangent_out={.4,.2,0};path.validate();auto custom=surface_path_at(path,0,.5);assert(custom.position[1]>smooth.position[1]);assert(std::abs(custom.pressure-.75)<1e-6);const auto dense=dense_surface_path(path,2,[](const auto &p){return std::optional(p);});assert(dense.size()>10&&dense.front().point.position==path.points.front().position&&dense.back().point.position==path.points.back().position);
-  path.closed=true;auto closed=dense_surface_path(path,2,[](const auto &p){return std::optional(p);});assert(closed.back().point.position==path.points.front().position&&closed.back().segment==2);bool rejected=false;path.points[1].tangent_in[2]=.1;try{path.validate();}catch(const std::invalid_argument &){rejected=true;}assert(rejected);
-  SurfacePath original;original.id=path.id;original.points={{{-.6,0,0},{0,0,1},{.2,.5},1},{{.6,0,0},{0,0,1},{.8,.5},1}};for(auto &p:original.points)p.custom=true;original.points[0].tangent_out={.4,.6,0};original.points[1].tangent_in={-.4,.6,0};const auto before=original;const double split=.4;const auto inserted=surface_path_insert(original,0,split,[](const auto &p){return std::optional(p);});assert(inserted==1&&original.points.size()==3);for(int i=0;i<=20;++i){const double t=i/20.;const auto expected=surface_path_at(before,0,t);const auto actual=surface_path_at(original,t<=split?0:1,t<=split?t/split:(t-split)/(1-split));assert(path_length(path_delta(actual.position,expected.position))<1e-10);}
-  auto reversed=before;surface_path_reverse(reversed);assert(path_length(path_delta(surface_path_at(reversed,0,.7).position,surface_path_at(before,0,.3).position))<1e-10);auto handles_path=before;handles_path.points[0].tangent_in={-.4,-.6,0};surface_path_move_handle(handles_path,0,1,{.8,1.2,0},false,true);assert(std::abs(path_length(handles_path.points[0].tangent_in)-path_length(PathVector{.8,1.2,0}))<1e-10);const auto retained=handles_path.points[0].tangent_in;surface_path_move_handle(handles_path,0,1,{.2,.8,0},true,false);assert(handles_path.points[0].broken&&handles_path.points[0].tangent_in==retained);
-  std::cout<<"Surface Bezier/corner/custom normal-plane handles, pressure interpolation, dense arc source, closed curve and invalid tangent rejection passed\n";
+int main()
+{
+  SurfacePath path;
+  path.id = "c0a80001-1234-4000-8000-000000000001";
+  path.points = {{{-.6, 0, 0}, {0, 0, 1}, {.2, .5}, 1},
+                 {{0, .5, 0}, {0, 0, 1}, {.5, .75}, .5},
+                 {{.6, 0, 0}, {0, 0, 1}, {.8, .5}, 1}};
+  auto linear = surface_path_at(path, 0, .5);
+  assert(std::abs(linear.position[1] - .25) < 1e-10);
+  path.points[1].smooth = true;
+  auto smooth = surface_path_at(path, 0, .5);
+  assert(smooth.position[1] > linear.position[1]);
+  const auto handles = surface_path_handles(path, 1);
+  assert(std::abs(handles[0][1]) < 1e-10 && handles[0][0] < 0 && handles[1][0] > 0);
+  path.points[1].custom = true;
+  path.points[1].tangent_in = {-.4, .2, 0};
+  path.points[1].tangent_out = {.4, .2, 0};
+  path.validate();
+  auto custom = surface_path_at(path, 0, .5);
+  assert(custom.position[1] > smooth.position[1]);
+  assert(std::abs(custom.pressure - .75) < 1e-6);
+  const auto dense = dense_surface_path(path, 2, [](const auto &p) { return std::optional(p); });
+  assert(dense.size() > 10 && dense.front().point.position == path.points.front().position &&
+         dense.back().point.position == path.points.back().position);
+  path.closed = true;
+  auto closed = dense_surface_path(path, 2, [](const auto &p) { return std::optional(p); });
+  assert(closed.back().point.position == path.points.front().position &&
+         closed.back().segment == 2);
+  bool rejected = false;
+  path.points[1].tangent_in[2] = .1;
+  try {
+    path.validate();
+  }
+  catch (const std::invalid_argument &) {
+    rejected = true;
+  }
+  assert(rejected);
+  SurfacePath original;
+  original.id = path.id;
+  original.points = {{{-.6, 0, 0}, {0, 0, 1}, {.2, .5}, 1}, {{.6, 0, 0}, {0, 0, 1}, {.8, .5}, 1}};
+  for (auto &p : original.points)
+    p.custom = true;
+  original.points[0].tangent_out = {.4, .6, 0};
+  original.points[1].tangent_in = {-.4, .6, 0};
+  const auto before = original;
+  const double split = .4;
+  const auto inserted = surface_path_insert(
+      original, 0, split, [](const auto &p) { return std::optional(p); });
+  assert(inserted == 1 && original.points.size() == 3);
+  for (int i = 0; i <= 20; ++i) {
+    const double t = i / 20.;
+    const auto expected = surface_path_at(before, 0, t);
+    const auto actual = surface_path_at(
+        original, t <= split ? 0 : 1, t <= split ? t / split : (t - split) / (1 - split));
+    assert(path_length(path_delta(actual.position, expected.position)) < 1e-10);
+  }
+  auto reversed = before;
+  surface_path_reverse(reversed);
+  assert(path_length(path_delta(surface_path_at(reversed, 0, .7).position,
+                                surface_path_at(before, 0, .3).position)) < 1e-10);
+  auto handles_path = before;
+  handles_path.points[0].tangent_in = {-.4, -.6, 0};
+  surface_path_move_handle(handles_path, 0, 1, {.8, 1.2, 0}, false, true);
+  assert(std::abs(path_length(handles_path.points[0].tangent_in) -
+                  path_length(PathVector{.8, 1.2, 0})) < 1e-10);
+  const auto retained = handles_path.points[0].tangent_in;
+  surface_path_move_handle(handles_path, 0, 1, {.2, .8, 0}, true, false);
+  assert(handles_path.points[0].broken && handles_path.points[0].tangent_in == retained);
+  std::cout
+      << "Surface Bezier/corner/custom normal-plane handles, pressure interpolation, dense arc source, closed curve and invalid tangent rejection passed\n";
 }

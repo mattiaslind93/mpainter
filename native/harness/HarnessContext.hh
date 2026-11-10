@@ -16,9 +16,18 @@ class HarnessContext {
   HarnessContext(const HarnessContext &) = delete;
   HarnessContext &operator=(const HarnessContext &) = delete;
 
-  bool is_set(const QString &option) const { return parser_.isSet(option); }
-  QString value(const QString &option) const { return parser_.value(option); }
-  QStringList values(const QString &option) const { return parser_.values(option); }
+  bool is_set(const QString &option) const
+  {
+    return parser_.isSet(option);
+  }
+  QString value(const QString &option) const
+  {
+    return parser_.value(option);
+  }
+  QStringList values(const QString &option) const
+  {
+    return parser_.values(option);
+  }
 
  private:
   const QCommandLineParser &parser_;

@@ -1,21 +1,177 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 {
- set=TextureSet{};set.texture_resolution=512;set.base_values.base_color={0,0,0,1};set.base_values.roughness=0;set.precision.fill(ChannelPrecision::RGB32F);set.precision[4]=ChannelPrecision::L32F;set.users[0].allocated=set.users[0].present=true;set.users[0].precision=ChannelPrecision::L32F;set.displacement.channel=set.displacement.allocated=true;set.displacement.precision=ChannelPrecision::L32F;
- auto &producer=set.layers.front();producer.kind=LayerKind::Fill;producer.visible=false;producer.channels.fill(false);producer.opacity.fill(0);producer.values.base_color={.2,.4,.6,1};producer.values.bump=-.25;
- LevelsEffect point;point.kind=ContentEffectKind::Anchor;point.anchor_name="Generator GPU source";producer.effects={point};const auto producer_id=producer.id;
- TextureDocument::add_fill(set);const auto consumer_id=set.selected_layer;set.layers.back().users[0].enabled=set.layers.back().displacement.enabled=true;target=texture("BTS GPU generator anchor targets",512,512,gpu::TextureFormat::SFLOAT_32_32_32_32);const auto first_case=cases;
- for(int generator=1;generator<=6;++generator)for(int component=0;component<=4;++component)for(bool coverage:{false,true}){
-  auto &consumer=TextureDocument::layer(set,consumer_id);consumer.values.base_color={1,1,1,1};consumer.values.roughness=.8;consumer.values.bump=.7;consumer.mask=LayerMask{};consumer.mask->background=.15;MaskEffect effect;effect.kind=MaskEffectKind::Generator;effect.generator=generator;effect.input_anchors[0]={point.id,0,component,coverage};if(generator==5)effect.input_anchors[1]={point.id,0,1,true};consumer.mask->effects={effect};for(int channel:{0,2,4})check(channel);
-  consumer.mask.reset();consumer.values.base_color={.25,.25,.25,1};LevelsEffect content;content.kind=ContentEffectKind::Generator;static_cast<MeshGeneratorSettings &>(content)=effect;content.channel=0;consumer.effects={content};check(0);if(component==0&&!coverage)for(const auto [authored,gpu_channel]:std::array<std::pair<int,int>,4>{{{2,2},{4,4},{6,7},{14,16}}}){content.channel=authored;consumer.effects={content};check(gpu_channel);}consumer.effects.clear();
- }
- auto &consumer=TextureDocument::layer(set,consumer_id);consumer.mask=LayerMask{};consumer.mask->background=.15;MaskEffect effect;effect.kind=MaskEffectKind::Generator;effect.generator=3;effect.input_anchors[0]={point.id,0,2,true};consumer.mask->effects={effect};check(0);TextureDocument::layer(set,producer_id).values.base_color[1]=.8;check(0);
- consumer.mask->effects.front().input_anchors[0].source=QUuid::createUuid();check(0);consumer.mask->effects.front().input_anchors[0].source=point.id;check(0);std::swap(set.layers[0],set.layers[1]);check(0);std::swap(set.layers[0],set.layers[1]);check(0);
- MaskEffect marker;marker.kind=MaskEffectKind::Anchor;auto &source=TextureDocument::layer(set,producer_id);source.mask=LayerMask{};source.mask->enabled=false;source.mask->background=.35;source.mask->effects={marker};consumer.mask->effects.front().input_anchors[0]={marker.id,0,0,true};check(0);source.mask->background=.75;check(0);
- consumer.mask->effects.front().input_anchors[0]={point.id,4,1,false};check(0);source.values.bump=1.5;check(0);source.values.bump=-.5;check(0);
- const auto baked=[&](float value){std::vector<float> pixels(32*32*4);for(int p=0;p<32*32;++p){pixels[p*4]=pixels[p*4+1]=pixels[p*4+2]=value;pixels[p*4+3]=1;}auto shared=std::make_shared<MeshMapPixels>(32,std::move(pixels));MeshMap map;map.name="Generator mixed input";map.tiles[1001]={32,shared->hash,shared};return map;};set.mesh_maps[3]=baked(.3);set.mesh_maps[4]=baked(.6);auto &dirt=consumer.mask->effects.front();dirt.generator=5;dirt.input_anchors[0]={point.id,0,2,true};dirt.input_anchors[1]={};check(0);dirt.input_anchors[0]={};dirt.input_anchors[1]={point.id,0,1,true};check(0);dirt.input_anchors[0]={point.id,0,2,true};check(0);set.mesh_maps={};dirt.generator=3;dirt.input_anchors[1]={};
- source.kind=LayerKind::Paint;source.pixels={};auto dab=ink;dab.channels={true,false,false,false,false};dab.values.base_color={.2,.4,.6,1};dab.flow=.5;dab.center={.5,.5};dab.axis_x={.3,0};dab.axis_y={0,.3};source.pixels.stamp(512,dab);consumer.mask->effects.front().input_anchors[0]={point.id,0,2,true};check(0);consumer.mask->effects.front().input_anchors[0].coverage=false;check(0);
- const auto cached_work=preview.impl_->mask_dispatch_texels;LevelsEffect later;later.kind=ContentEffectKind::Filter;later.channel=0;later.filter.resource=1;source.effects.push_back(later);check(0);if(preview.impl_->mask_dispatch_texels!=cached_work)throw std::runtime_error("Post-anchor effect invalidated generator consumer");
- auto small=dab;small.center={.05,.05};small.axis_x={.01,0};small.axis_y={0,.01};source.pixels.stamp(512,small);check(0);small.center={.1,.1};source.pixels.stamp(512,small);const auto dirty_start=preview.impl_->mask_dispatch_texels;check(0);const auto dirty=preview.impl_->mask_dispatch_texels-dirty_start;if(!dirty||dirty>=512*512)throw std::runtime_error("Generator anchor did not retain sparse dirty chunks");
- set.tiles={1001,1002,1011};for(int tile:set.tiles){preview.begin_frame();if(preview.update(set,0,target.get(),tile)!=GpuPreviewUpdate::Updated)throw std::runtime_error("Generator anchor UDIM deferred");++cases;}
- std::printf("BTS_GPU_GENERATOR_ANCHORS_VERIFIED cases=%d resources=6 components=5 coverage_modes=2 content_mask_sources=1 source_edits=1 broken_forward_repair=1 udim=3 dirty_texels=%llu\n",cases-first_case,(unsigned long long)dirty);
+  set = TextureSet{};
+  set.texture_resolution = 512;
+  set.base_values.base_color = {0, 0, 0, 1};
+  set.base_values.roughness = 0;
+  set.precision.fill(ChannelPrecision::RGB32F);
+  set.precision[4] = ChannelPrecision::L32F;
+  set.users[0].allocated = set.users[0].present = true;
+  set.users[0].precision = ChannelPrecision::L32F;
+  set.displacement.channel = set.displacement.allocated = true;
+  set.displacement.precision = ChannelPrecision::L32F;
+  auto &producer = set.layers.front();
+  producer.kind = LayerKind::Fill;
+  producer.visible = false;
+  producer.channels.fill(false);
+  producer.opacity.fill(0);
+  producer.values.base_color = {.2, .4, .6, 1};
+  producer.values.bump = -.25;
+  LevelsEffect point;
+  point.kind = ContentEffectKind::Anchor;
+  point.anchor_name = "Generator GPU source";
+  producer.effects = {point};
+  const auto producer_id = producer.id;
+  TextureDocument::add_fill(set);
+  const auto consumer_id = set.selected_layer;
+  set.layers.back().users[0].enabled = set.layers.back().displacement.enabled = true;
+  target = texture(
+      "BTS GPU generator anchor targets", 512, 512, gpu::TextureFormat::SFLOAT_32_32_32_32);
+  const auto first_case = cases;
+  for (int generator = 1; generator <= 6; ++generator)
+    for (int component = 0; component <= 4; ++component)
+      for (bool coverage : {false, true}) {
+        auto &consumer = TextureDocument::layer(set, consumer_id);
+        consumer.values.base_color = {1, 1, 1, 1};
+        consumer.values.roughness = .8;
+        consumer.values.bump = .7;
+        consumer.mask = LayerMask{};
+        consumer.mask->background = .15;
+        MaskEffect effect;
+        effect.kind = MaskEffectKind::Generator;
+        effect.generator = generator;
+        effect.input_anchors[0] = {point.id, 0, component, coverage};
+        if (generator == 5)
+          effect.input_anchors[1] = {point.id, 0, 1, true};
+        consumer.mask->effects = {effect};
+        for (int channel : {0, 2, 4})
+          check(channel);
+        consumer.mask.reset();
+        consumer.values.base_color = {.25, .25, .25, 1};
+        LevelsEffect content;
+        content.kind = ContentEffectKind::Generator;
+        static_cast<MeshGeneratorSettings &>(content) = effect;
+        content.channel = 0;
+        consumer.effects = {content};
+        check(0);
+        if (component == 0 && !coverage)
+          for (const auto [authored, gpu_channel] :
+               std::array<std::pair<int, int>, 4>{{{2, 2}, {4, 4}, {6, 7}, {14, 16}}})
+          {
+            content.channel = authored;
+            consumer.effects = {content};
+            check(gpu_channel);
+          }
+        consumer.effects.clear();
+      }
+  auto &consumer = TextureDocument::layer(set, consumer_id);
+  consumer.mask = LayerMask{};
+  consumer.mask->background = .15;
+  MaskEffect effect;
+  effect.kind = MaskEffectKind::Generator;
+  effect.generator = 3;
+  effect.input_anchors[0] = {point.id, 0, 2, true};
+  consumer.mask->effects = {effect};
+  check(0);
+  TextureDocument::layer(set, producer_id).values.base_color[1] = .8;
+  check(0);
+  consumer.mask->effects.front().input_anchors[0].source = QUuid::createUuid();
+  check(0);
+  consumer.mask->effects.front().input_anchors[0].source = point.id;
+  check(0);
+  std::swap(set.layers[0], set.layers[1]);
+  check(0);
+  std::swap(set.layers[0], set.layers[1]);
+  check(0);
+  MaskEffect marker;
+  marker.kind = MaskEffectKind::Anchor;
+  auto &source = TextureDocument::layer(set, producer_id);
+  source.mask = LayerMask{};
+  source.mask->enabled = false;
+  source.mask->background = .35;
+  source.mask->effects = {marker};
+  consumer.mask->effects.front().input_anchors[0] = {marker.id, 0, 0, true};
+  check(0);
+  source.mask->background = .75;
+  check(0);
+  consumer.mask->effects.front().input_anchors[0] = {point.id, 4, 1, false};
+  check(0);
+  source.values.bump = 1.5;
+  check(0);
+  source.values.bump = -.5;
+  check(0);
+  const auto baked = [&](float value) {
+    std::vector<float> pixels(32 * 32 * 4);
+    for (int p = 0; p < 32 * 32; ++p) {
+      pixels[p * 4] = pixels[p * 4 + 1] = pixels[p * 4 + 2] = value;
+      pixels[p * 4 + 3] = 1;
+    }
+    auto shared = std::make_shared<MeshMapPixels>(32, std::move(pixels));
+    MeshMap map;
+    map.name = "Generator mixed input";
+    map.tiles[1001] = {32, shared->hash, shared};
+    return map;
+  };
+  set.mesh_maps[3] = baked(.3);
+  set.mesh_maps[4] = baked(.6);
+  auto &dirt = consumer.mask->effects.front();
+  dirt.generator = 5;
+  dirt.input_anchors[0] = {point.id, 0, 2, true};
+  dirt.input_anchors[1] = {};
+  check(0);
+  dirt.input_anchors[0] = {};
+  dirt.input_anchors[1] = {point.id, 0, 1, true};
+  check(0);
+  dirt.input_anchors[0] = {point.id, 0, 2, true};
+  check(0);
+  set.mesh_maps = {};
+  dirt.generator = 3;
+  dirt.input_anchors[1] = {};
+  source.kind = LayerKind::Paint;
+  source.pixels = {};
+  auto dab = ink;
+  dab.channels = {true, false, false, false, false};
+  dab.values.base_color = {.2, .4, .6, 1};
+  dab.flow = .5;
+  dab.center = {.5, .5};
+  dab.axis_x = {.3, 0};
+  dab.axis_y = {0, .3};
+  source.pixels.stamp(512, dab);
+  consumer.mask->effects.front().input_anchors[0] = {point.id, 0, 2, true};
+  check(0);
+  consumer.mask->effects.front().input_anchors[0].coverage = false;
+  check(0);
+  const auto cached_work = preview.impl_->mask_dispatch_texels;
+  LevelsEffect later;
+  later.kind = ContentEffectKind::Filter;
+  later.channel = 0;
+  later.filter.resource = 1;
+  source.effects.push_back(later);
+  check(0);
+  if (preview.impl_->mask_dispatch_texels != cached_work)
+    throw std::runtime_error("Post-anchor effect invalidated generator consumer");
+  auto small = dab;
+  small.center = {.05, .05};
+  small.axis_x = {.01, 0};
+  small.axis_y = {0, .01};
+  source.pixels.stamp(512, small);
+  check(0);
+  small.center = {.1, .1};
+  source.pixels.stamp(512, small);
+  const auto dirty_start = preview.impl_->mask_dispatch_texels;
+  check(0);
+  const auto dirty = preview.impl_->mask_dispatch_texels - dirty_start;
+  if (!dirty || dirty >= 512 * 512)
+    throw std::runtime_error("Generator anchor did not retain sparse dirty chunks");
+  set.tiles = {1001, 1002, 1011};
+  for (int tile : set.tiles) {
+    preview.begin_frame();
+    if (preview.update(set, 0, target.get(), tile) != GpuPreviewUpdate::Updated)
+      throw std::runtime_error("Generator anchor UDIM deferred");
+    ++cases;
+  }
+  std::printf(
+      "BTS_GPU_GENERATOR_ANCHORS_VERIFIED cases=%d resources=6 components=5 coverage_modes=2 content_mask_sources=1 source_edits=1 broken_forward_repair=1 udim=3 dirty_texels=%llu\n",
+      cases - first_case,
+      (unsigned long long)dirty);
 }

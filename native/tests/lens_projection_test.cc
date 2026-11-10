@@ -2,4 +2,50 @@
 #include "LensProjection.hh"
 #include <cassert>
 #include <limits>
-int main(){using bts::LensProjection;LensProjection off;assert(off.to_source({.1,.9})==LensProjection::Point({.1,.9}));assert(!off.to_source({std::numeric_limits<double>::quiet_NaN(),0}));assert(LensProjection::coefficient(1,45)==0&&LensProjection::coefficient(2,45)==.25);LensProjection lens{true,.2,0,0};const auto known=lens.to_source({.7,.6});assert(known&&std::abs((*known)[0]-.6715728752538098)<1e-12&&std::abs((*known)[1]-.585786437626905)<1e-12);lens.distortion=-.2;const auto negative=lens.to_source({.7,.6});assert(negative&&std::abs((*negative)[0]-.7360679774997896)<1e-12&&std::abs((*negative)[1]-.6180339887498948)<1e-12);int checked=0;for(double k:{-.35,-.2,0.,.2,.35}){lens.distortion=k;for(int y=1;y<10;++y)for(int x=1;x<10;++x){LensProjection::Point source{x/10.,y/10.};auto displayed=lens.to_display(source);if(!displayed)continue;auto restored=lens.to_source(*displayed);if(!restored)continue;assert(std::hypot((*restored)[0]-source[0],(*restored)[1]-source[1])<1e-10);++checked;}}assert(checked>200);lens.distortion=0;lens.roundness=.2;lens.smoothness=1;assert(lens.alpha({.5,.5})==1&&lens.alpha({0,0})==0&&!lens.to_source({.01,.01}));assert(lens.to_source({.5,.5}));lens.roundness=.02;assert(lens.to_source({.04,.04}));lens.roundness=.2;assert(!lens.to_source({.04,.04}));lens.roundness=0;const double feather=lens.alpha({.0025,.5});assert(std::abs(feather-.5)<1e-12);lens.smoothness=0;assert(lens.alpha({.0025,.5})==1);}
+int main()
+{
+  using bts::LensProjection;
+  LensProjection off;
+  assert(off.to_source({.1, .9}) == LensProjection::Point({.1, .9}));
+  assert(!off.to_source({std::numeric_limits<double>::quiet_NaN(), 0}));
+  assert(LensProjection::coefficient(1, 45) == 0 && LensProjection::coefficient(2, 45) == .25);
+  LensProjection lens{true, .2, 0, 0};
+  const auto known = lens.to_source({.7, .6});
+  assert(known && std::abs((*known)[0] - .6715728752538098) < 1e-12 &&
+         std::abs((*known)[1] - .585786437626905) < 1e-12);
+  lens.distortion = -.2;
+  const auto negative = lens.to_source({.7, .6});
+  assert(negative && std::abs((*negative)[0] - .7360679774997896) < 1e-12 &&
+         std::abs((*negative)[1] - .6180339887498948) < 1e-12);
+  int checked = 0;
+  for (double k : {-.35, -.2, 0., .2, .35}) {
+    lens.distortion = k;
+    for (int y = 1; y < 10; ++y)
+      for (int x = 1; x < 10; ++x) {
+        LensProjection::Point source{x / 10., y / 10.};
+        auto displayed = lens.to_display(source);
+        if (!displayed)
+          continue;
+        auto restored = lens.to_source(*displayed);
+        if (!restored)
+          continue;
+        assert(std::hypot((*restored)[0] - source[0], (*restored)[1] - source[1]) < 1e-10);
+        ++checked;
+      }
+  }
+  assert(checked > 200);
+  lens.distortion = 0;
+  lens.roundness = .2;
+  lens.smoothness = 1;
+  assert(lens.alpha({.5, .5}) == 1 && lens.alpha({0, 0}) == 0 && !lens.to_source({.01, .01}));
+  assert(lens.to_source({.5, .5}));
+  lens.roundness = .02;
+  assert(lens.to_source({.04, .04}));
+  lens.roundness = .2;
+  assert(!lens.to_source({.04, .04}));
+  lens.roundness = 0;
+  const double feather = lens.alpha({.0025, .5});
+  assert(std::abs(feather - .5) < 1e-12);
+  lens.smoothness = 0;
+  assert(lens.alpha({.0025, .5}) == 1);
+}

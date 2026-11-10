@@ -7,6 +7,170 @@
 #include <QJsonArray>
 #include <cassert>
 #include <iostream>
-int main(int argc,char **argv){QCoreApplication app(argc,argv);using namespace bts;
- QTemporaryDir paths;assert(paths.isValid());const auto install=paths.path()+"/read-only-install";assert(QDir().mkpath(install));qputenv("BTS_ROOT",install.toUtf8());qputenv("XDG_DATA_HOME",(paths.path()+"/user-data").toUtf8());qunsetenv("BTS_TEMPLATE_DIR");const auto templates=project_template_directory();assert(templates.startsWith(paths.path()+"/user-data/"));assert(QDir().mkpath(templates));qputenv("BTS_TEMPLATE_DIR",(paths.path()+"/override").toUtf8());assert(project_template_directory()==paths.path()+"/override");qunsetenv("BTS_TEMPLATE_DIR");
-SceneSnapshot scene;MaterialSummary material;material.session_id=1;material.name="CubeSurface";material.uniform_editable=true;scene.materials.push_back(material);ImportSummary imported;imported.materials={{1,"CubeSurface"}};NewProjectOptions options;options.resolution=DocumentResolution::Pixels128;options.normal_map_format=NormalMapFormat::DirectX;options.auto_unwrap={true,UvDataPolicy::Recompute,UvDataPolicy::Missing,UvDataPolicy::Recompute,3};options.usd.scope="/World/Asset";options.usd.variants["/World/Asset#modelingVariant"]="low";options.usd.subdivision=2;options.usd.explicit_frame=true;options.usd.frame=10;options.auto_unwrap.hard_surface=true;TextureDocument source(options,imported,scene);assert(TextureDocument::from_json(source.to_json(),std::array{TextureSetBinding{source.set(1).id,1,"CubeSurface"}}).settings().auto_unwrap==options.auto_unwrap);assert(TextureDocument::from_json(source.to_json(),std::array{TextureSetBinding{source.set(1).id,1,"CubeSurface"}}).settings().usd==options.usd);auto legacy=source.to_json();legacy["schema"]=20;legacy.remove("usd");assert(TextureDocument::from_json(legacy,std::array{TextureSetBinding{source.set(1).id,1,"CubeSurface"}}).settings().usd==UsdImportOptions{});auto legacy_unwrap=source.to_json();auto legacy_uv=legacy_unwrap["auto_unwrap"].toObject();legacy_uv.remove("hard_surface");legacy_unwrap["auto_unwrap"]=legacy_uv;assert(!TextureDocument::from_json(legacy_unwrap,std::array{TextureSetBinding{source.set(1).id,1,"CubeSurface"}}).settings().auto_unwrap.hard_surface);auto invalid_unwrap=source.to_json();auto invalid_uv=invalid_unwrap["auto_unwrap"].toObject();invalid_uv["hard_surface"]=1;invalid_unwrap["auto_unwrap"]=invalid_uv;bool invalid_hard=false;try{TextureDocument::from_json(invalid_unwrap,std::array{TextureSetBinding{source.set(1).id,1,"CubeSurface"}});}catch(const std::exception &){invalid_hard=true;}assert(invalid_hard);auto &set=source.set(1);set.ao_channel=true;set.channels[1]=false;set.padding_3d=false;set.normal_mixing=NormalMixing::Replace;set.bump_method=BumpMethod::Sharp;PaintPixels::Stamp stamp{{.5,.5},{.1,0},{0,.1}};set.layers[0].pixels.stamp(128,stamp);TextureDocument::add_fill(set);const auto original=source.to_json();const QByteArray bytes="pure-parser fixture; native HDR decoding is tested by the host";QJsonObject resource{{"name","fixture.hdr"},{"data",QString::fromLatin1(bytes.toBase64())},{"sha256",QString::fromLatin1(QCryptographicHash::hash(bytes,QCryptographicHash::Sha256).toHex())}};auto data=make_project_template(source,1,{{"view_transform","Standard"}},{{"rotation",30},{"exposure",1},{"opacity",80},{"blur",25},{"alignment","Local"}},resource,{});assert(source.to_json()==original);auto configuration=project_template_options(data);assert(configuration.resolution==DocumentResolution::Pixels128&&configuration.normal_map_format==NormalMapFormat::DirectX);assert(configuration.auto_unwrap==options.auto_unwrap&&configuration.usd==UsdImportOptions{});auto bad_uv=source.to_json();auto uv=bad_uv["auto_unwrap"].toObject();uv["margin"]=4;bad_uv["auto_unwrap"]=uv;bool uv_rejected=false;try{TextureDocument::from_json(bad_uv,std::array{TextureSetBinding{source.set(1).id,1,"CubeSurface"}});}catch(const std::exception &){uv_rejected=true;}assert(uv_rejected);scene.materials[0].session_id=9;scene.materials[0].name="RenamedMesh";imported.materials={{9,"RenamedMesh"}};TextureDocument target(configuration,imported,scene);const auto target_id=target.id(),layer=target.set(9).selected_layer;apply_project_template(target,data);const auto &new_set=target.set(9);assert(target.id()==target_id&&new_set.selected_layer==layer&&new_set.layers.size()==1&&!TextureDocument::has_pixels(new_set)&&new_set.ao_channel&&!new_set.channels[1]&&!new_set.padding_3d&&new_set.normal_mixing==NormalMixing::Replace&&new_set.bump_method==BumpMethod::Sharp);const auto file=templates+"/project-template-test.btst";write_project_template(file,data);assert(read_project_template(file)==data);assert(QDir(install).entryList(QDir::Files|QDir::Dirs|QDir::NoDotAndDotDot).isEmpty());auto bad=data;auto invalid_resource=resource;invalid_resource["sha256"]="wrong";bad["resource"]=invalid_resource;bool rejected=false;try{validate_project_template(bad);}catch(const std::exception &){rejected=true;}assert(rejected);bad=data;bad["defaults"]=original;rejected=false;try{validate_project_template(bad);}catch(const std::exception &){rejected=true;}assert(rejected);bad=data;bad["shader"]="unknown";rejected=false;try{validate_project_template(bad);}catch(const std::exception &){rejected=true;}assert(rejected);assert(source.to_json()==original);std::cout<<"Portable template defaults, no paint/layer carryover, fallback profile, file roundtrip and corruption rejection passed\n";}
+int main(int argc, char **argv)
+{
+  QCoreApplication app(argc, argv);
+  using namespace bts;
+  QTemporaryDir paths;
+  assert(paths.isValid());
+  const auto install = paths.path() + "/read-only-install";
+  assert(QDir().mkpath(install));
+  qputenv("BTS_ROOT", install.toUtf8());
+  qputenv("XDG_DATA_HOME", (paths.path() + "/user-data").toUtf8());
+  qunsetenv("BTS_TEMPLATE_DIR");
+  const auto templates = project_template_directory();
+  assert(templates.startsWith(paths.path() + "/user-data/"));
+  assert(QDir().mkpath(templates));
+  qputenv("BTS_TEMPLATE_DIR", (paths.path() + "/override").toUtf8());
+  assert(project_template_directory() == paths.path() + "/override");
+  qunsetenv("BTS_TEMPLATE_DIR");
+  SceneSnapshot scene;
+  MaterialSummary material;
+  material.session_id = 1;
+  material.name = "CubeSurface";
+  material.uniform_editable = true;
+  scene.materials.push_back(material);
+  ImportSummary imported;
+  imported.materials = {{1, "CubeSurface"}};
+  NewProjectOptions options;
+  options.resolution = DocumentResolution::Pixels128;
+  options.normal_map_format = NormalMapFormat::DirectX;
+  options.auto_unwrap = {
+      true, UvDataPolicy::Recompute, UvDataPolicy::Missing, UvDataPolicy::Recompute, 3};
+  options.usd.scope = "/World/Asset";
+  options.usd.variants["/World/Asset#modelingVariant"] = "low";
+  options.usd.subdivision = 2;
+  options.usd.explicit_frame = true;
+  options.usd.frame = 10;
+  options.auto_unwrap.hard_surface = true;
+  TextureDocument source(options, imported, scene);
+  assert(TextureDocument::from_json(
+             source.to_json(), std::array{TextureSetBinding{source.set(1).id, 1, "CubeSurface"}})
+             .settings()
+             .auto_unwrap == options.auto_unwrap);
+  assert(TextureDocument::from_json(
+             source.to_json(), std::array{TextureSetBinding{source.set(1).id, 1, "CubeSurface"}})
+             .settings()
+             .usd == options.usd);
+  auto legacy = source.to_json();
+  legacy["schema"] = 20;
+  legacy.remove("usd");
+  assert(TextureDocument::from_json(
+             legacy, std::array{TextureSetBinding{source.set(1).id, 1, "CubeSurface"}})
+             .settings()
+             .usd == UsdImportOptions{});
+  auto legacy_unwrap = source.to_json();
+  auto legacy_uv = legacy_unwrap["auto_unwrap"].toObject();
+  legacy_uv.remove("hard_surface");
+  legacy_unwrap["auto_unwrap"] = legacy_uv;
+  assert(!TextureDocument::from_json(
+              legacy_unwrap, std::array{TextureSetBinding{source.set(1).id, 1, "CubeSurface"}})
+              .settings()
+              .auto_unwrap.hard_surface);
+  auto invalid_unwrap = source.to_json();
+  auto invalid_uv = invalid_unwrap["auto_unwrap"].toObject();
+  invalid_uv["hard_surface"] = 1;
+  invalid_unwrap["auto_unwrap"] = invalid_uv;
+  bool invalid_hard = false;
+  try {
+    TextureDocument::from_json(invalid_unwrap,
+                               std::array{TextureSetBinding{source.set(1).id, 1, "CubeSurface"}});
+  }
+  catch (const std::exception &) {
+    invalid_hard = true;
+  }
+  assert(invalid_hard);
+  auto &set = source.set(1);
+  set.ao_channel = true;
+  set.channels[1] = false;
+  set.padding_3d = false;
+  set.normal_mixing = NormalMixing::Replace;
+  set.bump_method = BumpMethod::Sharp;
+  PaintPixels::Stamp stamp{{.5, .5}, {.1, 0}, {0, .1}};
+  set.layers[0].pixels.stamp(128, stamp);
+  TextureDocument::add_fill(set);
+  const auto original = source.to_json();
+  const QByteArray bytes = "pure-parser fixture; native HDR decoding is tested by the host";
+  QJsonObject resource{
+      {"name", "fixture.hdr"},
+      {"data", QString::fromLatin1(bytes.toBase64())},
+      {"sha256",
+       QString::fromLatin1(QCryptographicHash::hash(bytes, QCryptographicHash::Sha256).toHex())}};
+  auto data = make_project_template(
+      source,
+      1,
+      {{"view_transform", "Standard"}},
+      {{"rotation", 30}, {"exposure", 1}, {"opacity", 80}, {"blur", 25}, {"alignment", "Local"}},
+      resource,
+      {});
+  assert(source.to_json() == original);
+  auto configuration = project_template_options(data);
+  assert(configuration.resolution == DocumentResolution::Pixels128 &&
+         configuration.normal_map_format == NormalMapFormat::DirectX);
+  assert(configuration.auto_unwrap == options.auto_unwrap &&
+         configuration.usd == UsdImportOptions{});
+  auto bad_uv = source.to_json();
+  auto uv = bad_uv["auto_unwrap"].toObject();
+  uv["margin"] = 4;
+  bad_uv["auto_unwrap"] = uv;
+  bool uv_rejected = false;
+  try {
+    TextureDocument::from_json(bad_uv,
+                               std::array{TextureSetBinding{source.set(1).id, 1, "CubeSurface"}});
+  }
+  catch (const std::exception &) {
+    uv_rejected = true;
+  }
+  assert(uv_rejected);
+  scene.materials[0].session_id = 9;
+  scene.materials[0].name = "RenamedMesh";
+  imported.materials = {{9, "RenamedMesh"}};
+  TextureDocument target(configuration, imported, scene);
+  const auto target_id = target.id(), layer = target.set(9).selected_layer;
+  apply_project_template(target, data);
+  const auto &new_set = target.set(9);
+  assert(target.id() == target_id && new_set.selected_layer == layer &&
+         new_set.layers.size() == 1 && !TextureDocument::has_pixels(new_set) &&
+         new_set.ao_channel && !new_set.channels[1] && !new_set.padding_3d &&
+         new_set.normal_mixing == NormalMixing::Replace &&
+         new_set.bump_method == BumpMethod::Sharp);
+  const auto file = templates + "/project-template-test.btst";
+  write_project_template(file, data);
+  assert(read_project_template(file) == data);
+  assert(QDir(install).entryList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot).isEmpty());
+  auto bad = data;
+  auto invalid_resource = resource;
+  invalid_resource["sha256"] = "wrong";
+  bad["resource"] = invalid_resource;
+  bool rejected = false;
+  try {
+    validate_project_template(bad);
+  }
+  catch (const std::exception &) {
+    rejected = true;
+  }
+  assert(rejected);
+  bad = data;
+  bad["defaults"] = original;
+  rejected = false;
+  try {
+    validate_project_template(bad);
+  }
+  catch (const std::exception &) {
+    rejected = true;
+  }
+  assert(rejected);
+  bad = data;
+  bad["shader"] = "unknown";
+  rejected = false;
+  try {
+    validate_project_template(bad);
+  }
+  catch (const std::exception &) {
+    rejected = true;
+  }
+  assert(rejected);
+  assert(source.to_json() == original);
+  std::cout
+      << "Portable template defaults, no paint/layer carryover, fallback profile, file roundtrip and corruption rejection passed\n";
+}

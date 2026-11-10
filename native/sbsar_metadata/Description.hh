@@ -9,7 +9,9 @@
 namespace bts::sbsar_metadata {
 using TokenId = std::size_t;
 inline constexpr TokenId no_token = std::numeric_limits<TokenId>::max();
-struct Attribute { QString name, namespace_uri, value; };
+struct Attribute {
+  QString name, namespace_uri, value;
+};
 // Flat, ordered XML events: no recursive ownership or traversal. Original bytes
 // additionally retain lexical details (quotes, namespace placement, CDATA, etc.).
 enum class Kind { Start, End, Text, Comment, ProcessingInstruction, Doctype };
@@ -21,7 +23,10 @@ struct Token {
   qint64 line = 0, column = 0;
   bool cdata = false;
 };
-struct Reference { TokenId input = no_token, output = no_token; QString raw_uid; };
+struct Reference {
+  TokenId input = no_token, output = no_token;
+  QString raw_uid;
+};
 struct Graph {
   TokenId token = no_token;
   std::vector<TokenId> inputs, outputs, presets;
@@ -37,12 +42,11 @@ struct Description {
   std::vector<QString> diagnostics;
   std::uint64_t accounted_bytes = 0;
 };
-struct ReadOptions {
-};
+struct ReadOptions {};
 Description read_xml(QByteArray bytes, ReadOptions options = {});
 Description read_xml_file(const QString &path, ReadOptions options = {});
 QString attribute(const Token &, QStringView name);
 QByteArray dump_json(const Description &);
 // Exposed checked decimal primitive also used for counts and UID references.
 std::uint64_t decimal(QStringView text);
-}
+}  // namespace bts::sbsar_metadata

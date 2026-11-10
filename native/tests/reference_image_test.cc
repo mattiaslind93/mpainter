@@ -15,16 +15,16 @@ using namespace bts;
 
 namespace {
 
-bool close_color(const PickerColor &a, const PickerColor &b, float eps = 0.015f) {
-  return std::abs(a[0] - b[0]) <= eps &&
-         std::abs(a[1] - b[1]) <= eps &&
-         std::abs(a[2] - b[2]) <= eps &&
-         std::abs(a[3] - b[3]) <= eps;
+bool close_color(const PickerColor &a, const PickerColor &b, float eps = 0.015f)
+{
+  return std::abs(a[0] - b[0]) <= eps && std::abs(a[1] - b[1]) <= eps &&
+         std::abs(a[2] - b[2]) <= eps && std::abs(a[3] - b[3]) <= eps;
 }
 
 }  // namespace
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
   QApplication app(argc, argv);
   QSettings::setDefaultFormat(QSettings::IniFormat);
 
@@ -38,26 +38,41 @@ int main(int argc, char **argv) {
     // Wide 2:1 image in square pane needs larger vertical extent so horizontal fits.
     const double fit_wide = reference_image_fit_vertical_extent(QSize(400, 400), 200, 100);
     assert(fit_wide > 2.0);
-    const QRectF rect_wide = reference_image_screen_rect(pane, 200, 100, QPointF(0.5, 0.5), fit_wide);
+    const QRectF rect_wide = reference_image_screen_rect(
+        pane, 200, 100, QPointF(0.5, 0.5), fit_wide);
     assert(std::abs(rect_wide.width() / rect_wide.height() - 2.0) < 1e-4);
     assert(rect_wide.width() <= pane.width());
 
     // Center of pane maps to (0.5, 0.5) UV.
-    const auto center_uv = reference_image_uv_at(pane, 200, 100, QPointF(0.5, 0.5), fit_wide, pane.center());
+    const auto center_uv = reference_image_uv_at(
+        pane, 200, 100, QPointF(0.5, 0.5), fit_wide, pane.center());
     assert(center_uv.has_value());
     assert(std::abs(center_uv->x() - 0.5) < 1e-4);
     assert(std::abs(center_uv->y() - 0.5) < 1e-4);
 
     // Top-left inside rect maps to (0, 1) UV, bottom-right inside rect maps to (1, 0) UV.
     const auto tl_uv = reference_image_uv_at(
-        pane, 200, 100, QPointF(0.5, 0.5), fit_wide, QPointF(rect_wide.left() + 0.5, rect_wide.top() + 0.5));
+        pane,
+        200,
+        100,
+        QPointF(0.5, 0.5),
+        fit_wide,
+        QPointF(rect_wide.left() + 0.5, rect_wide.top() + 0.5));
     assert(tl_uv.has_value());
     assert(tl_uv->x() >= 0.0 && tl_uv->x() < 0.05);
     assert(tl_uv->y() <= 1.0 && tl_uv->y() > 0.95);
 
     // Points outside the image rect or outside the pane return std::nullopt.
-    assert(!reference_image_uv_at(pane, 200, 100, QPointF(0.5, 0.5), fit_wide, QPointF(pane.left() + 5.0, pane.top() + 5.0)).has_value());
-    assert(!reference_image_uv_at(pane, 200, 100, QPointF(0.5, 0.5), fit_wide, QPointF(100.0, 200.0)).has_value());
+    assert(!reference_image_uv_at(pane,
+                                  200,
+                                  100,
+                                  QPointF(0.5, 0.5),
+                                  fit_wide,
+                                  QPointF(pane.left() + 5.0, pane.top() + 5.0))
+                .has_value());
+    assert(
+        !reference_image_uv_at(pane, 200, 100, QPointF(0.5, 0.5), fit_wide, QPointF(100.0, 200.0))
+             .has_value());
   }
 
   // 2. Reference image loading from disk and linear RGBA color picking.
@@ -171,6 +186,7 @@ int main(int argc, char **argv) {
     assert(document_reference_image(reopened) == ref_state);
   }
 
-  std::puts("Reference image 2D view, aspect fit, color picking, preferences, and .btsproj persistence PASS");
+  std::puts(
+      "Reference image 2D view, aspect fit, color picking, preferences, and .btsproj persistence PASS");
   return 0;
 }

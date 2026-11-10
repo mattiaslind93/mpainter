@@ -10,7 +10,93 @@
 #include <pxr/usd/usd/variantSets.h>
 #include <pxr/usd/usdGeom/mesh.h>
 #include <pxr/base/vt/array.h>
-int main(){using namespace bts;if(qEnvironmentVariableIsEmpty("BTS_ROOT"))qputenv("BTS_ROOT",QDir(BTS_USD_TEST_ROOT).canonicalPath().toUtf8());const std::string path=BTS_USD_FIXTURE;QFile file(QString::fromStdString(path));assert(file.open(QIODevice::ReadOnly));const auto original=file.readAll();UsdImportOptions options;auto info=inspect_usd_scene(path,options);assert(info.meshes==2&&info.animated&&info.subdividable&&info.first_frame==1&&info.last_frame==10&&info.meters_per_unit==1);assert(info.variants.size()==1&&info.variants[0].selected=="low"&&info.variants[0].choices.size()==2);options.scope="/World/Asset";options.frame=10;options.explicit_frame=true;std::string frozen_path;{auto frozen=freeze_usd_scene(path,options);frozen_path=frozen->path;assert(QFileInfo::exists(QString::fromStdString(frozen_path)));assert(frozen->info.meshes==1&&frozen->population_mask==options.scope);auto stage=pxr::UsdStage::Open(frozen_path);auto mesh=pxr::UsdGeomMesh(stage->GetPrimAtPath(pxr::SdfPath("/World/Asset/Surface")));pxr::VtArray<pxr::GfVec3f> positions;assert(mesh.GetPointsAttr().Get(&positions)&&positions.size()==4&&positions[0][0]==-2&&positions[0][2]==1);assert(!mesh.GetPointsAttr().ValueMightBeTimeVarying());}assert(!QFileInfo::exists(QString::fromStdString(frozen_path)));options.variants["/World/Asset#modelingVariant"]="high";auto variant=freeze_usd_scene(path,options);auto stage=pxr::UsdStage::Open(variant->path);pxr::VtArray<pxr::GfVec3f> positions;assert(pxr::UsdGeomMesh(stage->GetPrimAtPath(pxr::SdfPath("/World/Asset/Surface"))).GetPointsAttr().Get(&positions)&&positions.size()==6);assert(!variant->info.animated&&variant->info.meshes==1);assert(inspect_usd_scene(path,{}).variants[0].selected=="low");file.seek(0);assert(file.readAll()==original);options.variants.begin()->second="missing";bool rejected=false;try{freeze_usd_scene(path,options);}catch(const std::exception &){rejected=true;}assert(rejected);options={};options.scope="/World/Missing";rejected=false;try{inspect_usd_scene(path,options);}catch(const std::exception &){rejected=true;}assert(rejected);
-QTemporaryDir resources(QString::fromUtf8(qgetenv("BTS_ROOT"))+"/build/usd-anchor-XXXXXX");assert(resources.isValid());for(int tile:{1001,1002}){QFile image(resources.filePath(QString("tile.%1.exr").arg(tile)));assert(image.open(QIODevice::WriteOnly));assert(image.write("fixture")==7);}
-const auto resource_scene=resources.filePath("source.usda");assert(pxr::UsdStage::Open(path)->GetRootLayer()->Export(resource_scene.toStdString()));auto authored=pxr::UsdStage::Open(resource_scene.toStdString());auto texture=authored->DefinePrim(pxr::SdfPath("/Texture"),pxr::TfToken("Shader"));auto reference=texture.CreateAttribute(pxr::TfToken("inputs:file"),pxr::SdfValueTypeNames->Asset);assert(reference.Set(pxr::SdfAssetPath("tile.<UDIM>.exr")));assert(authored->GetRootLayer()->Save());auto anchored=freeze_usd_scene(resource_scene.toStdString(),{});pxr::SdfAssetPath retained;assert(pxr::UsdStage::Open(anchored->path)->GetAttributeAtPath(pxr::SdfPath("/Texture.inputs:file")).Get(&retained));assert(retained.GetAssetPath()==resources.filePath("tile.<UDIM>.exr").toStdString());pxr::SdfAssetPath original_reference;assert(reference.Get(&original_reference)&&original_reference.GetAssetPath()=="tile.<UDIM>.exr");
-std::cout<<"USD scopes, variant isolation, frame sampling, private lifetime and invalid selection passed\n";}
+int main()
+{
+  using namespace bts;
+  if (qEnvironmentVariableIsEmpty("BTS_ROOT"))
+    qputenv("BTS_ROOT", QDir(BTS_USD_TEST_ROOT).canonicalPath().toUtf8());
+  const std::string path = BTS_USD_FIXTURE;
+  QFile file(QString::fromStdString(path));
+  assert(file.open(QIODevice::ReadOnly));
+  const auto original = file.readAll();
+  UsdImportOptions options;
+  auto info = inspect_usd_scene(path, options);
+  assert(info.meshes == 2 && info.animated && info.subdividable && info.first_frame == 1 &&
+         info.last_frame == 10 && info.meters_per_unit == 1);
+  assert(info.variants.size() == 1 && info.variants[0].selected == "low" &&
+         info.variants[0].choices.size() == 2);
+  options.scope = "/World/Asset";
+  options.frame = 10;
+  options.explicit_frame = true;
+  std::string frozen_path;
+  {
+    auto frozen = freeze_usd_scene(path, options);
+    frozen_path = frozen->path;
+    assert(QFileInfo::exists(QString::fromStdString(frozen_path)));
+    assert(frozen->info.meshes == 1 && frozen->population_mask == options.scope);
+    auto stage = pxr::UsdStage::Open(frozen_path);
+    auto mesh = pxr::UsdGeomMesh(stage->GetPrimAtPath(pxr::SdfPath("/World/Asset/Surface")));
+    pxr::VtArray<pxr::GfVec3f> positions;
+    assert(mesh.GetPointsAttr().Get(&positions) && positions.size() == 4 &&
+           positions[0][0] == -2 && positions[0][2] == 1);
+    assert(!mesh.GetPointsAttr().ValueMightBeTimeVarying());
+  }
+  assert(!QFileInfo::exists(QString::fromStdString(frozen_path)));
+  options.variants["/World/Asset#modelingVariant"] = "high";
+  auto variant = freeze_usd_scene(path, options);
+  auto stage = pxr::UsdStage::Open(variant->path);
+  pxr::VtArray<pxr::GfVec3f> positions;
+  assert(pxr::UsdGeomMesh(stage->GetPrimAtPath(pxr::SdfPath("/World/Asset/Surface")))
+             .GetPointsAttr()
+             .Get(&positions) &&
+         positions.size() == 6);
+  assert(!variant->info.animated && variant->info.meshes == 1);
+  assert(inspect_usd_scene(path, {}).variants[0].selected == "low");
+  file.seek(0);
+  assert(file.readAll() == original);
+  options.variants.begin()->second = "missing";
+  bool rejected = false;
+  try {
+    freeze_usd_scene(path, options);
+  }
+  catch (const std::exception &) {
+    rejected = true;
+  }
+  assert(rejected);
+  options = {};
+  options.scope = "/World/Missing";
+  rejected = false;
+  try {
+    inspect_usd_scene(path, options);
+  }
+  catch (const std::exception &) {
+    rejected = true;
+  }
+  assert(rejected);
+  QTemporaryDir resources(QString::fromUtf8(qgetenv("BTS_ROOT")) + "/build/usd-anchor-XXXXXX");
+  assert(resources.isValid());
+  for (int tile : {1001, 1002}) {
+    QFile image(resources.filePath(QString("tile.%1.exr").arg(tile)));
+    assert(image.open(QIODevice::WriteOnly));
+    assert(image.write("fixture") == 7);
+  }
+  const auto resource_scene = resources.filePath("source.usda");
+  assert(pxr::UsdStage::Open(path)->GetRootLayer()->Export(resource_scene.toStdString()));
+  auto authored = pxr::UsdStage::Open(resource_scene.toStdString());
+  auto texture = authored->DefinePrim(pxr::SdfPath("/Texture"), pxr::TfToken("Shader"));
+  auto reference = texture.CreateAttribute(pxr::TfToken("inputs:file"),
+                                           pxr::SdfValueTypeNames->Asset);
+  assert(reference.Set(pxr::SdfAssetPath("tile.<UDIM>.exr")));
+  assert(authored->GetRootLayer()->Save());
+  auto anchored = freeze_usd_scene(resource_scene.toStdString(), {});
+  pxr::SdfAssetPath retained;
+  assert(pxr::UsdStage::Open(anchored->path)
+             ->GetAttributeAtPath(pxr::SdfPath("/Texture.inputs:file"))
+             .Get(&retained));
+  assert(retained.GetAssetPath() == resources.filePath("tile.<UDIM>.exr").toStdString());
+  pxr::SdfAssetPath original_reference;
+  assert(reference.Get(&original_reference) &&
+         original_reference.GetAssetPath() == "tile.<UDIM>.exr");
+  std::cout
+      << "USD scopes, variant isolation, frame sampling, private lifetime and invalid selection passed\n";
+}

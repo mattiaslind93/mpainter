@@ -7,7 +7,15 @@
 #include <cassert>
 #include <cmath>
 #include <iostream>
-int main(){using namespace bts;QTemporaryDir folder(QDir::currentPath()+"/camera-fixture-XXXXXX");assert(folder.isValid());const auto path=folder.path()+"/card.dae";QFile file(path);assert(file.open(QIODevice::WriteOnly));const QByteArray fixture=R"BTSDAE(<?xml version="1.0" encoding="utf-8"?>
+int main()
+{
+  using namespace bts;
+  QTemporaryDir folder(QDir::currentPath() + "/camera-fixture-XXXXXX");
+  assert(folder.isValid());
+  const auto path = folder.path() + "/card.dae";
+  QFile file(path);
+  assert(file.open(QIODevice::WriteOnly));
+  const QByteArray fixture = R"BTSDAE(<?xml version="1.0" encoding="utf-8"?>
 <COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
  <asset><created>2026-10-18T00:00:00Z</created><modified>2026-10-18T00:00:00Z</modified><unit name="meter" meter="1"/><up_axis>Y_UP</up_axis></asset>
  <library_effects><effect id="effect"><profile_COMMON><technique sid="common"><lambert><diffuse><color>0.5 0.5 0.5 1</color></diffuse></lambert></technique></profile_COMMON></effect></library_effects>
@@ -29,4 +37,26 @@ int main(){using namespace bts;QTemporaryDir folder(QDir::currentPath()+"/camera
  </visual_scene></library_visual_scenes>
  <scene><instance_visual_scene url="#Scene"/></scene>
 </COLLADA>
-)BTSDAE";assert(file.write(fixture)==fixture.size());file.close();auto scene=convert_collada_scene(path.toStdString(),true);assert(scene->cameras.size()==2&&QFileInfo::exists(QString::fromStdString(scene->obj_path)));const auto &front=scene->cameras[0],&angle=scene->cameras[1];assert(front.name=="FrontReference"&&angle.name=="AngleReference");assert(std::abs(front.position[1]+4)<1e-5&&std::abs(front.position[2])<1e-5);assert(std::abs(front.vertical_fov-45)<1e-4&&std::abs(angle.vertical_fov-35)<1e-4);assert(std::abs(front.aspect-1.5)<1e-5&&std::abs(angle.aspect-16.f/9)<1e-5);auto none=convert_collada_scene(path.toStdString(),false);assert(none->cameras.empty());assert(file.open(QIODevice::WriteOnly|QIODevice::Truncate));auto centimeters=fixture;centimeters.replace("meter=\"1\"","meter=\"0.01\"");file.write(centimeters);file.close();auto scaled=convert_collada_scene(path.toStdString(),true);assert(std::abs(scaled->cameras[0].position[1]+.04)<1e-5&&std::abs(scaled->cameras[0].near_clip-front.near_clip*.01)<1e-6);std::cout<<"In-process Collada bridge: native-axis camera names, calibrated FOV, camera exclusion and scene-unit scaling passed\n";}
+)BTSDAE";
+  assert(file.write(fixture) == fixture.size());
+  file.close();
+  auto scene = convert_collada_scene(path.toStdString(), true);
+  assert(scene->cameras.size() == 2 && QFileInfo::exists(QString::fromStdString(scene->obj_path)));
+  const auto &front = scene->cameras[0], &angle = scene->cameras[1];
+  assert(front.name == "FrontReference" && angle.name == "AngleReference");
+  assert(std::abs(front.position[1] + 4) < 1e-5 && std::abs(front.position[2]) < 1e-5);
+  assert(std::abs(front.vertical_fov - 45) < 1e-4 && std::abs(angle.vertical_fov - 35) < 1e-4);
+  assert(std::abs(front.aspect - 1.5) < 1e-5 && std::abs(angle.aspect - 16.f / 9) < 1e-5);
+  auto none = convert_collada_scene(path.toStdString(), false);
+  assert(none->cameras.empty());
+  assert(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
+  auto centimeters = fixture;
+  centimeters.replace("meter=\"1\"", "meter=\"0.01\"");
+  file.write(centimeters);
+  file.close();
+  auto scaled = convert_collada_scene(path.toStdString(), true);
+  assert(std::abs(scaled->cameras[0].position[1] + .04) < 1e-5 &&
+         std::abs(scaled->cameras[0].near_clip - front.near_clip * .01) < 1e-6);
+  std::cout
+      << "In-process Collada bridge: native-axis camera names, calibrated FOV, camera exclusion and scene-unit scaling passed\n";
+}

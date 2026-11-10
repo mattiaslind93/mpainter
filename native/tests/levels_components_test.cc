@@ -2,7 +2,90 @@
 #include "TextureDocument.hh"
 #include <cassert>
 #include <iostream>
-int main(){using namespace bts;const auto near=[](float a,float b){assert(std::abs(a-b)<2e-6);};LevelsEffect e;e.component=1;edited_levels_curve(e).output_low=1;edited_levels_curve(e).output_high=0;auto rgb=levels_rgb(e,{.2,.4,.8});near(rgb[0],.8);near(rgb[1],.4);near(rgb[2],.8);e.component=2;edited_levels_curve(e).output_low=1;edited_levels_curve(e).output_high=0;e.component=3;edited_levels_curve(e).gamma=2;rgb=levels_rgb(e,{.2,.4,.8});near(rgb[0],.8);near(rgb[1],.6);near(rgb[2],std::sqrt(.8f));e.component=0;e.output_low=1;e.output_high=0;rgb=levels_rgb(e,{.2,.4,.8});near(rgb[0],.2);near(rgb[1],.4);near(rgb[2],std::sqrt(.2f));const auto data=effects_json({e});assert(effects_json(read_effects(data))==data);auto old=data;auto object=old[0].toObject();object.remove("component");object.remove("rgb_curves");old[0]=object;const auto legacy=read_effects(old);near(levels_rgb(legacy[0],{.2,.4,.8})[0],.8);assert(legacy[0].component==0);
- e={};e.output_low=-1;e.output_high=2;rgb=levels_rgb(e,{0,.5,1});assert(rgb[0]==-1&&rgb[1]==.5&&rgb[2]==2);e.clamp=true;rgb=levels_rgb(e,{0,.5,1});assert(rgb[0]==0&&rgb[1]==.5&&rgb[2]==1);e={};e.rgb_curves[0].output_low=1;e.rgb_curves[0].output_high=0;e.channel=2;near(levels_rgb(e,{.25,.25,.25})[0],.25);
- SceneSnapshot scene;MaterialSummary m;m.session_id=1;m.name="Levels";m.uniform_editable=true;scene.materials={m};ImportSummary imported;imported.materials={{1,"Levels"}};TextureDocument doc({},imported,scene);auto &set=doc.set(1);set.precision[0]=ChannelPrecision::RGB32F;TextureDocument::add_fill(set);auto &layer=TextureDocument::layer(set,set.selected_layer);layer.values.base_color={.2,.4,.8,1};e.channel=0;layer.effects={e};set.selected_effect=e.id;near(TextureDocument::evaluate(set).material.base_color[0],.8);near(TextureDocument::evaluate(set).material.base_color[1],.4);std::vector<TextureSetBinding> bindings{{set.id,1,set.name}};assert(TextureDocument::from_json(doc.to_json(),bindings).to_json()==doc.to_json());auto bad=data;auto invalid=bad[0].toObject();invalid["component"]=4;bad[0]=invalid;bool rejected=false;try{read_effects(bad);}catch(const std::invalid_argument &){rejected=true;}assert(rejected);std::cout<<"Independent persistent RGB curves, composite-before-component order, editor selection, scalar isolation, signed/HDR clamp, legacy migration and evaluated document persistence passed\n";
+int main()
+{
+  using namespace bts;
+  const auto near = [](float a, float b) { assert(std::abs(a - b) < 2e-6); };
+  LevelsEffect e;
+  e.component = 1;
+  edited_levels_curve(e).output_low = 1;
+  edited_levels_curve(e).output_high = 0;
+  auto rgb = levels_rgb(e, {.2, .4, .8});
+  near(rgb[0], .8);
+  near(rgb[1], .4);
+  near(rgb[2], .8);
+  e.component = 2;
+  edited_levels_curve(e).output_low = 1;
+  edited_levels_curve(e).output_high = 0;
+  e.component = 3;
+  edited_levels_curve(e).gamma = 2;
+  rgb = levels_rgb(e, {.2, .4, .8});
+  near(rgb[0], .8);
+  near(rgb[1], .6);
+  near(rgb[2], std::sqrt(.8f));
+  e.component = 0;
+  e.output_low = 1;
+  e.output_high = 0;
+  rgb = levels_rgb(e, {.2, .4, .8});
+  near(rgb[0], .2);
+  near(rgb[1], .4);
+  near(rgb[2], std::sqrt(.2f));
+  const auto data = effects_json({e});
+  assert(effects_json(read_effects(data)) == data);
+  auto old = data;
+  auto object = old[0].toObject();
+  object.remove("component");
+  object.remove("rgb_curves");
+  old[0] = object;
+  const auto legacy = read_effects(old);
+  near(levels_rgb(legacy[0], {.2, .4, .8})[0], .8);
+  assert(legacy[0].component == 0);
+  e = {};
+  e.output_low = -1;
+  e.output_high = 2;
+  rgb = levels_rgb(e, {0, .5, 1});
+  assert(rgb[0] == -1 && rgb[1] == .5 && rgb[2] == 2);
+  e.clamp = true;
+  rgb = levels_rgb(e, {0, .5, 1});
+  assert(rgb[0] == 0 && rgb[1] == .5 && rgb[2] == 1);
+  e = {};
+  e.rgb_curves[0].output_low = 1;
+  e.rgb_curves[0].output_high = 0;
+  e.channel = 2;
+  near(levels_rgb(e, {.25, .25, .25})[0], .25);
+  SceneSnapshot scene;
+  MaterialSummary m;
+  m.session_id = 1;
+  m.name = "Levels";
+  m.uniform_editable = true;
+  scene.materials = {m};
+  ImportSummary imported;
+  imported.materials = {{1, "Levels"}};
+  TextureDocument doc({}, imported, scene);
+  auto &set = doc.set(1);
+  set.precision[0] = ChannelPrecision::RGB32F;
+  TextureDocument::add_fill(set);
+  auto &layer = TextureDocument::layer(set, set.selected_layer);
+  layer.values.base_color = {.2, .4, .8, 1};
+  e.channel = 0;
+  layer.effects = {e};
+  set.selected_effect = e.id;
+  near(TextureDocument::evaluate(set).material.base_color[0], .8);
+  near(TextureDocument::evaluate(set).material.base_color[1], .4);
+  std::vector<TextureSetBinding> bindings{{set.id, 1, set.name}};
+  assert(TextureDocument::from_json(doc.to_json(), bindings).to_json() == doc.to_json());
+  auto bad = data;
+  auto invalid = bad[0].toObject();
+  invalid["component"] = 4;
+  bad[0] = invalid;
+  bool rejected = false;
+  try {
+    read_effects(bad);
+  }
+  catch (const std::invalid_argument &) {
+    rejected = true;
+  }
+  assert(rejected);
+  std::cout
+      << "Independent persistent RGB curves, composite-before-component order, editor selection, scalar isolation, signed/HDR clamp, legacy migration and evaluated document persistence passed\n";
 }

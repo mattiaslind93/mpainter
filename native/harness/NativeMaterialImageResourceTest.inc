@@ -1,16 +1,99 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Three independently owned material Mains share a single concurrent decode.
 {
- const auto root=qEnvironmentVariable("BTS_RESOURCE_CACHE");QDir().mkpath(root);QTemporaryDir folder(root+"/shared-image-XXXXXX");require(folder.isValid(),"Native shared source fixture directory missing");const auto file=folder.filePath("shared-4096.png");QImage image(4096,4096,QImage::Format_RGBA8888);image.fill(QColor(64,128,192));require(image.save(file),"Cannot create native shared image fixture");
- struct Decoded {std::unique_ptr<Main,decltype(&BKE_main_free)> main{nullptr,BKE_main_free};Image *image=nullptr;std::shared_ptr<NativeMaterialGraph> graph;std::shared_ptr<NativeMaterialImageResource> resource;bool reused=false;};
- const auto baseline=native_material_image_pool_statistics().decodes;std::barrier ready(3);std::vector<std::future<Decoded>> jobs;
- for(int i=0;i<3;++i)jobs.push_back(std::async(std::launch::async,[&,colorspace=main->colorspace]{Decoded result;result.main.reset(BKE_main_new());result.main->colorspace=colorspace;result.image=BKE_image_load(result.main.get(),file.toUtf8().constData());require(result.image,"Cannot create detached native image user");require(!BKE_image_has_loaded_ibuf(result.image),"Shared decode fixture was already resident");ready.arrive_and_wait();std::atomic_bool cancel=false;result.resource=prepare_shared_native_image(*result.main,*result.image,cancel,result.reused);
- auto *material=BKE_material_add(result.main.get(),"Shared native source material");auto &tree=*material->nodetree;auto *pbr=bke::node_add_node(nullptr,tree,UString("ShaderNodeBsdfPrincipled"));auto *out=bke::node_add_node(nullptr,tree,UString("ShaderNodeOutputMaterial"));auto *texture=bke::node_add_node(nullptr,tree,UString("ShaderNodeTexImage"));texture->id=&result.image->id;id_us_plus(texture->id);bke::node_add_link(tree,*texture,socket(*texture,"Color",false),*pbr,socket(*pbr,"Base Color",true));bke::node_add_link(tree,*pbr,socket(*pbr,"BSDF",false),*out,socket(*out,"Surface",true));BKE_ntree_update_after_single_tree_change(*result.main,tree);NativeMaterialDescription description;description.material="Shared native source material";description.surface_type="ShaderNodeBsdfPrincipled";result.graph=std::make_shared<NativeMaterialGraph>(std::move(result.main),material,description,cancel);result.graph->image_resources.emplace_back(result.image,result.resource);return result;}));
- std::vector<Decoded> results;for(auto &job:jobs)results.push_back(job.get());auto *buffer=results[0].resource->buffer();int reused=0;for(auto &result:results){require(result.resource->buffer()==buffer,"Separate material sources duplicated the decoded image");ImageUser user{};BKE_imageuser_default(&user);auto *cached=BKE_image_acquire_ibuf(result.image,&user,nullptr);require(cached==buffer&&cached->x==4096&&cached->y==4096,"Image ID did not retain the shared source buffer");BKE_image_release_ibuf(result.image,cached,nullptr);reused+=result.reused;}
- require(reused==2&&native_material_image_pool_statistics().decodes==baseline+1,"Concurrent native users decoded the same source more than once");
+  const auto root = qEnvironmentVariable("BTS_RESOURCE_CACHE");
+  QDir().mkpath(root);
+  QTemporaryDir folder(root + "/shared-image-XXXXXX");
+  require(folder.isValid(), "Native shared source fixture directory missing");
+  const auto file = folder.filePath("shared-4096.png");
+  QImage image(4096, 4096, QImage::Format_RGBA8888);
+  image.fill(QColor(64, 128, 192));
+  require(image.save(file), "Cannot create native shared image fixture");
+  struct Decoded {
+    std::unique_ptr<Main, decltype(&BKE_main_free)> main{nullptr, BKE_main_free};
+    Image *image = nullptr;
+    std::shared_ptr<NativeMaterialGraph> graph;
+    std::shared_ptr<NativeMaterialImageResource> resource;
+    bool reused = false;
+  };
+  const auto baseline = native_material_image_pool_statistics().decodes;
+  std::barrier ready(3);
+  std::vector<std::future<Decoded>> jobs;
+  for (int i = 0; i < 3; ++i)
+    jobs.push_back(std::async(std::launch::async, [&, colorspace = main->colorspace] {
+      Decoded result;
+      result.main.reset(BKE_main_new());
+      result.main->colorspace = colorspace;
+      result.image = BKE_image_load(result.main.get(), file.toUtf8().constData());
+      require(result.image, "Cannot create detached native image user");
+      require(!BKE_image_has_loaded_ibuf(result.image),
+              "Shared decode fixture was already resident");
+      ready.arrive_and_wait();
+      std::atomic_bool cancel = false;
+      result.resource = prepare_shared_native_image(
+          *result.main, *result.image, cancel, result.reused);
+      auto *material = BKE_material_add(result.main.get(), "Shared native source material");
+      auto &tree = *material->nodetree;
+      auto *pbr = bke::node_add_node(nullptr, tree, UString("ShaderNodeBsdfPrincipled"));
+      auto *out = bke::node_add_node(nullptr, tree, UString("ShaderNodeOutputMaterial"));
+      auto *texture = bke::node_add_node(nullptr, tree, UString("ShaderNodeTexImage"));
+      texture->id = &result.image->id;
+      id_us_plus(texture->id);
+      bke::node_add_link(tree,
+                         *texture,
+                         socket(*texture, "Color", false),
+                         *pbr,
+                         socket(*pbr, "Base Color", true));
+      bke::node_add_link(
+          tree, *pbr, socket(*pbr, "BSDF", false), *out, socket(*out, "Surface", true));
+      BKE_ntree_update_after_single_tree_change(*result.main, tree);
+      NativeMaterialDescription description;
+      description.material = "Shared native source material";
+      description.surface_type = "ShaderNodeBsdfPrincipled";
+      result.graph = std::make_shared<NativeMaterialGraph>(
+          std::move(result.main), material, description, cancel);
+      result.graph->image_resources.emplace_back(result.image, result.resource);
+      return result;
+    }));
+  std::vector<Decoded> results;
+  for (auto &job : jobs)
+    results.push_back(job.get());
+  auto *buffer = results[0].resource->buffer();
+  int reused = 0;
+  for (auto &result : results) {
+    require(result.resource->buffer() == buffer,
+            "Separate material sources duplicated the decoded image");
+    ImageUser user{};
+    BKE_imageuser_default(&user);
+    auto *cached = BKE_image_acquire_ibuf(result.image, &user, nullptr);
+    require(cached == buffer && cached->x == 4096 && cached->y == 4096,
+            "Image ID did not retain the shared source buffer");
+    BKE_image_release_ibuf(result.image, cached, nullptr);
+    reused += result.reused;
+  }
+  require(reused == 2 && native_material_image_pool_statistics().decodes == baseline + 1,
+          "Concurrent native users decoded the same source more than once");
 
- std::set<gpu::Texture *> allocations;std::size_t fresh=0,shared=0;for(auto &result:results){NativeMaterialImageUpload upload(result.graph);int steps=0;while(!upload.step()){require(++steps<10000,"Shared GPU source upload did not finish");}auto progress=upload.progress();fresh+=progress.allocations;shared+=progress.shared_images;const auto cached=BKE_image_get_gpu_material_texture(result.image,nullptr,false);require(cached.texture&&*cached.texture,"Shared GPU source was not published");allocations.insert(*cached.texture);}
- require(allocations.size()==1&&fresh==1&&shared==2,"Separate materials duplicated a canonical GPU source texture");
- results[0].graph.reset();results[0].resource.reset();const auto retained=BKE_image_get_gpu_material_texture(results[1].image,nullptr,false);require(retained.texture&&allocations.contains(*retained.texture),"Removing a material freed another user's shared GPU texture");
-
+  std::set<gpu::Texture *> allocations;
+  std::size_t fresh = 0, shared = 0;
+  for (auto &result : results) {
+    NativeMaterialImageUpload upload(result.graph);
+    int steps = 0;
+    while (!upload.step()) {
+      require(++steps < 10000, "Shared GPU source upload did not finish");
+    }
+    auto progress = upload.progress();
+    fresh += progress.allocations;
+    shared += progress.shared_images;
+    const auto cached = BKE_image_get_gpu_material_texture(result.image, nullptr, false);
+    require(cached.texture && *cached.texture, "Shared GPU source was not published");
+    allocations.insert(*cached.texture);
+  }
+  require(allocations.size() == 1 && fresh == 1 && shared == 2,
+          "Separate materials duplicated a canonical GPU source texture");
+  results[0].graph.reset();
+  results[0].resource.reset();
+  const auto retained = BKE_image_get_gpu_material_texture(results[1].image, nullptr, false);
+  require(retained.texture && allocations.contains(*retained.texture),
+          "Removing a material freed another user's shared GPU texture");
 }

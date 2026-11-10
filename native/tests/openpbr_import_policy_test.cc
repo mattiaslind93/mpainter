@@ -2,4 +2,32 @@
 #include "OpenPbrImportPolicy.hh"
 #include <cassert>
 #include <iostream>
-int main(){using namespace bts;OpenPbrParameters source;source.set("base_color",{.125f,.25f,.5f});source.set("base_metalness",{.7f,0,0});source.set("specular_roughness",{.4f,0,0});source.set("specular_ior",{1.7f,0,0});const auto original=source;const auto result=openpbr_import_constants(source);assert(source==original&&result.base.base_color==(std::array<float,4>{.125f,.25f,.5f,1})&&result.base.metallic==.7f&&result.base.roughness==.4f&&result.shader.get("specular_ior")[0]==1.7f);const OpenPbrParameters defaults;for(const auto *name:{"base_color","base_metalness","specular_roughness"})assert(result.shader.get(name)==defaults.get(name));source.set("transmission_dispersion_scale",{.6f,0,0});bool failed=false;try{openpbr_import_constants(source);}catch(const std::invalid_argument &){failed=true;}assert(failed&&source.get("transmission_dispersion_scale")[0]==.6f);std::cout<<"OpenPBR constant import: immutable source, layer-owned values preserved, portable profile validated, unsupported values rejected\n";}
+int main()
+{
+  using namespace bts;
+  OpenPbrParameters source;
+  source.set("base_color", {.125f, .25f, .5f});
+  source.set("base_metalness", {.7f, 0, 0});
+  source.set("specular_roughness", {.4f, 0, 0});
+  source.set("specular_ior", {1.7f, 0, 0});
+  const auto original = source;
+  const auto result = openpbr_import_constants(source);
+  assert(source == original &&
+         result.base.base_color == (std::array<float, 4>{.125f, .25f, .5f, 1}) &&
+         result.base.metallic == .7f && result.base.roughness == .4f &&
+         result.shader.get("specular_ior")[0] == 1.7f);
+  const OpenPbrParameters defaults;
+  for (const auto *name : {"base_color", "base_metalness", "specular_roughness"})
+    assert(result.shader.get(name) == defaults.get(name));
+  source.set("transmission_dispersion_scale", {.6f, 0, 0});
+  bool failed = false;
+  try {
+    openpbr_import_constants(source);
+  }
+  catch (const std::invalid_argument &) {
+    failed = true;
+  }
+  assert(failed && source.get("transmission_dispersion_scale")[0] == .6f);
+  std::cout
+      << "OpenPBR constant import: immutable source, layer-owned values preserved, portable profile validated, unsupported values rejected\n";
+}

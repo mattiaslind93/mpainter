@@ -1,22 +1,139 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // One shader dispatch selects object transforms by the packed texel owner ID.
 {
- const auto saved=context;const auto original=points;const auto restore=qScopeGuard([&]{context=saved;points=original;std::memcpy(packed.data(),points.data(),surface_bytes);GPU_texture_update(surface.get(),GPU_DATA_UINT,packed.data());});
- NativeMaterialObject a,b;a.owner=0xffffffffu;a.object_to_world=context.object_to_world;a.world_to_object=context.world_to_object;a.bounds_min=context.bounds_min;a.bounds_max=context.bounds_max;a.color={.2,.4,.7,1};a.random=.375;
- b.owner=0x1000001u;b.object_to_world={4,0,0,0,0,2,0,0,0,0,.5,0,-2,1,2,1};b.world_to_object={.25,0,0,0,0,.5,0,0,0,0,2,0,.5,-.5,-4,1};b.bounds_min={-1,-1,-1};b.bounds_max={2,3,4};b.color={.8,.3,.1,1};b.random=.875;
- for(int y=0;y<height;++y)for(int x=0;x<width;++x)points[y*width+x].match_object=x<width/2?a.owner:b.owner;
- std::memcpy(packed.data(),points.data(),surface_bytes);GPU_texture_update(surface.get(),GPU_DATA_UINT,packed.data());context.objects=std::make_shared<const NativeMaterialObjectTable>(std::vector{a,b});
- for(const char *name:{"BTS_Coord_Object","BTS_Coord_Generated","BTS_Coord_Normal","BTS_Object_DisplacementScale","BTS_Object_Random","BTS_Object_Color"}){
-  auto *tree=make_tree(name);NativeMaterialGpuProgram program(*tree,0,0);
-  for(int tile:{1001,1002,1011}){context.tile=tile;program.dispatch(target.get(),{},context,{0,0,width,height});const auto uploads=program.object_table_uploads();program.dispatch(target.get(),{},context,{0,0,width,height});require(program.object_table_uploads()==uploads,"Unchanged native object table was uploaded again");auto *actual=pixels();require(actual,"Native multi-object oracle read failed");const auto free=qScopeGuard([&]{MEM_delete(actual);});
-   for(int y=0;y<height;++y)for(int x=0;x<width;++x){const auto &point=points[y*width+x];const auto &object=x<width/2?a:b;std::array<float,4> expected{0,0,0,1};const std::string_view attribute(name);std::array<float,3> local{},normal{};
-    for(int r=0;r<3;++r){local[r]=object.world_to_object[12+r];for(int c=0;c<3;++c){local[r]+=object.world_to_object[c*4+r]*point.position[c];normal[r]+=object.object_to_world[r*4+c]*point.normal[c];}}
-    if(attribute=="BTS_Coord_Object")std::copy(local.begin(),local.end(),expected.begin());else if(attribute=="BTS_Coord_Generated")for(int r=0;r<3;++r)expected[r]=(local[r]-object.bounds_min[r])/std::max(1e-20f,object.bounds_max[r]-object.bounds_min[r]);else if(attribute=="BTS_Coord_Normal"){const float length=std::hypot(normal[0],normal[1],normal[2]);for(int c=0;c<3;++c)expected[c]=normal[c]/length;}else if(attribute=="BTS_Object_Color")expected=object.color;else if(attribute=="BTS_Object_Random")expected={object.random,object.random,object.random,1};else{float length=0;for(int r=0;r<3;++r){float value=0;for(int c=0;c<3;++c)value+=object.world_to_object[c*4+r]*point.normal[c];length+=value*value;}const float scale=1/std::sqrt(length);expected={scale,scale,scale,1};}
-    if(!point.valid)expected={};for(int c=0;c<4;++c){max_error=std::max(max_error,std::abs(actual[(y*width+x)*4+c]-expected[c]));require(std::abs(actual[(y*width+x)*4+c]-expected[c])<2e-6,"Native object owner/transform/color/random differs from analytic oracle");}++object_texel_checks;
-   }
+  const auto saved = context;
+  const auto original = points;
+  const auto restore = qScopeGuard([&] {
+    context = saved;
+    points = original;
+    std::memcpy(packed.data(), points.data(), surface_bytes);
+    GPU_texture_update(surface.get(), GPU_DATA_UINT, packed.data());
+  });
+  NativeMaterialObject a, b;
+  a.owner = 0xffffffffu;
+  a.object_to_world = context.object_to_world;
+  a.world_to_object = context.world_to_object;
+  a.bounds_min = context.bounds_min;
+  a.bounds_max = context.bounds_max;
+  a.color = {.2, .4, .7, 1};
+  a.random = .375;
+  b.owner = 0x1000001u;
+  b.object_to_world = {4, 0, 0, 0, 0, 2, 0, 0, 0, 0, .5, 0, -2, 1, 2, 1};
+  b.world_to_object = {.25, 0, 0, 0, 0, .5, 0, 0, 0, 0, 2, 0, .5, -.5, -4, 1};
+  b.bounds_min = {-1, -1, -1};
+  b.bounds_max = {2, 3, 4};
+  b.color = {.8, .3, .1, 1};
+  b.random = .875;
+  for (int y = 0; y < height; ++y)
+    for (int x = 0; x < width; ++x)
+      points[y * width + x].match_object = x < width / 2 ? a.owner : b.owner;
+  std::memcpy(packed.data(), points.data(), surface_bytes);
+  GPU_texture_update(surface.get(), GPU_DATA_UINT, packed.data());
+  context.objects = std::make_shared<const NativeMaterialObjectTable>(std::vector{a, b});
+  for (const char *name : {"BTS_Coord_Object",
+                           "BTS_Coord_Generated",
+                           "BTS_Coord_Normal",
+                           "BTS_Object_DisplacementScale",
+                           "BTS_Object_Random",
+                           "BTS_Object_Color"})
+  {
+    auto *tree = make_tree(name);
+    NativeMaterialGpuProgram program(*tree, 0, 0);
+    for (int tile : {1001, 1002, 1011}) {
+      context.tile = tile;
+      program.dispatch(target.get(), {}, context, {0, 0, width, height});
+      const auto uploads = program.object_table_uploads();
+      program.dispatch(target.get(), {}, context, {0, 0, width, height});
+      require(program.object_table_uploads() == uploads,
+              "Unchanged native object table was uploaded again");
+      auto *actual = pixels();
+      require(actual, "Native multi-object oracle read failed");
+      const auto free = qScopeGuard([&] { MEM_delete(actual); });
+      for (int y = 0; y < height; ++y)
+        for (int x = 0; x < width; ++x) {
+          const auto &point = points[y * width + x];
+          const auto &object = x < width / 2 ? a : b;
+          std::array<float, 4> expected{0, 0, 0, 1};
+          const std::string_view attribute(name);
+          std::array<float, 3> local{}, normal{};
+          for (int r = 0; r < 3; ++r) {
+            local[r] = object.world_to_object[12 + r];
+            for (int c = 0; c < 3; ++c) {
+              local[r] += object.world_to_object[c * 4 + r] * point.position[c];
+              normal[r] += object.object_to_world[r * 4 + c] * point.normal[c];
+            }
+          }
+          if (attribute == "BTS_Coord_Object")
+            std::copy(local.begin(), local.end(), expected.begin());
+          else if (attribute == "BTS_Coord_Generated")
+            for (int r = 0; r < 3; ++r)
+              expected[r] = (local[r] - object.bounds_min[r]) /
+                            std::max(1e-20f, object.bounds_max[r] - object.bounds_min[r]);
+          else if (attribute == "BTS_Coord_Normal") {
+            const float length = std::hypot(normal[0], normal[1], normal[2]);
+            for (int c = 0; c < 3; ++c)
+              expected[c] = normal[c] / length;
+          }
+          else if (attribute == "BTS_Object_Color")
+            expected = object.color;
+          else if (attribute == "BTS_Object_Random")
+            expected = {object.random, object.random, object.random, 1};
+          else {
+            float length = 0;
+            for (int r = 0; r < 3; ++r) {
+              float value = 0;
+              for (int c = 0; c < 3; ++c)
+                value += object.world_to_object[c * 4 + r] * point.normal[c];
+              length += value * value;
+            }
+            const float scale = 1 / std::sqrt(length);
+            expected = {scale, scale, scale, 1};
+          }
+          if (!point.valid)
+            expected = {};
+          for (int c = 0; c < 4; ++c) {
+            max_error = std::max(max_error,
+                                 std::abs(actual[(y * width + x) * 4 + c] - expected[c]));
+            require(std::abs(actual[(y * width + x) * 4 + c] - expected[c]) < 2e-6,
+                    "Native object owner/transform/color/random differs from analytic oracle");
+          }
+          ++object_texel_checks;
+        }
+    }
   }
- }
- auto *tree=make_tree("BTS_Object_Color");NativeMaterialGpuProgram color(*tree,0,0);color.dispatch(target.get(),{},context,{0,0,width,height});const auto first=color.object_table_uploads();b.color={.1,.8,.3,1};context.objects=std::make_shared<const NativeMaterialObjectTable>(std::vector{a,b});color.dispatch(target.get(),{},context,{0,0,width,height});require(color.object_table_uploads()==first+1,"Changed object color did not update its native GPU table");
- const float sentinel[4]{-9,-8,-7,-6};GPU_texture_clear(target.get(),GPU_DATA_FLOAT,sentinel);color.dispatch(target.get(),{},context,{width/2,1,width-width/2,height-2});auto *region_pixels=pixels();require(region_pixels,"Native object-table dirty region read failed");{const auto release=qScopeGuard([&]{MEM_delete(region_pixels);});for(int y=0;y<height;++y)for(int x=0;x<width;++x){const bool changed=x>=width/2&&y>=1&&y<height-1;for(int c=0;c<4;++c)require(std::abs(region_pixels[(y*width+x)*4+c]-(changed?b.color[c]:sentinel[c]))<2e-6,"Native owner lookup ignored dirty-region origin or overwrote clean pixels");++object_texel_checks;}}
- context.objects=std::make_shared<const NativeMaterialObjectTable>(std::vector{a});color.dispatch(target.get(),{},context,{0,0,width,height});auto *missing=pixels();require(missing,"Native missing owner oracle read failed");const auto free=qScopeGuard([&]{MEM_delete(missing);});for(int y=0;y<height;++y)for(int x=width/2;x<width;++x)require(missing[(y*width+x)*4+3]==0,"Unmatched owner sampled another object's data");
+  auto *tree = make_tree("BTS_Object_Color");
+  NativeMaterialGpuProgram color(*tree, 0, 0);
+  color.dispatch(target.get(), {}, context, {0, 0, width, height});
+  const auto first = color.object_table_uploads();
+  b.color = {.1, .8, .3, 1};
+  context.objects = std::make_shared<const NativeMaterialObjectTable>(std::vector{a, b});
+  color.dispatch(target.get(), {}, context, {0, 0, width, height});
+  require(color.object_table_uploads() == first + 1,
+          "Changed object color did not update its native GPU table");
+  const float sentinel[4]{-9, -8, -7, -6};
+  GPU_texture_clear(target.get(), GPU_DATA_FLOAT, sentinel);
+  color.dispatch(target.get(), {}, context, {width / 2, 1, width - width / 2, height - 2});
+  auto *region_pixels = pixels();
+  require(region_pixels, "Native object-table dirty region read failed");
+  {
+    const auto release = qScopeGuard([&] { MEM_delete(region_pixels); });
+    for (int y = 0; y < height; ++y)
+      for (int x = 0; x < width; ++x) {
+        const bool changed = x >= width / 2 && y >= 1 && y < height - 1;
+        for (int c = 0; c < 4; ++c)
+          require(std::abs(region_pixels[(y * width + x) * 4 + c] -
+                           (changed ? b.color[c] : sentinel[c])) < 2e-6,
+                  "Native owner lookup ignored dirty-region origin or overwrote clean pixels");
+        ++object_texel_checks;
+      }
+  }
+  context.objects = std::make_shared<const NativeMaterialObjectTable>(std::vector{a});
+  color.dispatch(target.get(), {}, context, {0, 0, width, height});
+  auto *missing = pixels();
+  require(missing, "Native missing owner oracle read failed");
+  const auto free = qScopeGuard([&] { MEM_delete(missing); });
+  for (int y = 0; y < height; ++y)
+    for (int x = width / 2; x < width; ++x)
+      require(missing[(y * width + x) * 4 + 3] == 0,
+              "Unmatched owner sampled another object's data");
 }

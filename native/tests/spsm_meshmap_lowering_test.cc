@@ -4,54 +4,53 @@
 using namespace bts;
 using namespace bts::spsm_meshmap_test;
 namespace {
-template <class F> void reject(F f) {
+template<class F> void reject(F f)
+{
   bool yes = false;
   try {
     f();
-  } catch (const std::exception &) {
+  }
+  catch (const std::exception &) {
     yes = true;
   }
   require(yes, "Unsafe input accepted");
 }
-void verify(const TextureSet &set, int revision = 0) {
+void verify(const TextureSet &set, int revision = 0)
+{
   for (int tile : set.tiles)
     for (int y = 0; y < 128; ++y)
       for (int x = 0; x < 128; ++x) {
         const auto actual = TextureDocument::evaluate(set, x, y, tile);
         const auto want = expected(tile, x, y, revision);
         for (int c = 0; c < 3; ++c)
-          near(actual.material.base_color[c], want[c],
-               "Native CPU tile/oracle");
+          near(actual.material.base_color[c], want[c], "Native CPU tile/oracle");
       }
 }
-void tests() {
+void tests()
+{
   Builder builder;
   auto input = builder.prepare();
   require(!leaf(input).visible && leaf(input).effects.empty(),
           "Base preparer restored nonuniform source");
   auto unknown = enhance_prepared_spsm_mesh_maps(input);
-  require(!leaf(unknown).visible &&
-              has(unknown, "meshmap-ao-color-policy-required"),
+  require(!leaf(unknown).visible && has(unknown, "meshmap-ao-color-policy-required"),
           "Unknown policy enabled alias");
   auto prepared = enhance_prepared_spsm_mesh_maps(input, policy());
   require(leaf(prepared).visible && leaf(prepared).channels[0] &&
               leaf(prepared).effects.size() == 1,
           "AO Color not restored");
   require(prepared.source == input.source && !leaf(input).visible &&
-              input.source->source().presets[0].encoded ==
-                  s::ImageBytes({1, 2, 3, 4}),
+              input.source->source().presets[0].encoded == s::ImageBytes({1, 2, 3, 4}),
           "Source/preparation changed");
   require(prepared.partial && !prepared.appearance_verified &&
               has(prepared, "meshmap-ao-color-restored"),
           "Missing explicit partial policy diagnostics");
   const auto &e = leaf(prepared).effects[0];
-  require(e.kind == ContentEffectKind::Generator && e.generator == 3 &&
-              e.channel == 0 && e.map_filter == 0 && e.contrast == 1 &&
-              e.bias == 0 && !e.invert && e.curve == 0 && e.opacity == 1 &&
-              e.blending == LayerBlend::Normal && !generator_has_anchors(e),
+  require(e.kind == ContentEffectKind::Generator && e.generator == 3 && e.channel == 0 &&
+              e.map_filter == 0 && e.contrast == 1 && e.bias == 0 && !e.invert && e.curve == 0 &&
+              e.opacity == 1 && e.blending == LayerBlend::Normal && !generator_has_anchors(e),
           "Native live AO policy fields differ");
-  require(leaf(prepared).blending[0] == LayerBlend::Multiply &&
-              !leaf(prepared).ao_enabled,
+  require(leaf(prepared).blending[0] == LayerBlend::Multiply && !leaf(prepared).ao_enabled,
           "AO routed to wrong channel");
   for (int c : {1, 2, 3, 4})
     require(!leaf(prepared).channels[c], "Unsupported sibling enabled");
@@ -60,14 +59,12 @@ void tests() {
   verify(set);
   auto first = set.mesh_maps[3]->tiles.at(1001).hash;
   maps(set, 1);
-  require(first != set.mesh_maps[3]->tiles.at(1001).hash,
-          "Rebake hash unchanged");
+  require(first != set.mesh_maps[3]->tiles.at(1001).hash, "Rebake hash unchanged");
   verify(set, 1);
   auto written = write_material_preset(prepared.material);
   auto round = read_material_preset(written);
-  require(!round.set.mesh_maps[3] &&
-              effects_json(leaf(PreparedSpsm{round}).effects) ==
-                  effects_json(leaf(prepared).effects),
+  require(!round.set.mesh_maps[3] && effects_json(leaf(PreparedSpsm{round}).effects) ==
+                                         effects_json(leaf(prepared).effects),
           "Preset retains maps or changes generator binding roundtrip");
   auto opened = destination();
   apply_material_preset(opened, round);
@@ -83,7 +80,8 @@ void tests() {
     bool rejected = false;
     try {
       apply_material_preset(missing, prepared.material);
-    } catch (const std::invalid_argument &error) {
+    }
+    catch (const std::invalid_argument &error) {
       rejected = std::string_view(error.what()).find("Ambient occlusion") !=
                  std::string_view::npos;
     }
@@ -121,9 +119,7 @@ void tests() {
         v.size = 1;
         b.set(b.fill, "selection", b.add(v));
       },
-      [](auto &b) {
-        b.set(b.leaf_id, "enabledUVTileList", b.array({b.integer(1001)}));
-      },
+      [](auto &b) { b.set(b.leaf_id, "enabledUVTileList", b.array({b.integer(1001)})); },
       [](auto &b) { b.set(b.root, "enabledMeshDefault", b.flag(false)); },
       [](auto &b) { b.set(b.root, "gammaCompensation", b.flag(true)); },
       [](auto &b) { b.set(b.layerblend, "blendingMode", b.integer(77)); },
@@ -131,10 +127,7 @@ void tests() {
       [](auto &b) { b.set(b.src, "channelTypes", b.integer(129)); },
       [](auto &b) { b.set(b.src, "opacity", b.scalar(2)); },
       [](auto &b) { b.set(b.fill, "sources", b.array({b.src, b.src})); },
-      [](auto &b) {
-        b.set(b.leaf_id, "actions",
-              b.stack("DataStackActions", {b.fill, b.fill}));
-      },
+      [](auto &b) { b.set(b.leaf_id, "actions", b.stack("DataStackActions", {b.fill, b.fill})); },
       [](auto &b) {
         auto a = b.object("DataActionGroup", {{"enabled", b.flag(true)}});
         b.set(b.leaf_id, "maskActions", b.stack("DataStackActions", {a}));
@@ -166,10 +159,8 @@ void tests() {
   Builder inactive;
   inactive.set(inactive.fill, "enabled", inactive.flag(false));
   auto inactive_input = inactive.prepare();
-  auto inactive_output =
-      enhance_prepared_spsm_mesh_maps(inactive_input, policy());
-  require(!leaf(inactive_output).visible &&
-              leaf(inactive_output).effects.empty() &&
+  auto inactive_output = enhance_prepared_spsm_mesh_maps(inactive_input, policy());
+  require(!leaf(inactive_output).visible && leaf(inactive_output).effects.empty() &&
               !has(inactive_output, "meshmap-ao-color-restored"),
           "Disabled Fill action activated");
   // Source-initial mask and per-channel action opacity must remain operative.
@@ -177,8 +168,7 @@ void tests() {
   zero.set(zero.root, "maskInitial", zero.scalar(0));
   auto in = zero.prepare();
   auto out = enhance_prepared_spsm_mesh_maps(in, policy());
-  require(out.material.set.layers.back().mask->background == 0,
-          "Source ancestor mask reset");
+  require(out.material.set.layers.back().mask->background == 0, "Source ancestor mask reset");
   Builder op;
   op.set(op.actionblend, "opacity", op.scalar(.25));
   auto op_in = op.prepare();
@@ -186,31 +176,30 @@ void tests() {
   near(leaf(op_out).opacity[0], .6f * .25f * .7f, "Action opacity ignored");
   for (const auto &d : prepared.diagnostics)
     if (d.code == "meshmap-ao-color-restored")
-      require(!prepared.diagnostic_path(d).empty(),
-              "No source path diagnostic");
-  std::cout
-      << "PASS two-tile native CPU oracle/live rebake, genuine premultiplied "
-         "map/zero coverage, missing-map atomicity, preset roundtrip, 23 "
-         "dependency gates, source states and dynamic RAM\n";
+      require(!prepared.diagnostic_path(d).empty(), "No source path diagnostic");
+  std::cout << "PASS two-tile native CPU oracle/live rebake, genuine premultiplied "
+               "map/zero coverage, missing-map atomicity, preset roundtrip, 23 "
+               "dependency gates, source states and dynamic RAM\n";
 }
-void fixtures(const QString &directory) {
-  for (auto name : {"dirty-plastic-robot.spsm", "shd-hard-rust.spsm",
+void fixtures(const QString &directory)
+{
+  for (auto name : {"dirty-plastic-robot.spsm",
+                    "shd-hard-rust.spsm",
                     "sratched-metal-pealing-paint-dirt.spsm",
-                    "used_varnish_wood.spsm", "worn leather chest.spsm"}) {
+                    "used_varnish_wood.spsm",
+                    "worn leather chest.spsm"})
+  {
     const auto path = directory + "/" + name;
     auto sha = file_hash(path);
-    auto in = prepare_spsm_material(std::filesystem::path(path.toStdString()),
-                                    color_policy());
+    auto in = prepare_spsm_material(std::filesystem::path(path.toStdString()), color_policy());
     auto out = enhance_prepared_spsm_mesh_maps(in, policy());
     std::size_t count = 0;
     for (const auto &d : out.diagnostics)
       if (d.code == "meshmap-ao-color-restored")
         ++count;
-    require(count ==
-                (std::string_view(name) == "worn leather chest.spsm" ? 1u : 0u),
+    require(count == (std::string_view(name) == "worn leather chest.spsm" ? 1u : 0u),
             "Unexpected real alias restoration count");
-    require(out.source == in.source && file_hash(path) == sha,
-            "Fixture/source bytes changed");
+    require(out.source == in.source && file_hash(path) == sha, "Fixture/source bytes changed");
     std::uint64_t metadata = 0;
     for (const auto &stream : out.source->source().presets)
       metadata = resource_sum(metadata, stream.encoded.size());
@@ -226,14 +215,14 @@ void fixtures(const QString &directory) {
       require(set.mesh_maps[3]->tiles.size() == 2,
               "Actual preset copied/replaced destination maps");
     }
-    std::cout << "PASS fixture " << name
-              << " direct AO-Color restored=" << count
+    std::cout << "PASS fixture " << name << " direct AO-Color restored=" << count
               << " source SHA=" << sha.constData()
               << " appearance_verified=false payloads_read=false\n";
   }
 }
-} // namespace
-int main(int argc, char **argv) {
+}  // namespace
+int main(int argc, char **argv)
+{
   QCoreApplication app(argc, argv);
   try {
     if (argc > 1 && std::string_view(argv[1]) == "--runtime-baseline")
@@ -242,7 +231,8 @@ int main(int argc, char **argv) {
     if (argc > 1)
       fixtures(QString::fromLocal8Bit(argv[1]));
     return 0;
-  } catch (const std::exception &e) {
+  }
+  catch (const std::exception &e) {
     std::cerr << "FAIL " << e.what() << '\n';
     return 1;
   }
