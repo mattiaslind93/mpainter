@@ -159,7 +159,7 @@ leaves the release build.
 | `BTS_HEADLESS_WORKSPACE` | native/harness, native/host, native/tests | `PainterWorkflowDemo.hh`, `WorkspaceSession.inc`, `MainViewport.inc`, `GpuProgramWarmupDiagnostic.hh` |
 | `BTS_HEIGHT_8K_IMPORT_TEST` | native/harness | `TextureImportCpuDemo.cc` |
 | `BTS_HEIGHT_NEUTRAL_DEMO` | native/harness, native/tests | `GuiFixDemo.cc`, `SessionDemoActions.inc`, `native_height_policy_artist_test.cc` |
-| `BTS_HOSTED_SHADER_WORKERS` | native/host, native/tests | `BlenderHost.cc`, `GpuLayerPreview.cc`, `WorkspaceState.inc`, `MainViewport.inc` and 5 more |
+| `BTS_HOSTED_SHADER_WORKERS` | native/host, native/tests | `BlenderHost.cc`, `WorkspaceState.inc`, `GpuLayerPreviewImpl.inc`, `MainViewport.inc` and 5 more |
 | `BTS_IDLE_DEMO_DIR` | native/harness, native/host | `ViewportIdleDemo.cc`, `PythonConsole.cc` |
 | `BTS_IMAGE_SEQUENCE_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_INSPECTION_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
@@ -375,7 +375,7 @@ leaves the release build.
 | `BTS_UV_TEXTURE_DEMO` | native/harness | `GuiFixDemo.cc`, `UvProofActions.inc` |
 | `BTS_VERIFY_ASYNC_SAVE` | native/host | `WorkspaceProject.inc` |
 | `BTS_VERIFY_CYCLES_LIVE` | native/host | `NativeCyclesImages.cc` |
-| `BTS_VERIFY_GPU_STACK` | native/harness, native/host, native/tests | `AdjustmentPaintColdProof.hh`, `NativeMaterialProjectionColdProof.hh`, `SmartMaskNativeProof.cc`, `GpuLayerPreview.cc` and 1 more |
+| `BTS_VERIFY_GPU_STACK` | native/harness, native/host, native/tests | `AdjustmentPaintColdProof.hh`, `NativeMaterialProjectionColdProof.hh`, `SmartMaskNativeProof.cc`, `GpuLayerPreview.cc` and 2 more |
 | `BTS_VERIFY_GPU_UNIFORM` | native/host | `MaterialInspection.cc` |
 | `BTS_VERIFY_HOSTED_EEVEE_GENERATED_SOURCE` | native/harness | `ViewportHeadlessDemo.cc` |
 | `BTS_VERIFY_HOSTED_EEVEE_IMAGE_LIFETIME` | native/harness | `ViewportHeadlessDemo.cc` |
