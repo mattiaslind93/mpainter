@@ -472,6 +472,30 @@ def check_test_cmake_paths(root, files):
     return ("FAIL" if hits else "PASS", "standalone test projects name only existing sources", hits)
 
 
+HARNESS_OPTIONS = "native/harness/HarnessOptions.hh"
+MAIN_CC = "native/host/main.cc"
+
+
+def check_harness_seam(root, files):
+    """main() reads harness options only through bts::harness::HarnessContext and product options
+    only through the parser (docs/architecture/harness-context.md). Option names come from the
+    addOption lines in HarnessOptions.hh (harness) and main.cc (product)."""
+    harness_src, main_src = text(root, HARNESS_OPTIONS), text(root, MAIN_CC)
+    if harness_src is None or main_src is None:
+        return ("UNAVAILABLE", f"{HARNESS_OPTIONS} or {MAIN_CC} is missing", [])
+    harness_names = set(re.findall(r'addOption\(\{"([^"]+)"', harness_src))
+    product_names = set(re.findall(r'parser\.addOption\(\{"([^"]+)"', main_src))
+    hits = []
+    for number, line in enumerate(main_src.splitlines(), 1):
+        for owner, name in re.findall(r'\b(parser|harness)\.(?:isSet|is_set|value|values)\("([^"]+)"', line):
+            if owner == "parser" and name in harness_names:
+                hits.append(f"{MAIN_CC}:{number}: harness option --{name} read through the parser")
+            elif owner == "harness" and name not in harness_names:
+                hits.append(f"{MAIN_CC}:{number}: --{name} read through the harness context but "
+                            f"{'is a product option' if name in product_names else 'is not registered'}")
+    return ("FAIL" if hits else "PASS", "main() reads harness options only through HarnessContext", hits)
+
+
 def check_spdx(root, files):
     missing, pinned, _ = spdx_plan(root)
     summary = (f"{len(missing)} source files under native/ and scripts/ lack an SPDX line; "
@@ -506,6 +530,7 @@ CHECKS = {
     "cmake-backslash": check_cmake_backslash,
     "test-cmake-paths": check_test_cmake_paths,
     "test-includes": check_test_includes,
+    "harness-seam": check_harness_seam,
     "blender-boundary": check_blender_boundary,
     "blender-surface": check_blender_surface_doc,
     "bts-variables": check_bts_variables_doc,

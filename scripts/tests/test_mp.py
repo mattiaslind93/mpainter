@@ -348,6 +348,20 @@ class Move(unittest.TestCase):
         self.assertTrue((repo.root / "native/host/Brush.cc").is_file())
 
 
+class HarnessSeam(unittest.TestCase):
+    def test_harness_options_go_through_the_context_and_product_options_do_not(self):
+        options = 'inline void add(QCommandLineParser &parser){\n  parser.addOption({"demo-x", "Demo"});\n}\n'
+        main = ('parser.addOption({"project", "Open", "file"});\n'
+                'if(harness.is_set("demo-x")&&parser.isSet("project"))open(harness.value("demo-x"));\n')
+        repo = Repo(self, {"native/harness/HarnessOptions.hh": options, "native/host/main.cc": main})
+        self.assertEqual(statuses(repo)["harness-seam"][0], "PASS")
+        for bad in ('parser.isSet("demo-x");\n', 'harness.is_set("project");\n', 'harness.value("unknown");\n'):
+            with self.subTest(bad=bad):
+                repo.write("native/host/main.cc", main + bad)
+                repo.git("add", "-A")
+                self.assertEqual(statuses(repo)["harness-seam"][0], "FAIL")
+
+
 class Spdx(unittest.TestCase):
     def test_spdx_adds_lines_and_keeps_pinned_and_existing(self):
         import hashlib
