@@ -1,16 +1,48 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The Painter session: everything main() does once the Blender host is up, from the workspace
-// and its callbacks to the event loop and an orderly shutdown. main.cc includes this file inside
-// its anonymous namespace, after Viewport and the input helpers, so it is one translation unit
-// with main(). That is deliberate: the reviewed live-render drivers in native/tests compile
-// main.cc with a renamed main() and a start_gui_fix_demo() macro that names this function's
-// locals (host, viewport, edit_material).
-int run_workspace_session(bts::ProfileApplication &app,
-                          const QCommandLineParser &parser,
-                          const bts::harness::HarnessContext &harness,
-                          bts::BrandingStartup &branding,
-                          bts::BlenderHost &host,
-                          const bool numeric_locale_invalid)
+// and its callbacks to the event loop and an orderly shutdown. main() builds one
+// WorkspaceSession from what it set up and calls run().
+//
+// main.cc includes this file inside its anonymous namespace, after Viewport and the input
+// helpers, so it is one translation unit with main(). That is deliberate: the live-render
+// drivers in native/tests compile main.cc with a renamed main() and a start_gui_fix_demo()
+// macro that names host (a member), viewport and edit_material (locals of run()).
+//
+// run() is still one long function. Its sections share several hundred locals, mostly lambdas
+// held in `auto` and captured by reference in callbacks that live until shutdown. Splitting
+// the sections into member functions means turning those locals into typed members first.
+class WorkspaceSession {
+ public:
+  WorkspaceSession(bts::ProfileApplication &app,
+                   const QCommandLineParser &parser,
+                   const bts::harness::HarnessContext &harness,
+                   bts::BrandingStartup &branding,
+                   bts::BlenderHost &host,
+                   const bool numeric_locale_invalid)
+      : app(app),
+        parser(parser),
+        harness(harness),
+        branding(branding),
+        host(host),
+        numeric_locale_invalid(numeric_locale_invalid)
+  {
+  }
+  WorkspaceSession(const WorkspaceSession &) = delete;
+  WorkspaceSession &operator=(const WorkspaceSession &) = delete;
+
+  // The workspace, its callbacks, the event loop and the shutdown. Returns the exit code.
+  int run();
+
+ private:
+  bts::ProfileApplication &app;
+  const QCommandLineParser &parser;
+  const bts::harness::HarnessContext &harness;
+  bts::BrandingStartup &branding;
+  bts::BlenderHost &host;
+  const bool numeric_locale_invalid;
+};
+
+int WorkspaceSession::run()
 {
 #include "WorkspaceState.inc"
 #include "WorkspaceViewport.inc"

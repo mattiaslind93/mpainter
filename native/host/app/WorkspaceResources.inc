@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Texture, material and reference-image loading. Part of run_workspace_session()
+// Texture, material and reference-image loading. Part of WorkspaceSession::run()
 // (app/WorkspaceSession.inc), included in order inside its body; it shares that function's locals
 // and is not a standalone file.
 const auto texture_error = [&](const QString &message) {

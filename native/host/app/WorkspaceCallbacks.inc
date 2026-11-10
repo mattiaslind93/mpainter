@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The workspace callbacks (panels, layers, masks, assets, bakes) and the bare-viewport fallback.
-// Part of run_workspace_session() (app/WorkspaceSession.inc), included in order inside its body;
+// Part of WorkspaceSession::run() (app/WorkspaceSession.inc), included in order inside its body;
 // it shares that function's locals and is not a standalone file.
 if (use_workspace) {
   viewport->enable_layouts();

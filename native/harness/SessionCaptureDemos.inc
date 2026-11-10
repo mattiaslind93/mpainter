@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Harness: the new-project, open, capture, layout and navigation demo sequences. Part of
-// run_workspace_session() (app/WorkspaceSession.inc), included in order inside its body; it shares
+// WorkspaceSession::run() (app/WorkspaceSession.inc), included in order inside its body; it shares
 // that function's locals and is not a standalone file.
 QTimer new_demo;
 int new_demo_after_frame = 3;

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Brush strokes: the viewport's stroke_begin, stroke_stamps and stroke_end callbacks. Part of
-// run_workspace_session() (app/WorkspaceSession.inc), included in order inside its body; it shares
+// WorkspaceSession::run() (app/WorkspaceSession.inc), included in order inside its body; it shares
 // that function's locals and is not a standalone file.
 bool stroke_spatial = false;
 viewport->stroke_begin = [&] {

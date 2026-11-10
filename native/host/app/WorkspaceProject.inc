@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Project lifecycle: new project, save, recovery, open and the autosave timer. Part of
-// run_workspace_session() (app/WorkspaceSession.inc), included in order inside its body; it shares
+// WorkspaceSession::run() (app/WorkspaceSession.inc), included in order inside its body; it shares
 // that function's locals and is not a standalone file.
 const auto create_project = [&](const bts::NewProjectOptions &options) {
   if (parameter_import)

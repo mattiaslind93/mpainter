@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Surface paths: path history, selection, contacts and commits. Part of run_workspace_session()
+// Surface paths: path history, selection, contacts and commits. Part of WorkspaceSession::run()
 // (app/WorkspaceSession.inc), included in order inside its body; it shares that function's locals
 // and is not a standalone file.
 const auto path_history =

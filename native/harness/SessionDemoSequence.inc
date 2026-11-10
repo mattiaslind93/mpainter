@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Harness: the stage-by-stage acceptance sequence driven by the sets_demo timer. Part of
-// run_workspace_session() (app/WorkspaceSession.inc), included in order inside its body; it shares
+// WorkspaceSession::run() (app/WorkspaceSession.inc), included in order inside its body; it shares
 // that function's locals and is not a standalone file.
 QObject::connect(&sets_demo, &QTimer::timeout, window.get(), [&] {
   if (workspace->property("generatorInputLoading").toBool() ||

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Harness: the demo switches main() reads, and the stage list of each acceptance sequence. Part of
-// run_workspace_session() (app/WorkspaceSession.inc), included in order inside its body; it shares
+// WorkspaceSession::run() (app/WorkspaceSession.inc), included in order inside its body; it shares
 // that function's locals and is not a standalone file.
 if (harness.is_set("gpu-program-warmup-demo")) {
   if (!qEnvironmentVariableIsSet("BTS_GPU_PROGRAM_WARMUP_TEST_OUTPUT"))

@@ -378,7 +378,8 @@ int main(int argc, char **argv)
     bts::configure_spsm_source_hydration();
     if (const auto code = bts::harness::run_host_test(host, parser))
       return *code;
-    return run_workspace_session(app, parser, harness, branding, host, numeric_locale_invalid);
+    WorkspaceSession session(app, parser, harness, branding, host, numeric_locale_invalid);
+    return session.run();
   }
   catch (const std::exception &error) {
     std::fprintf(stderr, "BTS_HOST_FAILED %s\n", error.what());

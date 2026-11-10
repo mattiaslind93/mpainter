@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The main window: shader errors, per-frame hooks, size, About and show(). Part of
-// run_workspace_session() (app/WorkspaceSession.inc), included in order inside its body; it shares
+// WorkspaceSession::run() (app/WorkspaceSession.inc), included in order inside its body; it shares
 // that function's locals and is not a standalone file. Capture the application's composited
 // surface on rootless display servers as well.
 window->setAttribute(Qt::WA_TranslucentBackground);

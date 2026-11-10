@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The viewport and the document helpers its callbacks use: previews, inspection, edits, undo. Part
-// of run_workspace_session() (app/WorkspaceSession.inc), included in order inside its body; it
+// of WorkspaceSession::run() (app/WorkspaceSession.inc), included in order inside its body; it
 // shares that function's locals and is not a standalone file.
 viewport = new Viewport(host, window.get());
 viewport->texture_interaction = [&] {

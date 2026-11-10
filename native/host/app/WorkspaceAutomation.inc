@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Automation jobs and the Python console. Part of run_workspace_session()
+// Automation jobs and the Python console. Part of WorkspaceSession::run()
 // (app/WorkspaceSession.inc), included in order inside its body; it shares that function's locals
 // and is not a standalone file.
 std::unique_ptr<bts::AutomationJobs> automation_jobs;

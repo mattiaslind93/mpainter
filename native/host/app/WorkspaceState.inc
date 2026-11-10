@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Session state: the document, brushes, history, timers and the controllers the session owns. Part
-// of run_workspace_session() (app/WorkspaceSession.inc), included in order inside its body; it
+// of WorkspaceSession::run() (app/WorkspaceSession.inc), included in order inside its body; it
 // shares that function's locals and is not a standalone file.
 if (int(harness.is_set("demo-dir")) + int(harness.is_set("layout-demo-dir")) +
         int(harness.is_set("navigation-demo-dir")) + int(harness.is_set("new-demo-dir")) >

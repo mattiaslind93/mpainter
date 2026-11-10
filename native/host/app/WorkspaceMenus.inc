@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Project, texture-set and export menus. Part of run_workspace_session()
+// Project, texture-set and export menus. Part of WorkspaceSession::run()
 // (app/WorkspaceSession.inc), included in order inside its body; it shares that function's locals
 // and is not a standalone file.
 if (workspace) {

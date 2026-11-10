@@ -22,7 +22,7 @@ The mPainter application, C++20, in domain folders. `docs/architecture/source-la
 
 ## Startup
 
-`main()` in `main.cc` is short: process setup, the command line (product options; the harness options come from `native/harness/HarnessOptions.hh`), the early harness dispatch, the splash and the Blender host. It then calls `run_workspace_session()` in `app/WorkspaceSession.inc`, which includes its sections in order (`app/WorkspaceState.inc` to `app/WorkspaceWindow.inc`, then the harness sections) and ends with `app.exec()` and the shutdown.
+`main()` in `main.cc` is short: process setup, the command line (product options; the harness options come from `native/harness/HarnessOptions.hh`), the early harness dispatch, the splash and the Blender host. It then builds a `WorkspaceSession` (`app/WorkspaceSession.inc`) and calls its `run()`, which includes its sections in order (`app/WorkspaceState.inc` to `app/WorkspaceWindow.inc`, then the harness sections) and ends with `app.exec()` and the shutdown.
 
 The session is one translation unit with `main.cc` on purpose. The reviewed live-render drivers in `native/tests/` compile `main.cc` with a renamed `main()` and a `start_gui_fix_demo()` macro that names the session's locals. Verifiers that read main()'s code as text use `scripts/host/main_source.py`.
 
