@@ -252,7 +252,7 @@ leaves the release build.
 | `BTS_ORDERED_PRODUCTION_SHA` | native/tests | `ordered_raw_rgb_gpu_test.cc` |
 | `BTS_ORDERED_RESUME_CASES` | native/tests | `ordered_raw_rgb_gpu_test.cc` |
 | `BTS_OVERLAY_PROBE` | native/host | `BlenderHostDraw.inc` |
-| `BTS_OVERLAY_PROFILE` | native/harness, native/host | `GuiFixDemo.cc`, `SceneTriangleOverlay.cc`, `BlenderHostDraw.inc`, `MainViewport.inc` |
+| `BTS_OVERLAY_PROFILE` | native/harness, native/host | `GuiFixDemo.cc`, `BlenderHostDraw.inc`, `SceneTriangleOverlay.cc`, `MainViewport.inc` |
 | `BTS_OVERLAY_SELF_TEST_DIR` | native/host | `UvGpuOverlay.cc` |
 | `BTS_OVERLAY_TRIANGLE_PROFILE` | native/harness | `OverlayPerformanceDemo.hh` |
 | `BTS_PAINTER_WORKFLOW_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |

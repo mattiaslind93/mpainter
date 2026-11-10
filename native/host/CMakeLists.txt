@@ -3,7 +3,7 @@ find_package(Qt6 6.8.3 EXACT REQUIRED COMPONENTS Widgets OpenGLWidgets Network)
 find_package(assimp CONFIG REQUIRED)
 
 qt6_add_resources(BTS_FILE_BROWSER_RESOURCES ${BTS_HOST_SOURCE_DIR}/../../assets/file-browser/file-browser.qrc)
-set(BTS_FILE_BROWSER_WIDGET_SOURCES ${BTS_HOST_SOURCE_DIR}/ui/dialogs/FileDialogs.cc ${BTS_HOST_SOURCE_DIR}/FileBrowserIcons.cc ${BTS_HOST_SOURCE_DIR}/FileBrowserController.cc ${BTS_FILE_BROWSER_RESOURCES})
+set(BTS_FILE_BROWSER_WIDGET_SOURCES ${BTS_HOST_SOURCE_DIR}/ui/dialogs/FileDialogs.cc ${BTS_HOST_SOURCE_DIR}/blender/FileBrowserIcons.cc ${BTS_HOST_SOURCE_DIR}/blender/FileBrowserController.cc ${BTS_FILE_BROWSER_RESOURCES})
 qt6_add_resources(BTS_BRANDING_RESOURCES ${BTS_HOST_SOURCE_DIR}/../../assets/branding/branding.qrc)
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${BTS_HOST_SOURCE_DIR}/../../pyproject.toml)
 file(STRINGS ${BTS_HOST_SOURCE_DIR}/../../pyproject.toml BTS_PRODUCT_VERSION_LINE REGEX "^version = ")
@@ -37,10 +37,10 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/python/PythonUi.cc
   ${BTS_HOST_SOURCE_DIR}/python/PythonConsole.cc
   ${BTS_FILE_BROWSER_WIDGET_SOURCES}
-  ${BTS_HOST_SOURCE_DIR}/FileBrowserNativeThumbnails.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/FileBrowserNativeThumbnails.cc
   ${BTS_HOST_SOURCE_DIR}/platform/QtSharedContext.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/RenderModeDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/FlattenExport.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/FlattenExport.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/FlattenDemo.cc
   ${BTS_HOST_SOURCE_DIR}/layers/FlattenLayer.cc
   ${BTS_HOST_SOURCE_DIR}/ui/dialogs/FlattenLayerDialog.cc
@@ -50,7 +50,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/../harness/SubsurfaceDemo.cc
   ${BTS_HOST_SOURCE_DIR}/io/SubsurfacePreviewIO.cc
   ${BTS_HOST_SOURCE_DIR}/viewport/RenderController.cc
-  ${BTS_HOST_SOURCE_DIR}/DisplayPostEffects.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/DisplayPostEffects.cc
   ${BTS_HOST_SOURCE_DIR}/ui/panels/DisplayPostPanel.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/DisplayPostDemo.cc
   ${BTS_HOST_SOURCE_DIR}/ShaderController.cc
@@ -99,7 +99,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/../harness/SignedDisplacementDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/DisplacementDemo.cc
   ${BTS_HOST_SOURCE_DIR}/ui/panels/DisplacementPanel.cc
-  ${BTS_HOST_SOURCE_DIR}/DisplacementPreview.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/DisplacementPreview.cc
   ${BTS_HOST_SOURCE_DIR}/NativeCompositeJob.cc
   ${BTS_HOST_SOURCE_DIR}/NativeCyclesImages.cc
   ${BTS_HOST_SOURCE_DIR}/ColorPicker.cc
@@ -137,7 +137,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialGpuCompiler.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialFragmentBumpTest.cc
   ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialFragmentGpuCompiler.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeFragmentGeometry.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/NativeFragmentGeometry.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialFragmentGpuTest.cc
   ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialGpuPrototype.cc
   ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialContext.cc
@@ -163,7 +163,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/ui/panels/BlendLibraryPanel.cc
   ${BTS_HOST_SOURCE_DIR}/SceneBridge.cc
   ${BTS_HOST_SOURCE_DIR}/blender/AutoUnwrap.cc
-  ${BTS_HOST_SOURCE_DIR}/MeshReplacement.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/MeshReplacement.cc
   ${BTS_HOST_SOURCE_DIR}/persistence/Recovery.cc
   ${BTS_HOST_SOURCE_DIR}/io/ExportPadding.cc
   ${BTS_HOST_SOURCE_DIR}/TextureExport.cc
@@ -186,12 +186,12 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/fill/FillSymmetryPanel.cc
   ${BTS_HOST_SOURCE_DIR}/fill/FillPanel.cc
   ${BTS_HOST_SOURCE_DIR}/layers/BitmapMask.cc
-  ${BTS_HOST_SOURCE_DIR}/TexturePadding.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/TexturePadding.cc
   ${BTS_HOST_SOURCE_DIR}/io/SymmetryIO.cc
   ${BTS_HOST_SOURCE_DIR}/layers/LayerThumbnail.cc
   ${BTS_HOST_SOURCE_DIR}/blender/EnvironmentResource.cc
   ${BTS_HOST_SOURCE_DIR}/ProjectIO.cc
-  ${BTS_HOST_SOURCE_DIR}/SurfaceBrush.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/SurfaceBrush.cc
   ${BTS_HOST_SOURCE_DIR}/layers/AmbientOcclusion.cc
   ${BTS_HOST_SOURCE_DIR}/layers/NormalMix.cc
   ${BTS_HOST_SOURCE_DIR}/materials/layering/MaterialLayerShader.cc
@@ -199,13 +199,13 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/materials/layering/MaterialLayeringSourceSnapshots.cc
   ${BTS_HOST_SOURCE_DIR}/materials/openpbr/OpenPbrShader.cc
   ${BTS_HOST_SOURCE_DIR}/MaterialInspection.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeWorldNormalShader.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/NativeWorldNormalShader.cc
   ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc
   ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc
-  ${BTS_HOST_SOURCE_DIR}/NewProjectProfile.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/NewProjectProfile.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/MeshExportDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/UsdTextureBindings.cc
-  ${BTS_HOST_SOURCE_DIR}/UsdMeshExport.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/UsdTextureBindings.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/UsdMeshExport.cc
   ${BTS_HOST_SOURCE_DIR}/MeshExport.cc
   ${BTS_HOST_SOURCE_DIR}/ui/dialogs/MeshExportDialog.cc
   ${BTS_HOST_SOURCE_DIR}/io/MeshImport.cc
@@ -215,14 +215,14 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/EeveeCompletionSnapshot.cc
   ${BTS_HOST_SOURCE_DIR}/SurfaceGraphSnapshot.cc
   ${BTS_HOST_SOURCE_DIR}/BlenderHost.hh
-  ${BTS_HOST_SOURCE_DIR}/SceneSnapshot.cc
-  ${BTS_HOST_SOURCE_DIR}/SceneSnapshot.hh
+  ${BTS_HOST_SOURCE_DIR}/blender/SceneSnapshot.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/SceneSnapshot.hh
   ${BTS_HOST_SOURCE_DIR}/WorkspaceShell.cc
   ${BTS_HOST_SOURCE_DIR}/WorkspaceShell.hh
   ${BTS_HOST_SOURCE_DIR}/viewport/ViewLayout.hh
   ${BTS_HOST_SOURCE_DIR}/viewport/OrbitCamera.cc
   ${BTS_HOST_SOURCE_DIR}/viewport/OrbitCamera.hh
-  ${BTS_HOST_SOURCE_DIR}/SceneTriangleOverlay.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/SceneTriangleOverlay.cc
   ${BTS_HOST_SOURCE_DIR}/viewport/UvGpuOverlay.cc
   ${BTS_HOST_SOURCE_DIR}/viewport/UvPreview.cc
   ${BTS_HOST_SOURCE_DIR}/viewport/UvPreview.hh
@@ -232,7 +232,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
 set_source_files_properties(${BTS_HOST_SOURCE_DIR}/BlendAssetLibrary.cc PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/source/blender/asset_system")
 # Immutable geometry owner captures real ObjectInfos using stock draw resource sync.
 set_property(SOURCE
-  ${BTS_HOST_SOURCE_DIR}/NativeFragmentGeometry.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/NativeFragmentGeometry.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialInspectionDemo.cc APPEND PROPERTY
   INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/source/blender/draw/intern")
 # The explicit generated-source diagnostic uses the real EEVEE amendment.
@@ -1456,7 +1456,7 @@ add_dependencies(bts-cpu-tests bts-gpu-program-warmup-tests)
 
 # Widget behavior tests are independent of the Blender runtime; this companion
 # exercises the production native image and embedded blend thumbnail decoder.
-add_executable(bts-file-browser-native-check EXCLUDE_FROM_ALL ${SRC} ${BTS_HOST_SOURCE_DIR}/../tests/file_browser_native_test.cc ${BTS_HOST_SOURCE_DIR}/FileBrowserNativeThumbnails.cc ${BTS_FILE_BROWSER_WIDGET_SOURCES})
+add_executable(bts-file-browser-native-check EXCLUDE_FROM_ALL ${SRC} ${BTS_HOST_SOURCE_DIR}/../tests/file_browser_native_test.cc ${BTS_HOST_SOURCE_DIR}/blender/FileBrowserNativeThumbnails.cc ${BTS_FILE_BROWSER_WIDGET_SOURCES})
 # BLO thumbnail reads share Blender's real creator symbols and complete target
 # dependency closure. ${LIB} is mutable in included CMake files; do not reuse its
 # late value here or guess a subset of static libraries.
