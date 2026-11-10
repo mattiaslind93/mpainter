@@ -226,8 +226,8 @@ def main():
         files = [host, environment, Path(__file__).resolve()]
         for rel in ['scripts/host/run-host.sh', 'scripts/host/gpu-env.sh', 'scripts/host/session_logging.py',
                     'native/tests/pd149_uniform_fixture.py', 'native/tests/MaterialLayerEeveeObservation.hh',
-                    'native/tests/MaterialLayerEeveeObservationArtist.inc', 'native/host/EeveeCompletionSnapshot.hh',
-                    'native/host/EeveeCompletionSnapshot.cc', 'native/tests/material_layering_ui_artist_test.cc']:
+                    'native/tests/MaterialLayerEeveeObservationArtist.inc', 'native/host/blender/EeveeCompletionSnapshot.hh',
+                    'native/host/blender/EeveeCompletionSnapshot.cc', 'native/tests/material_layering_ui_artist_test.cc']:
             files.append(source / rel)
         controls.update({str(p): sha(p) for p in files})
         fixture_path = source / 'native/tests/pd149_uniform_fixture.py'

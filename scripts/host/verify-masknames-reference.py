@@ -24,8 +24,8 @@ root = Path(__file__).resolve().parents[2]
 ref, build, qt, out = [p.resolve() for p in (a.reference, a.build, a.qt, a.output)]
 assert not out.is_relative_to(ref)
 out.mkdir(parents=True, exist_ok=True)
-inputs = [ref/'native/host/BuiltinSmartMasks.cc', ref/'native/host/AssetCatalog.cc',
-          ref/'native/host/MaterialSpherePreview.hh', *sorted((ref/'assets/grunges').glob('*')),
+inputs = [ref/'native/host/assets/BuiltinSmartMasks.cc', ref/'native/host/AssetCatalog.cc',
+          ref/'native/host/assets/MaterialSpherePreview.hh', *sorted((ref/'assets/grunges').glob('*')),
           *sorted((ref/'assets/procedurals').glob('shaderball-jl01*.png'))]
 def hashes():
     return {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs if p.is_file()}
@@ -41,7 +41,7 @@ subprocess.run([str(qt/'libexec/rcc'), '--name', 'builtin_procedurals',
 command = ['c++', '-std=c++20', '-O1', '-fPIC', f'-I{ref}/native/host',
            f'-I{qt}/include', f'-I{qt}/include/QtCore', f'-I{qt}/include/QtGui',
            str(root/'native/tests/masknames_reference_export.cc'),
-           str(ref/'native/host/BuiltinSmartMasks.cc'), str(out/'grunges.cc'), str(out/'preview.cc'),
+           str(ref/'native/host/assets/BuiltinSmartMasks.cc'), str(out/'grunges.cc'), str(out/'preview.cc'),
            f'-L{qt}/lib', f'-Wl,-rpath,{qt}/lib', f'-L{build}/lib', '-lbts-export-config',
            '-lQt6Gui', '-lQt6Core', str(build.parent/'blender/lib/linux_x64/zlib/lib/libz.a'),
            '-o', str(out/'export-reference')]

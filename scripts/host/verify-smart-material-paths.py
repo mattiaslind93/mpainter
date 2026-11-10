@@ -12,9 +12,9 @@ for forbidden in ('std::vector<float>', 'assign_channel(', 'sample_id_map(', 'sa
 # capture still must use GPU readback and asynchronous publication below.
 assert compact('bool worn_metal_ready(const TextureSet &){return false;}') in compact(source)
 assert 'Import a user-owned Material Preset before applying it' in source
-thumbnail=(root/'native/host/AssetThumbnail.cc').read_text()
+thumbnail=(root/'native/host/blender/AssetThumbnail.cc').read_text()
 assert 'worn_metal_color(' not in thumbnail, 'Smart-material thumbnails may not evaluate a CPU layered stack'
-capture=(root/'native/host/MaterialPresetReadback.hh').read_text()
+capture=(root/'native/host/assets/MaterialPresetReadback.hh').read_text()
 assert 'capture_project_source(' in capture and 'GpuPersistenceScope' in capture and 'write_material_preset(preset_)' in capture
 # The whole callback statement, whitespace-free, however the session is formatted.
 callback=compact(statement(main_source(root),'callbacks.create_smart_material'))

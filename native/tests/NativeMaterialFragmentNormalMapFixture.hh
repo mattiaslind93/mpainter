@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 #include "NativeMaterialFragmentGpuFixture.hh"
-#include "../host/NativeMaterialFragmentGpuCompiler.hh"
+#include "../host/materials/native/NativeMaterialFragmentGpuCompiler.hh"
 #include <algorithm>
 #include <array>
 #include <utility>

@@ -353,7 +353,7 @@ def main():
         for path in [environment, Path(__file__).resolve(), *[source / rel for rel in [
                 'native/tests/MaterialLayerSurfaceReference.hh', 'native/tests/MaterialLayerSurfaceFixture.hh',
                 'native/tests/MaterialLayerSurfaceArtist.inc', 'native/tests/MaterialLayerSurfaceGraphObservation.hh',
-                'native/host/SurfaceGraphSnapshot.hh', 'native/host/SurfaceGraphSnapshot.cc',
+                'native/host/blender/SurfaceGraphSnapshot.hh', 'native/host/blender/SurfaceGraphSnapshot.cc',
                 'native/tests/material_layering_ui_artist_test.cc',
                 'scripts/host/run-host.sh', 'scripts/host/gpu-env.sh', 'scripts/host/session_logging.py']]]:
             controls[str(path)] = sha(path)

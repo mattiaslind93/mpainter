@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 #include "NativeMaterialTiledSourceTest.hh"
-#include "../host/NativeMaterialApply.hh"
+#include "../host/materials/native/NativeMaterialApply.hh"
 #include "../host/ProjectIO.hh"
 #include "../host/FillTextureIO.hh"
 #include "../host/ResourceIO.hh"

@@ -2,7 +2,7 @@
 #include <QCoreApplication>
 #include <QCryptographicHash>
 #include "../host/SpsmBitmapTexture.hh"
-#include "../host/FillTextureJSON.hh"
+#include "../host/io/FillTextureJSON.hh"
 #include "BLI_math_half.hh"
 #include "IMB_colormanagement.hh"
 #include "IMB_imbuf.hh"

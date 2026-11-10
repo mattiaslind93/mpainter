@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "SpsmBitmap.hh"
-#include "../../host/ResourceAvailability.hh"
+#include "../../host/platform/ResourceAvailability.hh"
 #include <lz4.h>
 #include <algorithm>
 #include <bit>

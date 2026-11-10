@@ -28,7 +28,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/../harness/AutomationDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/ExtensionCpuDemo.cc
   ${BTS_HOST_SOURCE_DIR}/LayerApi.cc
-  ${BTS_HOST_SOURCE_DIR}/LinearColorTransform.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/LinearColorTransform.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/LayerApiDemo.cc
   ${BTS_HOST_SOURCE_DIR}/layers/ChannelConfiguration.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/HardSurfaceDemo.cc
@@ -120,10 +120,10 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/fill/PhysicalScaleSource.cc
   ${BTS_HOST_SOURCE_DIR}/io/UsdScene.cc
   ${BTS_HOST_SOURCE_DIR}/ui/panels/UsdScenePanel.cc
-  ${BTS_HOST_SOURCE_DIR}/BlendAssetLibrary.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/BlendAssetLibrary.cc
   ${BTS_HOST_SOURCE_DIR}/BlendAssetBrowser.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialPreview.cc
-  ${BTS_HOST_SOURCE_DIR}/SmartMaskThumbnailJobs.cc
+  ${BTS_HOST_SOURCE_DIR}/assets/SmartMaskThumbnailJobs.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialPreviewImages.cc
   ${BTS_HOST_SOURCE_DIR}/BlendMaterial.cc
   ${BTS_HOST_SOURCE_DIR}/ui/panels/NativeMaterialPanel.cc
@@ -150,9 +150,9 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialResource.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialArchive.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialDecodedImage.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialImages.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/NativeMaterialImages.cc
   ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialImageUpload.cc
-  ${BTS_HOST_SOURCE_DIR}/NativeMaterialImageResource.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/NativeMaterialImageResource.cc
   ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialImageArchive.cc
   ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialSourceLoader.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialHostQueueDemo.cc
@@ -176,7 +176,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/io/MeshMapIO.cc
   ${BTS_HOST_SOURCE_DIR}/baking/MeshBakeFilter.cc
   ${BTS_HOST_SOURCE_DIR}/MeshBaker.cc
-  ${BTS_HOST_SOURCE_DIR}/AssetThumbnail.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/AssetThumbnail.cc
   ${BTS_HOST_SOURCE_DIR}/AssetCatalog.cc
   ${BTS_HOST_SOURCE_DIR}/ResourceIO.cc
   ${BTS_HOST_SOURCE_DIR}/io/ResourceImport.cc
@@ -212,8 +212,8 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/ui/dialogs/NewProjectDialog.cc
   ${BTS_HOST_SOURCE_DIR}/main.cc
   ${BTS_HOST_SOURCE_DIR}/BlenderHost.cc
-  ${BTS_HOST_SOURCE_DIR}/EeveeCompletionSnapshot.cc
-  ${BTS_HOST_SOURCE_DIR}/SurfaceGraphSnapshot.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/EeveeCompletionSnapshot.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/SurfaceGraphSnapshot.cc
   ${BTS_HOST_SOURCE_DIR}/BlenderHost.hh
   ${BTS_HOST_SOURCE_DIR}/blender/SceneSnapshot.cc
   ${BTS_HOST_SOURCE_DIR}/blender/SceneSnapshot.hh
@@ -229,7 +229,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/viewport/UvView.cc
   ${BTS_HOST_SOURCE_DIR}/viewport/UvView.hh
 )
-set_source_files_properties(${BTS_HOST_SOURCE_DIR}/BlendAssetLibrary.cc PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/source/blender/asset_system")
+set_source_files_properties(${BTS_HOST_SOURCE_DIR}/blender/BlendAssetLibrary.cc PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/source/blender/asset_system")
 # Immutable geometry owner captures real ObjectInfos using stock draw resource sync.
 set_property(SOURCE
   ${BTS_HOST_SOURCE_DIR}/blender/NativeFragmentGeometry.cc
@@ -244,7 +244,7 @@ set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/../harness/ViewportHeadlessDemo.cc AP
 set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialFragmentGpuCompiler.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialFragmentGpuTest.cc APPEND PROPERTY
   INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/source/blender/draw/intern")
-set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/EeveeCompletionSnapshot.cc APPEND PROPERTY
+set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/blender/EeveeCompletionSnapshot.cc APPEND PROPERTY
   INCLUDE_DIRECTORIES
     "${CMAKE_SOURCE_DIR}/source/blender/draw/engines/eevee"
     "${CMAKE_SOURCE_DIR}/source/blender/draw/intern"
@@ -432,7 +432,7 @@ target_link_libraries(bts-export-config PUBLIC Qt6::Core)
 qt6_add_resources(BTS_BUILTIN_BRUSH_RESOURCES ${BTS_HOST_SOURCE_DIR}/../../assets/brush-alphas/builtin-brush-alphas.qrc)
 qt6_add_resources(BTS_BUILTIN_GRUNGE_RESOURCES ${BTS_HOST_SOURCE_DIR}/../../assets/grunges/builtin-grunges.qrc)
 qt6_add_resources(BTS_MASK_PREVIEW_RESOURCES ${BTS_HOST_SOURCE_DIR}/../../assets/mask-preview/builtin-mask-preview.qrc)
-add_library(bts-builtin-smartmasks STATIC ${BTS_BUILTIN_GRUNGE_RESOURCES} ${BTS_MASK_PREVIEW_RESOURCES} ${BTS_BUILTIN_BRUSH_RESOURCES} ${BTS_HOST_SOURCE_DIR}/BuiltinSmartMasks.cc ${BTS_HOST_SOURCE_DIR}/assets/BuiltinBrushPresets.cc ${BTS_HOST_SOURCE_DIR}/assets/BuiltinProceduralAssets.cc ${BTS_HOST_SOURCE_DIR}/assets/BuiltinStandardMaterials.cc ${BTS_HOST_SOURCE_DIR}/assets/BuiltinPolyHaven.cc)
+add_library(bts-builtin-smartmasks STATIC ${BTS_BUILTIN_GRUNGE_RESOURCES} ${BTS_MASK_PREVIEW_RESOURCES} ${BTS_BUILTIN_BRUSH_RESOURCES} ${BTS_HOST_SOURCE_DIR}/assets/BuiltinSmartMasks.cc ${BTS_HOST_SOURCE_DIR}/assets/BuiltinBrushPresets.cc ${BTS_HOST_SOURCE_DIR}/assets/BuiltinProceduralAssets.cc ${BTS_HOST_SOURCE_DIR}/assets/BuiltinStandardMaterials.cc ${BTS_HOST_SOURCE_DIR}/assets/BuiltinPolyHaven.cc)
 target_include_directories(bts-builtin-smartmasks PUBLIC ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-builtin-smartmasks PUBLIC cxx_std_20)
 target_link_libraries(bts-builtin-smartmasks PUBLIC Qt6::Gui bts-export-config)

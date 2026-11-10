@@ -85,7 +85,7 @@ units=[]
 for command in commands:
  args=shlex.split(command)
  if '-c' in args and Path(args[args.index('-c')+1]).is_relative_to(old):units.append(args)
-for source in ['native/host/LinearColorTransform.cc','native/tests/linear_color_transform_test.cc','native/tests/ordered_raw_rgb_gpu_test.cc']:
+for source in ['native/host/blender/LinearColorTransform.cc','native/tests/linear_color_transform_test.cc','native/tests/ordered_raw_rgb_gpu_test.cc']:
  args=template.copy();args[args.index('-c')+1]=str(old/source);args[args.index('-o')+1]='__extra__/'+Path(source).name+'.o';units.append(args)
 def compile(args):
  previous=args[args.index('-o')+1];source=Path(args[args.index('-c')+1]);obj=out/'objects'/previous

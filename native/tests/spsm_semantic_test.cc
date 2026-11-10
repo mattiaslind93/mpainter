@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "SpsmSemantic.hh"
-#include "../host/ResourceAvailability.hh"
+#include "../host/platform/ResourceAvailability.hh"
 #include <bit>
 #include <iostream>
 #include <sstream>

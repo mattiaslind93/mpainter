@@ -7,7 +7,7 @@ as Blender when it does not resolve to a tracked file and follows Blender's `MOD
 naming. The restructure plan moves all of these includes behind `native/host/blender/` (phase 5).
 
 - Blender headers: 176, in 24 modules
-- Files that include them: 236, of which 209 are outside `native/host/blender/`
+- Files that include them: 236, of which 202 are outside `native/host/blender/`
 
 | Module | Header | Files that include it |
 |---|---|---|
@@ -192,6 +192,8 @@ naming. The restructure plan moves all of these includes behind `native/host/ble
 
 Check these by hand: system, OpenUSD, MaterialX and other libraries land here.
 
+- `../../host/ResourceAvailability.hh` (2 files)
+- `../host/ResourceAvailability.hh` (2 files)
 - `Description.hh` (1 files)
 - `MaterialXCore/Document.h` (4 files)
 - `MaterialXFormat/Util.h` (2 files)

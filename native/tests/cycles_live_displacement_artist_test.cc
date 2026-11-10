@@ -20,7 +20,7 @@
 #include <QScopeGuard>
 #include <QTimer>
 #include <QToolButton>
-#include "../host/NumericLocale.hh"
+#include "../host/platform/NumericLocale.hh"
 #include "../host/GpuProjectReadback.hh"
 #include "BKE_global.hh"
 #include "BKE_main.hh"

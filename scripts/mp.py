@@ -285,7 +285,8 @@ def write_docs(root, check_only):
 HOST = "native/host"
 HOST_CMAKE = "native/host/CMakeLists.txt"
 MOVE_DESTINATIONS = re.compile(r"native/(harness|host/[a-z][a-z0-9_-]*(/[a-z][a-z0-9_-]*)?)\Z")
-REF_FILES = re.compile(r"(scripts|native)/.*\.(py|json|sh)\Z|native/tests/.*\.(cc|hh|inc)\Z")
+# C++ outside native/host (tests, the standalone readers) reaches host files by relative path.
+REF_FILES = re.compile(r"(scripts|native)/.*\.(py|json|sh)\Z|native/(tests|spsm|sbsar_metadata)/.*\.(cc|hh|inc|c|h)\Z")
 NAME_END = r"(?![A-Za-z0-9_.])"
 # Standalone CMake projects that compile host sources by relative path.
 TEST_CMAKE = re.compile(r"native/tests/[^/]+/CMakeLists\.txt")
@@ -298,7 +299,7 @@ def name_references(root, names):
     alternatives = "|".join(re.escape(n) for n in names)
     full = re.compile(r"(?<![A-Za-z0-9_])(" + alternatives + r")(?![A-Za-z0-9_.])")
     # In C++ a bare include resolves through the include path; only a relative path pins a folder.
-    relative = re.compile(r'"\.\./host/(' + alternatives + r')"')
+    relative = re.compile(r'"(?:\.\./)+host/(' + alternatives + r')"')
     quoted = re.compile(r"""['"]([A-Za-z0-9_]+)['"]""")
     hits = []
     for rel in git_files(root):
@@ -365,8 +366,9 @@ def move_files(root, dest, sources, refs=False, allow_referenced=False):
             total += count
     if refs:
         rules = [(re.compile(r"native/host/" + re.escape(n) + NAME_END), f"{dest}/{n}") for n in names]
-        rules += [(re.compile(r'"\.\./host/' + re.escape(n) + '"'), f'"../{dest[len("native/"):]}/{n}"')
-                  for n in names]
+        # "../host/X" from native/tests or native/spsm, "../../host/X" from one folder deeper.
+        rules += [(re.compile(r'"((?:\.\./)+)host/' + re.escape(n) + '"'),
+                   f'"\\1{dest[len("native/"):]}/{n}"') for n in names]
         for rel in sorted(tracked):
             path = root / rel
             if not REF_FILES.match(rel) or path.is_symlink() or not path.is_file():
@@ -374,7 +376,7 @@ def move_files(root, dest, sources, refs=False, allow_referenced=False):
             content = path.read_text(encoding="utf-8", errors="surrogateescape")
             count = 0
             for pattern, replacement in rules:
-                content, n = pattern.subn(lambda m, r=replacement: r, content)
+                content, n = pattern.subn(lambda m, r=replacement: m.expand(r), content)
                 count += n
             if count:
                 path.write_text(content, encoding="utf-8", errors="surrogateescape")

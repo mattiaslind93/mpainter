@@ -34,7 +34,7 @@ commands = json.loads((snapshot / 'frozen-commands.json').read_text())
 frozen = json.loads((snapshot / 'frozen-link-inputs.json').read_text())
 base = shlex.split(next(c for c in commands if '/main.cc.o' in c and ' -c ' in c))
 original_main = base[base.index('-o') + 1]
-sources = ['native/host/NativeMaterialImageResource.cc', 'native/host/NativeMaterialImages.cc',
+sources = ['native/host/blender/NativeMaterialImageResource.cc', 'native/host/blender/NativeMaterialImages.cc',
            'native/tests/native_material_image_color' + ('_gpu' if a.suite == 'gpu' else '') + '_test.cc']
 if a.suite == 'gpu':
     if a.baseline or a.runtime_baseline or a.sanitize:

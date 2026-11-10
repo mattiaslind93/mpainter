@@ -34,7 +34,7 @@ assert project.is_relative_to(warm) and sha(project) == expected['packed_file_sh
 assert expected['tiles'] == [1001, 1002] and len(expected['gpu']) == 4
 owned = ['native/harness/AdjustmentPaintColdProof.hh', 'native/harness/ViewportHeadlessDemo.cc',
          'native/harness/GpuAdjustmentPaintTest.hh', 'native/host/GpuLayerPreview.cc',
-         'native/host/GpuAdjustmentPages.hh', 'scripts/host/verify-adjustment-paint-cold.py']
+         'native/host/gpu/GpuAdjustmentPages.hh', 'scripts/host/verify-adjustment-paint-cold.py']
 source_hashes = {name: sha(root / name) for name in owned}
 output.mkdir(parents=True)
 library = output / 'library'

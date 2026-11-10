@@ -8,7 +8,7 @@ p=argparse.ArgumentParser(description=__doc__);p.add_argument('--build-dir',type
 root=Path(__file__).resolve().parents[2];build=a.build_dir.resolve();out=a.output.resolve();assert out.is_relative_to(root.parent/'build');out.mkdir(parents=True,exist_ok=True)
 commands=subprocess.check_output([shutil.which('ninja')or'ninja-build','-t','commands','bts-host'],cwd=build,text=True).splitlines()
 base=shlex.split(next(c for c in commands if '/main.cc.o' in c and ' -c ' in c));mainobj=base[base.index('-o')+1];objects=[]
-for source in (['native/host/main.cc']if a.syntax_main else[])+['native/tests/blend_library_native_test.cc','native/host/BlendAssetLibrary.cc']:
+for source in (['native/host/main.cc']if a.syntax_main else[])+['native/tests/blend_library_native_test.cc','native/host/blender/BlendAssetLibrary.cc']:
  c=shlex.split(next((v for v in commands if '/'+Path(source).name+'.o' in v and ' -c ' in v),shlex.join(base)));obj=str(out/(Path(source).stem+'.o'));objects.extend([]if source.endswith('/main.cc')else[obj]);c[c.index('-o')+1]=obj;c[c.index('-c')+1]=str(root/source)
  for flag in ['-MF','-MT']:
   if flag in c:c[c.index(flag)+1]=obj+('.d' if flag=='-MF' else '')

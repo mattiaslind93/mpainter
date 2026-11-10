@@ -334,6 +334,18 @@ class Move(unittest.TestCase):
         repo.git("add", "-A")
         self.assertEqual(statuses(repo)["test-cmake-paths"][0], "PASS")
 
+    def test_relative_includes_outside_tests_block_and_are_rewritten(self):
+        repo = self.repo()
+        repo.write("native/spsm/bitmaps/Reader.cc", '#include "../../host/Other.hh"\n')
+        repo.write("native/host/Other.hh", "x\n")
+        repo.git("add", "-A")
+        code, _, err = self.move(repo, "Other.hh", allow=False)
+        self.assertEqual(code, 2)
+        self.assertIn("native/spsm/bitmaps/Reader.cc:1: Other.hh", err)
+        self.assertEqual(self.move(repo, "Other.hh", refs=True)[0], 0)
+        self.assertEqual((repo.root / "native/spsm/bitmaps/Reader.cc").read_text(),
+                         '#include "../../host/painting/Other.hh"\n')
+
     def test_move_refuses_bad_input_and_changes_nothing(self):
         repo = self.repo()
         before = (repo.root / "native/host/CMakeLists.txt").read_text()

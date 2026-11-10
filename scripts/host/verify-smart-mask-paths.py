@@ -17,17 +17,17 @@ apply = model.split('voidTextureDocument::apply_mask_preset', 1)[1].split('Textu
 assert 'MaskEffectKind::Paint' in apply
 for forbidden in ('sample_resampled(', 'visit_pages(', '.materialized(', '.assign_page('):
     assert forbidden not in apply, ('Synchronous smart-mask merge rasterization', forbidden)
-job = compact((root / 'native/host/MaskPresetReadback.hh').read_text())
+job = compact((root / 'native/host/assets/MaskPresetReadback.hh').read_text())
 assert 'std::async(std::launch::async' in job
 assert 'capture_project_source(' in job and 'readback_.poll()' in job
 assert 'GpuPersistenceScopeno_cpu_recipes' in job
-thumbnail=compact((root/'native/host/AssetThumbnail.cc').read_text())
+thumbnail=compact((root/'native/host/blender/AssetThumbnail.cc').read_text())
 mask_thumbnail=thumbnail.split('elseif(asset.smart_mask&&!is_spmsk_asset(asset)){',1)[1].split('elseif(asset.projection_weave',1)[0]
 assert 'native_missing=true' in mask_thumbnail
 assert '.value(' not in mask_thumbnail and 'composite' not in mask_thumbnail.replace('CPUstack','')
 assert 'std::async(std::launch::async' in thumbnail and 'native_generator(result.asset' in thumbnail
 assert 'smart_mask_thumbnails->request(asset' in main
-native=compact((root/'native/host/SmartMaskThumbnailJobs.cc').read_text())
+native=compact((root/'native/host/assets/SmartMaskThumbnailJobs.cc').read_text())
 assert 'gpu->renderer.begin_frame()' in native and 'gpu->renderer.update(' in native
 assert 'gpu->download.poll()' in native and 'smart_mask_thumbnail_packet_ready(' in native
 for forbidden in ('.value(', 'TextureDocument::composite', 'evaluate_channels(', 'composite_user(', 'composite_displacement('):
