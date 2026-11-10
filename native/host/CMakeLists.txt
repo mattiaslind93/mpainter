@@ -30,7 +30,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/LayerApi.cc
   ${BTS_HOST_SOURCE_DIR}/LinearColorTransform.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/LayerApiDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/ChannelConfiguration.cc
+  ${BTS_HOST_SOURCE_DIR}/layers/ChannelConfiguration.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/HardSurfaceDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/ChannelConfigurationDemo.cc
   ${BTS_HOST_SOURCE_DIR}/ui/dialogs/ChannelConfigurationDialog.cc
@@ -42,7 +42,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/../harness/RenderModeDemo.cc
   ${BTS_HOST_SOURCE_DIR}/FlattenExport.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/FlattenDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/FlattenLayer.cc
+  ${BTS_HOST_SOURCE_DIR}/layers/FlattenLayer.cc
   ${BTS_HOST_SOURCE_DIR}/ui/dialogs/FlattenLayerDialog.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/DerivedExportDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/DerivedExportCpuDemo.cc
@@ -185,15 +185,15 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/../harness/FillSymmetryDemo.cc
   ${BTS_HOST_SOURCE_DIR}/fill/FillSymmetryPanel.cc
   ${BTS_HOST_SOURCE_DIR}/fill/FillPanel.cc
-  ${BTS_HOST_SOURCE_DIR}/BitmapMask.cc
+  ${BTS_HOST_SOURCE_DIR}/layers/BitmapMask.cc
   ${BTS_HOST_SOURCE_DIR}/TexturePadding.cc
   ${BTS_HOST_SOURCE_DIR}/io/SymmetryIO.cc
   ${BTS_HOST_SOURCE_DIR}/layers/LayerThumbnail.cc
   ${BTS_HOST_SOURCE_DIR}/EnvironmentResource.cc
   ${BTS_HOST_SOURCE_DIR}/ProjectIO.cc
   ${BTS_HOST_SOURCE_DIR}/SurfaceBrush.cc
-  ${BTS_HOST_SOURCE_DIR}/AmbientOcclusion.cc
-  ${BTS_HOST_SOURCE_DIR}/NormalMix.cc
+  ${BTS_HOST_SOURCE_DIR}/layers/AmbientOcclusion.cc
+  ${BTS_HOST_SOURCE_DIR}/layers/NormalMix.cc
   ${BTS_HOST_SOURCE_DIR}/materials/layering/MaterialLayerShader.cc
   ${BTS_HOST_SOURCE_DIR}/materials/layering/MaterialLayeringSources.cc
   ${BTS_HOST_SOURCE_DIR}/materials/layering/MaterialLayeringSourceSnapshots.cc
@@ -400,17 +400,17 @@ target_include_directories(bts-map-import-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-map-import-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-map-import-tests PRIVATE Qt6::Core)
 
-add_executable(bts-normal-mix-tests ${BTS_HOST_SOURCE_DIR}/../tests/normal_mix_test.cc ${BTS_HOST_SOURCE_DIR}/NormalMix.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-normal-mix-tests ${BTS_HOST_SOURCE_DIR}/../tests/normal_mix_test.cc ${BTS_HOST_SOURCE_DIR}/layers/NormalMix.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
 target_include_directories(bts-normal-mix-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-normal-mix-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-normal-mix-tests PRIVATE Qt6::Core)
 
-add_executable(bts-height-normal-tests ${BTS_HOST_SOURCE_DIR}/../tests/height_normal_test.cc ${BTS_HOST_SOURCE_DIR}/NormalMix.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-height-normal-tests ${BTS_HOST_SOURCE_DIR}/../tests/height_normal_test.cc ${BTS_HOST_SOURCE_DIR}/layers/NormalMix.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
 target_include_directories(bts-height-normal-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-height-normal-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-height-normal-tests PRIVATE Qt6::Core)
 
-add_executable(bts-ao-tests ${BTS_HOST_SOURCE_DIR}/../tests/ambient_occlusion_test.cc ${BTS_HOST_SOURCE_DIR}/AmbientOcclusion.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-ao-tests ${BTS_HOST_SOURCE_DIR}/../tests/ambient_occlusion_test.cc ${BTS_HOST_SOURCE_DIR}/layers/AmbientOcclusion.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
 target_include_directories(bts-ao-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-ao-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-ao-tests PRIVATE Qt6::Core)
@@ -425,7 +425,7 @@ target_include_directories(bts-export-packing-tests PRIVATE ${BTS_HOST_SOURCE_DI
 target_compile_features(bts-export-packing-tests PRIVATE cxx_std_20)
 
 # Shared metadata parser is also linked by the pure TextureDocument test targets.
-add_library(bts-export-config STATIC ${BTS_HOST_SOURCE_DIR}/baking/SkewArchive.cc ${BTS_HOST_SOURCE_DIR}/Displacement.cc ${BTS_HOST_SOURCE_DIR}/CustomChannel.cc ${BTS_HOST_SOURCE_DIR}/PhysicalScale.cc ${BTS_HOST_SOURCE_DIR}/io/ExportConfiguration.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeArchive.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeTransfer.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc)
+add_library(bts-export-config STATIC ${BTS_HOST_SOURCE_DIR}/baking/SkewArchive.cc ${BTS_HOST_SOURCE_DIR}/Displacement.cc ${BTS_HOST_SOURCE_DIR}/layers/CustomChannel.cc ${BTS_HOST_SOURCE_DIR}/PhysicalScale.cc ${BTS_HOST_SOURCE_DIR}/io/ExportConfiguration.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeArchive.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeTransfer.cc ${BTS_HOST_SOURCE_DIR}/painting/StrokeHistory.cc ${BTS_HOST_SOURCE_DIR}/PaintPixels.cc)
 target_include_directories(bts-export-config PUBLIC ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-export-config PUBLIC cxx_std_20)
 target_link_libraries(bts-export-config PUBLIC Qt6::Core)
@@ -884,13 +884,13 @@ target_include_directories(bts-usd-preset-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-usd-preset-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-usd-preset-tests PRIVATE bts-export-config Qt6::Core)
 
-add_executable(bts-folder-composition-tests ${BTS_HOST_SOURCE_DIR}/../tests/folder_composition_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc ${BTS_HOST_SOURCE_DIR}/FlattenLayer.cc)
+add_executable(bts-folder-composition-tests ${BTS_HOST_SOURCE_DIR}/../tests/folder_composition_test.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc ${BTS_HOST_SOURCE_DIR}/layers/FlattenLayer.cc)
 target_include_directories(bts-folder-composition-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-folder-composition-tests PRIVATE cxx_std_20)
 target_compile_options(bts-folder-composition-tests PRIVATE "$<IF:$<CXX_COMPILER_ID:MSVC>,/UNDEBUG,-UNDEBUG>")
 target_link_libraries(bts-folder-composition-tests PRIVATE bts-export-config Qt6::Core)
 
-add_executable(bts-flatten-layer-tests ${BTS_HOST_SOURCE_DIR}/../tests/flatten_layer_test.cc ${BTS_HOST_SOURCE_DIR}/FlattenLayer.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-flatten-layer-tests ${BTS_HOST_SOURCE_DIR}/../tests/flatten_layer_test.cc ${BTS_HOST_SOURCE_DIR}/layers/FlattenLayer.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
 target_include_directories(bts-flatten-layer-tests PRIVATE ${BTS_HOST_SOURCE_DIR})
 target_compile_features(bts-flatten-layer-tests PRIVATE cxx_std_20)
 target_link_libraries(bts-flatten-layer-tests PRIVATE bts-export-config Qt6::Core)
@@ -904,7 +904,7 @@ target_link_libraries(bts-file-dialog-tests PRIVATE Qt6::Widgets Qt6::GuiPrivate
 add_executable(bts-layer-api-tests ${BTS_HOST_SOURCE_DIR}/../tests/layer_api_test.cc ${BTS_HOST_SOURCE_DIR}/LayerApi.cc ${BTS_HOST_SOURCE_DIR}/SmartMaterial.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
 target_link_libraries(bts-layer-api-tests PRIVATE bts-export-config)
 
-add_executable(bts-channel-configuration-tests ${BTS_HOST_SOURCE_DIR}/../tests/channel_configuration_test.cc ${BTS_HOST_SOURCE_DIR}/ChannelConfiguration.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
+add_executable(bts-channel-configuration-tests ${BTS_HOST_SOURCE_DIR}/../tests/channel_configuration_test.cc ${BTS_HOST_SOURCE_DIR}/layers/ChannelConfiguration.cc ${BTS_HOST_SOURCE_DIR}/TextureDocument.cc)
 target_link_libraries(bts-channel-configuration-tests PRIVATE bts-export-config)
 
 add_executable(bts-fill-symmetry-tests ${BTS_HOST_SOURCE_DIR}/../tests/fill_symmetry_test.cc)
