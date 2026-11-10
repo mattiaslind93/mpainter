@@ -56,6 +56,10 @@ def main() -> int:
     if not root.is_dir():
         print(f"FAIL: package directory does not exist: {root}", file=sys.stderr)
         return 2
+    # A macOS bundle keeps its texts in Contents/Resources and Qt in Frameworks/PlugIns.
+    contents = root / "Contents" if root.suffix == ".app" else None
+    if contents:
+        root = contents / "Resources"
 
     missing: list[str] = []
     notes: list[str] = []
@@ -128,15 +132,18 @@ def main() -> int:
 
     network_libs = list(root.glob("Qt6Network.dll")) + list(root.glob("lib/libQt6Network.so*"))
     tls_plugins = list((root / "tls").glob("*")) + list((root / "plugins" / "tls").glob("*"))
+    if contents:
+        network_libs += list((contents / "Frameworks").glob("QtNetwork.framework"))
+        tls_plugins += list((contents / "PlugIns" / "tls").glob("*"))
     tls_plugins = [p for p in tls_plugins if p.is_file()]
     real_tls = [
         p
         for p in tls_plugins
-        if "openssl" in p.name.lower() or "schannel" in p.name.lower()
+        if any(name in p.name.lower() for name in ("openssl", "schannel", "securetransport"))
     ]
     if network_libs and not real_tls:
         missing.append(
-            "Qt6Network is present but no OpenSSL/Schannel TLS plugin "
+            "Qt6Network is present but no OpenSSL/Schannel/SecureTransport TLS plugin "
             f"(found: {[p.name for p in tls_plugins] or 'no tls directory'})"
         )
 

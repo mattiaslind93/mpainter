@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import struct
@@ -48,6 +49,22 @@ if not a.resume:
  # This native editor has no Python application package; Blender's embedded
  # Python and scripts are already included above.
  shutil.copy2(repo/'LICENSE',resources/'mPainter-LICENSE.txt')
+ # Same top-level texts, license notes and BUILD-INFO as the Linux and Windows packages,
+ # so scripts/license-gate.py can gate the bundle (pass it the .app).
+ for name in ['LICENSE','NOTICE.md','README.md']:shutil.copy2(repo/name,resources/name)
+ licenses=resources/'licenses';licenses.mkdir(exist_ok=True)
+ for source,target in [('assets/grunges/README.md','mask-grunges.md'),('assets/mask-preview/README.md','mask-preview.md'),('assets/meshes/Shader_Ball_JL_01-NOTICE.md','shaderball-jl01.md'),('assets/meshes/CC-BY-4.0.txt','CC-BY-4.0.txt')]:
+  shutil.copy2(repo/source,licenses/target)
+ shutil.copytree(repo/'assets/file-browser',licenses/'file-browser',ignore=shutil.ignore_patterns('atlas.png','*.qrc','manifest.json','svg'))
+ # The aqt macOS archive may omit Qt's license texts; any Qt 6.8.3 install's collection is the same.
+ qt_licenses=next((p for p in [work/'toolchains/qt/6.8.3/macos/licenses',work/'toolchains/qt/licenses'] if p.is_dir()),None)
+ if qt_licenses is None:raise SystemExit('No Qt 6.8.3 license collection found for licenses/Qt')
+ shutil.copytree(qt_licenses,licenses/'Qt/licenses')
+ for name in ['license','licenses']:
+  if (runtime/name).is_dir():shutil.copytree(runtime/name,licenses/'Blender',dirs_exist_ok=True)
+ version=re.search(r'^version = "([^"]+)"',(repo/'pyproject.toml').read_text(),re.M).group(1)
+ commit=subprocess.check_output(['git','-C',str(repo),'rev-parse','HEAD'],text=True).strip()
+ (resources/'BUILD-INFO.txt').write_text(f'mPainter {version}\nCommit {commit}\nBlender 5.2.0\nQt 6.8.3\nmacOS arm64, Metal backend.\nHTTPS uses the Qt TLS plugin in Contents/PlugIns/tls with the macOS TLS stack.\nNo Developer ID signature or notarization.\nSource preparation and package commands: docs/building.md in the matching source tree.\n')
 elif not a.finish:
  shutil.copy2(work/'build-metal/bin/mPainter.app/Contents/MacOS/mPainter',macos/'mPainter')
 # Data belongs in Resources. Retain the build's duplicate branding directory
@@ -65,6 +82,11 @@ if not a.finish:print(run(deploy,app,'-no-strip','-verbose=1'),flush=True)
 platforms=contents/'PlugIns/platforms';platforms.mkdir(parents=True,exist_ok=True)
 offscreen=platforms/'libqoffscreen.dylib'
 if not offscreen.exists():shutil.copy2(work/'toolchains/qt/6.8.3/macos/plugins/platforms/libqoffscreen.dylib',offscreen)
+# The update check needs HTTPS. Do not rely on macdeployqt's plugin choice: require a
+# backend that uses the macOS TLS stack, which needs no bundled OpenSSL.
+tls=contents/'PlugIns/tls';tls.mkdir(parents=True,exist_ok=True)
+secure=tls/'libqsecuretransportbackend.dylib'
+if not secure.exists():shutil.copy2(work/'toolchains/qt/6.8.3/macos/plugins/tls'/secure.name,secure)
 (resources/'qt.conf').write_text('[Paths]\nPlugins = PlugIns\n')
 # Qt resolves qt.conf from Contents/Resources on macOS, Plugins relative to Contents.
 magic={b'\xcf\xfa\xed\xfe',b'\xfe\xed\xfa\xcf',b'\xca\xfe\xba\xbe',b'\xbe\xba\xfe\xca'}

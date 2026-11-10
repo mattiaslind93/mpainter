@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import tempfile
 
@@ -37,11 +38,14 @@ subprocess.run(['codesign','--verify','--deep','--strict',str(app)],check=True)
 # Keep the image source separate from the destination; never mount the image.
 stage=Path(tempfile.mkdtemp(prefix='mpainter-dmg-',dir=work/'tmp'))
 subprocess.run(['/bin/cp','-cR',str(app),str(stage/'mPainter.app')],check=True)
-(stage/'README.txt').write_text('mPainter 0.9.0-alpha, macOS arm64\nLocal Metal alpha. No Developer ID signature or notarization.\nPresentation uses synchronous Metal/QRhi capture and raster overlays.\nValidated offscreen only; no manual visible-window or older-macOS testing.\n')
+build_info=(app/'Contents/Resources/BUILD-INFO.txt').read_text()
+version=re.search(r'^mPainter (\S+)$',build_info,re.M).group(1)
+commit=re.search(r'^Commit ([0-9a-f]{40})$',build_info,re.M).group(1)
+(stage/'README.txt').write_text(f'mPainter {version}, macOS arm64\nCommit {commit}\nLocal Metal build. No Developer ID signature or notarization.\nPresentation uses synchronous Metal/QRhi capture and raster overlays.\nValidated offscreen only; no manual visible-window or older-macOS testing.\n')
 out.parent.mkdir(parents=True,exist_ok=True)
-subprocess.run(['hdiutil','create','-volname','mPainter 0.9.0-alpha','-srcfolder',str(stage),'-format','UDZO','-fs','HFS+','-imagekey','zlib-level=6',str(out)],check=True)
+subprocess.run(['hdiutil','create','-volname',f'mPainter {version}','-srcfolder',str(stage),'-format','UDZO','-fs','HFS+','-imagekey','zlib-level=6',str(out)],check=True)
 subprocess.run(['hdiutil','verify',str(out)],check=True)
 with out.open('rb') as f:digest=hashlib.file_digest(f,'sha256').hexdigest()
 Path(str(out)+'.sha256').write_text(digest+'  '+out.name+'\n')
-manifest={'path':str(out),'bytes':out.stat().st_size,'sha256':digest,'binary_sha256':binary_hash,'proofs':[str(x.resolve()) for x in a.proof],'evidence':str(a.evidence.resolve()),'closure':str(a.closure.resolve()),'source_retained':str(stage),'developer_id_signed':False,'notarized':False,'local_adhoc_code_hashes':True,'mounted':False}
+manifest={'path':str(out),'bytes':out.stat().st_size,'sha256':digest,'version':version,'commit':commit,'binary_sha256':binary_hash,'proofs':[str(x.resolve()) for x in a.proof],'evidence':str(a.evidence.resolve()),'closure':str(a.closure.resolve()),'source_retained':str(stage),'developer_id_signed':False,'notarized':False,'local_adhoc_code_hashes':True,'mounted':False}
 Path(str(out)+'.json').write_text(json.dumps(manifest,indent=2)+'\n');print(json.dumps(manifest,indent=2))
