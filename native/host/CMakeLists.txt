@@ -132,7 +132,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialGpuProgramTest.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialStackTest.cc
   ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialGpuLibrary.cc
-  ${BTS_HOST_SOURCE_DIR}/ShaderTreeCache.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/ShaderTreeCache.cc
   ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialGpuProgram.cc
   ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialGpuCompiler.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/NativeMaterialFragmentBumpTest.cc
@@ -159,10 +159,10 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/materials/native/NativeMaterialSharedGpuImages.cc
   ${BTS_HOST_SOURCE_DIR}/NativeMaterialGraph.cc
   ${BTS_HOST_SOURCE_DIR}/ui/dialogs/BlendMaterialDialog.cc
-  ${BTS_HOST_SOURCE_DIR}/BlendLibrary.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/BlendLibrary.cc
   ${BTS_HOST_SOURCE_DIR}/ui/panels/BlendLibraryPanel.cc
   ${BTS_HOST_SOURCE_DIR}/SceneBridge.cc
-  ${BTS_HOST_SOURCE_DIR}/AutoUnwrap.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/AutoUnwrap.cc
   ${BTS_HOST_SOURCE_DIR}/MeshReplacement.cc
   ${BTS_HOST_SOURCE_DIR}/persistence/Recovery.cc
   ${BTS_HOST_SOURCE_DIR}/io/ExportPadding.cc
@@ -189,7 +189,7 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/TexturePadding.cc
   ${BTS_HOST_SOURCE_DIR}/io/SymmetryIO.cc
   ${BTS_HOST_SOURCE_DIR}/layers/LayerThumbnail.cc
-  ${BTS_HOST_SOURCE_DIR}/EnvironmentResource.cc
+  ${BTS_HOST_SOURCE_DIR}/blender/EnvironmentResource.cc
   ${BTS_HOST_SOURCE_DIR}/ProjectIO.cc
   ${BTS_HOST_SOURCE_DIR}/SurfaceBrush.cc
   ${BTS_HOST_SOURCE_DIR}/layers/AmbientOcclusion.cc
