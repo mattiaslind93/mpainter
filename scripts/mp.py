@@ -551,8 +551,8 @@ CHECKS = {
     "unpushed": check_unpushed,
 }
 NOT_YET = {
-    "clang-format": "not a gate yet: 442 owned files stay unformatted until the verifiers that pin their "
-                    "text or hash change with them",
+    "clang-format": "not a gate yet (needs clang-format from bts-build): every owned C/C++ file is formatted "
+                    "except the 12 sha-pinned files and 7 kept on purpose (listed in commit a137bf8)",
 }
 
 
