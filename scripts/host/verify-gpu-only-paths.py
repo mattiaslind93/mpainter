@@ -34,7 +34,8 @@ def verify_interactive_brush_transport(source, label='main.cc'):
 file_allowlist = {'NativeCompositeJob.cc', 'NativeCompositeJob.hh', 'TextureExport.cc', 'MeshExport.cc'}
 function_allowlist = {
     'MaterialInspection.cc': ['MaterialInspection::copy_pixels(', 'MaterialInspection::verify_gpu_pixels('],
-    'GpuLayerPreview.cc': ['GpuLayerPreview::self_test('],
+    # The GPU stack oracle; GpuLayerPreview.cc includes it from the harness.
+    'GpuLayerPreviewSelfTest.inc': ['GpuLayerPreview::self_test('],
 }
 calls = 0
 for path in [*host.rglob('*'), *(root / 'native/harness').rglob('*')]:
