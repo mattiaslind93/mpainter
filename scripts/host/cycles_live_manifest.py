@@ -29,7 +29,9 @@ def required_sources(mode):
     # main.cc and MaterialInspection.cc keep their code in .inc sections they include in place
     # (main_source.py, with_sections); a run built from older sections is stale too.
     core |= set(SESSION_FILES) | {"native/host/materials/native/MaterialInspection" + name + ".inc" for name in (
-        "Images", "Impl", "Scene", "Update", "Diagnostics", "Pixels", "Native", "Sources")}
+        "Images", "Impl", "Scene", "Update", "Diagnostics", "Pixels", "Native", "Sources")} | {
+        "native/host/blender/BlenderHost" + name + ".inc" for name in (
+            "Impl", "Materials", "Project", "State", "Draw", "Scene", "Textures")}
     if mode == "displacement":
         drivers = ("cycles_live_displacement_main.cc", "cycles_live_displacement_artist_test.cc",
                    "CyclesLiveDisplacementArtist.hh", "CyclesLiveDisplacementProbe.hh", "CyclesLiveDisplacementProbe.cc")

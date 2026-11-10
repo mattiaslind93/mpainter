@@ -61,11 +61,13 @@ sys.path.insert(0, str(root / 'scripts/host'))
 from main_source import compact, main_source, with_sections
 verify_interactive_brush_transport(main_source(root))
 # Persistence is no exception to the GPU rule.
-code = masked((host / 'BlenderHost.cc').read_text())
+# BlenderHost.cc keeps its code in .inc sections it includes in place.
+blender_host = with_sections(root, 'native/host/BlenderHost.cc')
+code = masked(blender_host)
 for name in ('BlenderHost::begin_save_project(', 'BlenderHost::poll_save_project(', 'BlenderHost::save_project(', 'BlenderHost::apply_texture_set('):
     a, b = body(code, code.index(name))
     assert 'queue_composite(' not in code[a:b] and 'TextureDocument::composite(' not in code[a:b]
-assert 'reason=save-cache' not in (host / 'BlenderHost.cc').read_text()
+assert 'reason=save-cache' not in blender_host
 assert 'GpuPersistenceScope gpu_only' in (host / 'ProjectIO.cc').read_text(), 'Save worker must reject unhandled CPU authoring recipes'
 assert 'if(cpu_paint_evaluation_forbidden)throw' in compact((host / 'PaintPixels.cc').read_text())
 # MaterialInspection.cc keeps its code in .inc sections it includes in place.
