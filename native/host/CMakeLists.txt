@@ -23,8 +23,8 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/io/TextureLoadController.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/ViewportIdleDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/AutomationPlanCpuDemo.cc
-  ${BTS_HOST_SOURCE_DIR}/AutomationExportPlan.cc
-  ${BTS_HOST_SOURCE_DIR}/AutomationJobs.cc
+  ${BTS_HOST_SOURCE_DIR}/python/AutomationExportPlan.cc
+  ${BTS_HOST_SOURCE_DIR}/python/AutomationJobs.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/AutomationDemo.cc
   ${BTS_HOST_SOURCE_DIR}/../harness/ExtensionCpuDemo.cc
   ${BTS_HOST_SOURCE_DIR}/LayerApi.cc
