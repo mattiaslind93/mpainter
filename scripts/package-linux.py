@@ -1,12 +1,21 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Stage a portable Linux tarball with Qt and recursively discovered ELF dependencies."""
-import argparse, pathlib, shutil, subprocess, os, re, tarfile, json, sys
-p=argparse.ArgumentParser();p.add_argument('--runtime',type=pathlib.Path,required=True);p.add_argument('--qt',type=pathlib.Path,required=True);p.add_argument('--output',type=pathlib.Path,required=True);p.add_argument('--no-archive',action='store_true');a=p.parse_args()
+import argparse, pathlib, shutil, subprocess, os, re, tarfile, json, sys, hashlib
+root=pathlib.Path(__file__).absolute().parents[1]
+# The build Qt has only the cert-only TLS backend. This is the OpenSSL backend from the
+# official Qt 6.8.3 linux_gcc_64 qtbase archive (aqtinstall), pinned so that no other
+# Qt's plugin, such as the host's ABI-incompatible Qt 6.11, can be bundled by mistake.
+openssl_tls_sha256='20530f6ad73e236d855bb9e31c8fb1ed56256452d6f004c089735ae9ddde75a9'
+p=argparse.ArgumentParser();p.add_argument('--runtime',type=pathlib.Path,required=True);p.add_argument('--qt',type=pathlib.Path,required=True);p.add_argument('--output',type=pathlib.Path,required=True);p.add_argument('--no-archive',action='store_true')
+p.add_argument('--openssl-tls-plugin',type=pathlib.Path,default=root.parent/'deps/qt-6.8.3-aqt/6.8.3/gcc_64/plugins/tls/libqopensslbackend.so')
+a=p.parse_args()
 a.runtime=a.runtime.absolute();a.qt=a.qt.absolute()
-root=pathlib.Path(__file__).absolute().parents[1];out=a.output.resolve();out.mkdir(parents=True,exist_ok=True)
+out=a.output.resolve();out.mkdir(parents=True,exist_ok=True)
 # One version for the whole product. pyproject.toml is what the build reads for
 # BTS_PRODUCT_VERSION, so the package name cannot drift away from the app's own.
 version=re.search(r'^version = "([^"]+)"',(root/'pyproject.toml').read_text(),re.M).group(1)
+commit=subprocess.check_output(['git','-C',str(root),'rev-parse','HEAD'],text=True).strip()
 def is_elf(path):
     if not path.is_file():return False
     with path.open('rb') as stream:return stream.read(4)==b'\x7fELF'
@@ -35,6 +44,13 @@ subprocess.run([sys.executable,str(root/'scripts/sanitize-runtime.py'),str(stage
 plugins=stage/'plugins';plugins.mkdir()
 for directory in ['platforms','imageformats','iconengines','platforminputcontexts','xcbglintegrations','wayland-decoration-client','wayland-graphics-integration-client','wayland-shell-integration','tls']:
     if (a.qt/'plugins'/directory).exists():shutil.copytree(a.qt/'plugins'/directory,plugins/directory)
+openssl_tls=plugins/'tls/libqopensslbackend.so'
+added_openssl_tls=not openssl_tls.exists() and a.openssl_tls_plugin.is_file()
+if added_openssl_tls:
+    digest=hashlib.sha256(a.openssl_tls_plugin.read_bytes()).hexdigest()
+    if digest!=openssl_tls_sha256:raise SystemExit(f'{a.openssl_tls_plugin} has sha256 {digest}, expected the official Qt 6.8.3 plugin {openssl_tls_sha256}')
+    openssl_tls.parent.mkdir(exist_ok=True);shutil.copy2(a.openssl_tls_plugin,openssl_tls)
+if not openssl_tls.exists():print(f'WARNING: no Qt 6.8.3 OpenSSL TLS plugin in --qt or at {a.openssl_tls_plugin}; plugins/tls has only the cert-only backend and in-app HTTPS will fail',file=sys.stderr)
 if (a.runtime/'lib').exists():
     for directory in ['usd', 'materialx']:
         if (a.runtime/'lib'/directory).exists():
@@ -147,6 +163,15 @@ for item in a.runtime.iterdir():
     if item.is_file() and any(word in item.name.lower() for word in ['license','copyright','readme']):shutil.copy2(item,licenses/item.name)
 qtlicenses=a.qt/'licenses'
 if qtlicenses.exists():shutil.copytree(qtlicenses,licenses/'Qt')
+if added_openssl_tls:(licenses/'qt-tls-openssl-backend.md').write_text('''# Qt OpenSSL TLS plugin
+
+plugins/tls/libqopensslbackend.so is the Qt TLS plugin from the official Qt 6.8.3
+qtbase binary archive for linux_gcc_64 (download.qt.io). It is part of Qt and is
+covered by the Qt license texts in licenses/Qt (LGPL-3.0-only, GPL-3.0-only).
+
+The OpenSSL libraries (libssl, libcrypto) are not bundled. The plugin loads them from
+the system at runtime, and they remain under the system's OpenSSL license.
+''')
 shutil.copytree(root/'assets/file-browser',licenses/'file-browser',ignore=shutil.ignore_patterns('atlas.png','*.qrc','manifest.json','svg'))
 # Fedora build: collect packaged license texts for every added system library.
 packages=set()
@@ -159,7 +184,7 @@ if shutil.which('rpm'):
         for source in result.stdout.splitlines():
             if source.startswith('/usr/share/licenses/') and pathlib.Path(source).is_file():
                 dest=licenses/'system'/pathlib.Path(source).relative_to('/usr/share/licenses');dest.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(source,dest)
-(stage/'BUILD-INFO.txt').write_text(f'mPainter {version}\nBlender 5.2.0\nQt 6.8.3\nRequires a compatible Linux glibc and OpenGL 4.3 graphics driver.\nCycles CUDA (sm_86 and forward-compatible PTX) and OptiX kernels are included.\nCUDA and OptiX use the system NVIDIA driver, which is never bundled; CPU fallback is included.\nOptional Intel/AMD GPU denoising backends are not bundled.\nSource preparation and package commands: docs/building.md in the matching source tree.\n')
+(stage/'BUILD-INFO.txt').write_text(f'mPainter {version}\nCommit {commit}\nBlender 5.2.0\nQt 6.8.3\nRequires a compatible Linux glibc and OpenGL 4.3 graphics driver.\nCycles CUDA (sm_86 and forward-compatible PTX) and OptiX kernels are included.\nCUDA and OptiX use the system NVIDIA driver, which is never bundled; CPU fallback is included.\nOptional Intel/AMD GPU denoising backends are not bundled.\nSource preparation and package commands: docs/building.md in the matching source tree.\n')
 dependency_manifest=json.dumps({'libraries':sorted(origins),'external_libraries':sorted(external_libraries),'system_packages':sorted(packages)},indent=2)+'\n'
 (out/'linux-dependencies.json').write_text(dependency_manifest)
 (stage/'DEPENDENCIES.json').write_text(dependency_manifest)
