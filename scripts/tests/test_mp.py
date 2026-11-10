@@ -320,6 +320,20 @@ class Move(unittest.TestCase):
         repo.git("add", "-A")
         self.assertEqual(statuses(repo)["test-cmake-paths"][0], "PASS")
 
+    def test_host_variable_form_is_rewritten_and_checked(self):
+        repo = self.repo()
+        project = ("set(HOST ${CMAKE_CURRENT_LIST_DIR}/../../host)\n"
+                   "add_executable(t ../brush_test.cc ${HOST}/Other.cc)\n")
+        repo.write("native/tests/library/CMakeLists.txt", project.replace("Other.cc", "Gone.cc"))
+        repo.git("add", "-A")
+        self.assertEqual(statuses(repo)["test-cmake-paths"][0], "FAIL")
+        repo.write("native/tests/library/CMakeLists.txt", project)
+        repo.git("add", "-A")
+        self.assertEqual(self.move(repo, "Other.cc", allow=False)[0], 0)
+        self.assertIn("${HOST}/painting/Other.cc)", (repo.root / "native/tests/library/CMakeLists.txt").read_text())
+        repo.git("add", "-A")
+        self.assertEqual(statuses(repo)["test-cmake-paths"][0], "PASS")
+
     def test_move_refuses_bad_input_and_changes_nothing(self):
         repo = self.repo()
         before = (repo.root / "native/host/CMakeLists.txt").read_text()

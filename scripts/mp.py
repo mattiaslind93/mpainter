@@ -357,8 +357,8 @@ def move_files(root, dest, sources, refs=False, allow_referenced=False):
         content = (root / rel).read_text(encoding="utf-8")
         count = 0
         for name in names:
-            pattern = re.compile(r"\.\./\.\./host/" + re.escape(name) + NAME_END)
-            content, n = pattern.subn(lambda m, name=name: f"../../host/{prefix}/{name}", content)
+            pattern = re.compile(r"(\.\./\.\./host|\$\{HOST\})/" + re.escape(name) + NAME_END)
+            content, n = pattern.subn(lambda m, name=name: f"{m.group(1)}/{prefix}/{name}", content)
             count += n
         if count:
             (root / rel).write_text(content, encoding="utf-8")
@@ -460,7 +460,12 @@ def check_test_cmake_paths(root, files):
         if not TEST_CMAKE.fullmatch(rel):
             continue
         folder = (root / rel).parent
-        for number, line in enumerate((text(root, rel) or "").splitlines(), 1):
+        content = text(root, rel) or ""
+        # blend-library spells the host folder as ${HOST}, set to ${CMAKE_CURRENT_LIST_DIR}/../../host.
+        host_var = re.search(r"set\(HOST \$\{CMAKE_CURRENT_LIST_DIR\}/\.\./\.\./host\)", content)
+        for number, line in enumerate(content.splitlines(), 1):
+            if host_var:
+                line = line.replace("${HOST}/", "../../host/")
             for path in re.findall(r"(?<![\w${}/.-])(\.\./[\w./-]+\.(?:cc|cpp|c|hh|h|cmake))(?![\w.])", line):
                 if not (folder / path).is_file():
                     hits.append(f"{rel}:{number}: {path}")

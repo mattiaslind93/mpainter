@@ -3,7 +3,7 @@ find_package(Qt6 6.8.3 EXACT REQUIRED COMPONENTS Widgets OpenGLWidgets Network)
 find_package(assimp CONFIG REQUIRED)
 
 qt6_add_resources(BTS_FILE_BROWSER_RESOURCES ${BTS_HOST_SOURCE_DIR}/../../assets/file-browser/file-browser.qrc)
-set(BTS_FILE_BROWSER_WIDGET_SOURCES ${BTS_HOST_SOURCE_DIR}/FileDialogs.cc ${BTS_HOST_SOURCE_DIR}/FileBrowserIcons.cc ${BTS_HOST_SOURCE_DIR}/FileBrowserController.cc ${BTS_FILE_BROWSER_RESOURCES})
+set(BTS_FILE_BROWSER_WIDGET_SOURCES ${BTS_HOST_SOURCE_DIR}/ui/dialogs/FileDialogs.cc ${BTS_HOST_SOURCE_DIR}/FileBrowserIcons.cc ${BTS_HOST_SOURCE_DIR}/FileBrowserController.cc ${BTS_FILE_BROWSER_RESOURCES})
 qt6_add_resources(BTS_BRANDING_RESOURCES ${BTS_HOST_SOURCE_DIR}/../../assets/branding/branding.qrc)
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${BTS_HOST_SOURCE_DIR}/../../pyproject.toml)
 file(STRINGS ${BTS_HOST_SOURCE_DIR}/../../pyproject.toml BTS_PRODUCT_VERSION_LINE REGEX "^version = ")
