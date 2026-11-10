@@ -46,8 +46,11 @@ for path in [*host.rglob('*'), *(root / 'native/harness').rglob('*')]:
     for name in function_allowlist.get(path.name, []):
         allowed.append(body(code, code.index(name)))
     if path.name == 'GpuLayerPreview.cc':
-        guard = 'if(!output_tile&&std::getenv("BTS_VERIFY_GPU_STACK")&&testing_stack'
-        allowed.append(body(code, source.index(guard)))
+        # Whitespace-tolerant: the guard must hold however the file is formatted.
+        guard = re.search(r'if\s*\(\s*!\s*output_tile\s*&&\s*std::getenv\s*\(\s*"BTS_VERIFY_GPU_STACK"\s*\)'
+                          r'\s*&&\s*testing_stack', source)
+        assert guard, 'GpuLayerPreview.cc: the BTS_VERIFY_GPU_STACK self-test guard is missing'
+        allowed.append(body(code, guard.start()))
     for call in re.finditer(r'\bnative_composite_job\s*\(', code):
         calls += 1
         assert path.name in file_allowlist or path.name.endswith('CpuDemo.cc') or any(a < call.start() < b for a, b in allowed), f'CPU composite outside explicit export/diagnostic: {path.name}:{source.count(chr(10), 0, call.start()) + 1}'
