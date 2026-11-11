@@ -18,7 +18,10 @@ import cycles_integrated_snapshot as integration
 from cycles_live_manifest import fresh_runtime, freeze_admission
 
 PROFILE = 'default-observation-only-v2'
-WRITER_SHA = '76fda7d12abfd5d6ad80fd469c7a59af1c5d89641f53d2284c5cba8e7309faff'
+# Re-pinned 2026-11-11 with the owner's approval: verify-cycles-default-observer.py only
+# re-pins cycles_live_default_observed_artist_test.cc, whose only source change is the
+# ../host/... include path after the seven-file move. Was 76fda7d1...
+WRITER_SHA = 'aa02e59ea2fd7ecf8df5b6f8a1c8d68f98e0a26e3fce6422cf5f56d6d660b560'
 STAGES = ['cycles-before', 'cycles-color-edited', 'cycles-color-undone', 'cycles-color-redone',
           'cycles-camera-only', 'cycles-reentered-latest']
 sha = integration.sha256
