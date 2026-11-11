@@ -174,7 +174,7 @@ int main(int argc, char **argv)
       require(wood, "Wood bitmap branch missing");
       auto &set = document.set(document.texture_sets().front().material_session_uid);
       set.layers = {*wood};
-      set.layers[0].parent = {};
+      set.layers[0].parent = QUuid();
       set.layers[0].depth = 0;
       set.layers[0].visible = true;
       set.layers[0].channels = {false, false, true, false, false};

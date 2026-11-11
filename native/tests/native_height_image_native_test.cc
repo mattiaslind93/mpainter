@@ -325,7 +325,7 @@ void select(Harness &h, const QUuid &id)
       layer.visible = layer.id == id;
   h.set().selected_layer = id;
   h.set().selected_mask = false;
-  h.set().selected_effect = {};
+  h.set().selected_effect = QUuid();
   h.publish();
 }
 QJsonObject cold(Harness &h)

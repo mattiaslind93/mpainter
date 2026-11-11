@@ -423,7 +423,7 @@ int main(int argc, char **argv)
               "Actual raw-half layout changed");
       auto &set = document.set(document.texture_sets().front().material_session_uid);
       set.layers = {leaf};
-      set.layers[0].parent = {};
+      set.layers[0].parent = QUuid();
       set.layers[0].depth = 0;
       set.selected_layer = leaf.id;
       set.precision[2] = ChannelPrecision::L32F;
@@ -593,7 +593,7 @@ int main(int argc, char **argv)
           synthetic_prefix_error,
           synthetic_composite_error);
       set.layers = {leaf};
-      set.layers[0].parent = {};
+      set.layers[0].parent = QUuid();
       set.layers[0].depth = 0;
       publish(true);
       const auto restored = host.diagnostic_gpu_pixels(set.material_session_uid, 2, probes);

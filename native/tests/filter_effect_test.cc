@@ -116,7 +116,7 @@ int main(int argc, char **argv)
     target.layers.resize(1);
     target.selected_layer = target.layers.front().id;
     target.selected_mask = false;
-    target.selected_effect = {};
+    target.selected_effect = QUuid();
     const auto id = apply_native_material_asset(target, asset);
     auto &fill_layer = TextureDocument::layer(target, id);
     fill_layer.values.base_color = {.2f, .4f, .8f, 1};

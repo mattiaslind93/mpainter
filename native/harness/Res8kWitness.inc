@@ -38,7 +38,7 @@ if (parser.isSet("gui-fix-demo") && workspace && qEnvironmentVariableIsSet("BTS_
       }
       set.layers = {fill, folder};
       set.selected_layer = folder.id;
-      set.selected_effect = {};
+      set.selected_effect = QUuid();
       set.selected_mask = false;
       bts::StudioAsset asset;
       asset.name = QString::fromStdString(folder.name);

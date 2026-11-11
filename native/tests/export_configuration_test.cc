@@ -43,7 +43,7 @@ int main()
   {
     auto large = config;
     large.presets.clear();
-    large.preset = {};
+    large.preset = QUuid();
     large.size = 8192;
     large.directory = "/metadata-only/" + QString(5000, 'd');
     for (int i = 0; i < 140; ++i) {
@@ -214,7 +214,7 @@ int main()
     assert(request.formats[c] == ExportFormat::Jpeg8);
   assert(request.outputs.empty());
   auto modern = config;
-  modern.preset = {};
+  modern.preset = QUuid();
   modern.format = ExportFormat::Exr32;
   modern.naming_convention = ExportNamingConvention::OpenPbr;
   modern.openpbr_materialx = true;

@@ -298,7 +298,7 @@ class DisplacementArtist final : public QObject {
       TextureDocument::add_fill(set);
       auto layer = std::move(TextureDocument::layer(set, set.selected_layer));
       set.layers.clear();
-      layer.parent = {};
+      layer.parent = QUuid();
       layer.depth = 0;
       layer.name = "BA signed periodic Displacement";
       layer.channels = {false, false, false, false, false};
@@ -335,7 +335,7 @@ class DisplacementArtist final : public QObject {
       layer.fill.depth_culling = false;
       set.layers.push_back(std::move(layer));
       set.selected_mask = false;
-      set.selected_effect = {};
+      set.selected_effect = QUuid();
       called = true;
     });
     require(called, "Artist fixture edit callback did not execute");
