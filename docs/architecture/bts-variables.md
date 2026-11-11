@@ -7,8 +7,8 @@ a test or a diagnostic; they are the harness's interface and are not product set
 The restructure plan (phase 4) moves this register to `native/harness/` once the harness
 leaves the release build.
 
-- Variables: 375
-- Read only outside `native/host` (harness and tests): 281
+- Variables: 376
+- Read only outside `native/host` (harness and tests): 282
 
 | Variable | Read in | Files |
 |---|---|---|
@@ -26,6 +26,7 @@ leaves the release build.
 | `BTS_AE_PERSISTENCE_DEMO` | native/harness, native/host | `GuiFixDemo.cc`, `WorkspaceProject.inc` |
 | `BTS_AE_PROJECT` | native/harness, native/host | `AePersistenceDemo.cc`, `WorkspaceProject.inc` |
 | `BTS_AE_RESOLUTION` | native/harness | `AePersistenceDemo.cc` |
+| `BTS_AE_TIMEOUT_MS` | native/harness | `AePersistenceDemo.cc` |
 | `BTS_ALEMBIC_DEMO` | native/harness | `GuiFixDemo.cc` |
 | `BTS_AUTOMATION_DEMO` | native/harness, native/host | `AutomationDemo.cc`, `PythonConsole.cc` |
 | `BTS_AUTOMATION_JOBS_DEMO` | native/harness | `AutomationDemo.cc` |

@@ -29,6 +29,11 @@ class Demo final : public QObject {
   int stage_ = 0, set_ = 0, layer_ = 0;
   bool measuring_ = false;
   int settled_ = 0;
+  // Software GL (llvmpipe) compiles each compute shader at its first dispatch, which takes
+  // minutes; such runs raise the budget.
+  qint64 timeout_ms_ = qEnvironmentVariableIsSet("BTS_AE_TIMEOUT_MS") ?
+                           qEnvironmentVariable("BTS_AE_TIMEOUT_MS").toLongLong() :
+                           180000;
   QColor set_a_color_;
   double max_ping_ = 0;
   QJsonArray operations_;
@@ -95,8 +100,9 @@ class Demo final : public QObject {
       finish("Channel controls were reparented during layer selection");
       return;
     }
-    if (clock_.elapsed() > 180000) {
-      finish("AE persistence timeout");
+    if (clock_.elapsed() > timeout_ms_) {
+      finish(
+          QString("AE persistence timeout after %1 ms in stage %2").arg(timeout_ms_).arg(stage_));
       return;
     }
     const auto current = state();
