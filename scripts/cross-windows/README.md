@@ -86,6 +86,15 @@ source/library directories if you need a pristine preparation; do not run the
 upstream updater over a patched checkout. Changing the toolchain may require
 `configure.sh --fresh` before rebuilding.
 
+`build.sh` runs the Ninja build inside `wine-session.sh`: one persistent
+wineserver, started after `init-wine.sh` has finished any new or updated prefix
+setup with a time limit. In this container that setup's `rundll32 wine.inf` step
+never ends. When it ran inside the build's own session, every generator waited
+out Wine's five-minute boot timeout (one shader step per minute instead of
+sub-second steps), and the session's daemons held `build.lock` and a Ninja output
+pipe open. `build.sh resume` continues an interrupted build without the
+preparation and configure steps.
+
 `snapshot-source.py` refreshes the application snapshot from a committed revision
 without touching unchanged file timestamps. It verifies the old snapshot against
 Git first and refuses source drift or untracked-file collisions. Run it with

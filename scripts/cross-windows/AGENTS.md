@@ -8,7 +8,9 @@ Builds the Windows x64 package on Linux with clang-cl and lld, against the pinne
 2. `bootstrap.sh`, `prepare-source.sh`, `probe.sh`, `qt-probe.sh`, `build.sh`, in that order.
 3. `package.py` makes the zip. `smoke.sh` and `capture.sh` run it under Wine.
 
-`build.sh` runs the UUID reset check, `prepare-cross.py` and `fix-library-case.py` before it builds.
+`build.sh` runs the UUID reset check, `prepare-cross.py` and `fix-library-case.py` before it builds. `build.sh resume` skips those steps and configure, and continues an interrupted build.
+
+Wine generator steps run inside one warm session started by `wine-session.sh`. `init-wine.sh` finishes any new or updated prefix setup first, with a time limit. If that setup runs inside the build's own session, it never finishes, and every Wine step then waits out Wine's five-minute boot timeout.
 
 ## Gates already in place
 
