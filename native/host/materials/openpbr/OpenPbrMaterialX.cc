@@ -68,6 +68,22 @@ QByteArray openpbr_materialx_license()
 {
   return QByteArray(openpbr_reference::license, int(sizeof(openpbr_reference::license) - 1));
 }
+QString materialx_library_base(const QString &executable_dir)
+{
+  const QDir dir(executable_dir);
+  // Blender installs the standard library under its TARGETDIR_LIB: lib/ on Linux,
+  // blender.shared/ on Windows and Contents/Resources/lib/ in a macOS bundle.
+  for (const char *relative : {"lib/materialx",
+                               "blender.shared/materialx",
+                               "../Resources/lib/materialx",
+                               "../lib/materialx"})
+  {
+    const auto base = QDir::cleanPath(dir.filePath(relative));
+    if (QDir(base + "/libraries").exists())
+      return base;
+  }
+  return {};
+}
 QByteArray openpbr_materialx_document(const OpenPbrMaterialX &request)
 {
   request.parameters.validate();

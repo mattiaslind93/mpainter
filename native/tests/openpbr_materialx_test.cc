@@ -7,11 +7,14 @@
 #include <MaterialXFormat/Util.h>
 #include <MaterialXFormat/XmlIo.h>
 #include <QCoreApplication>
+#include <QDir>
 #include <QLocale>
+#include <QTemporaryDir>
 #include <QXmlStreamReader>
 #include <cassert>
 #include <clocale>
 #include <cstdio>
+#include <utility>
 namespace mx = MaterialX;
 using namespace bts;
 template<class F> void rejected(F edit)
@@ -188,6 +191,23 @@ int main(int argc, char **argv)
       denied = true;
     }
     assert(!denied);
+  }
+  {
+    QTemporaryDir root;
+    assert(root.isValid());
+    const QDir dir(root.path());
+    assert(materialx_library_base(dir.filePath("bare")).isEmpty() &&
+           "no standard library is found where none is shipped");
+    const std::pair<const char *, const char *> layouts[] = {
+        {"linux", "linux/lib/materialx"},
+        {"windows", "windows/blender.shared/materialx"},
+        {"mPainter.app/Contents/MacOS", "mPainter.app/Contents/Resources/lib/materialx"}};
+    for (const auto &[executable, data] : layouts) {
+      assert(dir.mkpath(QString(data) + "/libraries"));
+      assert(materialx_library_base(dir.filePath(executable)) ==
+                 QDir::cleanPath(dir.filePath(data)) &&
+             "standard library is found in each package layout");
+    }
   }
   std::puts(
       "OpenPBR MaterialX 1.1.1: official 1.39.4 semantic validation, all 37 parameters including full-model fields, locale-safe floats, shared image bindings, explicit color spaces/raw scalars, UDIM, bump without normal files, signed displacement subtraction/enable, XML escaping, relative paths and bundled license PASS; metadata transport only");

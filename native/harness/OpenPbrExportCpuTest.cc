@@ -114,11 +114,11 @@ QJsonObject verify_openpbr_texture_export(const QString &directory)
   auto doc = mx::createDocument();
   mx::readFromXmlString(doc, bytes.toStdString());
   auto library = mx::createDocument();
-  auto library_base = QDir(QCoreApplication::applicationDirPath()).filePath("lib/materialx");
-  if (!QDir(library_base + "/libraries").exists())
-    library_base = QDir(QCoreApplication::applicationDirPath()).filePath("../lib/materialx");
-  if (!QDir(library_base + "/libraries").exists())
-    library_base = qEnvironmentVariable("BTS_MATERIALX_BASE", library_base);
+  auto library_base = materialx_library_base(QCoreApplication::applicationDirPath());
+  if (library_base.isEmpty())
+    library_base = qEnvironmentVariable("BTS_MATERIALX_BASE");
+  require(QDir(library_base + "/libraries").exists(),
+          "MaterialX standard library not found beside the executable or in BTS_MATERIALX_BASE");
   mx::loadLibraries({"libraries"}, mx::FileSearchPath(library_base.toStdString()), library);
   doc->importLibrary(library);
   std::string message;

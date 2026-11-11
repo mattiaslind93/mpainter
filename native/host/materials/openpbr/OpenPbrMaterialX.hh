@@ -24,4 +24,7 @@ struct OpenPbrMaterialX {
 // Embed the pinned ASWF graph; distribute the returned license alongside the document.
 QByteArray openpbr_materialx_document(const OpenPbrMaterialX &);
 QByteArray openpbr_materialx_license();
+// The MaterialX data directory whose "libraries" folder holds the standard library shipped
+// beside the executable in `executable_dir`, in every package layout. Empty if none is found.
+QString materialx_library_base(const QString &executable_dir);
 }  // namespace bts
