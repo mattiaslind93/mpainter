@@ -26,7 +26,10 @@ SOURCES = {
     "native/tests/CyclesDefaultCompletionEpoch.hh": "b3acb72c0d64b924031a398b817e50f3a37310b38c5ca3529c13613c5f8f3bf0",
     "native/tests/CyclesDefaultCompletionProbe.hh": "0d910c939f2fddcb675e0267179b33df088d579717868698e13e382033521c2a",
     "native/tests/CyclesDefaultCompletionProbe.cc": "f9e5a1d3ecb50e9b1d830366f0aa8630c8172b1408e2988ccb707710ae067472",
-    "native/tests/cycles_live_default_observed_artist_test.cc": "e3a8029676e729bf6f41a0995007f3d0945aea84a4550ce5b27e399e822d5255",
+    # Re-pinned 2026-11-11 with the owner's approval: the only source change is the
+    # ../host/... include path after the seven-file move (../host/ColorPicker.hh →
+    # ../host/ui/widgets/ColorPicker.hh, ViewportDemoCapture.hh → viewport/). Was e3a80296...
+    "native/tests/cycles_live_default_observed_artist_test.cc": "153ec8499c7b6137783c5fa5690f86220a26be2827735c3e1ab6ab840a309900",
     "native/tests/cycles_default_completion_epoch_test.cc": "f720143a2e333de43d567251b4e126495f9b0775452cd951304c41e9ca09cf77",
     "native/tests/cycles_default_completion_observer_plan.md": "23e450277bff18d407aee4acf16d9689cb606c570fe4fafc3c2adaea870e732b",
 }

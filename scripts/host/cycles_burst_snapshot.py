@@ -13,11 +13,23 @@ BE_COMMIT = "970312ea7da686a6b25b9da0e107d5c47e8c2baf"
 BE_SOURCES = {
     "native/tests/CyclesLiveCompletionProbe.hh": "c232d283e5923e2d5d25aea3bff5ec0dd65731943c390729569505ab466a2615",
     "native/tests/CyclesLiveCompletionProbe.cc": "272915d1df23974da2b1841d9b0d0679888c048b3525609d60f28761b79b81d4",
-    "native/tests/CyclesLiveUdimArtist.hh": "8ee2d24f287eb296591dbff751d5f76a797de796784691bb67e81ef8c748989e",
+    # Re-pinned 2026-11-11 with the owner's approval: the only source change is the
+    # ../host/... include path after the seven-file move (../host/BlenderHost.hh →
+    # ../host/blender/BlenderHost.hh, ../host/TextureDocument.hh → ../host/document/...).
+    # Was 8ee2d24f...
+    "native/tests/CyclesLiveUdimArtist.hh": "5a95a9995b53d8ff50e0e8e03690e1569fd608cd1ebfd5900ef662b881a8d7e7",
     # Re-pinned 2026-11-09 with the owner's approval: the only change since the reviewed
     # 0a1f9ece... is the include of GuiFixDemo.hh, now in native/harness.
-    "native/tests/cycles_live_udim_artist_main.cc": "b887a76512721549537c820aad943eafbc6365d3fac4ec1a1d6f048b1d29ef2a",
-    "native/tests/cycles_live_udim_artist_test.cc": "5506caf08b3e9313506875849942c0c3a30541b1a064500beb238638cce0b818",
+    # Re-pinned 2026-11-11 with the owner's approval: the only source change is the
+    # ../host/... include path after the seven-file move (../host/main.cc →
+    # ../host/app/main.cc). Was b887a765...
+    "native/tests/cycles_live_udim_artist_main.cc": "81af9e22d318e03344d132a79dcf09e8d85a43fe61fc68515e90ed78f842644d",
+    # Re-pinned 2026-11-11 with the owner's approval: the only source change is the
+    # ../host/... include path after the seven-file move (GpuProjectReadback.hh,
+    # ColorPicker.hh, ViewportDemoCapture.hh). The value is of the text validate_sources()
+    # compares (friend line removed, memory preflight restored), not of the raw file.
+    # Was 5506caf0...
+    "native/tests/cycles_live_udim_artist_test.cc": "78136f18ab518ea10169122ae59df65825949931d403a1c94a05497920d7046c",
 }
 BURST_SOURCES = {
     "native/tests/CyclesLiveBurst.hh",

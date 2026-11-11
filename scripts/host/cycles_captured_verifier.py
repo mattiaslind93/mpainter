@@ -35,6 +35,16 @@ ACTOR_SHA = {**ACTOR_SHA,
     'native/tests/cycles_live_burst_main.cc': 'acb9b7d30cc2cf14a514cceb030817bec4026e6aabdf7587799f1a74bac5f852',
     'scripts/host/cycles_burst_snapshot.py': 'd7fdf27b7018a7fa8af7687a953eacd0a58dd61297841aca1cd008454b751e14',
 }
+# Re-pinned 2026-11-11 with the owner's approval: the only source change is the ../host/...
+# include path after the seven-file move (../host/main.cc → ../host/app/main.cc in the burst
+# main, was acb9b7d3...; ../host/GpuProjectReadback.hh → ../host/blender/... and
+# ../host/PropertyLatency.hh → ../host/diagnostics/... in the burst test, was 9f9daf25...).
+# cycles_burst_snapshot.py only re-pins the three udim fixtures (was d7fdf27b...).
+ACTOR_SHA = {**ACTOR_SHA,
+    'native/tests/cycles_live_burst_main.cc': 'ebf2ff24a2fdbce10bfbf059d0e61504307e3afc02a56c55e7709242c0e8469b',
+    'native/tests/cycles_live_burst_test.cc': '7d21683feeb389541aecabc96b357670430fe80edc516623fa936effe5f24d72',
+    'scripts/host/cycles_burst_snapshot.py': '52afb8b66a8c47bda604d22de355d6c671e596afdd4eb6f80eac3537c3f7adde',
+}
 
 # Historical evidence is SHA-pinned as historical, never a production parent
 # for the new integration and never passed a forged new snapshot identity.
