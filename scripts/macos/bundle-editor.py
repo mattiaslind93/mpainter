@@ -57,10 +57,12 @@ if not a.resume:
  for source,target in [('assets/grunges/README.md','mask-grunges.md'),('assets/mask-preview/README.md','mask-preview.md'),('assets/meshes/Shader_Ball_JL_01-NOTICE.md','shaderball-jl01.md'),('assets/meshes/CC-BY-4.0.txt','CC-BY-4.0.txt')]:
   shutil.copy2(repo/source,licenses/target)
  shutil.copytree(repo/'assets/file-browser',licenses/'file-browser',ignore=shutil.ignore_patterns('atlas.png','*.qrc','manifest.json','svg'))
- # The aqt macOS archive may omit Qt's license texts; any Qt 6.8.3 install's collection is the same.
- qt_licenses=next((p for p in [work/'toolchains/qt/6.8.3/macos/licenses',work/'toolchains/qt/licenses'] if p.is_dir()),None)
- if qt_licenses is None:raise SystemExit('No Qt 6.8.3 license collection found for licenses/Qt')
- shutil.copytree(qt_licenses,licenses/'Qt/licenses')
+ # The aqt macOS archive may hold only Qt-LICENSE.txt; any Qt 6.8.3 install's collection is the
+ # same, so merge every collection present and require the texts license-gate.py checks.
+ qt_sources=[p for p in [work/'toolchains/qt/6.8.3/macos/licenses',work/'toolchains/qt/licenses',work/'toolchains/qt/Licenses'] if p.is_dir()]
+ for source in qt_sources:shutil.copytree(source,licenses/'Qt/licenses',dirs_exist_ok=True)
+ qt_missing=[name for name in ['GPL-3.0-only.txt','LGPL-3.0-only.txt'] if not any(p.is_file() for p in (licenses/'Qt').rglob(name))]
+ if qt_missing:raise SystemExit(f'Qt 6.8.3 license texts {qt_missing} not found in {[str(p) for p in qt_sources] or "any Qt license folder"}; copy them from a Qt 6.8.3 install (for example the Linux toolchains/qt/licenses) into {work/"toolchains/qt/licenses"}')
  for name in ['license','licenses']:
   if (runtime/name).is_dir():shutil.copytree(runtime/name,licenses/'Blender',dirs_exist_ok=True)
  version=re.search(r'^version = "([^"]+)"',(repo/'pyproject.toml').read_text(),re.M).group(1)
