@@ -18,7 +18,7 @@
 #include <QJsonDocument>
 #include <QLabel>
 #include <QLineEdit>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
 #include <QPushButton>
 #include <QRadioButton>
 #include <QTimer>

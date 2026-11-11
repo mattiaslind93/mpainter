@@ -121,7 +121,10 @@ vec4 paint_sample(sampler2D image,ivec2 p,ivec2 output_size){
   precise vec4 term=texelFetch(image,clamp(first+ivec2(x,y),ivec2(0),size-1),0)*weight-correction;precise vec4 next=sum+term;correction=(next-sum)-term;sum=next;
  }return sum;
 }
+// MSL wraps these functions as class members, where redeclaration is illegal.
+#ifndef GPU_METAL
 vec4 generator_map_sample(sampler2D image,vec2 uv,bool linear_filter);
+#endif
 vec4 generator_input_sample(sampler2D image,vec2 uv,bool filtering,bool anchored,vec4 options){
  if(!anchored)return generator_map_sample(image,uv,filtering);
  if(options.w==0)return vec4(0);

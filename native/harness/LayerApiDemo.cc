@@ -12,7 +12,7 @@
 #include <QJsonDocument>
 #include <QLineEdit>
 #include <QMainWindow>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QTimer>
@@ -57,7 +57,7 @@ class Demo : public QObject {
     proof.write(QJsonDocument(QJsonObject{{"pid", QCoreApplication::applicationPid()},
                                           {"captures", captures}})
                     .toJson());
-    auto *view = window->findChild<QOpenGLWidget *>();
+    auto *view = window->findChild<bts::ViewportWidget *>();
     view->grabFramebuffer().save(directory + "/" + name + "-viewport.png");
     window->grab().save(directory + "/" + name + "-workspace.png");
   }
@@ -65,7 +65,7 @@ class Demo : public QObject {
   {
     if (++ticks > 1600)
       qFatal("Layer API demo timed out");
-    auto *view = window->findChild<QOpenGLWidget *>();
+    auto *view = window->findChild<bts::ViewportWidget *>();
     if (!view || !view->isValid() || busy())
       return;
     switch (phase++) {

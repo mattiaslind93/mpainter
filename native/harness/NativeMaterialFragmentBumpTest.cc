@@ -1,3 +1,5 @@
+#include "GpuGeneratedSources.hh"
+#include "GpuRasterState.hh"
 // SPDX-License-Identifier: GPL-2.0-or-later
 // A UV-bakepixel stencil, not a camera/screen-footprint implementation.
 #include <epoxy/gl.h>
@@ -129,6 +131,7 @@ void codegen_impl(Compilation &c, GPUMaterial *material, GPUCodegenOutput &outpu
   auto &info = *reinterpret_cast<ShaderCreateInfo *>(output.create_info);
   info.vertex_inputs_.clear();
   info.vertex_out_interfaces_.clear();
+  info.builtins_ |= BuiltinBits::FRONT_FACING;
   info.auto_resource_location(true)
       .vertex_in(0, Type::float2_t, "raster_uv")
       .vertex_in(1, Type::float2_t, "authored_uv")
@@ -147,7 +150,11 @@ void main(){stencil_uv=authored_uv;stencil_P=world_P;stencil_N=world_N;
  gl_Position=vec4(raster_uv*2.0-1.0,0.0,1.0);}
 )GLSL";
   info.vertex_source("gpu_shader_python_vert.glsl");
-  info.generated_sources.append({"gpu_shader_python_vert.glsl", {}, info.vertex_source_generated});
+  info.generated_sources.append(
+      {"gpu_shader_compositor_nodetree_type.glsl", {}, info.typedef_source_generated});
+  info.generated_sources.append({"gpu_shader_python_vert.glsl",
+                                 {"gpu_shader_compositor_nodetree_type.glsl"},
+                                 info.vertex_source_generated});
   std::string fields, initialize;
   for (const auto &attribute : GPU_material_attributes(material)) {
     require(std::string_view(attribute.name) == "BTS_StencilUV",
@@ -162,8 +169,9 @@ void main(){stencil_uv=authored_uv;stencil_P=world_P;stencil_N=world_N;
        {&info.batch_resources_, &info.pass_resources_, &info.geometry_resources_})
     for (auto &resource : *resources)
       resource.info_name = "bts_fragment_bump";
-  std::string types = "struct Closure {float unused;};\n#define CLOSURE_DEFAULT Closure(0.0)\n" +
-                      info.typedef_source_generated;
+  std::string types =
+      "struct Closure {float unused;};\nClosure bts_closure_default(){Closure value;value.unused=0.0;return value;}\n#define CLOSURE_DEFAULT bts_closure_default()\n" +
+      info.typedef_source_generated;
   types += "struct BtsAttributes {" + fields +
            "} var_attrs;\n"
            "float derivative_scale_get(){return 1.0;}\n"
@@ -226,6 +234,7 @@ void main(){
 )GLSL";
   info.fragment_source("gpu_shader_python_frag.glsl");
   info.generated_sources.append({"gpu_shader_python_frag.glsl", dependencies, evaluate});
+  preprocess_hosted_sources(info);
   c.generated = types + info.vertex_source_generated + evaluate;
 }
 void codegen(void *data, GPUMaterial *material, GPUCodegenOutput *output)
@@ -261,12 +270,12 @@ struct State {
   GPUWriteMask write = GPU_write_mask_get();
   int viewport[4], scissor[4];
   GLint front = 0;
-  bool scissor_enabled = glIsEnabled(GL_SCISSOR_TEST), srgb = glIsEnabled(GL_FRAMEBUFFER_SRGB);
+  bool scissor_enabled = bts::gpu_scissor_enabled(), srgb = bts::gpu_framebuffer_srgb();
   State()
   {
     GPU_viewport_size_get_i(viewport);
     GPU_scissor_get(scissor);
-    glGetIntegerv(GL_FRONT_FACE, &front);
+    front = bts::gpu_front_inverted();
   }
   ~State()
   {
@@ -277,16 +286,13 @@ struct State {
     GPU_viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
     GPU_scissor(scissor[0], scissor[1], scissor[2], scissor[3]);
     GPU_scissor_test(scissor_enabled);
-    GPU_front_facing(front == GL_CW);
+    GPU_front_facing(bool(front));
     GPU_blend(blend);
     GPU_depth_test(depth);
     GPU_face_culling(cull);
     GPU_stencil_test(stencil);
     GPU_write_mask(write);
-    if (srgb)
-      glEnable(GL_FRAMEBUFFER_SRGB);
-    else
-      glDisable(GL_FRAMEBUFFER_SRGB);
+    bts::gpu_restore_framebuffer_srgb(srgb);
   }
 };
 struct Frame {

@@ -179,6 +179,19 @@ QJsonObject verify_native_material_gpu_program()
       program.dispatch(target.get(), {}, context, {0, 0, width, height});
       auto *actual = pixels();
       require(actual, "Native surface oracle read failed");
+      if (tile == 1001)
+        std::fprintf(
+            stderr,
+            "BTS_NATIVE_CONTEXT_SAMPLE name=%s first=%.6g,%.6g,%.6g,%.6g mid=%.6g,%.6g,%.6g,%.6g\n",
+            name,
+            actual[4],
+            actual[5],
+            actual[6],
+            actual[7],
+            actual[320],
+            actual[321],
+            actual[322],
+            actual[323]);
       const auto free = qScopeGuard([&] { MEM_delete(actual); });
       for (int y = 0; y < height; ++y)
         for (int x = 0; x < width; ++x) {
@@ -210,9 +223,22 @@ QJsonObject verify_native_material_gpu_program()
             expected = context.object_color;
           if (!point.valid)
             expected = {};
-          for (int c = 0; c < 4; ++c)
-            max_error = std::max(max_error,
-                                 std::abs(actual[(y * width + x) * 4 + c] - expected[c]));
+          for (int c = 0; c < 4; ++c) {
+            const float error = std::abs(actual[(y * width + x) * 4 + c] - expected[c]);
+            if (error > max_error && error >= 2e-6)
+              std::fprintf(
+                  stderr,
+                  "BTS_NATIVE_CONTEXT_MISMATCH name=%s tile=%d xy=%d,%d c=%d actual=%.9g expected=%.9g error=%.9g\n",
+                  name,
+                  tile,
+                  x,
+                  y,
+                  c,
+                  actual[(y * width + x) * 4 + c],
+                  expected[c],
+                  error);
+            max_error = std::max(max_error, error);
+          }
         }
     }
     cases.append(QString::fromUtf8(name));

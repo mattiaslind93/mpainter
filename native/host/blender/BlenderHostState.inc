@@ -374,6 +374,27 @@ void BlenderHost::with_gpu(const std::function<void()> &fn)
     throw;
   }
 }
+void BlenderHost::initialize_gpu_metal()
+{
+#ifdef __APPLE__
+  impl_->require_owner();
+  if (impl_->phase != Impl::Phase::SceneReady)
+    throw std::logic_error("Metal initialization requires scene-ready host");
+  impl_->ghost = std::make_unique<MetalContextOwner>();
+  initialize_gpu_surface();
+#else
+  throw std::logic_error("Metal viewport is available only on macOS");
+#endif
+}
+QImage BlenderHost::viewport_image() const
+{
+  impl_->require_owner();
+#ifdef __APPLE__
+  return impl_->metal_frame;
+#else
+  return {};
+#endif
+}
 void BlenderHost::initialize_gpu(QOpenGLWidget &surface)
 {
   impl_->surface = std::make_unique<QtGpuSurface>(surface);

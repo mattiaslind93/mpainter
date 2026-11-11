@@ -33,7 +33,9 @@ QObject::connect(&sets_demo, &QTimer::timeout, window.get(), [&] {
       return;
     }
     const auto rendered = viewport->grabFramebuffer();
-    const auto presented = window->screen()->grabWindow(window->winId());
+    const auto presented = QGuiApplication::platformName() == "offscreen" ?
+                               QPixmap::fromImage(bts::capture_demo_window(window.get(), viewport)) :
+                               window->screen()->grabWindow(window->winId());
     rendered.save(directory + "/" + stage + "-viewport.png");
     presented.save(directory + "/" + stage + "-window.png");
     const QPoint origin = viewport->mapTo(window.get(), QPoint{});
@@ -10217,6 +10219,10 @@ QObject::connect(&sets_demo, &QTimer::timeout, window.get(), [&] {
             return;
           if (!configured) {
             configured = true;
+            // The default Studio template has fixed EXR encodings. This
+            // four-format regression explicitly exercises Document channels.
+            if (harness.is_set("export-demo"))
+              dialog->findChild<QComboBox *>("exportPreset")->setCurrentIndex(0);
             if (naming_demo && encoding == 0) {
               dialog->findChild<QPushButton *>("duplicateExportPreset")->click();
               if (dialog->findChild<QComboBox *>("exportPreset")->currentIndex() != 0)
@@ -14037,7 +14043,7 @@ QObject::connect(&sets_demo, &QTimer::timeout, window.get(), [&] {
           workspace->findChild<QDoubleSpinBox *>("brushSize")->setValue(10);
           break;
         case 4:
-          drag(bts::ViewKind::Scene, {.28, .34}, {.18, .02});
+          drag(bts::ViewKind::Scene, {.28, .46}, {.18, .02});
           break;
         case 5:
           send_key(*viewport, Qt::Key_M);
@@ -14119,6 +14125,14 @@ QObject::connect(&sets_demo, &QTimer::timeout, window.get(), [&] {
           if (document->to_json() != before)
             qFatal("Invalid Open changed the document");
           open_document(directory + "/painted.blend");
+          if (qEnvironmentVariableIsSet("BTS_METAL_ROUNDTRIP_STABILITY")) {
+            const auto stored = document->to_json();
+            save_document(directory + "/repacked.blend");
+            open_document(directory + "/repacked.blend");
+            if (document->to_json() != stored)
+              qFatal("Stored GPU pixels changed on a second save/open");
+            std::puts("BTS_STORED_GPU_ROUNDTRIP_EXACT");
+          }
           if (undo_action->isEnabled() || redo_action->isEnabled() || brush.diameter != 10)
             qFatal("Open retained session history or brush size");
           workspace->texture_sets()->setCurrentRow(1);

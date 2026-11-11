@@ -8,7 +8,7 @@
 #include "GPU_state.hh"
 #include "GPU_storage_buffer.hh"
 #include "gpu_shader_create_info.hh"
-#include <epoxy/gl.h>
+#include "GpuReadbackFence.hh"
 #include <array>
 #include <map>
 #include <memory>
@@ -45,15 +45,10 @@ class GpuHistogram {
  private:
   struct Entry {
     Buffer buffer{nullptr, blender::GPU_storagebuf_free};
-    GLsync fence = nullptr;
+    GpuReadbackFence fence;
     std::uint64_t revision = 0, submitted = 0;
     std::optional<HistogramMetadata> result;
     std::uint64_t ticket = 0, submitted_ticket = 0;
-    ~Entry()
-    {
-      if (fence)
-        glDeleteSync(fence);
-    }
   };
   Shader shader_{nullptr, blender::GPU_shader_free};
   std::map<std::string, Entry> entries_;
@@ -103,11 +98,7 @@ void main(){ivec2 p=(2*ivec2(gl_LocalInvocationID.xy)+1)*size/32;
     using namespace blender;
     if (entry.fence || entry.submitted == entry.revision)
       return;
-    GPU_storagebuf_sync_to_host(entry.buffer.get());
-    entry.fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-    if (!entry.fence)
-      throw std::runtime_error("Histogram fence allocation failed");
-    glFlush();
+    entry.fence.submit(entry.buffer.get());
     entry.submitted = entry.revision;
     entry.submitted_ticket = entry.ticket;
   }
@@ -182,16 +173,10 @@ void main(){ivec2 p=(2*ivec2(gl_LocalInvocationID.xy)+1)*size/32;
     for (auto &[id, entry] : entries_) {
       if (!entry.fence)
         continue;
-      auto status = glClientWaitSync(entry.fence, 0, 0);
-      if (status == GL_WAIT_FAILED)
-        throw std::runtime_error("Histogram fence poll failed");
-      if (status != GL_ALREADY_SIGNALED && status != GL_CONDITION_SATISFIED)
+      Packet packet;
+      if (!entry.fence.read(entry.buffer.get(), &packet, entry.submitted != entry.revision))
         continue;
-      glDeleteSync(entry.fence);
-      entry.fence = nullptr;
       if (entry.submitted == entry.revision) {
-        Packet packet;
-        GPU_storagebuf_read(entry.buffer.get(), &packet);
         const auto decode = [](unsigned u) {
           return std::bit_cast<float>((u & 0x80000000u) != 0u ? u ^ 0x80000000u : ~u);
         };

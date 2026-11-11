@@ -13,7 +13,7 @@
 #include <QLineEdit>
 #include <QMainWindow>
 #include <QMouseEvent>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QTimer>
@@ -72,7 +72,7 @@ class Demo final : public QObject {
   }
   void view_edit()
   {
-    auto *viewport = window->findChild<QOpenGLWidget *>();
+    auto *viewport = window->findChild<bts::ViewportWidget *>();
     get<QComboBox>("warpSelectedPoint")->setCurrentIndex(0);
     const auto points = state()["warp_geometry"].toObject()["screen"].toArray();
     if (points.size() != 9)
@@ -96,7 +96,7 @@ class Demo final : public QObject {
   {
     if (++ticks > 1400)
       qFatal("Warp geometry demo timed out");
-    auto *view = window->findChild<QOpenGLWidget *>();
+    auto *view = window->findChild<bts::ViewportWidget *>();
     if (!view || !view->isValid() || (phase != 1 && busy()))
       return;
     switch (phase++) {

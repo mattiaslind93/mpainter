@@ -14,7 +14,7 @@
 #include <QJsonDocument>
 #include <QLineEdit>
 #include <QListWidget>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
 #include <QPushButton>
 #include <QScrollArea>
 #include <QSpinBox>

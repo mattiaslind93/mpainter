@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The app's live viewport widget. main.cc includes this inside its anonymous namespace, after
 // all of its own includes; it is not a standalone header.
-class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
+class Viewport final : public bts::ViewportWidget, public bts::ViewportCapture {
  public:
   std::function<void()> gpu_startup_ready;
   std::function<void(double)> environment_rotation_changed;
   explicit Viewport(bts::BlenderHost &host, QWidget *parent = nullptr)
-      : QOpenGLWidget(parent), host_(host)
+      : bts::ViewportWidget(parent), host_(host)
   {
     headless_surface_ = qEnvironmentVariableIntValue("BTS_HEADLESS_WORKSPACE") == 1 &&
                         QGuiApplication::platformName() == "offscreen";
@@ -15,7 +15,9 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
     setFocusPolicy(Qt::StrongFocus);
     setMouseTracking(true);
     setAttribute(Qt::WA_TabletTracking, true);
-    QObject::connect(this, &QOpenGLWidget::frameSwapped, this, [] { bts::property_frame_done(); });
+#ifndef __APPLE__
+    QObject::connect(this, &bts::ViewportWidget::frameSwapped, this, [] { bts::property_frame_done(); });
+#endif
     setMinimumSize(400, 300);
     camera_selector_ = new QComboBox(this);
     camera_selector_->setObjectName("sceneCameraSelector");
@@ -58,9 +60,25 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
     close_native();
   }
 
+#ifdef __APPLE__
+  void makeCurrent() {}
+  void doneCurrent() {}
+  QImage capture_framebuffer() override
+  {
+    return metal_frame_;
+  }
+  QImage grabFramebuffer() override
+  {
+    return metal_frame_;
+  }
+  bool isValid() const override
+  {
+    return headless_gpu_ready_;
+  }
+#else
   QOpenGLContext *context() const
   {
-    return headless_surface_ ? headless_context_.get() : QOpenGLWidget::context();
+    return headless_surface_ ? headless_context_.get() : bts::ViewportWidget::context();
   }
   void makeCurrent()
   {
@@ -69,7 +87,7 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
         headless_context_->makeCurrent(headless_native_surface_.get());
     }
     else
-      QOpenGLWidget::makeCurrent();
+      bts::ViewportWidget::makeCurrent();
   }
   void doneCurrent()
   {
@@ -78,7 +96,7 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
         headless_context_->doneCurrent();
     }
     else
-      QOpenGLWidget::doneCurrent();
+      bts::ViewportWidget::doneCurrent();
   }
   QImage capture_framebuffer() override
   {
@@ -87,15 +105,16 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
   QImage grabFramebuffer()
   {
     if (!headless_surface_)
-      return QOpenGLWidget::grabFramebuffer();
+      return bts::ViewportWidget::grabFramebuffer();
     makeCurrent();
     return headless_framebuffer_ ? headless_framebuffer_->toImage() : QImage{};
   }
   bool isValid() const
   {
     return headless_surface_ ? headless_context_ && headless_context_->isValid() :
-                               QOpenGLWidget::isValid();
+                               bts::ViewportWidget::isValid();
   }
+#endif
   bts::EmptyProjectView *empty_project_view = nullptr;
   bool empty_project = false;
   void set_empty_project(bool empty)
@@ -1794,8 +1813,28 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
       event->accept();
       return;  // No synthetic frame/frame_done.
     }
+#ifdef __APPLE__
+    if (!headless_gpu_ready_) {
+      try {
+        host_.initialize_gpu_metal();
+        headless_gpu_ready_ = true;
+        setProperty("headlessGpuReady", true);
+        if (gpu_startup_ready)
+          gpu_startup_ready();
+      }
+      catch (const std::exception &error) {
+        qFatal("BTS_METAL_INIT_FAILED: %s", error.what());
+      }
+    }
+    render_frame();
+    QPainter painter(this);
+    painter.drawImage(rect(), metal_frame_);
+    bts::property_frame_done();
+    event->accept();
+  }
+#else
     if (!headless_surface_) {
-      QOpenGLWidget::paintEvent(event);
+      bts::ViewportWidget::paintEvent(event);
       return;
     }
     if (!headless_context_) {
@@ -1861,6 +1900,11 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
 
   void paintGL() override
   {
+    render_frame();
+  }
+#endif
+  void render_frame()
+  {
     if (property("bakeRenderingSuspended").toBool())
       return;
     draw_guard.run(
@@ -1889,6 +1933,19 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
           });
         });
   }
+  void clear_viewport()
+  {
+#ifdef __APPLE__
+    metal_frame_ = QImage(size() * devicePixelRatioF(), QImage::Format_RGBA8888);
+    metal_frame_.setDevicePixelRatio(devicePixelRatioF());
+    metal_frame_.fill(QColor(bts::theme::ViewportEdge));
+#else
+    auto *functions = context()->functions();
+    const QColor backdrop(bts::theme::ViewportEdge);
+    functions->glClearColor(backdrop.redF(), backdrop.greenF(), backdrop.blueF(), 1);
+    functions->glClear(GL_COLOR_BUFFER_BIT);
+#endif
+  }
   void paint_frame()
   {
     bts::performance::Scope full_frame_timing("viewport_full_frame");
@@ -1896,7 +1953,7 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
     if (headless_surface_ && !headless_gpu_ready_)
       return;
     if (empty_project) {
-      if (host_.texture_updates_pending())
+      if (host_.texture_updates_pending() || qEnvironmentVariableIsSet("BTS_TEST_CONTINUOUS_FRAMES"))
         timer_.start(16);
       else
         timer_.stop();
@@ -1906,10 +1963,7 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
             (width() - panel_width) / 2, (height() - 110) / 2, panel_width, 110);
         empty_project_view->raise();
       }
-      auto *functions = context()->functions();
-      const QColor backdrop(bts::theme::ViewportEdge);
-      functions->glClearColor(backdrop.redF(), backdrop.greenF(), backdrop.blueF(), 1);
-      functions->glClear(GL_COLOR_BUFFER_BIT);
+      clear_viewport();
       ++frame_count;
       if (frame_done)
         frame_done(0);
@@ -1970,12 +2024,14 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
       // Let Qt invalidate its cached GL bindings across the external renderer.
       // Creating a separate painter only afterwards leaves cached texture/VAO
       // state from the previous frame indistinguishable from Blender's state.
+#ifndef __APPLE__
       if (layouts_enabled_) {
         overlay = headless_surface_ ? std::make_unique<QPainter>(headless_paint_device_.get()) :
                                       std::make_unique<QPainter>(this);
         overlay->beginNativePainting();
         native_painting = true;
       }
+#endif
       host_.set_texture_interaction(painting_ || (texture_interaction && texture_interaction()));
       const bool material_pending = material_import_pending && material_import_pending();
       last_ms = host_.draw(frames, w, h, material_pending);
@@ -1986,6 +2042,12 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
         for (auto i = profile.begin(); i != profile.end(); ++i)
           setProperty(i.key().toLatin1(), i.value().toVariant());
       }
+#ifdef __APPLE__
+      metal_frame_ = host_.viewport_image();
+      metal_frame_.setDevicePixelRatio(devicePixelRatioF());
+      if (layouts_enabled_)
+        overlay = std::make_unique<QPainter>(&metal_frame_);
+#endif
       overlay_gpu_.begin();
       if (native_painting) {
         overlay->endNativePainting();
@@ -2552,7 +2614,7 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
       event->accept();
       return;
     }
-    QOpenGLWidget::mouseDoubleClickEvent(event);
+    bts::ViewportWidget::mouseDoubleClickEvent(event);
   }
 
   void mouseMoveEvent(QMouseEvent *event) override
@@ -3149,7 +3211,7 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
       event->accept();
       return;
     }
-    QOpenGLWidget::keyPressEvent(event);
+    bts::ViewportWidget::keyPressEvent(event);
   }
 
   void keyReleaseEvent(QKeyEvent *event) override
@@ -3184,7 +3246,7 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
       update();
       return;
     }
-    QOpenGLWidget::keyReleaseEvent(event);
+    bts::ViewportWidget::keyReleaseEvent(event);
   }
   void focusOutEvent(QFocusEvent *event) override
   {
@@ -3199,14 +3261,14 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
     end_paint(true);
     secondary_active_ = false;
     end_gesture();
-    QOpenGLWidget::focusOutEvent(event);
+    bts::ViewportWidget::focusOutEvent(event);
   }
 
   void hideEvent(QHideEvent *event) override
   {
     fill_gizmo.finish(true);
     end_gesture();
-    QOpenGLWidget::hideEvent(event);
+    bts::ViewportWidget::hideEvent(event);
   }
 
   bool event(QEvent *event) override
@@ -3215,15 +3277,18 @@ class Viewport final : public QOpenGLWidget, public bts::ViewportCapture {
       fill_gizmo.finish(true);
       end_gesture();
     }
-    return QOpenGLWidget::event(event);
+    return bts::ViewportWidget::event(event);
   }
 
  private:
   bool headless_surface_ = false, headless_gpu_ready_ = false;
+  QImage metal_frame_;
+#ifndef __APPLE__
   std::unique_ptr<QOpenGLContext> headless_context_;
   std::unique_ptr<QOffscreenSurface> headless_native_surface_;
   std::unique_ptr<QOpenGLFramebufferObject> headless_framebuffer_;
   std::unique_ptr<QOpenGLPaintDevice> headless_paint_device_;
+#endif
   bts::GpuPerformance overlay_gpu_{"gpu_overlay"};
   bts::BlenderHost &host_;
   QTimer timer_;

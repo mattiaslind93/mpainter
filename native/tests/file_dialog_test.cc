@@ -24,6 +24,7 @@
 #include <QTreeView>
 #include <QMimeData>
 #include <QPushButton>
+#include <QPointer>
 #include <QSettings>
 #include <QLockFile>
 #include <QEventLoop>
@@ -32,9 +33,105 @@
 #include <QTemporaryDir>
 #include <QTimer>
 #include <QWidget>
+#include <QtCore/private/qobject_p.h>
 #include <cassert>
 #include <iostream>
 namespace {
+void verify_filters_detached(QApplication &app, bts::FileDialog &dialog)
+{
+  const QPointer<QObject> controller = dialog.findChild<QObject *>("fileBrowserController");
+  assert(controller);
+  for (const char *name : {"listView", "treeView"}) {
+    auto *view = dialog.findChild<QAbstractItemView *>(name);
+    assert(view);
+    for (QObject *object :
+         {static_cast<QObject *>(view), static_cast<QObject *>(view->viewport())})
+    {
+      QObject::connect(object, &QObject::destroyed, &app, [controller, object] {
+        const auto *data = QObjectPrivate::get(object);
+        assert(!controller || !data->extraData ||
+               !data->extraData->eventFilters.contains(controller));
+      });
+    }
+  }
+}
+void browser_lifetime(QApplication &app, const QString &root)
+{
+  const auto path = root + "/lifetime.abc";
+  {
+    QFile file(path);
+    assert(file.open(QIODevice::WriteOnly));
+    file.write("file-pick fixture");
+  }
+  for (int mode = 0; mode < 3; ++mode) {
+    for (int iteration = 0; iteration < 20; ++iteration) {
+      bts::FileDialog::prepare_directory_thread();
+      QPointer<bts::FileDialog> dialog = new bts::FileDialog(
+          nullptr, "Lifetime", root, "Alembic (*.abc)");
+      verify_filters_detached(app, *dialog);
+      dialog->setFileMode(QFileDialog::ExistingFile);
+      dialog->findChild<QToolButton *>(QString("fileBrowserMode%1").arg(mode))->click();
+      dialog->setAttribute(Qt::WA_DeleteOnClose, iteration % 2 == 0);
+      dialog->selectFile(path);
+      dialog->show();
+      app.processEvents();
+      assert(QMetaObject::invokeMethod(dialog, "accept", Qt::DirectConnection));
+      assert(dialog);
+      assert(dialog->result() == QDialog::Accepted);
+      assert(dialog->selectedFiles() == QStringList{path});
+      if (iteration % 2 == 0)
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+      else
+        delete dialog.data();
+      assert(!dialog);
+    }
+  }
+  // Parent teardown and retained-dialog reuse exercise the other close paths.
+  {
+    auto *owner = new QWidget;
+    QPointer<bts::FileDialog> dialog = bts::FileDialog::borrow(owner, "Retained", root);
+    verify_filters_detached(app, *dialog);
+    dialog->show();
+    app.processEvents();
+    dialog->hide();
+    assert(bts::FileDialog::borrow(owner, "Reused", root) == dialog);
+    dialog->show();
+    app.processEvents();
+    owner->deleteLater();
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    assert(!dialog);
+  }
+  // The shared controller also supports plain QFileDialog callers. Destroy a
+  // viewport/view first, or the controller before the delegate, then the dialog.
+  for (int teardown = 0; teardown < 4; ++teardown) {
+    auto *dialog = new QFileDialog(nullptr, "Shared controller", root);
+    dialog->setOption(QFileDialog::DontUseNativeDialog);
+    bts::setup_browser_controls(dialog, 2, 96);
+    bts::resume_browser_previews(dialog);
+    auto *tree = dialog->findChild<QTreeView *>("treeView");
+    assert(tree);
+    if (teardown == 0)
+      tree->setViewport(new QWidget);
+    if (teardown == 1) {
+      auto *controller = dialog->findChild<QObject *>("fileBrowserController");
+      assert(controller);
+      QEvent deletion(QEvent::DeferredDelete);
+      assert(!controller->eventFilter(tree, &deletion));
+      // Dispatch only to the filter. QFileDialog itself requires its tree for
+      // saveSettings(), so independently deleting that tree is invalid Qt usage.
+      QEvent tooltip(QEvent::ToolTip);
+      assert(!controller->eventFilter(tree->viewport(), &tooltip));
+    }
+    if (teardown == 2)
+      delete dialog->findChild<QObject *>("fileBrowserController");
+    delete dialog;
+  }
+  bts::shutdown_browser_previews();
+  QThreadPool::globalInstance()->waitForDone();
+  QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+  std::cout
+      << "Browser lifetime passed: 60 accepts across three modes, direct/deferred deletion, retained parent teardown, shared controller and child teardown\n";
+}
 void browser_modes(QApplication &app, const QString &root)
 {
   const auto directory = root + "/browser-types";
@@ -325,9 +422,16 @@ int main(int argc, char **argv)
   qputenv("XDG_CONFIG_HOME", (root + "/config").toUtf8());
   qputenv("XDG_CACHE_HOME", (root + "/cache").toUtf8());
   qputenv("XDG_DATA_HOME", (root + "/data").toUtf8());
+  QSettings::setDefaultFormat(QSettings::IniFormat);
+  QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, root + "/config");
   QApplication app(argc, argv);
   bts::FileDialog::prepare_directory_thread();
   const bool read = argc > 1 && QString(argv[1]) == "--read";
+  if (argc > 1 && QString(argv[1]) == "--lifetime") {
+    QDir().mkpath(root);
+    browser_lifetime(app, root);
+    return 0;
+  }
   QDir().mkpath(root + "/folders");
   for (int i = 0; i < 13; ++i)
     QDir().mkpath(root + QString("/folders/%1").arg(i));

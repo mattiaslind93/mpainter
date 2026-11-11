@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+#include "GpuElapsedQuery.hh"
 #include "NativeMaterialPreview.hh"
 #include "BlenderHost.hh"
 #include "NativeMaterialGpuLibrary.hh"
@@ -59,12 +60,10 @@ struct NativeMaterialPreview::Impl {
     QJsonArray formats;
     blender::gpu::Texture *target = nullptr;
     int stage = 0;
-    GLuint query = 0;
+    GpuElapsedQuery query;
     double compile_ms = 0, compile_cpu_ms = 0;
     ~Gpu()
     {
-      if (query)
-        glDeleteQueries(1, &query);
       thumbnail.reset();
       if (target)
         blender::GPU_texture_free(target);
@@ -220,10 +219,9 @@ struct NativeMaterialPreview::Impl {
           return;
         }
         if (gpu->stage == 3) {
-          glGenQueries(1, &gpu->query);
-          glBeginQuery(GL_TIME_ELAPSED, gpu->query);
+          gpu->query.begin();
           {
-            const auto end = qScopeGuard([] { glEndQuery(GL_TIME_ELAPSED); });
+            const auto end = qScopeGuard([&] { gpu->query.end(); });
             gpu->library.render("preview",
                                 0,
                                 gpu->graph->description,
@@ -239,15 +237,14 @@ struct NativeMaterialPreview::Impl {
         }
         gpu->thumbnail->poll();
         if (auto result = gpu->thumbnail->get()) {
-          GLuint64 elapsed = 0;
-          glGetQueryObjectui64v(gpu->query, GL_QUERY_RESULT, &elapsed);
+          const double elapsed = gpu->query.milliseconds();
           QJsonObject timing{
               {"image_formats", gpu->formats},
               {"compile_wall_ms", gpu->compile_ms},
               {"compile_cpu_ms", gpu->compile_cpu_ms},
               {"maximum_owner_step_ms", maximum_owner_ms},
               {"maximum_owner_step_cpu_ms", maximum_owner_cpu_ms},
-              {"native_dispatch_gpu_ms", double(elapsed) / 1e6},
+              {"native_dispatch_gpu_ms", elapsed},
               {"compiled_channels", int(gpu->library.statistics().programs)},
               {"uploaded_images", int(gpu->images.total)},
               {"transfer_budget_upper_bound_bytes", qint64(gpu->images.transfer_budget_bytes)}};

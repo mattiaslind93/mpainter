@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+#include "GpuRasterState.hh"
+#include "GpuGeneratedSources.hh"
 #include "NativeSurfaceBasis.hh"
 #include "NativeMaterialFragmentGpuCompiler.hh"
 #include "NativeMaterialFragmentContext.hh"
@@ -381,6 +383,7 @@ void construct(void *data, GPUMaterial *material)
       key += ";resident-raster-origin-v1";
     if (c.layout.paired_physical_sides)
       key += ";physical-front-back-v1";
+    key += ";tangent-output=" + std::to_string(c.layout.tangent_output);
     key += ";fill-projection-v1=" + std::to_string(c.layout.fill_projection);
     for (const auto &a : GPU_material_attributes(material)) {
       key += ';' + std::string(a.name) + ':' + std::to_string(a.type) + ':' + attribute(a, c);
@@ -428,6 +431,7 @@ void codegen_impl(Compilation &c, GPUMaterial *material, GPUCodegenOutput &outpu
   auto &info = *reinterpret_cast<ShaderCreateInfo *>(output.create_info);
   info.vertex_inputs_.clear();
   info.vertex_out_interfaces_.clear();
+  info.builtins_ |= BuiltinBits::FRONT_FACING;
   c.varying.smooth(Type::float2_t, "fragment_uv")
       .smooth(Type::float3_t, "fragment_P")
       .smooth(Type::float3_t, "fragment_N")
@@ -524,12 +528,19 @@ void codegen_impl(Compilation &c, GPUMaterial *material, GPUCodegenOutput &outpu
       std::string(c.layout.resident_raster_origin ?
                       "gl_Position=vec4((raster_uv-native_raster_origin)*2.0-1.0,0,1);}" :
                       "gl_Position=vec4(raster_uv*2.0-1.0,0,1);}");
-  info.vertex_source("gpu_shader_python_vert.glsl");
+  // Metal emits resources in each stage wrapper, including resources unused by
+  // the vertex function. Supply the shared layouts there as well as in fragment.
+  Vector<StringRefNull> vertex_types;
+  if (c.diagnostic.normal_maps || c.diagnostic.object_context ||
+      c.diagnostic.object_matrices_context)
+    vertex_types.append("draw_shader_shared.hh");
   info.generated_sources.append(
-      {"gpu_shader_python_vert.glsl",
-       c.layout.tangent_stream ? Vector<StringRefNull>{"gpu_shader_math_vector_safe_lib.glsl"} :
-                                 Vector<StringRefNull>{},
-       vertex});
+      {"gpu_shader_compositor_nodetree_type.glsl", vertex_types, info.typedef_source_generated});
+  Vector<StringRefNull> vertex_dependencies{"gpu_shader_compositor_nodetree_type.glsl"};
+  if (c.layout.tangent_stream)
+    vertex_dependencies.append("gpu_shader_math_vector_safe_lib.glsl");
+  info.vertex_source("gpu_shader_python_vert.glsl");
+  info.generated_sources.append({"gpu_shader_python_vert.glsl", vertex_dependencies, vertex});
   std::string fields, initialize;
   int projection_domains = 0;
   for (const auto &a : GPU_material_attributes(material)) {
@@ -550,8 +561,9 @@ void codegen_impl(Compilation &c, GPUMaterial *material, GPUCodegenOutput &outpu
        {&info.batch_resources_, &info.pass_resources_, &info.geometry_resources_})
     for (auto &resource : *resources)
       resource.info_name = "bts_fragment_normal";
-  std::string types = "struct Closure {float unused;};\n#define CLOSURE_DEFAULT Closure(0.0)\n" +
-                      info.typedef_source_generated;
+  std::string types =
+      "struct Closure {float unused;};\nClosure bts_closure_default(){Closure value;value.unused=0.0;return value;}\n#define CLOSURE_DEFAULT bts_closure_default()\n" +
+      info.typedef_source_generated;
   if (!fields.empty())
     types += "struct BtsAttributes {" + fields + "} var_attrs;\n";
   types +=
@@ -662,6 +674,7 @@ vec4 bts_fill_tangent(){
   info.fragment_source("gpu_shader_python_frag.glsl");
   info.generated_sources.append({"gpu_shader_python_frag.glsl", dependencies, fragment});
   c.diagnostic.generated = types + vertex + fragment;
+  preprocess_hosted_sources(info);
 }
 void codegen(void *data, GPUMaterial *material, GPUCodegenOutput *output)
 {
@@ -697,11 +710,11 @@ struct State {
   State()
   {
     GPU_apply_state();
-    scissor_enabled = glIsEnabled(GL_SCISSOR_TEST);
-    srgb = glIsEnabled(GL_FRAMEBUFFER_SRGB);
+    scissor_enabled = bts::gpu_scissor_enabled();
+    srgb = bts::gpu_framebuffer_srgb();
     GPU_viewport_size_get_i(viewport);
     GPU_scissor_get(scissor);
-    glGetIntegerv(GL_FRONT_FACE, &front);
+    front = bts::gpu_front_inverted();
   }
   ~State()
   {
@@ -712,16 +725,13 @@ struct State {
     GPU_viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
     GPU_scissor(scissor[0], scissor[1], scissor[2], scissor[3]);
     GPU_scissor_test(scissor_enabled);
-    GPU_front_facing(front == GL_CW);
+    GPU_front_facing(bool(front));
     GPU_blend(blend);
     GPU_depth_test(depth);
     GPU_face_culling(cull);
     GPU_stencil_test(stencil);
     GPU_write_mask(write);
-    if (srgb)
-      glEnable(GL_FRAMEBUFFER_SRGB);
-    else
-      glDisable(GL_FRAMEBUFFER_SRGB);
+    bts::gpu_restore_framebuffer_srgb(srgb);
   }
 };
 }  // namespace
@@ -1103,18 +1113,7 @@ NativeMaterialFragmentGpuGeometry::NativeMaterialFragmentGpuGeometry(
   // staging/metadata only. IBO's documented no-copy optimization is not implemented.
   const auto staging = resource_sum(gpu_bytes, metadata);
   State state;
-  GLint held_vao = 0, held_array = 0;
-  glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &held_vao);
-  glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &held_array);
-  GLuint upload_vao = 0;
-  glGenVertexArrays(1, &upload_vao);
-  require(upload_vao != 0, "Resident upload VAO allocation failed");
-  glBindVertexArray(upload_vao);
-  const auto restore_upload = qScopeGuard([&] {
-    glBindVertexArray(held_vao);
-    glBindBuffer(GL_ARRAY_BUFFER, held_array);
-    glDeleteVertexArrays(1, &upload_vao);
-  });
+  GpuUploadBindings upload_bindings;
   s.source = std::move(source);
   s.streams.resize(streams.size());
   s.objects.reserve(objects.size());

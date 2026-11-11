@@ -27,6 +27,8 @@ inline void gpu_calculate_pointiness(SurfaceCurvature &surface,
     std::array<float, 4> position, normal;
     std::array<std::uint32_t, 4> neighbors;
   };
+  static_assert(sizeof(Vertex) == 48,
+                "PointVertex is vec4/uvec4 only; Metal float3 padding does not apply");
   std::vector<Vertex> vertices;
   std::vector<std::uint32_t> neighbors;
   vertices.reserve(count);
@@ -75,7 +77,44 @@ inline void gpu_calculate_pointiness(SurfaceCurvature &surface,
       .push_constant(gpu::shader::Type::int_t, "base_vertex")
       .push_constant(gpu::shader::Type::int_t, "pass")
       .push_constant(gpu::shader::Type::float_t, "radius");
-  info.compute_source_generated = R"GLSL(
+  // MSL has no double. Metal keeps float32 Kahan sums; GL keeps the original
+  // double accumulation so Linux results stay bit-identical.
+  const bool metal = GPU_backend_get_type() == GPU_BACKEND_METAL;
+  info.compute_source_generated = metal ? R"GLSL(
+void main(){
+ uint i=uint(base_vertex)+gl_GlobalInvocationID.x;if(i>=uint(vertex_count))return;
+ PointVertex v=vertices[i];uint begin=v.neighbors.x,count=v.neighbors.y;
+ if(pass==0){
+  precise vec3 direction=vec3(0.0);
+  for(uint k=0u;k<count;++k){precise vec3 edge=vertices[neighbors[begin+k]].position.xyz-v.position.xyz;precise float len=sqrt(dot(edge,edge));if(len>0.0)direction+=edge/len;}
+  if(count==0u){raw[i]=0.5;return;}
+  precise float cosine=clamp(dot(v.normal.xyz,direction)/float(count),-1.0,1.0);
+  // The atan2 identity evaluates acos accurately near neutral Pointiness.
+  precise float sine=sqrt(max(0.0,(1.0-cosine)*(1.0+cosine)));
+  raw[i]=atan(sine,cosine)/3.14159265358979323846;
+ }else if(pass==1){
+  float sum=raw[i];for(uint k=0u;k<count;++k)sum+=raw[neighbors[begin+k]];
+  blurred[i]=sum/float(count+1u);output_values[i]=blurred[i];
+ }else{
+  // The balanced int-indexed tree is at most 32 levels. Right then left
+  // reproduces the CPU's preorder and therefore its accumulation order.
+  int stack[64];int size=1;stack[0]=0;precise float sum=0.0,total=0.0,sum_c=0.0,total_c=0.0;
+  while(size>0){
+   ivec4 node=tree[stack[--size]];PointVertex other=vertices[node.x];
+   vec3 delta=other.position.xyz-v.position.xyz;float d2=dot(delta,delta);
+   if(d2<radius*radius&&other.neighbors.z==v.neighbors.z){
+    precise float falloff=1.0-d2/(radius*radius);precise float weight=falloff*falloff*max(other.position.w,1e-20);
+    precise float y=blurred[node.x]*weight-sum_c;precise float t=sum+y;sum_c=(t-sum)-y;sum=t;
+    y=weight-total_c;t=total+y;total_c=(t-total)-y;total=t;
+   }
+   if(node.z>=0&&v.position[node.w]+radius>=other.position[node.w])stack[size++]=node.z;
+   if(node.y>=0&&v.position[node.w]-radius<=other.position[node.w])stack[size++]=node.y;
+  }
+  output_values[i]=total>0.0?sum/total:blurred[i];
+ }
+}
+)GLSL" :
+                                          R"GLSL(
 void main(){
  uint i=uint(base_vertex)+gl_GlobalInvocationID.x;if(i>=uint(vertex_count))return;
  PointVertex v=vertices[i];uint begin=v.neighbors.x,count=v.neighbors.y;
@@ -154,6 +193,9 @@ void main(){
     GPU_shader_unbind();
   }
   GPU_storagebuf_sync_to_host(out.get());
+#ifdef __APPLE__
+  GPU_finish();
+#else
   GLsync fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
   if (!fence)
     throw std::runtime_error("Pointiness fence failed");
@@ -161,6 +203,7 @@ void main(){
   glDeleteSync(fence);
   if (status != GL_ALREADY_SIGNALED && status != GL_CONDITION_SATISFIED)
     throw std::runtime_error("Pointiness fence timed out");
+#endif
   std::vector<float> values(count);
   GPU_storagebuf_read(out.get(), values.data());
   for (float value : values)

@@ -181,7 +181,7 @@ inline int verify_gpu_flatten()
         }
         if (state != GpuPreviewUpdate::Updated)
           throw std::runtime_error("GPU flatten oracle unsupported");
-        glFinish();
+        blender::GPU_finish();
         gpu.displacement_summaries();
         auto actual = gpu.layer_capture_result();
         if (!actual || !actual->valid ||

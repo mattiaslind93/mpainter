@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+#include "GpuRasterState.hh"
 #include "NativeMaterialFragmentGpuTest.hh"
 #include "NativeMaterialFragmentGpuCompiler.hh"
 #include "NativeMaterialGraph.hh"
@@ -49,9 +50,9 @@ NativeFragmentGpuFixtures prepare_native_fragment_gpu_fixtures()
         prepare_native_fragment_normal(
             native_fragment_normal_test::fixture(native_fragment_normal_test::Kind::NormalMap),
             cancel));
-    result.unsupported.emplace_back("UV/object/view binding", result.named);
+    result.unsupported.emplace_back("another named UV stream", result.named);
     result.unsupported.emplace_back(
-        "captured resident owner context",
+        "captured authoritative ORCO",
         prepare_native_fragment_normal(
             native_fragment_gpu_test::source(.5f, false, false, "object"), cancel));
     result.unsupported.emplace_back(
@@ -65,9 +66,10 @@ NativeFragmentGpuFixtures prepare_native_fragment_gpu_fixtures()
     // Conditional physical-context sources are kept in the same owned packet;
     // the original five checks retain their source cohort. First six retain the
     // original phase1 rejection cohort; these five have separate phase2 checks.
+    // World-space normals are supported; the negative fixture requires absent object matrices.
     for (int kind = 0; kind < 5; ++kind) {
       auto original = native_fragment_normal_map_test::source(
-          kind == 1, kind == 2, kind == 3, kind == 4 ? SHD_SPACE_WORLD : SHD_SPACE_TANGENT);
+          kind == 1, kind == 2, kind == 3, kind == 4 ? SHD_SPACE_OBJECT : SHD_SPACE_TANGENT);
       const auto before = native_fragment_normal_test::source_state(*original.material->nodetree);
       auto owner = prepare_native_fragment_normal(std::move(original), cancel);
       native_raw_height_test::require(
@@ -79,7 +81,7 @@ NativeFragmentGpuFixtures prepare_native_fragment_gpu_fixtures()
           const auto &storage = *static_cast<const NodeShaderNormalMap *>(node.storage);
           native_raw_height_test::require(
               STREQ(storage.uv_map, "FixtureUV") &&
-                  storage.space == (kind == 4 ? SHD_SPACE_WORLD : SHD_SPACE_TANGENT) &&
+                  storage.space == (kind == 4 ? SHD_SPACE_OBJECT : SHD_SPACE_TANGENT) &&
                   storage.convention == (kind == 1 ? SHD_NORMAL_MAP_CONVENTION_DIRECTX :
                                                      SHD_NORMAL_MAP_CONVENTION_OPENGL) &&
                   storage.base == SHD_NORMAL_MAP_BASE_ORIGINAL &&
@@ -176,12 +178,12 @@ struct HeldState {
   blender::GPUWriteMask write = blender::GPU_write_mask_get();
   std::array<int, 4> viewport{}, scissor{};
   int front = 0;
-  bool scissor_on = glIsEnabled(GL_SCISSOR_TEST), srgb = glIsEnabled(GL_FRAMEBUFFER_SRGB);
+  bool scissor_on = bts::gpu_scissor_enabled(), srgb = bts::gpu_framebuffer_srgb();
   HeldState()
   {
     blender::GPU_viewport_size_get_i(viewport.data());
     blender::GPU_scissor_get(scissor.data());
-    glGetIntegerv(GL_FRONT_FACE, &front);
+    front = bts::gpu_front_inverted();
   }
   bool operator==(const HeldState &) const = default;
   void restore() const
@@ -194,16 +196,13 @@ struct HeldState {
     GPU_viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
     GPU_scissor(scissor[0], scissor[1], scissor[2], scissor[3]);
     GPU_scissor_test(scissor_on);
-    GPU_front_facing(front == GL_CW);
+    GPU_front_facing(bool(front));
     GPU_blend(blend);
     GPU_depth_test(depth);
     GPU_face_culling(cull);
     GPU_stencil_test(stencil);
     GPU_write_mask(write);
-    if (srgb)
-      glEnable(GL_FRAMEBUFFER_SRGB);
-    else
-      glDisable(GL_FRAMEBUFFER_SRGB);
+    bts::gpu_restore_framebuffer_srgb(srgb);
     GPU_apply_state();
   }
 };
@@ -279,7 +278,7 @@ std::vector<float> draw(NativeMaterialFragmentGpuProgram &program,
   GPU_apply_state();
   HeldState expected;
   expected.scissor_on = true;
-  expected.front = GL_CW;
+  expected.front = 1;
   // Deliberately leave these two logical changes pending. A raw GL snapshot
   // before flushing them loses the caller's state even if ordinary tests pass.
   GPU_scissor_test(true);
@@ -666,7 +665,7 @@ QJsonObject verify_normal_map_bindings(const NativeFragmentGpuFixtures &fixtures
   QJsonArray rejected;
   for (const auto &[index, text] :
        std::array<std::pair<int, const char *>, 2>{
-           {{9, "alternate derivative basis"}, {10, "tangent space"}}})
+           {{9, "alternate derivative basis"}, {10, "captured object matrices"}}})
   {
     bool refused = false;
     QString reason;
@@ -912,20 +911,24 @@ QJsonObject verify_resident_geometry(const NativeFragmentGpuFixtures &fixtures)
   GPU_scissor_test(false);
   GPU_apply_state();
   HeldState upload_state;
-  upload_state.front = GL_CW;
+  upload_state.front = 1;
   upload_state.scissor_on = true;
   std::array<int, 3> upload_bindings{};
+#ifndef __APPLE__
   glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &upload_bindings[0]);
   glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &upload_bindings[1]);
   glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &upload_bindings[2]);
+#endif
   GPU_front_facing(true);
   GPU_scissor_test(true);
   NativeMaterialFragmentGpuGeometry resident(f.original);
   GPU_apply_state();
   std::array<int, 3> after_upload{};
+#ifndef __APPLE__
   glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &after_upload[0]);
   glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &after_upload[1]);
   glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &after_upload[2]);
+#endif
   require(HeldState{} == upload_state && after_upload == upload_bindings,
           "Resident creation lost held/pending state or caller VAO/buffers");
   require(resident.diagnostics().indices == f.original->indices().size(),
@@ -981,7 +984,7 @@ QJsonObject verify_resident_geometry(const NativeFragmentGpuFixtures &fixtures)
     GPU_scissor_test(false);
     GPU_apply_state();
     HeldState expected;
-    expected.front = GL_CW;
+    expected.front = 1;
     expected.scissor_on = true;
     GPU_front_facing(true);
     GPU_scissor_test(true);
@@ -1138,6 +1141,21 @@ QJsonObject verify_projected_native_normal_gpu(const NativeFragmentGpuFixtures &
   const auto identity = native_material_projection(fill, &atlas, set);
   const auto unprojected = render(plain, rows, nullptr),
              original = render(projected, rows, identity.get());
+  if (original != unprojected) {
+    double error = 0;
+    std::size_t at = 0;
+    for (std::size_t i = 0; i < original.size(); ++i)
+      if (std::abs(original[i] - unprojected[i]) > error) {
+        error = std::abs(original[i] - unprojected[i]);
+        at = i;
+      }
+    std::fprintf(stderr,
+                 "BTS_FRAGMENT_PROJECTION_MISMATCH max=%.9g at=%zu actual=%.9g expected=%.9g\n",
+                 error,
+                 at,
+                 original[at],
+                 unprojected[at]);
+  }
   require(original == unprojected, "Identity Fill changed native NormalMap output");
   fill.rotation = 90;
   const auto rotated_projection = native_material_projection(fill, &atlas, set);
@@ -1188,9 +1206,20 @@ QJsonObject verify_native_normal_stack_gpu(const NativeFragmentGpuFixtures &fixt
     const auto rotated = draw(program, size, basis, values(fixtures.bumps[0], 1, .3f));
     for (int y = 4; y < size - 4; ++y)
       for (int x = 4; x < size - 4; ++x)
-        for (int c = 0; c < 4; ++c)
-          require(std::abs(rotated[(y * size + x) * 4 + c] - a[(y * size + x) * 4 + c]) < 3e-5,
+        for (int c = 0; c < 4; ++c) {
+          const auto at = (y * size + x) * 4 + c;
+          if (std::abs(rotated[at] - a[at]) >= 3e-5)
+            std::fprintf(stderr,
+                         "BTS_TANGENT_MISMATCH basis=%s xy=%d,%d c=%d actual=%.9g expected=%.9g\n",
+                         basis.name,
+                         x,
+                         y,
+                         c,
+                         rotated[at],
+                         a[at]);
+          require(std::abs(rotated[at] - a[at]) < 3e-5,
                   "Target tangent conversion depends on world orientation");
+        }
   }
   GpuLayerPreview preview;
   auto graph = fixtures.bumps[0].source;
@@ -1392,6 +1421,11 @@ QJsonObject verify_native_fragment_normal_gpu(const NativeFragmentGpuFixtures &f
       reason = QString::fromUtf8(e.what());
       refused = std::string_view(e.what()).find(expected) != std::string_view::npos;
     }
+    if (!refused)
+      std::fprintf(stderr,
+                   "BTS_FRAGMENT_ADMISSION_MISMATCH expected=%s actual=%s\n",
+                   expected.c_str(),
+                   qPrintable(reason));
     require(refused,
             "Unsupported fragment context did not fail with its specific admission reason");
     rejected.append(

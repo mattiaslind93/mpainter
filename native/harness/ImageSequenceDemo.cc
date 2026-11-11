@@ -17,7 +17,7 @@
 #include <QJsonDocument>
 #include <QLineEdit>
 #include <QListWidget>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
 #include <QPushButton>
 #include <QTimer>
 #include <QToolButton>
@@ -80,7 +80,7 @@ class SequenceDemo final : public QObject {
     data["sequence_shelf"] = shelf;
     captures.append(data);
     capture_demo_window(w, v).save(dir + "/" + name + ".png");
-    if (auto *gl = qobject_cast<QOpenGLWidget *>(v))
+    if (auto *gl = qobject_cast<bts::ViewportWidget *>(v))
       capture_viewport_framebuffer(gl).save(dir + "/" + name + "-viewport.png");
   }
   void shelf()

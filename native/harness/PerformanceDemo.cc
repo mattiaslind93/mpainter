@@ -17,7 +17,7 @@
 #include <QKeyEvent>
 #include <QListWidget>
 #include <QMouseEvent>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
 #include <QPushButton>
 #include <QSlider>
 #include <QTimer>
@@ -342,7 +342,7 @@ class Demo final : public QObject {
     timer.stop();
     action("checkGuiComposite");
     auto final = state();
-    auto *gl = qobject_cast<QOpenGLWidget *>(v);
+    auto *gl = qobject_cast<bts::ViewportWidget *>(v);
     capture_viewport_framebuffer(gl).save(dir + "/final.png");
     QFile out(dir + "/performance.json");
     if (!out.open(QIODevice::WriteOnly))

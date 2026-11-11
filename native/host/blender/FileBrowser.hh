@@ -36,6 +36,8 @@ BrowserFileType browser_file_type(const QString &path);
 QIcon browser_file_icon(BrowserFileType type);
 QIcon browser_file_large_icon(BrowserFileType type);
 void setup_browser_controls(QFileDialog *dialog, int mode, int zoom);
+// Call before QFileDialog or any of its child widgets begin destruction.
+void detach_browser_controls(QFileDialog *dialog);
 void resume_browser_previews(QFileDialog *dialog);
 void cancel_browser_previews(QFileDialog *dialog);
 // Terminal host/application shutdown only; never called on dialog close.

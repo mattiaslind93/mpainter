@@ -156,21 +156,25 @@ class PreviewDelegate : public QStyledItemDelegate {
   }
 };
 class BrowserController : public QObject {
-  QFileDialog *dialog_;
-  QListView *list_;
-  QTreeView *tree_;
-  QSlider *zoom_;
-  QButtonGroup *buttons_;
+  QPointer<QFileDialog> dialog_;
+  QPointer<QListView> list_;
+  QPointer<QTreeView> tree_;
+  QPointer<QWidget> list_viewport_, tree_viewport_;
+  QList<QPointer<QObject>> watched_;
+  QPointer<PreviewDelegate> delegate_;
+  QPointer<QSlider> zoom_;
+  QPointer<QButtonGroup> buttons_;
   QTimer timer_;
   std::shared_ptr<PreviewSession> session_;
   QCache<QString, QIcon> images_{32 * 1024};  // KiB, including raster icon storage.
   QSet<QString> attempted_, failed_;
   int mode_ = -1;
   bool live_ = false;
+  bool detached_ = false;
   QString hover_path_;
   QPoint hover_global_;
-  QWidget *tooltip_ = nullptr;
-  QLabel *tooltip_image_ = nullptr, *tooltip_text_ = nullptr;
+  QPointer<QWidget> tooltip_;
+  QPointer<QLabel> tooltip_image_, tooltip_text_;
 
  public:
   BrowserController(QFileDialog *dialog, int mode, int zoom)
@@ -215,6 +219,8 @@ class BrowserController : public QObject {
         button->hide();
     connect(buttons_, &QButtonGroup::idClicked, this, [this](int value) { set_mode(value); });
     connect(zoom_, &QSlider::valueChanged, this, [this](int value) {
+      if (detached_ || !dialog_)
+        return;
       dialog_->setProperty("fileBrowserThumbnailSize", value);
       if (mode_ == 2)
         configure_list();
@@ -222,17 +228,22 @@ class BrowserController : public QObject {
     connect(dialog, &QFileDialog::directoryEntered, this, [this] { invalidate(); });
     if (auto *model = dialog->findChild<QFileSystemModel *>("qt_filesystem_model"))
       connect(model, &QFileSystemModel::rootPathChanged, this, [this] { invalidate(); });
-    auto *delegate = new PreviewDelegate(dialog);
-    delegate->preview = [this](const QModelIndex &index, bool paint) {
+    delegate_ = new PreviewDelegate(dialog);
+    delegate_->preview = [this](const QModelIndex &index, bool paint) {
       return preview(index, paint);
     };
-    dialog->setItemDelegate(delegate);
-    for (auto *view :
-         {static_cast<QAbstractItemView *>(list_), static_cast<QAbstractItemView *>(tree_)})
-      if (view) {
-        view->viewport()->installEventFilter(this);
-        view->viewport()->setMouseTracking(true);
-      }
+    dialog->setItemDelegate(delegate_);
+    // Cache viewport identities while the views are fully alive. During QWidget
+    // teardown a QPointer can still be non-null after QAbstractItemView has died.
+    list_viewport_ = list_ ? list_->viewport() : nullptr;
+    tree_viewport_ = tree_ ? tree_->viewport() : nullptr;
+    watched_ = {dialog, list_.data(), tree_.data(), list_viewport_.data(), tree_viewport_.data()};
+    for (const auto &object : watched_)
+      if (object)
+        object->installEventFilter(this);
+    for (const auto &viewport : {list_viewport_, tree_viewport_})
+      if (viewport)
+        viewport->setMouseTracking(true);
     timer_.setInterval(30);
     connect(&timer_, &QTimer::timeout, this, [this] { complete(); });
     set_mode(qBound(0, mode, 2));
@@ -240,7 +251,30 @@ class BrowserController : public QObject {
   }
   ~BrowserController() override
   {
+    detach();
+  }
+  void detach()
+  {
+    if (detached_)
+      return;
+    detached_ = true;
+    for (const auto &object : watched_)
+      if (object)
+        object->removeEventFilter(this);
+    watched_.clear();
+    // Also retire the delegate callback, which otherwise captures this controller
+    // independently of the event filters. No widget access is safe on this path.
+    if (delegate_)
+      delegate_->preview = {};
+    tooltip_.clear();
+    tooltip_image_.clear();
+    tooltip_text_.clear();
     cancel();
+    dialog_.clear();
+    list_.clear();
+    tree_.clear();
+    list_viewport_.clear();
+    tree_viewport_.clear();
   }
   void cancel()
   {
@@ -261,6 +295,8 @@ class BrowserController : public QObject {
   }
   void resume()
   {
+    if (detached_ || !dialog_)
+      return;
     live_ = true;
     session_ = preview_service().session();
     timer_.start();
@@ -276,6 +312,8 @@ class BrowserController : public QObject {
   }
   void set_mode(int value)
   {
+    if (detached_ || !dialog_ || !buttons_ || !buttons_->button(value) || !zoom_)
+      return;
     if (mode_ == value)
       return;
     const bool was_live = live_;
@@ -292,7 +330,7 @@ class BrowserController : public QObject {
   }
   void configure_list()
   {
-    if (!list_)
+    if (detached_ || !list_ || !zoom_)
       return;
     if (mode_ == 2) {
       const int size = zoom_->value();
@@ -317,7 +355,8 @@ class BrowserController : public QObject {
       list_->setWordWrap(false);
       list_->setTextElideMode(Qt::ElideMiddle);
     }
-    list_->viewport()->update();
+    if (list_viewport_)
+      list_viewport_->update();
   }
   bool request_image(const QString &path, BrowserFileType type)
   {
@@ -337,7 +376,7 @@ class BrowserController : public QObject {
   }
   QIcon preview(const QModelIndex &index, bool paint)
   {
-    if (mode_ != 2)
+    if (detached_ || mode_ != 2 || !index.isValid() || !index.model())
       return {};  // Vertical/Horizontal rows retain their small type icons.
     const auto path = index.data(QFileSystemModel::FilePathRole).toString();
     if (auto *icon = images_.object(path))
@@ -356,13 +395,26 @@ class BrowserController : public QObject {
   }
   bool eventFilter(QObject *object, QEvent *event) override
   {
-    auto *view = object == (list_ ? list_->viewport() : nullptr) ?
-                     static_cast<QAbstractItemView *>(list_) :
-                 object == (tree_ ? tree_->viewport() : nullptr) ?
-                     static_cast<QAbstractItemView *>(tree_) :
-                     nullptr;
+    if (!object || !event || detached_)
+      return false;
+    if (event->type() == QEvent::Destroy || event->type() == QEvent::DeferredDelete) {
+      detach();
+      return false;
+    }
+    // Only tooltip events need a view. In particular, never inspect widgets for
+    // the child/removal/hide events emitted while their parents are destructing.
+    if (event->type() != QEvent::ToolTip && event->type() != QEvent::Leave &&
+        event->type() != QEvent::MouseMove && event->type() != QEvent::MouseButtonPress)
+      return false;
+    if (!live_ || !dialog_)
+      return false;
+    QAbstractItemView *view = nullptr;
+    if (object == list_viewport_)
+      view = qobject_cast<QListView *>(list_.data());
+    else if (object == tree_viewport_)
+      view = qobject_cast<QTreeView *>(tree_.data());
     if (!view)
-      return QObject::eventFilter(object, event);
+      return false;
     if (event->type() == QEvent::ToolTip) {
       const auto *help = static_cast<QHelpEvent *>(event);
       const auto index = view->indexAt(help->pos());
@@ -386,11 +438,11 @@ class BrowserController : public QObject {
       if (tooltip_)
         tooltip_->hide();
     }
-    return QObject::eventFilter(object, event);
+    return false;
   }
   void show_hover()
   {
-    if (hover_path_.isEmpty() || !live_)
+    if (detached_ || !dialog_ || hover_path_.isEmpty() || !live_)
       return;
     if (!tooltip_) {
       tooltip_ = new QWidget(dialog_, Qt::ToolTip);
@@ -403,6 +455,8 @@ class BrowserController : public QObject {
       layout->addWidget(tooltip_image_);
       layout->addWidget(tooltip_text_);
     }
+    if (!tooltip_image_ || !tooltip_text_)
+      return;
     if (auto *icon = images_.object(hover_path_)) {
       tooltip_image_->setPixmap(icon->pixmap(256, 256));
       tooltip_image_->show();
@@ -427,7 +481,7 @@ class BrowserController : public QObject {
   }
   void complete()
   {
-    if (!session_)
+    if (detached_ || !dialog_ || !session_)
       return;
     std::deque<PreviewSession::Result> results;
     {
@@ -449,15 +503,17 @@ class BrowserController : public QObject {
       ++completed;
     }
     dialog_->setProperty("fileBrowserPreviewsCompleted", completed);
-    if (list_)
-      list_->viewport()->update();
+    if (list_viewport_)
+      list_viewport_->update();
     if (!hover_path_.isEmpty())
       show_hover();
   }
 };
 BrowserController *controller(QFileDialog *dialog)
 {
-  return static_cast<BrowserController *>(dialog->findChild<QObject *>("fileBrowserController"));
+  return dialog ? static_cast<BrowserController *>(dialog->findChild<QObject *>(
+                      "fileBrowserController", Qt::FindDirectChildrenOnly)) :
+                  nullptr;
 }
 }  // namespace
 void shutdown_browser_previews()
@@ -467,7 +523,13 @@ void shutdown_browser_previews()
 }
 void setup_browser_controls(QFileDialog *dialog, int mode, int zoom)
 {
-  new BrowserController(dialog, mode, zoom);
+  if (dialog && !controller(dialog))
+    new BrowserController(dialog, mode, zoom);
+}
+void detach_browser_controls(QFileDialog *dialog)
+{
+  if (auto *value = controller(dialog))
+    value->detach();
 }
 void resume_browser_previews(QFileDialog *dialog)
 {

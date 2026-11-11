@@ -17,7 +17,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QLineEdit>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
 #include <QPushButton>
 #include <QTimer>
 #include <QToolButton>
@@ -83,7 +83,7 @@ class ClipDemo final : public QObject {
   {
     auto data = state();
     data["stage"] = name;
-    auto *gl = qobject_cast<QOpenGLWidget *>(v);
+    auto *gl = qobject_cast<bts::ViewportWidget *>(v);
     const auto image = capture_viewport_framebuffer(gl);
     data["center_rgb"] = image.pixelColor(image.width() / 2, image.height() / 2).name();
     captures.append(data);

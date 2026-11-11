@@ -36,11 +36,13 @@ inline QJsonObject memory()
     for (const auto &line : file.readAll().split('\n'))
       if (line.startsWith("VmRSS:"))
         rss = line.simplified().split(' ')[1].toLongLong() * 1024;
-  GLint total = 0, available = 0;
+  int total = 0, available = 0;
+#ifndef __APPLE__
   if (epoxy_has_gl_extension("GL_NVX_gpu_memory_info")) {
     glGetIntegerv(0x9048, &total);
     glGetIntegerv(0x9049, &available);
   }
+#endif
   return {{"driver_device_used_bytes", qint64(total - available) * 1024},
           {"driver_device_total_bytes", qint64(total) * 1024},
           {"process_rss_bytes", rss},

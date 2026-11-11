@@ -1,26 +1,47 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Stage a portable Linux tarball with Qt and recursively discovered ELF dependencies."""
-import argparse, pathlib, shutil, subprocess, os, re, tarfile, json, sys
-p=argparse.ArgumentParser();p.add_argument('--runtime',type=pathlib.Path,required=True);p.add_argument('--qt',type=pathlib.Path,required=True);p.add_argument('--output',type=pathlib.Path,required=True);p.add_argument('--no-archive',action='store_true');a=p.parse_args()
+import argparse, pathlib, shutil, subprocess, os, re, tarfile, json, sys, hashlib
+root=pathlib.Path(__file__).absolute().parents[1]
+# The toolchain QtNetwork was built without SSL, so no TLS plugin can give it HTTPS.
+# scripts/host/rebuild-qt-network-ssl.sh rebuilds Network and its TLS plugins from the
+# same pinned, patched qtbase with OpenSSL loaded at runtime. Pinned so that no other
+# Qt's files, such as the host's ABI-incompatible Qt 6.11, can be bundled by mistake.
+ssl_overlay_files={
+    'lib/libQt6Network.so.6.8.3':'e3b1c2f3eac3df1b1a661c32126d277538a1f2f36f071f7d4adb0de889ef8a05',
+    'plugins/tls/libqopensslbackend.so':'30eec83b77bf3b221b3ef08b83af471d177a8cdea5b5faf16bb1f33527a7c6ba',
+    'plugins/tls/libqcertonlybackend.so':'19c35758f6988e8393a3a0c1a8e788233fa123e3eddcc14b661f763e08dd3529'}
+p=argparse.ArgumentParser();p.add_argument('--runtime',type=pathlib.Path,required=True);p.add_argument('--qt',type=pathlib.Path,required=True);p.add_argument('--output',type=pathlib.Path,required=True);p.add_argument('--no-archive',action='store_true')
+p.add_argument('--qt-ssl-overlay',type=pathlib.Path,default=root.parent/'deps/qt-6.8.3-ssl-overlay')
+p.add_argument('--runtime-commit',help='commit --runtime was built from, if not this checkout\'s HEAD')
+a=p.parse_args()
 a.runtime=a.runtime.absolute();a.qt=a.qt.absolute()
-root=pathlib.Path(__file__).absolute().parents[1];out=a.output.resolve();out.mkdir(parents=True,exist_ok=True)
+out=a.output.resolve();out.mkdir(parents=True,exist_ok=True)
 # One version for the whole product. pyproject.toml is what the build reads for
 # BTS_PRODUCT_VERSION, so the package name cannot drift away from the app's own.
 version=re.search(r'^version = "([^"]+)"',(root/'pyproject.toml').read_text(),re.M).group(1)
+commit=subprocess.check_output(['git','-C',str(root),'rev-parse','HEAD'],text=True).strip()
+runtime_commit=subprocess.check_output(['git','-C',str(root),'rev-parse','--verify',(a.runtime_commit or commit)+'^{commit}'],text=True).strip()
+runtime_note=''
+if runtime_commit!=commit:
+    # A runtime from an earlier commit may be packaged only when nothing it was built from changed since.
+    changed=subprocess.check_output(['git','-C',str(root),'diff','--name-only',runtime_commit,commit],text=True).split()
+    built_from=[path for path in changed if not path.startswith(('docs/','scripts/')) or path in ('scripts/build.py','scripts/prepare-blender.py')]
+    if built_from:raise SystemExit(f'Runtime commit {runtime_commit} differs from {commit} in build inputs: {built_from}')
+    runtime_note=f'Native runtime built from {runtime_commit}; later commits change only packaging scripts and docs.\n'
 def is_elf(path):
     if not path.is_file():return False
     with path.open('rb') as stream:return stream.read(4)==b'\x7fELF'
-world=a.runtime/'5.2/datafiles/studiolights/world'
-world.mkdir(parents=True,exist_ok=True)
-for name in ('default-studio.hdr','default-studio.txt'):
-    shutil.copy2(root/'assets/environments'/name,world/name)
-subprocess.run([sys.executable,str(root/'scripts/check-environment.py'),str(a.runtime)],check=True)
 stage=out/f'mPainter-{version}-linux-x86_64'
 if stage.exists():raise SystemExit('Output staging directory exists; choose a new output directory.')
 stage.mkdir();(stage/'lib').mkdir()
 shutil.copy2(a.runtime/'mpainter',stage/'mpainter')
 shutil.copytree(a.runtime/'5.2',stage/'5.2',ignore=shutil.ignore_patterns('__pycache__','*.pyc'))
+# Studio lights go into the stage so that --runtime, often a live build tree, stays read-only.
+world=stage/'5.2/datafiles/studiolights/world'
+world.mkdir(parents=True,exist_ok=True)
+for name in ('default-studio.hdr','default-studio.txt'):
+    shutil.copy2(root/'assets/environments'/name,world/name)
 shutil.rmtree(stage/'5.2/datafiles/assets',ignore_errors=True)
 # Cycles device kernels are portable release resources, not workstation caches.
 kernels=stage/'5.2/scripts/addons_core/cycles/lib'
@@ -33,9 +54,23 @@ for directory in ['branding','meshes']:
     shutil.copytree(root/'assets'/directory,stage/('branding' if directory=='branding' else 'assets/meshes'))
 shutil.copytree(root/'assets/materials',stage/'assets/materials')
 subprocess.run([sys.executable,str(root/'scripts/sanitize-runtime.py'),str(stage/'5.2')],check=True)
+subprocess.run([sys.executable,str(root/'scripts/check-environment.py'),str(stage)],check=True)
 plugins=stage/'plugins';plugins.mkdir()
 for directory in ['platforms','imageformats','iconengines','platforminputcontexts','xcbglintegrations','wayland-decoration-client','wayland-graphics-integration-client','wayland-shell-integration','tls']:
     if (a.qt/'plugins'/directory).exists():shutil.copytree(a.qt/'plugins'/directory,plugins/directory)
+openssl_tls=plugins/'tls/libqopensslbackend.so'
+ssl_overlay=a.qt_ssl_overlay
+use_ssl_overlay=not openssl_tls.exists() and ssl_overlay.is_dir()
+if use_ssl_overlay:
+    for relative,pin in ssl_overlay_files.items():
+        digest=hashlib.sha256((ssl_overlay/relative).read_bytes()).hexdigest()
+        if digest!=pin:raise SystemExit(f'{ssl_overlay/relative} has sha256 {digest}, expected {pin} from rebuild-qt-network-ssl.sh')
+    openssl_tls.parent.mkdir(exist_ok=True)
+    for relative in ssl_overlay_files:
+        if relative.startswith('plugins/'):shutil.copy2(ssl_overlay/relative,stage/relative)
+    # Staged before the dependency walk, which never replaces a library already in lib/.
+    shutil.copy2(ssl_overlay/'lib/libQt6Network.so.6.8.3',stage/'lib/libQt6Network.so.6')
+if not openssl_tls.exists():print(f'WARNING: no OpenSSL TLS plugin in --qt and no SSL overlay at {ssl_overlay}; in-app HTTPS will fail',file=sys.stderr)
 if (a.runtime/'lib').exists():
     for directory in ['usd', 'materialx']:
         if (a.runtime/'lib'/directory).exists():
@@ -43,12 +78,15 @@ if (a.runtime/'lib').exists():
     for lib in (a.runtime/'lib').glob('*.so*'):
         # Optional Intel/AMD GPU adapters require separate Level Zero/HIP stacks.
         # Keep CPU/CUDA denoising and the core SYCL loader, but do not ship these adapters.
-        if lib.name.startswith(('libcuda.so','libnvoptix.so','libnvidia','libur_adapter_level_zero','libOpenImageDenoise_device_sycl','libOpenImageDenoise_device_hip')):continue
+        if lib.name.startswith(('libcuda.so','libnvoptix.so','libnvidia','libssl.so','libcrypto.so','libur_adapter_level_zero','libOpenImageDenoise_device_sycl','libOpenImageDenoise_device_hip')):continue
         if lib.is_file():shutil.copy2(lib.resolve(),stage/'lib'/lib.name)
 # The OS supplies glibc and graphics drivers/dispatch to match its display server.
-external=re.compile(r'^(?:linux-vdso|ld-linux|lib(?:c|m|dl|rt|pthread|resolv|util)\.so|lib(?:GL|GLX|OpenGL|EGL|GLdispatch|cuda\.so|nvoptix\.so|nvidia))')
+# OpenSSL also comes from the OS: Qt's TLS plugin loads the system libssl.so.3, which
+# must pair with the system libcrypto.so.3 rather than a bundled copy (here pulled in
+# through Kerberos for GSSAPI).
+external=re.compile(r'^(?:linux-vdso|ld-linux|lib(?:c|m|dl|rt|pthread|resolv|util|ssl|crypto)\.so|lib(?:GL|GLX|OpenGL|EGL|GLdispatch|cuda\.so|nvoptix\.so|nvidia))')
 queue=[stage/'mpainter',*(p for p in stage.rglob('*.so*') if is_elf(p))];visited=set();origins={};external_libraries=set()
-env=dict(os.environ);env['LD_LIBRARY_PATH']=str(a.qt/'lib')+':'+str(a.runtime/'lib')+':'+env.get('LD_LIBRARY_PATH','')
+env=dict(os.environ);env['LD_LIBRARY_PATH']=(str(ssl_overlay/'lib')+':' if use_ssl_overlay else '')+str(a.qt/'lib')+':'+str(a.runtime/'lib')+':'+env.get('LD_LIBRARY_PATH','')
 while queue:
     binary=queue.pop();key=str(binary.resolve())
     if key in visited:continue
@@ -86,10 +124,10 @@ for elf in [stage/'mpainter',*(p for p in stage.rglob('*.so*') if is_elf(p))]:
     subprocess.run(['strip','--strip-unneeded',str(elf)],check=True)
     relative=os.path.relpath(stage/'lib',elf.parent)
     subprocess.run(['patchelf','--set-rpath','$ORIGIN:$ORIGIN/'+relative,str(elf)],check=True)
-# NVIDIA driver binaries must always come from the running host.
+# NVIDIA driver and OpenSSL binaries must always come from the running host.
 for library in stage.rglob('*.so*'):
-    if library.name.startswith(('libcuda.so','libnvoptix.so','libnvidia')):
-        raise SystemExit('NVIDIA driver library must not be bundled: '+str(library))
+    if library.name.startswith(('libcuda.so','libnvoptix.so','libnvidia','libssl.so','libcrypto.so')):
+        raise SystemExit('Host library must not be bundled: '+str(library))
 # Verify the completed package without access to the build SDK search paths.
 for binary in [stage/'mpainter',*(p for p in stage.rglob('*.so*') if is_elf(p))]:
     result=subprocess.run(['ldd',str(binary)],env=dict(os.environ,LD_LIBRARY_PATH=str(stage/'lib')),capture_output=True,text=True)
@@ -148,6 +186,20 @@ for item in a.runtime.iterdir():
     if item.is_file() and any(word in item.name.lower() for word in ['license','copyright','readme']):shutil.copy2(item,licenses/item.name)
 qtlicenses=a.qt/'licenses'
 if qtlicenses.exists():shutil.copytree(qtlicenses,licenses/'Qt')
+if use_ssl_overlay:(licenses/'qt-tls-openssl-backend.md').write_text('''# Qt Network with OpenSSL support
+
+lib/libQt6Network.so.6 and the TLS plugins in plugins/tls were built from the same
+qtbase 6.8.3 source archive (download.qt.io) and file-dialog patch as the other
+bundled Qt libraries, with OpenSSL support loaded at runtime. They are part of Qt and
+are covered by the Qt license texts in licenses/Qt (LGPL-3.0-only, GPL-3.0-only).
+Rebuild command: scripts/host/rebuild-qt-network-ssl.sh in the matching source tree.
+
+The OpenSSL libraries (libssl, libcrypto) are not bundled. The plugin loads them from
+the system at runtime, and they remain under the system's OpenSSL license.
+
+Build record:
+
+'''+(ssl_overlay/'MANIFEST.txt').read_text())
 shutil.copytree(root/'assets/file-browser',licenses/'file-browser',ignore=shutil.ignore_patterns('atlas.png','*.qrc','manifest.json','svg'))
 # Fedora build: collect packaged license texts for every added system library.
 packages=set()
@@ -160,7 +212,7 @@ if shutil.which('rpm'):
         for source in result.stdout.splitlines():
             if source.startswith('/usr/share/licenses/') and pathlib.Path(source).is_file():
                 dest=licenses/'system'/pathlib.Path(source).relative_to('/usr/share/licenses');dest.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(source,dest)
-(stage/'BUILD-INFO.txt').write_text(f'mPainter {version}\nBlender 5.2.0\nQt 6.8.3\nRequires a compatible Linux glibc and OpenGL 4.3 graphics driver.\nCycles CUDA (sm_86 and forward-compatible PTX) and OptiX kernels are included.\nCUDA and OptiX use the system NVIDIA driver, which is never bundled; CPU fallback is included.\nOptional Intel/AMD GPU denoising backends are not bundled.\nSource preparation and package commands: docs/building.md in the matching source tree.\n')
+(stage/'BUILD-INFO.txt').write_text(f'mPainter {version}\nCommit {commit}\n{runtime_note}Blender 5.2.0\nQt 6.8.3\nRequires a compatible Linux glibc and OpenGL 4.3 graphics driver.\nCycles CUDA (sm_86 and forward-compatible PTX) and OptiX kernels are included.\nCUDA and OptiX use the system NVIDIA driver, which is never bundled; CPU fallback is included.\nOptional Intel/AMD GPU denoising backends are not bundled.\nRequires the system OpenSSL 3 libraries (libssl.so.3, libcrypto.so.3), which are never bundled.\n{"HTTPS uses the bundled Qt OpenSSL TLS plugin."+chr(10) if openssl_tls.exists() else ""}Source preparation and package commands: docs/building.md in the matching source tree.\n')
 dependency_manifest=json.dumps({'libraries':sorted(origins),'external_libraries':sorted(external_libraries),'system_packages':sorted(packages)},indent=2)+'\n'
 (out/'linux-dependencies.json').write_text(dependency_manifest)
 (stage/'DEPENDENCIES.json').write_text(dependency_manifest)

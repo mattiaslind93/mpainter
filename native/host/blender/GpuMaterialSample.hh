@@ -7,7 +7,7 @@
 #include "GPU_state.hh"
 #include "GPU_storage_buffer.hh"
 #include "gpu_shader_create_info.hh"
-#include <epoxy/gl.h>
+#include "GpuReadbackFence.hh"
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -20,7 +20,7 @@ class GpuMaterialSample {
       std::unique_ptr<blender::gpu::StorageBuf, decltype(&blender::GPU_storagebuf_free)>;
   Shader shader_{nullptr, blender::GPU_shader_free};
   Buffer buffer_{nullptr, blender::GPU_storagebuf_free};
-  GLsync fence_ = nullptr;
+  GpuReadbackFence fence_;
   std::uint64_t ticket_ = 0;
   bool mask_ = false;
   std::optional<MaterialSample> result_;
@@ -30,14 +30,10 @@ class GpuMaterialSample {
     blender::gpu::Texture *image = nullptr;
     std::array<float, 3> base{};
   };
-  ~GpuMaterialSample()
-  {
-    if (fence_)
-      glDeleteSync(fence_);
-  }
+
   bool pending() const
   {
-    return fence_ != nullptr;
+    return bool(fence_);
   }
   std::optional<MaterialSample> get() const
   {
@@ -100,11 +96,7 @@ void main(){
     GPU_storagebuf_unbind(buffer_.get());
     GPU_texture_unbind_all();
     GPU_shader_unbind();
-    GPU_storagebuf_sync_to_host(buffer_.get());
-    fence_ = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-    if (!fence_)
-      throw std::runtime_error("Material sample fence allocation failed");
-    glFlush();
+    fence_.submit(buffer_.get());
     ticket_ = ticket;
   }
   void poll()
@@ -112,15 +104,9 @@ void main(){
     using namespace blender;
     if (!fence_)
       return;
-    const auto state = glClientWaitSync(fence_, 0, 0);
-    if (state == GL_WAIT_FAILED)
-      throw std::runtime_error("Material sample fence failed");
-    if (state != GL_ALREADY_SIGNALED && state != GL_CONDITION_SATISFIED)
-      return;
-    glDeleteSync(fence_);
-    fence_ = nullptr;
     std::array<std::array<float, 4>, 6> values{};
-    GPU_storagebuf_read(buffer_.get(), values.data());
+    if (!fence_.read(buffer_.get(), values.data()))
+      return;
     MaterialSample result;
     result.ticket = ticket_;
     if (mask_)

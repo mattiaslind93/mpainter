@@ -91,7 +91,7 @@ template<class ColorContext> ArchivedVectorMath archived_vector_math_fixture(Col
   result.current_graph = hydrate_native_material_resource(result.current, cancel);
   result.legacy_graph = hydrate_native_material_resource(result.legacy, cancel);
   const auto rows = [](const auto &d) {
-    return native_material_description_json(d)["parameters"];
+    return native_material_description_json(d).value("parameters");
   };
   if (rows(result.current_graph->description) != rows(archive.description) ||
       rows(result.legacy_graph->description) != rows(legacy))

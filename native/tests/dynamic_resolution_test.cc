@@ -16,7 +16,8 @@ int main()
   stamp.values.base_color = {1, .25f, .1f, 1};
   stamp.hardness = .5;
   pixels.stamp(1024, stamp);
-  const auto hash = pixels.hash(0), pages = pixels.page_count(0);
+  const auto hash = pixels.hash(0);
+  const auto pages = pixels.page_count(0);
   double low_alpha = 0, high_alpha = 0;
   for (int y = 0; y < 128; ++y)
     for (int x = 0; x < 128; ++x) {

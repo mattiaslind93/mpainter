@@ -14,7 +14,7 @@
 #include <QLineEdit>
 #include <QMenu>
 #include <QMouseEvent>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
 #include <QPushButton>
 #include <QTimer>
 #include <QSpinBox>

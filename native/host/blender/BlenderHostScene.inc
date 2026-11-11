@@ -215,14 +215,14 @@ SceneSnapshot BlenderHost::scene_snapshot(bool evaluated_subdivision)
     snapshot.preview_subdivision_levels = s.displacement_preview.material_levels();
     if (gpu_ready) {
       DRW_gpu_context_disable_ex(false);
-      s.surface->makeCurrent();
+      s.restore_surface();
     }
     return snapshot;
   }
   catch (...) {
     if (gpu_ready) {
       DRW_gpu_context_disable_ex(false);
-      s.surface->makeCurrent();
+      s.restore_surface();
     }
     throw;
   }

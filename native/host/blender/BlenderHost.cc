@@ -72,8 +72,14 @@
 #include <limits>
 #include <vector>
 
+#ifdef __APPLE__
+#include "MetalContextOwner.hh"
+#include "MetalRhiViewport.hh"
+#include <QPainter>
+#endif
 #include <epoxy/gl.h>
 #include "QtGpuSurface.hh"
+#include "GpuContextOwner.hh"
 #include <QCoreApplication>
 #include <QJsonArray>
 #include <QOpenGLContext>
@@ -160,7 +166,16 @@ BlenderHost::BlenderHost(const std::string &executable, const std::string &proje
                                    "--factory-startup",
                                    "--disable-autoexec",
                                    "--gpu-backend",
-                                   "opengl"};
+#ifdef __APPLE__
+                                   "metal"
+#else
+                                   "opengl"
+#endif
+  };
+  if (qEnvironmentVariableIntValue("BTS_HOST_THREADS") > 0) {
+    args.push_back("--threads");
+    args.push_back(std::to_string(std::clamp(qEnvironmentVariableIntValue("BTS_HOST_THREADS"), 1, 6)));
+  }
   if (!project.empty()) {
     args.push_back(project);
   }
@@ -276,6 +291,10 @@ void BlenderHost::shutdown()
     GPU_finish();
     DRW_gpu_context_disable_ex(false);
   }
+#ifdef __APPLE__
+  s.metal_rhi.reset();
+  s.metal_frame = {};
+#endif
   WM_exit_ex(s.context, true, false);
   // WM_exit/GPU_exit joins compiler workers first. Their disposal never waits
   // on this GUI thread; retire the released Qt surfaces before dropping root.

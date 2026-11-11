@@ -7,8 +7,8 @@ a test or a diagnostic; they are the harness's interface and are not product set
 The restructure plan (phase 4) moves this register to `native/harness/` once the harness
 leaves the release build.
 
-- Variables: 372
-- Read only outside `native/host` (harness and tests): 279
+- Variables: 375
+- Read only outside `native/host` (harness and tests): 281
 
 | Variable | Read in | Files |
 |---|---|---|
@@ -112,11 +112,12 @@ leaves the release build.
 | `BTS_DISPLAY_POST_DEMO` | native/harness | `GuiFixDemo.cc` |
 | `BTS_DROPDOWN_SCREENSHOT` | native/tests | `theme_test.cc` |
 | `BTS_EDGE_LENGTH_DEMO` | native/harness | `GuiFixDemo.cc` |
-| `BTS_ENVIRONMENT` | native/harness, native/host, native/tests | `LargeMeshBudgetDemo.hh`, `ManyUdimProjectDemo.hh`, `NativeMaterialCaptureDemo.hh`, `NativeMaterialHostQueueDemo.cc` and 14 more |
+| `BTS_ENVIRONMENT` | native/harness, native/host, native/tests | `LargeMeshBudgetDemo.hh`, `ManyUdimProjectDemo.hh`, `NativeMaterialCaptureDemo.hh`, `NativeMaterialHostQueueDemo.cc` and 15 more |
 | `BTS_ESC_CANCEL_TEST` | native/harness | `ViewportHeadlessDemo.cc` |
 | `BTS_EXPORT_DEPTH_DEMO` | native/harness | `DerivedExportDemo.cc` |
 | `BTS_EXPORT_REFERENCE` | native/host | `TextureExport.cc` |
 | `BTS_EXTENSION_DEMO` | native/harness | `AutomationDemo.cc` |
+| `BTS_FILE_DIALOG_IMPORT_TEST` | native/harness | `ViewportHeadlessDemo.cc` |
 | `BTS_FILLED_PATH_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_FILL_ANCHORS` | native/harness, native/host | `ContentAnchorDemo.inc`, `SessionDemoFlags.inc`, `FillAnchorCapture.inc` |
 | `BTS_FILL_CHANNELS_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
@@ -160,6 +161,7 @@ leaves the release build.
 | `BTS_HEIGHT_8K_IMPORT_TEST` | native/harness | `TextureImportCpuDemo.cc` |
 | `BTS_HEIGHT_NEUTRAL_DEMO` | native/harness, native/tests | `GuiFixDemo.cc`, `SessionDemoActions.inc`, `native_height_policy_artist_test.cc` |
 | `BTS_HOSTED_SHADER_WORKERS` | native/host, native/tests | `WorkspaceState.inc`, `BlenderHostDraw.inc`, `GpuLayerPreviewImpl.inc`, `MainViewport.inc` and 5 more |
+| `BTS_HOST_THREADS` | native/host | `BlenderHost.cc` |
 | `BTS_IDLE_DEMO_DIR` | native/harness, native/host | `ViewportIdleDemo.cc`, `PythonConsole.cc` |
 | `BTS_IMAGE_SEQUENCE_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
 | `BTS_INSPECTION_DEMO` | native/harness | `GuiFixDemo.cc`, `SessionDemoActions.inc` |
@@ -191,6 +193,7 @@ leaves the release build.
 | `BTS_MESH_EXPORT_DISPLACED` | native/harness | `MeshExportDemo.cc` |
 | `BTS_MESH_EXPORT_USD` | native/harness | `MeshExportDemo.cc` |
 | `BTS_MESH_GENERATORS` | native/harness | `SessionDemoFlags.inc`, `SessionDemoSequence.inc` |
+| `BTS_METAL_ROUNDTRIP_STABILITY` | native/harness | `SessionDemoSequence.inc` |
 | `BTS_NATIVE_BUMP_CPU_ONLY` | native/tests | `native_bump_capabilities_test.cc` |
 | `BTS_NATIVE_CAPTURE_BASELINE` | native/harness | `NativeMaterialCaptureDemo.hh` |
 | `BTS_NATIVE_CAPTURE_TEST` | native/harness | `NativeMaterialHostQueueDemo.cc` |
@@ -227,7 +230,7 @@ leaves the release build.
 | `BTS_NATIVE_MATERIAL_CASES` | native/harness, native/host | `NativeMaterialHostQueueDemo.cc`, `NativeMaterialInspectionDemo.cc`, `NativeMaterialGpuPrototype.cc` |
 | `BTS_NATIVE_MATERIAL_DECODE_IMAGES` | native/host | `NativeMaterialGpuPrototype.cc` |
 | `BTS_NATIVE_MATERIAL_EXTERNAL_IMAGES` | native/host | `NativeMaterialGpuPrototype.cc` |
-| `BTS_NATIVE_MATERIAL_GPU_TEST` | native/harness, native/host | `NativeMaterialCaptureDemo.hh`, `NativeMaterialHostQueueDemo.cc`, `NativeMaterialMultiObjectDemo.hh`, `NativeMaterialThumbnailTest.hh` and 4 more |
+| `BTS_NATIVE_MATERIAL_GPU_TEST` | native/harness, native/host | `NativeMaterialCaptureDemo.hh`, `NativeMaterialHostQueueDemo.cc`, `NativeMaterialMultiObjectDemo.hh`, `NativeMaterialThumbnailTest.hh` and 5 more |
 | `BTS_NATIVE_MATERIAL_HOST_QUEUE_TEST` | native/harness | `ViewportHeadlessDemo.cc` |
 | `BTS_NATIVE_MULTI_OBJECT_TEST` | native/harness | `NativeMaterialHostQueueDemo.cc` |
 | `BTS_NATIVE_PREPARATION_TRACE` | native/host | `NativeMaterialResource.cc`, `NativeMaterialGpuPreparation.hh` |

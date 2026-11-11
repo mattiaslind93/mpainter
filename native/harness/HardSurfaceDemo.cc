@@ -13,7 +13,7 @@
 #include <QJsonDocument>
 #include <QLineEdit>
 #include <QMainWindow>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QTimer>
@@ -58,8 +58,8 @@ class Demo final : public QObject {
     file.write(QJsonDocument(QJsonObject{{"pid", QCoreApplication::applicationPid()},
                                          {"captures", captures}})
                    .toJson());
-    window->findChild<QOpenGLWidget *>()->grabFramebuffer().save(directory + "/" + name +
-                                                                 "-viewport.png");
+    window->findChild<bts::ViewportWidget *>()->grabFramebuffer().save(directory + "/" + name +
+                                                                       "-viewport.png");
     window->grab().save(directory + "/" + name + "-workspace.png");
   }
   void create(bool hard, bool authored = false, bool recompute = false, bool cancel = false)
@@ -101,7 +101,7 @@ class Demo final : public QObject {
   {
     if (++ticks > 1000)
       qFatal("Hard surface demo timed out");
-    auto *view = window->findChild<QOpenGLWidget *>();
+    auto *view = window->findChild<bts::ViewportWidget *>();
     if (!view || !view->isValid() || busy())
       return;
     switch (phase++) {

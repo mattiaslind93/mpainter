@@ -424,10 +424,16 @@ FileDialog::FileDialog(QWidget *parent,
 }
 FileDialog::~FileDialog()
 {
-  cancel_browser_previews(this);
+  detach_browser_controls(this);
   if (!state_published_)
     publish_state();
   release_directory_listing();
+}
+bool FileDialog::event(QEvent *event)
+{
+  if (event && event->type() == QEvent::DeferredDelete)
+    detach_browser_controls(this);
+  return QFileDialog::event(event);
 }
 void FileDialog::publish_state()
 {

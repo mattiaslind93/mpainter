@@ -116,7 +116,9 @@ class MeshMapStorage {
     if (msync(mapping_, bytes, MS_SYNC))
       throw std::runtime_error("Cannot sync baked map cache");
     madvise(mapping_, bytes, MADV_DONTNEED);
+#  if defined(__linux__)
     posix_fadvise(file_.handle(), 0, bytes, POSIX_FADV_DONTNEED);
+#  endif
 #endif
   }
   bool disk_backed() const

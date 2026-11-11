@@ -10,7 +10,7 @@
 #include <QJsonDocument>
 #include <QLineEdit>
 #include <QMainWindow>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QSlider>
@@ -50,7 +50,7 @@ class Demo : public QObject {
     if (++ticks > 1200)
       qFatal("Automation GUI timed out: %s",
              qPrintable(get<QPlainTextEdit>("pythonOutput")->toPlainText()));
-    const auto *viewport = window->findChild<QOpenGLWidget *>();
+    const auto *viewport = window->findChild<bts::ViewportWidget *>();
     if (!viewport->isValid() && !viewport->property("headlessGpuReady").toBool())
       return;
     if (phase > 2 && busy())
@@ -170,9 +170,9 @@ def start_plugin():
         else {
           command(
               "bts.project.save()\n(root / 'automation.json').write_text(json.dumps({'pid': os.getpid(), 'api_version': list(bts.api_version), 'project': bts.project.status(), 'sets': bts.textureset.all_texture_sets(), 'owner_thread_rejected': True, 'busy_save_rejected': blocked, 'copy_preserves_path': True, 'plugin_start': builtins._bts_probe_start, 'plugin_close_before_shutdown': builtins._bts_probe_close}, indent=2))\nprint('BTS_AUTOMATION_VERIFIED')");
-          capture_demo_window(window, window->findChild<QOpenGLWidget *>())
+          capture_demo_window(window, window->findChild<bts::ViewportWidget *>())
               .save(directory + "/console-project.png");
-          capture_viewport_framebuffer(window->findChild<QOpenGLWidget *>())
+          capture_viewport_framebuffer(window->findChild<bts::ViewportWidget *>())
               .save(directory + "/viewport.png");
           get<QDockWidget>("pythonConsoleDock")->close();
           if (get<QDockWidget>("pythonConsoleDock")->isVisible())
@@ -217,9 +217,9 @@ def start_plugin():
               "assert received_events\nfor index, event in enumerate(received_events):\n    kind, data = event['type'], event['data']\n    if kind in ('ProjectCreated', 'ProjectOpened'):\n        assert any(later['type'] == 'ProjectEditionEntered' and later['data']['project_id'] == data['project_id'] for later in received_events[index+1:])\n    if kind in ('ExportTexturesAboutToStart', 'BakingProcessAboutToStart'):\n        ended = 'ExportTexturesEnded' if kind.startswith('Export') else 'BakingProcessEnded'\n        assert any(later['type'] == ended and later['data']['id'] == data['id'] for later in received_events[index+1:])\n    if kind == 'BakingProcessProgress': assert 0 <= data['progress'] <= 1\nassert any(event['type'] == 'BusyStatusChanged' and event['data']['busy'] for event in received_events)\nassert any(event['type'] == 'BusyStatusChanged' and not event['data']['busy'] for event in received_events)\nassert getattr(builtins, '_bts_plugin_opens', 0) == 1\n(root / 'extensions.json').write_text(json.dumps({'pid': os.getpid(), 'events': received_events, 'plugin_ui_clicks': builtins._bts_ui_clicks, 'plugin_open_callbacks': builtins._bts_plugin_opens, 'reload_unique': True, 'ui_keeps_camera': True, 'deleted_handle_rejected': not old_dock.is_valid()}, indent=2))");
         command(
             "bts.project.save()\n(root / 'automation.json').write_text(json.dumps({'pid': os.getpid(), 'api_version': list(bts.api_version), 'project': bts.project.status(), 'sets': bts.textureset.all_texture_sets(), 'owner_thread_rejected': True, 'busy_save_rejected': blocked, 'copy_preserves_path': True, 'plugin_start': builtins._bts_probe_start, 'plugin_close_before_shutdown': builtins._bts_probe_close}, indent=2))\nprint('BTS_AUTOMATION_VERIFIED')");
-        capture_demo_window(window, window->findChild<QOpenGLWidget *>())
+        capture_demo_window(window, window->findChild<bts::ViewportWidget *>())
             .save(directory + "/console-project.png");
-        capture_viewport_framebuffer(window->findChild<QOpenGLWidget *>())
+        capture_viewport_framebuffer(window->findChild<bts::ViewportWidget *>())
             .save(directory + "/viewport.png");
         get<QDockWidget>("pythonConsoleDock")->close();
         if (get<QDockWidget>("pythonConsoleDock")->isVisible())

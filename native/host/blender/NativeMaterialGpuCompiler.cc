@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "NativeMaterialDependencies.hh"
+#include "GpuGeneratedSources.hh"
 #include "BLI_listbase.h"
 #include "NativeMaterialGpuCompiler.hh"
 #include "NativeMaterialMapping.hh"
@@ -119,6 +120,8 @@ void codegen_impl(void *data, GPUMaterial *material, GPUCodegenOutput *output)
   if (!compilation.error.empty())
     throw std::runtime_error(compilation.error);
   auto &info = *reinterpret_cast<ShaderCreateInfo *>(output->create_info);
+  // Generated source text is not scanned by Blender for built-in usage.
+  info.builtins_ |= BuiltinBits::GLOBAL_INVOCATION_ID;
   info.auto_resource_location(true)
       .local_group_size(8, 8)
       .image(0,
@@ -178,8 +181,9 @@ void codegen_impl(void *data, GPUMaterial *material, GPUCodegenOutput *output)
        {&info.batch_resources_, &info.pass_resources_, &info.geometry_resources_})
     for (auto &resource : *resources)
       resource.info_name = "bts_native_nodetree";
-  std::string types = "struct Closure {float unused;};\n#define CLOSURE_DEFAULT Closure(0.0)\n" +
-                      info.typedef_source_generated;
+  std::string types =
+      "struct Closure {float unused;};\nClosure bts_closure_default(){Closure value;value.unused=0.0;return value;}\n#define CLOSURE_DEFAULT bts_closure_default()\n" +
+      info.typedef_source_generated;
   if (!attributes.empty())
     types += "struct BtsAttributes {\n" + attributes + "} var_attrs;\n";
   // Only explicit parameter attributes and diagnostic fixture coordinates are accepted.
@@ -211,9 +215,9 @@ bool bts_context(ivec2 p){
  bts_object_location=object_to_world[3].xyz;
  bts_object=(world_to_object*vec4(bts_position,1)).xyz;
  bts_generated=(bts_object-bounds_min)/max(bounds_max-bounds_min,vec3(1e-20));
- bts_object_normal=normalize(transpose(mat3(object_to_world))*bts_normal);
+ bts_object_normal=normalize(transpose(mat3(object_to_world[0].xyz,object_to_world[1].xyz,object_to_world[2].xyz))*bts_normal);
  bts_mesh_ao=native_has_ao!=0?textureLod(native_mesh_ao,(vec2(p)+.5)/vec2(imageSize(target)),0.0).r:1.0;
- bts_displacement_scale=1.0/max(length(mat3(world_to_object)*bts_normal),1e-20);
+ bts_displacement_scale=1.0/max(length(mat3(world_to_object[0].xyz,world_to_object[1].xyz,world_to_object[2].xyz)*bts_normal),1e-20);
  bts_real_uv=bts_uv;bts_real_position=bts_position;bts_real_normal=bts_normal;bts_real_object=bts_object;bts_real_generated=bts_generated;bts_real_object_normal=bts_object_normal;
  return valid;
 }
@@ -287,6 +291,7 @@ void evaluate(){
   info.compute_source("gpu_shader_compositor_main.glsl");
   info.generated_sources.append(
       {"gpu_shader_compositor_eval.glsl", {"gpu_shader_compositor_store.glsl"}, evaluate});
+  preprocess_hosted_sources(info);
   static_cast<NativeMaterialCompilation *>(data)->generated = types + generated + evaluate;
 }
 void codegen(void *data, GPUMaterial *material, GPUCodegenOutput *output)
@@ -302,7 +307,8 @@ void codegen(void *data, GPUMaterial *material, GPUCodegenOutput *output)
     auto &info = *reinterpret_cast<ShaderCreateInfo *>(output->create_info);
     ShaderCreateInfo failed("mPainter unsupported native source");
     failed.local_group_size(1, 1).compute_source("gpu_shader_compositor_main.glsl");
-    failed.generated_sources.append({"gpu_shader_compositor_eval.glsl", {}, "void evaluate(){}"});
+    failed.generated_sources.append(
+        {"gpu_shader_compositor_eval.glsl", {}, "void evaluate(){}\n"});
     info = std::move(failed);
   }
 }

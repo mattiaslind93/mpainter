@@ -23,7 +23,8 @@ for name,url,digest in assets:
     target=a.cache/name
     if not target.exists():urllib.request.urlretrieve(url,target)
     if hashlib.sha256(target.read_bytes()).hexdigest()!=digest:raise SystemExit('Checksum mismatch: '+name)
-    target.chmod(0o755)
+    # The verified cache may be shared and owned by another user; only fix a missing exec bit.
+    if not os.access(target,os.X_OK):target.chmod(0o755)
 for name,target in [('AppRun','mpainter'),('.DirIcon','se.mattiaslind.mpainter.png')]:
     path=a.appdir/name
     if not path.exists():path.symlink_to(target)
@@ -47,11 +48,12 @@ icons=a.appdir/'usr/share/icons/hicolor/scalable/apps';icons.mkdir(parents=True,
 copy_icon(a.appdir/'branding/mpainter.svg',icons/'se.mattiaslind.mpainter.svg')
 binary=a.appdir/'usr/bin/mpainter';binary.parent.mkdir(parents=True,exist_ok=True)
 if not binary.exists():binary.symlink_to('../../mpainter')
-env=dict(os.environ,ARCH='x86_64',TMPDIR=str(a.cache.absolute()),XDG_CACHE_HOME=str(a.cache.absolute()))
 # Build beside the destination, then replace it atomically. A FUSE runtime can
 # still hold the previous AppImage open after its application window closes.
 # Failed builds must leave the last usable artifact intact.
 with tempfile.TemporaryDirectory(prefix='.mpainter-appimage-',dir=a.output.parent) as temp:
+    scratch=pathlib.Path(temp)/'tmp';scratch.mkdir()
+    env=dict(os.environ,ARCH='x86_64',TMPDIR=str(scratch),XDG_CACHE_HOME=str(scratch))
     candidate=pathlib.Path(temp)/a.output.name
     subprocess.run([str((a.cache/assets[0][0]).absolute()),'--appimage-extract-and-run','--runtime-file',str((a.cache/assets[1][0]).absolute()),'--comp','zstd','--mksquashfs-opt','-Xcompression-level','--mksquashfs-opt','5','--mksquashfs-opt','-processors','--mksquashfs-opt','2',str(a.appdir.absolute()),str(candidate.absolute())],env=env,check=True)
     candidate.chmod(0o755)

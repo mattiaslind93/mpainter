@@ -3,6 +3,7 @@
 #include "NativeMaterialPreview.hh"
 #include "BakeSource.hh"
 #pragma once
+#include <QImage>
 #include "ProjectFileSafety.hh"
 #include "NativeMaterialMappingValidation.hh"
 
@@ -67,6 +68,8 @@ class BlenderHost {
   void initialize_empty_workspace_working_space();
   void release_bake_scratch();
   void with_gpu(const std::function<void()> &);
+  void initialize_gpu_metal();
+  QImage viewport_image() const;
   void initialize_gpu(QOpenGLWidget &surface);
   void initialize_gpu(QOpenGLContext &, QSurface &, unsigned framebuffer);
   void initialize_gpu(QOpenGLContext &, QSurface &, std::function<unsigned()> framebuffer);

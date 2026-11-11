@@ -443,6 +443,22 @@ void NativeMaterialGpuProgram::dispatch(gpu::Texture *target,
     GPU_shader_uniform_mat3(shader,
                             "native_color_to_aces",
                             reinterpret_cast<const float (*)[3]>(context.color_to_aces.data()));
+  if (qEnvironmentVariableIsSet("BTS_NATIVE_MATERIAL_GPU_TEST")) {
+    static int count = 0;
+    if (count++ < 12)
+      std::fprintf(
+          stderr,
+          "BTS_NATIVE_CONTEXT_BINDINGS params=%d objects=%d projection=%d surface=%d region=%d stride=%d values=%d,%d,%d\n",
+          GPU_shader_get_ssbo_binding(shader, "native_parameters"),
+          object_binding,
+          projection_binding,
+          GPU_shader_get_sampler_binding(shader, "native_surface"),
+          GPU_shader_get_uniform(shader, "native_region_size"),
+          GPU_shader_get_uniform(shader, "native_surface_stride"),
+          region[2],
+          region[3],
+          context.surface_stride);
+  }
   GPU_texture_image_bind(target, 0);
   GPU_compute_dispatch(shader, (region[2] + 7) / 8, (region[3] + 7) / 8, 1);
   GPU_memory_barrier(GPU_BARRIER_TEXTURE_FETCH | GPU_BARRIER_SHADER_IMAGE_ACCESS |

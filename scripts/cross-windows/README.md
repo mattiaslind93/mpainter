@@ -1,7 +1,7 @@
 # Experimental Windows x64 build from Linux
 
 This is a local clang-cl/lld cross-build experiment, not a verified Windows release recipe.
-It targets mPainter 0.9.0-alpha using the Microsoft C++ ABI, the pinned Blender 5.2
+It targets mPainter 0.9.2 using the Microsoft C++ ABI, the pinned Blender 5.2
 Windows libraries, and Qt 6.8.3 `win64_msvc2022_64`. See `~/mpainter-work/REPORT-win.md`
 and `~/mpainter-work/REPORT-win2.md` for the actual outcomes and logs. No script pushes, publishes, or uploads files.
 
@@ -127,14 +127,23 @@ on a linked application. Failed checks stop the script.
 After a completed build and install:
 
 ```sh
+export MP_WIN_DIST="$MP_WIN_WORK/dist/candidates/$(date +%F)"
 python3 scripts/cross-windows/package.py
-bash scripts/cross-windows/smoke.sh "$MP_WIN_WORK/dist/mPainter-0.9.0-alpha-windows-x64"
-bash scripts/cross-windows/capture.sh "$MP_WIN_WORK/dist/mPainter-0.9.0-alpha-windows-x64"
+stage="$MP_WIN_DIST/mPainter-$(sed -n 's/^version = "\(.*\)"$/\1/p' pyproject.toml)-windows-x64"
+bash scripts/cross-windows/smoke.sh "$stage"
+bash scripts/cross-windows/capture.sh "$stage"
+python3 scripts/license-gate.py "$stage" --expect-commit "$(git rev-parse HEAD)"
 ```
 
-`package.py` stages runtime resources, Qt plugins, release CRT and dependency
-licenses, checks required static DLL closure (with explicit optional GPU imports), and writes the ZIP plus its
-`.zip.sha256` file locally. It refuses to overwrite existing outputs. `smoke.sh`
+`package.py` stages runtime resources, the material library, Qt plugins
+(including the Schannel TLS backend `tls/qschannelbackend.dll`), release CRT,
+dependency licenses and `BUILD-INFO.txt`, checks required static DLL closure
+(with explicit optional GPU imports), and writes the ZIP plus its
+`.zip.sha256` file locally. It refuses to overwrite existing outputs and to
+write into the `dist/` root. It also refuses a runtime built from another
+commit than this checkout's HEAD (recorded in `build/windows/source-head.txt`)
+unless `MP_WIN_PACKAGING_PROOF=1` is set, which names the stage
+`...-windows-x64-packaging-proof` and labels BUILD-INFO.txt as a proof. `smoke.sh`
 checks static imports, `--version` and `--cpu-workspace-shutdown-test`; there is
 no application `--self-test` option. `capture.sh` attempts the main window using
 Wine's Windows Qt plugin inside private Xvfb and software OpenGL, saving

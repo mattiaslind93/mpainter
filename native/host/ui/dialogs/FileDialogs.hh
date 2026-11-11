@@ -52,6 +52,7 @@ class FileDialog : public QFileDialog {
  private:
   QListWidget *pinned_ = nullptr, *recent_ = nullptr;
   bool state_published_ = false;
+  bool event(QEvent *event) override;
   void showEvent(QShowEvent *event) override;
   void hideEvent(QHideEvent *event) override;
   void publish_state();

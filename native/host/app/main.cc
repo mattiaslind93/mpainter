@@ -242,7 +242,8 @@
 #include <QMatrix4x4>
 #include <QMouseEvent>
 #include <QOpenGLContext>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
+#include "ViewportDemoCapture.hh"
 #include <QOffscreenSurface>
 #include <QOpenGLFramebufferObject>
 #include <QOpenGLPaintDevice>
@@ -304,10 +305,13 @@ int main(int argc, char **argv)
   std::setvbuf(stderr, nullptr, _IOLBF, BUFSIZ);
 #endif
   const bool cpu_only_test = bts::cpu_test_arguments(argc, argv);
+#ifndef __APPLE__
   if (!cpu_only_test)
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+#endif
   QCoreApplication::setAttribute(Qt::AA_CompressHighFrequencyEvents);
   QCoreApplication::setAttribute(Qt::AA_CompressTabletEvents);
+#ifndef __APPLE__
   QSurfaceFormat format;
   format.setRenderableType(QSurfaceFormat::OpenGL);
   format.setVersion(4, 3);
@@ -319,11 +323,21 @@ int main(int argc, char **argv)
   format.setAlphaBufferSize(8);
   format.setDepthBufferSize(24);
   QSurfaceFormat::setDefaultFormat(format);
+#endif
   if (!cpu_only_test)
     bts::tablet::configure_xwayland_coordinates();
   bts::initialize_numeric_locale();
   bts::configure_portable_fonts(argv[0]);
   bts::ProfileApplication app(argc, argv);
+  // Offscreen acceptance must never touch native macOS preferences.
+  if (QGuiApplication::platformName() == "offscreen") {
+    const auto config = qEnvironmentVariable("XDG_CONFIG_HOME");
+    if (config.isEmpty())
+      qFatal("Offscreen editor requires an isolated XDG_CONFIG_HOME");
+    QSettings::setDefaultFormat(QSettings::IniFormat);
+    QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, config);
+    QSettings::setPath(QSettings::IniFormat, QSettings::SystemScope, config);
+  }
   // Qt adopts the user's locale. Blender shader code generation requires decimal dots.
   std::setlocale(LC_NUMERIC, "C");
   const bool numeric_locale_invalid = std::strcmp(std::localeconv()->decimal_point, ".") != 0;

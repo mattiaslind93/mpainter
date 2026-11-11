@@ -10,7 +10,9 @@
 #include "GPU_state.hh"
 #include "GPU_storage_buffer.hh"
 #include "gpu_shader_create_info.hh"
-#include <epoxy/gl.h>
+#ifndef __APPLE__
+#  include <epoxy/gl.h>
+#endif
 #include <memory>
 #include <bit>
 #include <map>
@@ -86,8 +88,11 @@ inline std::vector<float> gpu_bake_cosine_occlusion(
   if (tris.size() > GPU_max_storage_buffer_size() / sizeof(tris[0]))
     throw std::length_error("GPU bake triangle/filter buffer exceeds driver limit");
   gpu::shader::ShaderCreateInfo info("pyGPU_Shader");
+  // Match the 32-byte CPU Node: Metal float3 occupies 16 bytes, packed_float3
+  // occupies 12. Blender aliases packed_float3 to float3/vec3 on GLSL backends.
+  // BakeRayState is uint+float (8 bytes). PointVertex is vec4/uvec4 only.
   info.typedef_source_generated =
-      "struct BakeNode {vec3 lower;uint escape;vec3 upper;uint triangle;};\nstruct BakeRayState {uint index;float distance;};\n";
+      "struct BakeNode {packed_float3 lower;uint escape;packed_float3 upper;uint triangle;};\nstruct BakeRayState {uint index;float distance;};\n";
   info.local_group_size(64, 1)
       .storage_buf(0, gpu::shader::Qualifier::read, "BakeNode", "nodes[]")
       .storage_buf(1, gpu::shader::Qualifier::read, "vec4", "tris[]")
@@ -100,12 +105,18 @@ inline std::vector<float> gpu_bake_cosine_occlusion(
       .push_constant(gpu::shader::Type::int_t, "reset_rays");
   info.compute_source_generated =
       filter ?
-          R"GLSL(
+          (GPU_backend_get_type() == GPU_BACKEND_METAL ? R"GLSL(
+#define BAKE_PRECISE precise
+#define BAKE_INVERSE(x) (1.0/(x))
+float bake_dot(vec3 a,vec3 b){precise float value=(a.x*b.x+a.y*b.y)+a.z*b.z;return value;}
+vec3 bake_cross(vec3 a,vec3 b){precise vec3 value=vec3(a.y*b.z-a.z*b.y,a.z*b.x-a.x*b.z,a.x*b.y-a.y*b.x);return value;}
+)GLSL" :
+                                                         R"GLSL(
 #define BAKE_PRECISE precise
 #define BAKE_INVERSE(x) float(double(1.0)/double(x))
 float bake_dot(vec3 a,vec3 b){precise float value=(a.x*b.x+a.y*b.y)+a.z*b.z;return value;}
 vec3 bake_cross(vec3 a,vec3 b){precise vec3 value=vec3(a.y*b.z-a.z*b.y,a.z*b.x-a.x*b.z,a.x*b.y-a.y*b.x);return value;}
-)GLSL" :
+)GLSL") :
           "#define BAKE_PRECISE\n#define BAKE_INVERSE(x) (1.0/(x))\n#define bake_dot dot\n#define bake_cross cross\n";
   info.compute_source_generated += R"GLSL(
 bool bounds_hit(BakeNode node,vec3 origin,vec3 direction,float distance){
@@ -246,6 +257,11 @@ void main(){
         GPU_storagebuf_unbind(buffer);
       GPU_shader_unbind();
       GPU_storagebuf_sync_to_host(counter_buf.get());
+#ifdef __APPLE__
+      // Metal owns its command buffers; a GL fence cannot synchronize this backend.
+      // This synchronous bake already waits for every traversal slice on Linux.
+      GPU_finish();
+#else
       GLsync fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
       if (!fence)
         throw std::runtime_error("Bake BVH fence failed");
@@ -253,6 +269,7 @@ void main(){
       glDeleteSync(fence);
       if (state != GL_ALREADY_SIGNALED && state != GL_CONDITION_SATISFIED)
         throw std::runtime_error("Bake BVH traversal slice fence timed out");
+#endif
       GPU_storagebuf_read(counter_buf.get(), unfinished.data());
       reset = false;
       if (statistics)

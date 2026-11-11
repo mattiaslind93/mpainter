@@ -87,7 +87,7 @@
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMouseEvent>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
 #include <QPushButton>
 #include <QSlider>
 #include <QTimer>
@@ -158,7 +158,7 @@ class Demo final : public QObject {
   {
     mouse(QEvent::MouseMove, {-1000, -1000}, Qt::NoButton, Qt::NoButton);
     viewport->repaint();
-    if (auto *gl = qobject_cast<QOpenGLWidget *>(viewport))
+    if (auto *gl = qobject_cast<bts::ViewportWidget *>(viewport))
       capture_viewport_framebuffer(gl).save(directory + "/" + name + "-framebuffer.png");
     auto data = state();
     auto *sets = workspace->findChild<QListWidget *>("textureSets");
@@ -334,7 +334,7 @@ class Demo final : public QObject {
     timer.stop();
     if (!performance)
       capture("painted");
-    auto *gl = qobject_cast<QOpenGLWidget *>(viewport);
+    auto *gl = qobject_cast<bts::ViewportWidget *>(viewport);
     if (!gl)
       qFatal("GUI viewport is not a Qt OpenGL surface");
     const auto image = capture_viewport_framebuffer(gl);

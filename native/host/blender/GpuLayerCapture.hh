@@ -7,7 +7,7 @@
 #include "GPU_state.hh"
 #include "GPU_storage_buffer.hh"
 #include "gpu_shader_create_info.hh"
-#include <epoxy/gl.h>
+#include "GpuReadbackFence.hh"
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -18,9 +18,10 @@ class GpuLayerCapture {
       std::unique_ptr<blender::gpu::StorageBuf, decltype(&blender::GPU_storagebuf_free)>;
   Shader shader_{nullptr, blender::GPU_shader_free};
   Buffer buffer_{nullptr, blender::GPU_storagebuf_free};
-  GLsync fence_ = nullptr;
+  GpuReadbackFence fence_;
   std::uint64_t ticket_ = 0;
   int count_ = 0;
+  std::shared_ptr<std::vector<std::array<float, 4>>> pending_pixels_;
   std::optional<LayerCaptureResult> result_;
 
  public:
@@ -30,14 +31,10 @@ class GpuLayerCapture {
     std::array<float, 3> completion_base{};
     int completion = 0;
   };
-  ~GpuLayerCapture()
-  {
-    if (fence_)
-      glDeleteSync(fence_);
-  }
+
   bool pending() const
   {
-    return fence_ != nullptr;
+    return bool(fence_);
   }
   std::optional<LayerCaptureResult> get() const
   {
@@ -115,11 +112,7 @@ class GpuLayerCapture {
     GPU_storagebuf_unbind(buffer_.get());
     GPU_texture_unbind_all();
     GPU_shader_unbind();
-    GPU_storagebuf_sync_to_host(buffer_.get());
-    fence_ = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-    if (!fence_)
-      throw std::runtime_error("Layer capture fence failed");
-    glFlush();
+    fence_.submit(buffer_.get());
     ticket_ = ticket;
     count_ = r.width * r.height;
   }
@@ -128,17 +121,12 @@ class GpuLayerCapture {
     using namespace blender;
     if (!fence_)
       return;
-    const auto state = glClientWaitSync(fence_, 0, 0);
-    if (state == GL_WAIT_FAILED)
-      throw std::runtime_error("Layer capture fence failed");
-    if (state != GL_ALREADY_SIGNALED && state != GL_CONDITION_SATISFIED)
+    if (!pending_pixels_)
+      pending_pixels_ = std::make_shared<std::vector<std::array<float, 4>>>(256 * 256);
+    if (!fence_.read(buffer_.get(), pending_pixels_->data()))
       return;
-    glDeleteSync(fence_);
-    fence_ = nullptr;
-    auto pixels = std::make_shared<std::vector<std::array<float, 4>>>(256 * 256);
-    GPU_storagebuf_read(buffer_.get(), pixels->data());
-    pixels->resize(count_);
-    result_ = LayerCaptureResult{ticket_, true, std::move(pixels)};
+    pending_pixels_->resize(count_);
+    result_ = LayerCaptureResult{ticket_, true, std::move(pending_pixels_)};
   }
 };
 }  // namespace bts

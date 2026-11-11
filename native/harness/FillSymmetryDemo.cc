@@ -12,7 +12,7 @@
 #include <QJsonDocument>
 #include <QLineEdit>
 #include <QMainWindow>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QScrollArea>
@@ -71,8 +71,8 @@ class Demo final : public QObject {
     proof.write(QJsonDocument(QJsonObject{{"pid", QCoreApplication::applicationPid()},
                                           {"captures", captures}})
                     .toJson());
-    window->findChild<QOpenGLWidget *>()->grabFramebuffer().save(directory + "/" + name +
-                                                                 "-viewport.png");
+    window->findChild<bts::ViewportWidget *>()->grabFramebuffer().save(directory + "/" + name +
+                                                                       "-viewport.png");
     if (QString(name) == "mirror" || QString(name) == "radial")
       get<QScrollArea>("propertiesScroll")->ensureWidgetVisible(get<QWidget>("fillSymmetryPanel"));
     window->grab().save(directory + "/" + name + "-workspace.png");
@@ -81,7 +81,7 @@ class Demo final : public QObject {
   {
     if (++ticks > 1400)
       qFatal("Fill symmetry demo timed out");
-    auto *view = window->findChild<QOpenGLWidget *>();
+    auto *view = window->findChild<bts::ViewportWidget *>();
     if (!view || !view->isValid() || (phase != 1 && busy()))
       return;
     switch (phase++) {

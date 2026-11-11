@@ -15,7 +15,7 @@
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMainWindow>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QSpinBox>
@@ -67,7 +67,8 @@ class Demo final : public QObject {
     out.write(QJsonDocument(
                   QJsonObject{{"pid", QCoreApplication::applicationPid()}, {"captures", captures}})
                   .toJson());
-    window->findChild<QOpenGLWidget *>()->grabFramebuffer().save(directory + "/" + name + ".png");
+    window->findChild<bts::ViewportWidget *>()->grabFramebuffer().save(directory + "/" + name +
+                                                                       ".png");
   }
 
   void camera(int index)
@@ -91,7 +92,7 @@ class Demo final : public QObject {
   {
     if (++ticks > 18000)
       qFatal("Residency demo timed out phase=%d", phase);
-    auto *v = window->findChild<QOpenGLWidget *>();
+    auto *v = window->findChild<bts::ViewportWidget *>();
     if (!v || !v->isValid() || (phase != 1 && busy()))
       return;
     if (qEnvironmentVariableIsSet("BTS_RESIDENCY_RESTART")) {

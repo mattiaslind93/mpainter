@@ -1,4 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+option(BTS_MACOS_METAL_PROBE "Build the headless macOS Metal diagnostic instead of the editor" OFF)
+option(BTS_MACOS_METAL_EDITOR "Build the Metal editor alongside diagnostics" OFF)
+if(BTS_MACOS_METAL_PROBE)
+  include("${BTS_HOST_SOURCE_DIR}/blender/macos/CMakeLists.txt")
+  if(NOT BTS_MACOS_METAL_EDITOR)
+    return()
+  endif()
+endif()
+
 find_package(Qt6 6.8.3 EXACT REQUIRED COMPONENTS Widgets OpenGLWidgets Network)
 find_package(assimp CONFIG REQUIRED)
 
@@ -229,6 +238,21 @@ add_executable(bts-host ${BTS_CREATOR_SOURCES}
   ${BTS_HOST_SOURCE_DIR}/viewport/UvView.cc
   ${BTS_HOST_SOURCE_DIR}/viewport/UvView.hh
 )
+if(APPLE)
+  get_target_property(_host_sources bts-host SOURCES)
+  list(REMOVE_ITEM _host_sources ${BTS_HOST_SOURCE_DIR}/blender/QtSharedContext.cc)
+  set_property(TARGET bts-host PROPERTY SOURCES "${_host_sources}")
+  qt6_wrap_cpp(_viewport_moc ${BTS_HOST_SOURCE_DIR}/viewport/ViewportWidget.hh OPTIONS -D__APPLE__)
+  target_sources(bts-host PRIVATE ${_viewport_moc}
+    ${BTS_HOST_SOURCE_DIR}/blender/macos/MetalContextOwner.mm
+    ${BTS_HOST_SOURCE_DIR}/blender/macos/MetalSharedContext.mm
+    ${BTS_HOST_SOURCE_DIR}/blender/macos/MetalRhiViewport.mm)
+  target_include_directories(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/blender/macos
+    ${CMAKE_SOURCE_DIR}/source/blender/gpu/metal)
+  target_compile_options(bts-host PRIVATE -mmacosx-version-min=12.0)
+  target_link_options(bts-host PRIVATE -mmacosx-version-min=12.0
+    "LINKER:-force_load,${FREETYPE_LIBRARY_RELEASE}" "LINKER:-unexported_symbol,_FT_*")
+endif()
 set_source_files_properties(${BTS_HOST_SOURCE_DIR}/blender/BlendAssetLibrary.cc PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/source/blender/asset_system")
 # Immutable geometry owner captures real ObjectInfos using stock draw resource sync.
 set_property(SOURCE
@@ -260,6 +284,9 @@ target_compile_features(bts-host PRIVATE cxx_std_20)
 add_subdirectory(${BTS_HOST_SOURCE_DIR}/../spsm ${CMAKE_CURRENT_BINARY_DIR}/spsm-reader)
 add_subdirectory(${BTS_HOST_SOURCE_DIR}/../spsm/semantic ${CMAKE_CURRENT_BINARY_DIR}/spsm-semantic)
 add_subdirectory(${BTS_HOST_SOURCE_DIR}/../spsm/bitmaps ${CMAKE_CURRENT_BINARY_DIR}/spsm-bitmaps)
+if(LZ4_INCLUDE_DIR)
+  set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/../tests/spsm_bitmap_lowering_test.cc APPEND PROPERTY INCLUDE_DIRECTORIES "${LZ4_INCLUDE_DIR}")
+endif()
 target_sources(bts-host PRIVATE
   ${BTS_HOST_SOURCE_DIR}/spsm-import/SpsmMaterialImport.cc
   ${BTS_HOST_SOURCE_DIR}/blender/SpsmBitmapTexture.cc

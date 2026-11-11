@@ -16,7 +16,7 @@
 #include <QLabel>
 #include <QListWidget>
 #include <QMouseEvent>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
 #include <QPushButton>
 #include <QSpinBox>
 #include <QTabWidget>

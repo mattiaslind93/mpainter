@@ -108,8 +108,8 @@
   queue.cancel("queued-a");
   require(!queue.pending() && library.contains("queued-a"),
           "Cancelled native preparation removed an existing source");
-  const auto previous_revision = library.revision("prepared-source"),
-             previous_resources = library.statistics().resources;
+  const auto previous_revision = library.revision("prepared-source");
+  const auto previous_resources = library.statistics().resources;
   {
     NativeMaterialGpuPreparation cancelled(
         library, "prepared-source", "cancelled-replacement", graph);

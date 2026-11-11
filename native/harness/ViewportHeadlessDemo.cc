@@ -47,6 +47,7 @@
 #include "../tests/HostedGpuPassReadinessTest.hh"
 #include "../tests/HostedEeveeGeneratedSourceTest.hh"
 #include "../tests/HostedEeveeImageLifetimeTest.hh"
+#include "../tests/FileDialogImportTest.hh"
 namespace bts {
 #if defined(BTS_MATERIAL_LAYER_SOURCE_GPU_TEST)
 int run_material_layering_sources_gpu_test(BlenderHost &, const QString &, const QString &);
@@ -188,6 +189,20 @@ int run_viewport_headless_demo(BlenderHost &host, const QString &directory, cons
   if (qEnvironmentVariableIsSet("BTS_ESC_CANCEL_TEST"))
     return run_mesh_bake_cancel_test(directory);
   QDir().mkpath(directory);
+#ifdef __APPLE__
+  struct Close {
+    BlenderHost &host;
+    ~Close()
+    {
+      host.shutdown();
+    }
+  } close{host};
+  host.initialize_gpu_metal();
+  const auto make_current = [] {};
+  if (qEnvironmentVariableIsSet("BTS_FILE_DIALOG_IMPORT_TEST"))
+    return file_dialog_import_test::run(
+        host, directory, qEnvironmentVariable("BTS_FILE_DIALOG_IMPORT_TEST"));
+#else
   QOpenGLContext context;
   context.setFormat(QSurfaceFormat::defaultFormat());
   require(context.create(), "Cannot create offscreen OpenGL context");
@@ -206,6 +221,11 @@ int run_viewport_headless_demo(BlenderHost &host, const QString &directory, cons
     }
   } close{host};
   host.initialize_gpu(context, surface, target.handle());
+  const auto make_current = [&] {
+    context.makeCurrent(&surface);
+    target.bind();
+  };
+#endif
   if (qEnvironmentVariableIsSet("BTS_MATERIAL_FILTER_TEST")) {
     QJsonObject proof;
     host.with_gpu([&] { proof = verify_native_material_stack(); });
@@ -319,8 +339,10 @@ int run_viewport_headless_demo(BlenderHost &host, const QString &directory, cons
     return run_gpu_bake_ray_demo(host, directory);
   if (qEnvironmentVariableIsSet("BTS_BAKE_MEMORY_STRESS"))
     return run_bake_memory_demo(host, directory);
+#ifndef __APPLE__
   if (qEnvironmentVariableIsSet("BTS_LARGE_MESH_TEST"))
     return verify_large_mesh_budget(host, context, surface, target, directory);
+#endif
   if (qEnvironmentVariableIsSet("BTS_NATIVE_MATERIAL_GPU_TEST") ||
       qEnvironmentVariableIsSet("BTS_NATIVE_THUMBNAIL_TEST"))
   {
@@ -349,34 +371,15 @@ int run_viewport_headless_demo(BlenderHost &host, const QString &directory, cons
         std::copy_n(projection.constData(), 16, f.projection.begin());
         const auto clip = camera.clipping_range();
         f.clipping = {clip.first, clip.second};
-        context.makeCurrent(&surface);
-        target.bind();
+        make_current();
         host.draw(std::span<const ViewFrame>(&f, 1), 1000, 700);
       };
       const auto proof = verify_native_host_material_queue(host, frame, [&] {
-        context.makeCurrent(&surface);
-        GLint previous = 0, texture = 0;
-        glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &previous);
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, target.handle());
-        glReadBuffer(GL_COLOR_ATTACHMENT0);
-        glGetFramebufferAttachmentParameteriv(GL_READ_FRAMEBUFFER,
-                                              GL_COLOR_ATTACHMENT0,
-                                              GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME,
-                                              &texture);
-        glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-        glPixelStorei(GL_PACK_ALIGNMENT, 1);
-        glPixelStorei(GL_PACK_ROW_LENGTH, 0);
-        QImage image(1000, 700, QImage::Format_RGBA8888);
-        glReadPixels(0, 0, 1000, 700, GL_RGBA, GL_UNSIGNED_BYTE, image.bits());
-        std::printf("MPAINTER_FRAME_CAPTURE fbo=%u texture=%d status=%u error=%u\n",
-                    target.handle(),
-                    texture,
-                    unsigned(glCheckFramebufferStatus(GL_READ_FRAMEBUFFER)),
-                    unsigned(glGetError()));
-        std::fflush(stdout);
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, GLuint(previous));
-        glPixelStorei(GL_PACK_ALIGNMENT, 4);
-        return image.mirrored(false, true);
+#ifdef __APPLE__
+        return host.viewport_image();
+#else
+context.makeCurrent(&surface);GLint previous=0,texture=0;glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING,&previous);glBindFramebuffer(GL_READ_FRAMEBUFFER,target.handle());glReadBuffer(GL_COLOR_ATTACHMENT0);glGetFramebufferAttachmentParameteriv(GL_READ_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME,&texture);glBindBuffer(GL_PIXEL_PACK_BUFFER,0);glPixelStorei(GL_PACK_ALIGNMENT,1);glPixelStorei(GL_PACK_ROW_LENGTH,0);QImage image(1000,700,QImage::Format_RGBA8888);glReadPixels(0,0,1000,700,GL_RGBA,GL_UNSIGNED_BYTE,image.bits());std::printf("MPAINTER_FRAME_CAPTURE fbo=%u texture=%d status=%u error=%u\n",target.handle(),texture,unsigned(glCheckFramebufferStatus(GL_READ_FRAMEBUFFER)),unsigned(glGetError()));std::fflush(stdout);glBindFramebuffer(GL_READ_FRAMEBUFFER,GLuint(previous));glPixelStorei(GL_PACK_ALIGNMENT,4);return image.mirrored(false,true);
+#endif
       });
       QFile output(directory + "/native-host-queue.json");
       if (!output.open(QIODevice::WriteOnly))
@@ -418,10 +421,15 @@ int run_viewport_headless_demo(BlenderHost &host, const QString &directory, cons
   const auto &lines = cuts.get(scene.uv_triangles, 0, 0);
   const auto overlay = [&] {
     const auto begin = performance::Clock::now();
+#ifdef __APPLE__
+    QImage image = host.viewport_image();
+    QPainter painter(&image);
+#else
     context.makeCurrent(&surface);
     target.bind();
     QOpenGLPaintDevice device(1000, 700);
     QPainter painter(&device);
+#endif
     painter.setPen(QPen(QColor(224, 70, 70, 220), 1.2));
     const auto view = camera.view_matrix(), matrix = camera.projection_matrix({1000, 700}) * view;
     const auto eye = view.inverted().column(3).toVector3D();

@@ -6,8 +6,8 @@ It lists every Blender header that tracked code under `native/` includes. A head
 as Blender when it does not resolve to a tracked file and follows Blender's `MODULE_name.h`
 naming. The restructure plan moves all of these includes behind `native/host/blender/` (phase 5).
 
-- Blender headers: 176, in 24 modules
-- Files that include them: 236, of which 110 are outside `native/host/blender/`
+- Blender headers: 177, in 24 modules
+- Files that include them: 242, of which 110 are outside `native/host/blender/`
 
 | Module | Header | Files that include it |
 |---|---|---|
@@ -131,9 +131,10 @@ naming. The restructure plan moves all of these includes behind `native/host/ble
 | ED | `ED_view3d_offscreen.hh` | 2 |
 | GEO | `GEO_uv_pack.hh` | 1 |
 | GHOST | `GHOST_Context.hh` | 2 |
+| GHOST | `GHOST_IContext.hh` | 1 |
 | GPU | `GPU_batch.hh` | 6 |
-| GPU | `GPU_capabilities.hh` | 16 |
-| GPU | `GPU_compute.hh` | 16 |
+| GPU | `GPU_capabilities.hh` | 18 |
+| GPU | `GPU_compute.hh` | 17 |
 | GPU | `GPU_context.hh` | 27 |
 | GPU | `GPU_context_hosted.hh` | 2 |
 | GPU | `GPU_framebuffer.hh` | 9 |
@@ -146,16 +147,16 @@ naming. The restructure plan moves all of these includes behind `native/host/ble
 | GPU | `GPU_matrix.hh` | 2 |
 | GPU | `GPU_pass.hh` | 21 |
 | GPU | `GPU_pass_hosted.hh` | 1 |
-| GPU | `GPU_platform.hh` | 3 |
-| GPU | `GPU_shader.hh` | 26 |
+| GPU | `GPU_platform.hh` | 4 |
+| GPU | `GPU_shader.hh` | 28 |
 | GPU | `GPU_shader_builtin.hh` | 2 |
 | GPU | `GPU_shader_hosted.hh` | 2 |
 | GPU | `GPU_shader_hosted_diagnostics.hh` | 1 |
-| GPU | `GPU_state.hh` | 33 |
-| GPU | `GPU_storage_buffer.hh` | 13 |
-| GPU | `GPU_storage_buffer_poll.hh` | 2 |
-| GPU | `GPU_texture.hh` | 44 |
-| GPU | `GPU_texture_mip_range.hh` | 3 |
+| GPU | `GPU_state.hh` | 35 |
+| GPU | `GPU_storage_buffer.hh` | 15 |
+| GPU | `GPU_storage_buffer_poll.hh` | 4 |
+| GPU | `GPU_texture.hh` | 45 |
+| GPU | `GPU_texture_mip_range.hh` | 4 |
 | GPU | `GPU_uniform_buffer.hh` | 4 |
 | GPU | `GPU_vertex_buffer.hh` | 6 |
 | GPU | `GPU_vertex_format.hh` | 2 |
@@ -168,7 +169,7 @@ naming. The restructure plan moves all of these includes behind `native/host/ble
 | IMB | `IMB_thumbs.hh` | 1 |
 | IO | `IO_fbx.hh` | 1 |
 | IO | `IO_wavefront_obj.hh` | 2 |
-| MEM | `MEM_guardedalloc.h` | 48 |
+| MEM | `MEM_guardedalloc.h` | 50 |
 | NOD | `NOD_defaults.hh` | 4 |
 | NOD | `NOD_shader.h` | 7 |
 | NOD | `NOD_shader_nodes_inline.hh` | 2 |
@@ -203,6 +204,7 @@ Check these by hand: system, OpenUSD, MaterialX and other libraries land here.
 - `OpenImageIO/sysutil.h` (1 files)
 - `OpenPbrReferenceData.hh` (2 files)
 - `Python.h` (5 files)
+- `QtCore/private/qobject_p.h` (1 files)
 - `QtCore/qfloat16.h` (1 files)
 - `QtCore/qt_windows.h` (1 files)
 - `QtGui/private/qfilesystemmodel_p.h` (1 files)
@@ -221,14 +223,17 @@ Check these by hand: system, OpenUSD, MaterialX and other libraries land here.
 - `eevee_instance.hh` (1 files)
 - `eevee_material.hh` (2 files)
 - `eevee_shader.hh` (2 files)
-- `epoxy/gl.h` (20 files)
+- `epoxy/gl.h` (18 files)
 - `execinfo.h` (1 files)
 - `exporter/obj_exporter.hh` (1 files)
 - `fcntl.h` (4 files)
 - `fontconfig/fontconfig.h` (1 files)
 - `gl_context.hh` (1 files)
 - `gpu_codegen.hh` (2 files)
-- `gpu_shader_create_info.hh` (20 files)
+- `gpu_context_private.hh` (1 files)
+- `gpu_framebuffer_private.hh` (1 files)
+- `gpu_shader_create_info.hh` (22 files)
+- `gpu_state_private.hh` (1 files)
 - `hdf5.h` (5 files)
 - `intrin.h` (1 files)
 - `io.h` (1 files)

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Independent PNG/OpenEXR header and uncompressed scanline reader for export proofs."""
+"""Independent PNG/OpenEXR header and raw/ZIP scanline reader for export proofs."""
 import struct
 import zlib
 
@@ -34,11 +34,27 @@ def exr_pixels(path):
     while raw[at]:
         end=raw.index(b'\0',at);name=raw[at:end].decode();at=end+1;typ=struct.unpack_from('<i',raw,at)[0];at+=16;channels.append((name,typ))
     minimum_x,minimum_y,maximum_x,maximum_y=struct.unpack('<4i',attrs['dataWindow'][1]);assert minimum_x==minimum_y==0
-    width=maximum_x+1;height=maximum_y+1;assert attrs['compression'][1]==b'\0', 'Reader expects native uncompressed EXR'
-    offsets=struct.unpack_from('<'+'Q'*height,b,offset)
+    width=maximum_x+1;height=maximum_y+1;compression=attrs['compression'][1][0]
+    assert compression in (0,2,3), 'Reader supports uncompressed, ZIPS and ZIP EXR'
+    block_rows=16 if compression==3 else 1
+    offsets=struct.unpack_from('<'+'Q'*((height+block_rows-1)//block_rows),b,offset)
+    row_bytes=sum(width*(2 if typ==1 else 4) for _,typ in channels);blocks={}
     def sample(x,y):
-        row=height-1-y;at=offsets[row];scanline,size=struct.unpack_from('<ii',b,at);assert scanline==row;at+=8;values={}
+        assert 0<=x<width and 0<=y<height
+        row=height-1-y;block=row//block_rows
+        if block not in blocks:
+            at=offsets[block];scanline,size=struct.unpack_from('<ii',b,at);raw=b[at+8:at+8+size]
+            expected=min(block_rows,height-scanline)*row_bytes
+            # EXR stores the original bytes when ZIP would be larger.
+            if compression and size<expected:
+                predicted=bytearray(zlib.decompress(raw));assert len(predicted)==expected
+                for i in range(1,len(predicted)):predicted[i]=(predicted[i-1]+predicted[i]-128)&255
+                raw=bytearray(expected);middle=(expected+1)//2
+                raw[0::2]=predicted[:middle];raw[1::2]=predicted[middle:]
+            assert len(raw)==expected
+            blocks[block]=(scanline,raw)
+        scanline,raw=blocks[block];at=(row-scanline)*row_bytes;values={}
         for name,typ in channels:
-            count=2 if typ==1 else 4;values[name]=struct.unpack_from('<e' if typ==1 else '<f',b,at+x*count)[0];at+=width*count
-        return [values[name] for name in ('R','G','B') if name in values]
-    return {'width':width,'height':height,'types':dict(channels),'channels':len(channels),'sample':sample}
+            count=2 if typ==1 else 4;values[name]=struct.unpack_from('<e' if typ==1 else '<f',raw,at+x*count)[0];at+=width*count
+        return [values[name] for name in ('R','G','B','Y') if name in values]
+    return {'width':width,'height':height,'types':dict(channels),'channels':len(channels),'compression':compression,'sample':sample}

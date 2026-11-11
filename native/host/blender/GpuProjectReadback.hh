@@ -1,20 +1,23 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
-#include "Performance.hh"
-#include "TextureMemory.hh"
-#include "GPU_texture.hh"
-#include "GPU_texture_mip_range.hh"
-#include "GPU_state.hh"
-#include "GPU_storage_buffer.hh"
-#include "GPU_storage_buffer_poll.hh"
-#include <epoxy/gl.h>
-#include <array>
-#include <cstring>
-#include <memory>
-#include <map>
-#include <stdexcept>
-#include <vector>
-#include <utility>
+#ifdef __APPLE__
+#  include "GpuProjectReadbackMetal.hh"
+#else
+#  include "Performance.hh"
+#  include "TextureMemory.hh"
+#  include "GPU_texture.hh"
+#  include "GPU_texture_mip_range.hh"
+#  include "GPU_state.hh"
+#  include "GPU_storage_buffer.hh"
+#  include "GPU_storage_buffer_poll.hh"
+#  include <epoxy/gl.h>
+#  include <array>
+#  include <cstring>
+#  include <memory>
+#  include <map>
+#  include <stdexcept>
+#  include <vector>
+#  include <utility>
 namespace bts {
 // OpenGL persistence adapter. Freeze the submitted GPU revision with a GPU
 // copy, then stream it through a bounded PBO ring. Allocating a full-image PBO
@@ -593,3 +596,5 @@ void main(){ivec2 p=ivec2(gl_GlobalInvocationID.xy);if(any(greaterThanEqual(p,ca
   }
 };
 }  // namespace bts
+
+#endif

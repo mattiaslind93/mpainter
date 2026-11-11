@@ -11,14 +11,14 @@
 #include <QListWidget>
 #include <QMainWindow>
 #include <QMouseEvent>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
 #include <QTimer>
 #include <QToolButton>
 namespace bts {
 namespace {
 class IdleDemo final : public QObject {
   QMainWindow *window;
-  QOpenGLWidget *viewport = nullptr;
+  bts::ViewportWidget *viewport = nullptr;
   std::function<bool()> busy;
   QTimer poll;
   int phase = 0, paints = 0, steps = 0, tries = 0;
@@ -42,7 +42,7 @@ class IdleDemo final : public QObject {
     if (++tries > 1800)
       qFatal("Idle demo timed out phase %d", phase);
     if (!viewport) {
-      viewport = window->findChild<QOpenGLWidget *>();
+      viewport = window->findChild<bts::ViewportWidget *>();
       if (!viewport)
         return;
       viewport->installEventFilter(this);

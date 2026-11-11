@@ -14,7 +14,7 @@
 #include <QListWidget>
 #include <QMainWindow>
 #include <QMessageBox>
-#include <QOpenGLWidget>
+#include "ViewportWidget.hh"
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QTimer>
@@ -60,8 +60,8 @@ class Demo final : public QObject {
     proof.write(QJsonDocument(QJsonObject{{"pid", QCoreApplication::applicationPid()},
                                           {"captures", captures}})
                     .toJson());
-    window->findChild<QOpenGLWidget *>()->grabFramebuffer().save(directory + "/" + name +
-                                                                 "-viewport.png");
+    window->findChild<bts::ViewportWidget *>()->grabFramebuffer().save(directory + "/" + name +
+                                                                       "-viewport.png");
     window->grab().save(directory + "/" + name + "-workspace.png");
   }
   void configure(bool cancel, bool all)
@@ -95,7 +95,7 @@ class Demo final : public QObject {
   {
     if (++ticks > 1000)
       qFatal("Batch channels demo timed out");
-    auto *view = window->findChild<QOpenGLWidget *>();
+    auto *view = window->findChild<bts::ViewportWidget *>();
     if (!view || !view->isValid() || busy())
       return;
     switch (phase++) {

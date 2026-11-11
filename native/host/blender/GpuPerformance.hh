@@ -2,10 +2,53 @@
 #pragma once
 #include "Performance.hh"
 #include "GPU_host_metrics.hh"
+#include "GPU_storage_buffer.hh"
+#include "GPU_storage_buffer_poll.hh"
 #include <epoxy/gl.h>
 #include <array>
 namespace bts {
 // Query objects belong to Blender's GL context. Never wait for an unavailable result.
+#ifdef __APPLE__
+// A tiny storage snapshot carries Metal's asynchronous command completion event.
+// GPU timestamp metrics are unavailable here; never report CPU time as GPU time.
+class GpuPerformance {
+  blender::gpu::StorageBuf *completion_ = nullptr;
+  bool pending_ = false;
+
+ public:
+  explicit GpuPerformance(const char * = "gpu_render") {}
+  bool compute_ready()
+  {
+    if (!pending_)
+      return true;
+    unsigned int value = 0;
+    if (!blender::GPU_storagebuf_read_if_ready(completion_, &value))
+      return false;
+    pending_ = false;
+    return true;
+  }
+  void submitted()
+  {
+    if (!completion_) {
+      unsigned int zero = 0;
+      completion_ = blender::GPU_storagebuf_create_ex(
+          sizeof(zero), &zero, blender::GPU_USAGE_DYNAMIC, "Frame completion");
+    }
+    blender::GPU_storagebuf_sync_to_host(completion_);
+    pending_ = true;
+  }
+  void poll() {}
+  void begin() {}
+  void end() {}
+  void free()
+  {
+    if (completion_)
+      blender::GPU_storagebuf_free(completion_);
+    completion_ = nullptr;
+    pending_ = false;
+  }
+};
+#else
 class GpuPerformance {
   struct Slot {
     GLuint ids[2]{};
@@ -90,6 +133,7 @@ class GpuPerformance {
       }
   }
 };
+#endif
 inline QJsonObject gpu_transfer_snapshot()
 {
   using namespace blender::gpu::host_metrics;

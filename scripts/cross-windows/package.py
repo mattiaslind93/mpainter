@@ -4,11 +4,18 @@
 
 Run after build.sh inside the container with env.sh sourced. No network access,
 publication, or upload is performed. Existing output is never overwritten.
+Output goes to MP_WIN_DIST, by default $MP_WIN_WORK/dist/candidates/<today>.
+
+The runtime must have been built from this checkout's HEAD. To exercise the
+scripts against an older runtime, set MP_WIN_PACKAGING_PROOF=1. The stage is
+then named and labelled as a packaging proof, not a release.
 """
+from datetime import date
 import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -19,8 +26,19 @@ qt = Path(os.environ['MP_WIN_QT'])
 repo = Path(__file__).absolute().parents[2]
 runtime = work / 'build/windows/native/bin'
 libroot = work / 'build/windows/lib-windows_x64'
-dist = work / 'dist'
-name = 'mPainter-0.9.0-alpha-windows-x64'
+version = re.search(r'^version = "([^"]+)"', (repo / 'pyproject.toml').read_text(), re.M).group(1)
+# build.sh compiles the snapshot recorded here, not whatever this checkout holds now.
+built_commit = (work / 'build/windows/source-head.txt').read_text().strip()
+packaging_commit = subprocess.check_output(['git', '-C', str(repo), 'rev-parse', 'HEAD'],
+                                           text=True).strip()
+proof = os.environ.get('MP_WIN_PACKAGING_PROOF') == '1'
+if built_commit != packaging_commit and not proof:
+    raise SystemExit(f'Runtime was built from {built_commit} but this checkout is '
+                     f'{packaging_commit}; rebuild, or set MP_WIN_PACKAGING_PROOF=1')
+dist = Path(os.environ.get('MP_WIN_DIST') or work / 'dist/candidates' / date.today().isoformat())
+if dist.resolve() == (work / 'dist').resolve():
+    raise SystemExit('Write new packages under dist/candidates/, not the dist/ root')
+name = f'mPainter-{version}-windows-x64' + ('-packaging-proof' if proof else '')
 stage = dist / name
 archive = dist / (name + '.zip')
 checksum = archive.with_suffix('.zip.sha256')
@@ -103,6 +121,7 @@ for filename in ('default-studio.hdr', 'default-studio.txt'):
 subprocess.run([sys.executable, str(repo / 'scripts/check-environment.py'), str(stage)], check=True)
 copy(repo / 'assets/branding', stage / 'branding')
 copy(repo / 'assets/meshes', stage / 'assets/meshes')
+copy(repo / 'assets/materials', stage / 'assets/materials')
 for filename in ('LICENSE', 'NOTICE.md', 'README.md'):
     copy(repo / filename, stage / filename)
 
@@ -116,6 +135,9 @@ for folder in ('imageformats', 'iconengines'):
     for plugin in (qt / 'plugins' / folder).glob('*.dll'):
         if not plugin.stem.endswith('d'):
             copy(plugin, stage / folder / plugin.name)
+# Copied by name: the debug filter above would drop it, since "backend" ends in "d".
+# Schannel uses the Windows TLS stack; the OpenSSL backend would need OpenSSL DLLs.
+copy(qt / 'plugins/tls/qschannelbackend.dll', stage / 'tls/qschannelbackend.dll')
 (stage / 'qt.conf').write_text('[Paths]\nPlugins=.\n')
 for path in (work / 'toolchains/windows/redist').glob('*.dll'):
     copy(path, stage / path.name)
@@ -148,6 +170,27 @@ for dependency in (work / 'build/windows/dependency-source').iterdir():
             if path.is_file() and path.name.lower().startswith(('license', 'copying', 'copyright')):
                 copy(path, licenses / dependency.name / path.name)
 copy(libroot / 'deps.md', licenses / 'blender-dependencies.md')
+for source, target in (('assets/grunges/README.md', 'mask-grunges.md'),
+                       ('assets/mask-preview/README.md', 'mask-preview.md'),
+                       ('assets/meshes/Shader_Ball_JL_01-NOTICE.md', 'shaderball-jl01.md'),
+                       ('assets/meshes/CC-BY-4.0.txt', 'CC-BY-4.0.txt')):
+    copy(repo / source, licenses / target)
+shutil.copytree(repo / 'assets/file-browser', licenses / 'file-browser',
+                ignore=shutil.ignore_patterns('atlas.png', '*.qrc', 'manifest.json', 'svg'))
+if (repo / 'third_party/optix').is_dir():
+    copy(repo / 'third_party/optix', licenses / 'OptiX')
+
+build_info = [f'mPainter {version}', f'Commit {built_commit}', 'Blender 5.2.0', 'Qt 6.8.3',
+              'Windows x64, cross-built on Linux with clang-cl for the MSVC ABI.',
+              'Requires an OpenGL 4.3 graphics driver.',
+              'HTTPS uses the Qt Schannel TLS backend in tls/qschannelbackend.dll. '
+              'No OpenSSL DLLs are bundled.',
+              'Source preparation and package commands: scripts/cross-windows/README.md '
+              'in the matching source tree.']
+if proof:
+    build_info.insert(2, 'PACKAGING PROOF, NOT A RELEASE. The runtime was built from '
+                         f'{built_commit}. These packaging scripts are from {packaging_commit}.')
+(stage / 'BUILD-INFO.txt').write_text('\n'.join(build_info) + '\n')
 
 search = [runtime, runtime / 'blender.shared', qt / 'bin',
           work / 'toolchains/windows/deps/bin', work / 'toolchains/windows/redist',

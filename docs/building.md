@@ -1,4 +1,4 @@
-# Building mPainter 0.9.0-alpha
+# Building mPainter 0.9.2
 
 The native host is compiled inside Blender's CMake graph. The stable internal target is `bts-host`; its installed executable is `mpainter` on Linux and `mPainter.exe` on Windows. Blender's standalone executable is built only to complete its runtime resource installation and is excluded from the mPainter package.
 
@@ -25,13 +25,15 @@ From this repository, with `QT_ROOT_DIR` pointing to the installed Qt SDK:
 ```sh
 python3 scripts/build.py --blender ../build/blender --build ../build/native --qt "$QT_ROOT_DIR" --cuda "$CUDA_TOOLKIT_ROOT_DIR" --optix "$OPTIX_ROOT_DIR" --jobs 4
 python3 scripts/package-linux.py --runtime ../build/native/bin --qt "$QT_ROOT_DIR" --output ../dist
-python3 scripts/package-appimage.py --appdir ../dist/mPainter-0.9.0-alpha-linux-x86_64 --output ../dist/mPainter-0.9.0-alpha-linux-x86_64.AppImage --cache ../cache/appimage
-../dist/mPainter-0.9.0-alpha-linux-x86_64.AppImage
+python3 scripts/package-appimage.py --appdir ../dist/mPainter-0.9.2-linux-x86_64 --output ../dist/mPainter-0.9.2-linux-x86_64.AppImage --cache ../cache/appimage
+../dist/mPainter-0.9.2-linux-x86_64.AppImage
 ```
 
 The AppImage wrapper uses checksum-pinned appimagetool 1.9.1 and type2 runtime 20251108. It can extract and run when FUSE is unavailable (`--appimage-extract-and-run`); extraction must have writable temporary storage. It does not lower the required glibc version.
 
 In the tarball, `AppRun` is the launcher and `mpainter` is the actual ELF executable.
+
+The in-app update check needs HTTPS. When the Qt passed with `--qt` was built without SSL (its `plugins/tls` has no `libqopensslbackend.so`), first run `bash scripts/host/rebuild-qt-network-ssl.sh start` inside `bts-build`. It rebuilds only QtNetwork and its TLS plugins from the same pinned, patched qtbase 6.8.3 with OpenSSL loaded at runtime, and stages them in `deps/qt-6.8.3-ssl-overlay` without touching the Qt prefix. `package-linux.py` then bundles that overlay (sha256-pinned, override with `--qt-ssl-overlay`). OpenSSL itself comes from the system and is never bundled. Check the result with `scripts/host/probe-packaged-https.sh`.
 
 The tarball bundles Qt and dynamically resolved dependencies, runtime scripts, color management data and studio lights. It requires a compatible glibc, the system graphics driver, X11/XWayland and OpenGL 4.3. A package built on Fedora 43 is not a universal older-Linux package. The hosted Ubuntu build has a different glibc baseline; it must also be launch-tested before publication. Linux releases include CUDA kernels for sm_86 (RTX 30 series), forward-compatible compute_75 PTX, and OptiX kernels. Building these requires a CUDA toolkit and OptiX 8.0 or newer SDK headers; pass their roots with `--cuda` and `--optix`. The verified build uses CUDA 13.2 and [NVIDIA OptiX 9.1 headers](https://github.com/NVIDIA/optix-dev/tree/v9.1.0). Cycles selects OptiX, then CUDA, and falls back to CPU when no compatible GPU is available. The launcher resolves host NVIDIA drivers, including the `/run/host` driver mount in Distrobox, without packaging driver binaries. The Linux package omits optional Intel Level Zero and AMD HIP denoising backends; CPU denoising remains included. Its CUDA denoising plugin requires the system NVIDIA driver (`libcuda.so.1`), which is deliberately not bundled.
 
@@ -72,13 +74,46 @@ adds Windows project-save handling, and extends the sequential Wine checks.
 `~/mpainter-work/REPORT-win2.md` records the follow-up's actual build, artifact
 and verification outcome; the scripts alone are not release evidence.
 
-## macOS arm64: viewport port required
+## macOS arm64
 
-The old `setup-macos.command` installed a Python prototype and PySide6. It did not build this native Blender/Qt host. The current host explicitly selects Blender's OpenGL backend and requests a Qt OpenGL 4.3 context. Blender 5.2 disables its OpenGL backend on Apple builds, and macOS does not supply OpenGL 4.3. Therefore a working native Mac package is **not currently feasible from this host code** without a Metal rendering/presentation integration port. No Mac machine was available in this session, and no Mac binary was built.
+The macOS build uses the Metal backend and a Qt RHI presentation bridge. It builds from the same source tree as Linux and Windows, with platform-specific code guarded by `#ifdef __APPLE__` and CMake `if(APPLE)` conditions.
 
-The arm64 CI job fetches official libraries and Qt, then reports this blocker explicitly. `Info.plist`, bundle identity, ICNS icon and a guarded DMG packaging script are prepared for the port. They do not establish a functioning `mPainter.app`. After the viewport is ported and validated, update the build guard and package runtime resources into the bundle before enabling DMG publication.
+### Prerequisites
 
-For a future unsigned reviewed build, Gatekeeper may require Finder > right-click the app > Open. Only for an app you trust, the quarantine attribute can be removed with `xattr -dr com.apple.quarantine /path/to/mPainter.app`. Neither instruction fixes the missing viewport implementation.
+- Xcode Command Line Tools or full Xcode
+- Qt 6.8.3 arm64 (including private GUI headers)
+- CMake 3.31+, Ninja, Python 3.11+
+- Assimp and HDF5 development packages (brew or manual)
+- Blender's official arm64 libraries (fetched by `make_update.py`)
+
+### Building
+
+```sh
+# Prepare Blender with macOS patches
+python3 scripts/prepare-blender.py ../build/blender
+cd ../build/blender
+python3 build_files/utils/make_update.py --no-blender
+cd -
+
+# Build the probe (diagnostic, headless Metal validation)
+python3 scripts/macos/build-probe.py --blender ../build/blender --build ../build/probe --qt "$QT_ROOT_DIR"
+scripts/macos/run-probe.sh ../build/probe ../probe-output
+
+# Build the editor
+scripts/macos/build-editor.sh  # Configure with BTS_MACOS_METAL_EDITOR=ON
+scripts/macos/bundle-editor.py --build ../build/editor --qt "$QT_ROOT_DIR" --output ../dist/mPainter.app
+scripts/macos/package-editor.py --app ../dist/mPainter.app --output ../dist
+```
+
+The Metal probe (`mpainter-metal-probe`) is a diagnostic target that validates GPU operations, brush raster parity, viewport rendering and Qt RHI bridge integration in headless mode. It is not the editor.
+
+The editor is built with `-DBTS_MACOS_METAL_EDITOR=ON` and links Qt Widgets. The bundle includes Blender's runtime resources, OIDN device plugins, and denoiser ML models.
+
+### Signing and notarization
+
+For distribution, sign the app bundle with your Developer ID and notarize with Apple's `notarytool`. For local testing, Gatekeeper may require Finder > right-click > Open. The quarantine attribute can be removed with `xattr -dr com.apple.quarantine /path/to/mPainter.app`.
+
+See [docs/macos-metal-port.md](macos-metal-port.md) for technical details of the Metal/Qt RHI integration.
 
 ## CI and publication
 
@@ -86,7 +121,7 @@ For a future unsigned reviewed build, Gatekeeper may require Finder > right-clic
 
 Each successful build uploads its platform archive. A tagged run creates a draft release via `softprops/action-gh-release` only if the full matrix passes. The known Mac blocker currently prevents that release step. Manual dispatch builds artifacts without publishing. No workflows were run remotely during phase one, and no repository, remote, tag or release was created.
 
-Before publishing, run the workflow, resolve platform failures, test the actual downloaded artifacts, retain dependency license texts and provide corresponding source. Version 0.9.0-alpha is fixed in the package filenames and metadata; update all version metadata together for a later release.
+Before publishing, run the workflow, resolve platform failures, test the actual downloaded artifacts, retain dependency license texts and provide corresponding source. Version 0.9.2 comes from `pyproject.toml`; `packaging/Info.plist`, `packaging/mpainter.rc` and the metainfo carry the same string. Update them together for a later release.
 
 Runtime packaging normalizes compiled OSL source-path metadata and gives legacy wide-gamut color spaces neutral display names. Standard interoperability aliases remain intact so embedded image metadata keeps its color meaning. These aliases and third-party codec/license references are included in the audit, rather than silently altering dependency APIs.
 

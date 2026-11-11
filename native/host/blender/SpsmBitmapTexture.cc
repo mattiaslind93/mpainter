@@ -233,8 +233,10 @@ std::shared_ptr<const SpsmBitmapTexture> SpsmBitmapTextureCache::load(const Desc
     throw Error("Missing SPSM bitmap descriptor");
   require_format(*d.header);
   const auto key = location(d.resource) + ":" + std::to_string(d.resource.stamp.file_bytes) + ":" +
-                   std::to_string(d.resource.stamp.modified.time_since_epoch().count()) + ":" +
-                   policy_key(p);
+                   std::to_string(std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                      d.resource.stamp.modified.time_since_epoch())
+                                      .count()) +
+                   ":" + policy_key(p);
   std::lock_guard lock(mutex_);
   std::erase_if(entries_, [](const auto &entry) { return entry.second.expired(); });
   if (const auto found = entries_.find(key); found != entries_.end())

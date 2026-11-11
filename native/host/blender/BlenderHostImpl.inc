@@ -1,9 +1,21 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The Qt GHOST context and struct BlenderHost::Impl: Blender's Main, the scene, the viewport and the queues.
 // A section of native/host/BlenderHost.cc, which includes it in place; not a standalone file.
-class QtGhostContext final : public GHOST_Context {
+class QtGhostContext final : public GHOST_Context, public GpuContextOwner {
  public:
   explicit QtGhostContext(QtGpuSurface &surface) : GHOST_Context({}), surface_(surface) {}
+  GHOST_IContext *ghost_context() override
+  {
+    return this;
+  }
+  GPUBackendType backend() const override
+  {
+    return GPU_BACKEND_OPENGL;
+  }
+  void restore_external_state() override
+  {
+    gpu::GLContext::get()->restore_external_state();
+  }
 
   GHOST_TSuccess activateDrawingContext() override
   {
@@ -152,7 +164,16 @@ struct BlenderHost::Impl {
   QJsonObject last_tangent_shader_state;
   LensProjection lens;
   std::unique_ptr<QtGpuSurface> surface;
-  std::unique_ptr<QtGhostContext> ghost;
+  std::unique_ptr<GpuContextOwner> ghost;
+#ifdef __APPLE__
+  std::unique_ptr<MetalRhiViewport> metal_rhi;
+  QImage metal_frame;
+#endif
+  void restore_surface()
+  {
+    if (surface)
+      surface->makeCurrent();
+  }
   RenderTarget scene_target;
   RenderTarget uv_target;
   EeveeCompletionSnapshot last_eevee_completion;
@@ -350,7 +371,7 @@ struct BlenderHost::Impl {
                                nullptr,
                                (std::string("force_cpu = ") + (force_cpu ? "True" : "False") +
                                 "\nprobe_defaults = " + (probe ? "True" : "False") + "\n" +
-                                R"PY(import bpy, os, cycles, _cycles
+                                R"PY(import bpy, os, sys, cycles, _cycles
 # Blender starts without its own window; Qt supplies a real graphical viewport.
 _cycles.init(os.path.dirname(cycles.__file__), os.path.dirname(os.path.abspath(bpy.utils.user_resource('CONFIG', path=''))), False)
 p = bpy.context.preferences.addons['cycles'].preferences
@@ -359,7 +380,7 @@ backend = 'CPU'
 device_errors = []
 explicit_cpu = force_cpu or os.environ.get('BTS_CYCLES_DEVICE') == 'CPU'
 if not explicit_cpu:
-    for candidate in ('OPTIX', 'CUDA'):
+    for candidate in (('METAL',) if sys.platform == 'darwin' else ('OPTIX', 'CUDA')):
         try:
             p.compute_device_type = candidate
             devices = [d for d in p.get_devices_for_type(candidate) if d.type == candidate]
@@ -440,7 +461,7 @@ print('BTS_CYCLES_INPUT', bpy.context.scene.name, [(o.name, o.type, o.hide_rende
     }
     {
       performance::Scope timing("gpu_owner_external_state_restore");
-      gpu::GLContext::get()->restore_external_state();
+      ghost->restore_external_state();
     }
     {
       performance::Scope timing("gpu_owner_framebuffer_restore");

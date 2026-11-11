@@ -936,6 +936,7 @@ void main(){vec3 v=world_point-projection_offset,p=vec3(dot(rotation_x,v),dot(ro
     auto grid = std::make_shared<WarpGrid>();
     grid->move(4, {.1, -.56, .04});
     layer.fill.warp = grid;
+#ifndef __APPLE__
     GpuLayerPreview measured;
     auto image = texture("BTS Warp timing", 1024, 1024, gpu::TextureFormat::SFLOAT_16_16_16_16);
     GLuint queries[2];
@@ -968,6 +969,7 @@ void main(){vec3 v=world_point-projection_offset,p=vec3(dot(rotation_x,v),dot(ro
     }
     benchmark_stack = false;
     glDeleteQueries(2, queries);
+#endif
   }
   const int warp_layer_cases = cases - warp_case_begin;
   // Warp mask sources use the same GPU solver and one shared prefix per tile.

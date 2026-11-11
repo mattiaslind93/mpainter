@@ -1,0 +1,29 @@
+--- a/source/blender/gpu/metal/mtl_shader.mm
++++ b/source/blender/gpu/metal/mtl_shader.mm
+@@ -267,6 +267,15 @@
+     shader_compat = fmt::to_string(fmt::join(compatibility_src, ""));
+   }
+
++  bool hosted_precise_math = false;
++  for (const auto &define : info.defines_) {
++    hosted_precise_math |= define[0] == "BTS_PRECISE_MATH";
++  }
++  if (hosted_precise_math) {
++    // GLSL's local precise qualifier has no MSL spelling. These hosted
++    // authoring kernels need unfused edge arithmetic and finite CPU parity.
++    shader_compat += "\n#define precise\n";
++  }
+   sources[SOURCES_INDEX_VERSION] = shader_compat;
+
+   const std::string original_source = fmt::to_string(fmt::join(sources, "")) + wrapper.second;
+@@ -291,6 +300,10 @@
+     ::MTLCompileOptions *options = get_compile_options(
+         !info.subpass_inputs_.is_empty(), bool(info.builtins_ & BuiltinBits::TEXTURE_ATOMIC));
+
++    if (hosted_precise_math) {
++      options.fastMathEnabled = NO;
++      processed_source = "#pragma clang fp contract(off)\n" + processed_source;
++    }
+     NSError *error = nullptr;
+     id<MTLLibrary> library = [context_->device
+         newLibraryWithSource:[NSString stringWithUTF8String:processed_source.c_str()]
