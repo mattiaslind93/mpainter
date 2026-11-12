@@ -721,8 +721,8 @@ struct GpuLayerPreview::Impl {
       return nullptr;
     }
     e->plane = channel;
-    const auto versions = pixels.page_versions();
-    const auto &wanted_versions = versions[channel];
+    PaintPixels::PageVersions versions_storage, base_storage, before_storage;
+    const auto &wanted_versions = pixels.page_versions(versions_storage)[channel];
     if (e->pages == wanted_versions)
       return e->image.get();
     auto &polygon = authoring_pages.polygon_raster();
@@ -741,11 +741,11 @@ struct GpuLayerPreview::Impl {
     const auto ink = root ? root->ink.recipe() : nullptr;
     if (polygon_depth < 32 && root && root->kind == PaintRecipe::Kind::Over &&
         root->complete_stroke && !root->erase && ink && ink->kind == PaintRecipe::Kind::Stamp &&
-        ink->base.page_versions()[channel].empty() &&
+        ink->base.page_versions(base_storage)[channel].empty() &&
         (root->before.resolution() == 0 || root->before.resolution() == pixels.resolution()) &&
         GpuPolygonRaster::supported(ink->stamp))
     {
-      const auto before_versions = root->before.page_versions()[channel];
+      const auto &before_versions = root->before.page_versions(before_storage)[channel];
       if (!before_versions.empty() && e->pages != before_versions) {
         auto protect = protected_keys;
         protect.insert(key);
@@ -818,8 +818,7 @@ struct GpuLayerPreview::Impl {
     bool complete = true;
     std::set<std::uint32_t> wanted;
     if (pixels.recipe()) {
-      const auto versions = pixels.page_versions();
-      for (const auto &[page, version] : versions[channel]) {
+      for (const auto &[page, version] : wanted_versions) {
         wanted.insert(page);
         if (e->pages.contains(page) && e->pages.at(page) == version)
           continue;

@@ -163,8 +163,8 @@ GpuPreviewUpdate GpuLayerPreview::update_tile(const TextureSet &source_set,
       return;
     const double sx = double(width) / pixels.resolution(),
                  sy = double(height) / pixels.resolution();
-    const auto versions = pixels.page_versions();
-    for (const auto &[page, revision] : versions[plane]) {
+    PaintPixels::PageVersions storage;
+    for (const auto &[page, revision] : pixels.page_versions(storage)[plane]) {
       const int px = int(page % 65536) * 64, py = int(page / 65536) * 64;
       const int x = int(std::floor(px * sx)) - 1, y = int(std::floor(py * sy)) - 1,
                 right = int(std::ceil((px + 64) * sx)) + 1,

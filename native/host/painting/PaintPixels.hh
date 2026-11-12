@@ -118,6 +118,10 @@ class PaintPixels {
                                  std::shared_ptr<const PaintRasterSource>,
                                  const PageVersions &declared_pages);
   PageVersions page_versions() const;
+  // The same maps without the copy: a recorded recipe hands out its own, and only
+  // materialized pixels fill `storage`. One map node per 64 px page adds up when a
+  // stroke event reads them for every layer, channel and tile.
+  const PageVersions &page_versions(PageVersions &storage) const;
   std::uint64_t page_version(int channel, std::uint32_t key) const;
   std::span<const Pixel> page_data(int channel, std::uint32_t key) const;
   const std::shared_ptr<const PaintRecipe> &recipe() const

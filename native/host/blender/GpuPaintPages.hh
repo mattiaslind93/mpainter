@@ -136,7 +136,8 @@ class GpuPaintPages {
     if (u < 0 || u >= 10 || v < 0 || v >= 100)
       return zero();
     const auto &pixels = stamp.coverage_mask->pixels.tile(1001 + u + v * 10);
-    const auto versions = pixels.page_versions()[2];
+    PaintPixels::PageVersions storage;
+    const auto &versions = pixels.page_versions(storage)[2];
     if (versions.empty())
       return zero();
     std::string key;
