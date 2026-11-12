@@ -6,8 +6,13 @@
 #include "MEM_guardedalloc.h"
 #include <algorithm>
 #include <cmath>
+#include <limits>
+#include <map>
 #include <memory>
 #include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 #include <OpenImageDenoise/oidn.hpp>
 namespace bts {
 namespace {
@@ -54,36 +59,35 @@ void diffuse(blender::ImBuf &image)
       }
   }
 }
-}  // namespace
-void denoise_mesh_bake(std::vector<float> &pixels,
-                       std::span<const FillSurfacePoint> surface,
-                       int width,
-                       int height)
+// One committed OIDN filter per working-tile size. Interior tiles all share a size, so the
+// network is built once per map instead of once per tile, which matters most on a GPU device.
+struct DenoiseTile {
+  oidn::FilterRef filter;
+  oidn::BufferRef color, albedo, normal, output;
+};
+void denoise_tiles(oidn::DeviceRef &device,
+                   std::vector<float> &pixels,
+                   const ScratchVector<float> &original,
+                   std::span<const FillSurfacePoint> surface,
+                   int width,
+                   int height)
 {
-  float low = std::numeric_limits<float>::max(), high = std::numeric_limits<float>::lowest();
-  for (std::size_t i = 0; i < surface.size(); ++i)
-    if (surface[i].valid) {
-      low = std::min(low, pixels[4 * i]);
-      high = std::max(high, pixels[4 * i]);
-    }
-  if (high - low < 1e-6f)
-    return;  // Preserve exactly constant visibility, including open planes.
-  auto device = oidn::newDevice(oidn::DeviceType::CPU);
-  device.set("numThreads", 6);
-  device.commit();
+  const auto check = [&] {
+    const char *message = nullptr;
+    if (device.getError(message) != oidn::Error::None)
+      throw std::runtime_error(std::string("Mesh-map OIDN: ") +
+                               (message ? message : "unknown error"));
+  };
+  std::map<std::pair<int, int>, DenoiseTile> tiles;
   // Fixed working tiles with overlap keep 8K maps from allocating 8K OIDN scratch.
-  // Retain the unfiltered input until every tile is done: overlap is deterministic.
-  ScratchVector<float> original(pixels.size());
-  std::copy(pixels.begin(), pixels.end(), original.begin());
   constexpr int tile_size = 512, halo = 64;
   for (int y0 = 0; y0 < height; y0 += tile_size)
     for (int x0 = 0; x0 < width; x0 += tile_size) {
       const int left = std::max(0, x0 - halo), bottom = std::max(0, y0 - halo),
                 right = std::min(width, x0 + tile_size + halo),
                 top = std::min(height, y0 + tile_size + halo), w = right - left, h = top - bottom;
-      const std::size_t count = std::size_t(w) * h;
-      std::vector<float> color(count * 3), normal(count * 3), albedo(count * 3, 1.f),
-          output(count * 3);
+      const std::size_t count = std::size_t(w) * h, bytes = count * 3 * sizeof(float);
+      std::vector<float> color(count * 3), normal(count * 3), output(count * 3);
       std::vector<int> owner(count, -1), queue;
       queue.reserve(count);
       for (int y = 0; y < h; ++y)
@@ -116,20 +120,32 @@ void denoise_mesh_bake(std::vector<float> &pixels,
           normal[i * 3 + c] = surface[src].normal[c];
         }
       }
-      auto filter = device.newFilter("RT");
-      filter.setImage("color", color.data(), oidn::Format::Float3, w, h);
-      filter.setImage("albedo", albedo.data(), oidn::Format::Float3, w, h);
-      filter.setImage("normal", normal.data(), oidn::Format::Float3, w, h);
-      filter.setImage("output", output.data(), oidn::Format::Float3, w, h);
-      filter.set("hdr", true);
-      filter.set("inputScale", 1.f);
-      filter.set("cleanAux", true);
-      filter.commit();
-      filter.execute();
-      const char *message = nullptr;
-      if (device.getError(message) != oidn::Error::None)
-        throw std::runtime_error(std::string("Mesh-map OIDN: ") +
-                                 (message ? message : "unknown error"));
+      auto &tile = tiles[{w, h}];
+      if (!tile.filter) {
+        // Device buffers work on every OIDN device; host pointers only on the CPU one.
+        tile.color = device.newBuffer(bytes);
+        tile.albedo = device.newBuffer(bytes);
+        tile.normal = device.newBuffer(bytes);
+        tile.output = device.newBuffer(bytes);
+        check();
+        const std::vector<float> white(count * 3, 1.f);
+        tile.albedo.write(0, bytes, white.data());
+        tile.filter = device.newFilter("RT");
+        tile.filter.setImage("color", tile.color, oidn::Format::Float3, w, h);
+        tile.filter.setImage("albedo", tile.albedo, oidn::Format::Float3, w, h);
+        tile.filter.setImage("normal", tile.normal, oidn::Format::Float3, w, h);
+        tile.filter.setImage("output", tile.output, oidn::Format::Float3, w, h);
+        tile.filter.set("hdr", true);
+        tile.filter.set("inputScale", 1.f);
+        tile.filter.set("cleanAux", true);
+        tile.filter.commit();
+        check();
+      }
+      tile.color.write(0, bytes, color.data());
+      tile.normal.write(0, bytes, normal.data());
+      tile.filter.execute();
+      tile.output.read(0, bytes, output.data());
+      check();
       for (int y = y0; y < std::min(height, y0 + tile_size); ++y)
         for (int x = x0; x < std::min(width, x0 + tile_size); ++x) {
           const auto index = std::size_t(y) * width + x;
@@ -144,6 +160,58 @@ void denoise_mesh_bake(std::vector<float> &pixels,
             pixels[index * 4 + c] = value;
         }
     }
+}
+// The fastest OIDN device this machine has: Metal, CUDA, HIP or SYCL when the module and a
+// supported GPU are present. Null when only the CPU device is available.
+oidn::DeviceRef gpu_denoise_device()
+{
+  try {
+    auto device = oidn::newDevice(oidn::DeviceType::Default);
+    if (!device)
+      return {};
+    device.commit();
+    const char *message = nullptr;
+    if (device.getError(message) != oidn::Error::None)
+      return {};
+    if (oidn::DeviceType(device.get<int>("type")) == oidn::DeviceType::CPU)
+      return {};
+    return device;
+  }
+  catch (const std::exception &) {
+    return {};
+  }
+}
+}  // namespace
+void denoise_mesh_bake(std::vector<float> &pixels,
+                       std::span<const FillSurfacePoint> surface,
+                       int width,
+                       int height)
+{
+  float low = std::numeric_limits<float>::max(), high = std::numeric_limits<float>::lowest();
+  for (std::size_t i = 0; i < surface.size(); ++i)
+    if (surface[i].valid) {
+      low = std::min(low, pixels[4 * i]);
+      high = std::max(high, pixels[4 * i]);
+    }
+  if (high - low < 1e-6f)
+    return;  // Preserve exactly constant visibility, including open planes.
+  // Retain the unfiltered input until every tile is done: overlap is deterministic.
+  ScratchVector<float> original(pixels.size());
+  std::copy(pixels.begin(), pixels.end(), original.begin());
+  if (auto device = gpu_denoise_device()) {
+    try {
+      denoise_tiles(device, pixels, original, surface, width, height);
+      return;
+    }
+    catch (const std::exception &) {
+      // A GPU device that fails mid-map (driver, memory) must not fail the bake.
+      std::copy(original.begin(), original.end(), pixels.begin());
+    }
+  }
+  auto device = oidn::newDevice(oidn::DeviceType::CPU);
+  device.set("numThreads", 6);
+  device.commit();
+  denoise_tiles(device, pixels, original, surface, width, height);
 }
 std::vector<float> filter_mesh_bake(std::vector<float> pixels,
                                     int source_width,
