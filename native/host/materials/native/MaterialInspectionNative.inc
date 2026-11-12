@@ -203,7 +203,8 @@ bool MaterialInspection::queue_layer_edit(const TextureSet &source,
   // a single CPU pixel here bypassed its cache/dependency rules and duplicated
   // blend logic on every property event.
   impl_->gpu_queued.erase(uid);
-  auto gpu_request = request;
+  auto unsupported = request.channels;
+  auto gpu_request = std::move(request);
   gpu_request.channels = {};
   bool stack = false;
   for (int c = 0; c < 17; ++c)
@@ -216,10 +217,9 @@ bool MaterialInspection::queue_layer_edit(const TextureSet &source,
       }
     }
   // Any logged unsupported fallback also stages at document resolution.
-  auto final_request = request;
   for (int c = 0; c < 17; ++c)
     if (gpu_request.channels[c])
-      final_request.channels[c] = false;
+      unsupported[c] = false;
   if (stack) {
     if (performance::enabled() && impl_->gpu_stack_queued.contains(uid))
       performance::record({performance::flow(), "gpu_stack_replace", 0, 0, 0, true});
@@ -228,14 +228,12 @@ bool MaterialInspection::queue_layer_edit(const TextureSet &source,
   else
     impl_->gpu_stack_queued.erase(uid);
   property_pipeline_pending = true;
-  if (std::any_of(final_request.channels.begin(),
-                  final_request.channels.end(),
-                  [](bool on) { return on; }))
+  if (std::any_of(unsupported.begin(), unsupported.end(), [](bool on) { return on; }))
   {
     pending_composite_error =
         "GPU layer operation is unsupported; retaining the previous image (CPU fallback disabled)";
     impl_->failures[uid] = pending_composite_error;
-    impl_->failed_channels[uid] = final_request.channels;
+    impl_->failed_channels[uid] = unsupported;
     std::fprintf(
         stderr,
         "BTS_GPU_STACK_ERROR uid=%u reason=unsupported-operator-or-inspection cpu_fallback=0\n",
