@@ -26,8 +26,15 @@
 #include <QRegularExpression>
 #include <QUuid>
 #include <cmath>
+#include <cstdint>
+#include <deque>
 #include <exception>
+#include <functional>
+#include <future>
+#include <memory>
 #include <mutex>
+#include <string>
+#include <thread>
 #include <stdexcept>
 namespace bts {
 bool texture_export_has_adjustment(const TextureSet &set)
@@ -106,6 +113,56 @@ namespace {
 const auto &names = export_channel_suffixes;
 // Export rows are independent, like the rows of the native composite job. The
 // first failure is rethrown on the calling thread; a cancel stops the rest.
+// Finished images are encoded on background threads while the next map is evaluated. Progress
+// is reported on the exporting thread, in file order. Waiting images are bounded by count and by
+// memory so 8K sets do not stack up.
+class EncodeQueue {
+  struct Pending {
+    std::future<void> done;
+    std::string name;
+    std::uint64_t bytes;
+  };
+  std::deque<Pending> pending_;
+  std::uint64_t bytes_ = 0;
+  const std::uint64_t budget_ = ResourceAvailability{}.ram() / 8;
+  const std::size_t limit_ = std::max(1u, std::thread::hardware_concurrency() / 2);
+  const std::atomic_bool &cancel_;
+  std::function<void(const std::string &)> finished_;
+
+  void finish_one()
+  {
+    auto first = std::move(pending_.front());
+    pending_.pop_front();
+    bytes_ -= first.bytes;
+    first.done.get();
+    if (!cancel_)
+      finished_(first.name);
+  }
+
+ public:
+  EncodeQueue(const std::atomic_bool &cancel, std::function<void(const std::string &)> finished)
+      : cancel_(cancel), finished_(std::move(finished))
+  {
+  }
+  ~EncodeQueue()
+  {
+    for (auto &entry : pending_)
+      if (entry.done.valid())
+        entry.done.wait();
+  }
+  void add(std::uint64_t bytes, std::string name, std::function<void()> work)
+  {
+    while (!pending_.empty() && (pending_.size() >= limit_ || bytes_ + bytes > budget_))
+      finish_one();
+    pending_.push_back({std::async(std::launch::async, std::move(work)), std::move(name), bytes});
+    bytes_ += bytes;
+  }
+  void finish_all()
+  {
+    while (!pending_.empty())
+      finish_one();
+  }
+};
 template<class Function>
 void export_rows(int height, const std::atomic_bool &cancel, const Function &row)
 {
@@ -517,6 +574,7 @@ void write_texture_export(const ExportRequest &request,
     if (!unique.insert(QString::fromStdString(file.name).toCaseFolded().toStdString()).second)
       throw std::invalid_argument("Texture Set names produce duplicate output filenames");
   int completed = 0;
+  EncodeQueue encoder(cancel, [&](const std::string &name) { progress(++completed, name); });
   struct Derived {
     NativeCompositeResult pixels;
     std::shared_ptr<TexturePadding> padding;
@@ -973,28 +1031,47 @@ void write_texture_export(const ExportRequest &request,
       const auto temporary = directory.filePath(
           ".bts-" + QUuid::createUuid().toString(QUuid::WithoutBraces) +
           ("." + QString::fromLatin1(extension(format))));
-      struct RemoveTemporary {
-        QString path;
-        ~RemoveTemporary()
-        {
-          QFile::remove(path);
-        }
-      } cleanup{temporary};
-      if (request.studio && format == ExportFormat::Exr32)
-        write_studio_exr(
-            temporary, out, output, output_height, is_color, output_alpha(request, channel));
-      else if (!IMB_save_image(image.get(),
-                               temporary.toUtf8().constData(),
-                               ImBufFlags::FloatData | ImBufFlags::AlphaChannelPacked))
-        throw std::runtime_error("Native image encoder failed: " + name.toStdString());
-      if (cancel)
-        return;
-      // POSIX rename replaces one complete output atomically, including an earlier own export.
-      if (std::rename(temporary.toUtf8().constData(), destination.toUtf8().constData()) != 0)
-        throw std::runtime_error("Cannot install exported file: " + name.toStdString());
-      progress(++completed, name.toStdString());
+      // Encoding and installing the file runs beside the next map's evaluation.
+      const bool studio_exr = request.studio && format == ExportFormat::Exr32;
+      const bool alpha = output_alpha(request, channel);
+      std::shared_ptr<ImBuf> encoded(image.release(), IMB_freeImBuf);
+      encoder.add(std::uint64_t(output) * output_height * 16,
+                  name.toStdString(),
+                  [encoded, temporary, destination, name, studio_exr, alpha, is_color, &cancel] {
+                    struct RemoveTemporary {
+                      QString path;
+                      ~RemoveTemporary()
+                      {
+                        QFile::remove(path);
+                      }
+                    } cleanup{temporary};
+                    if (studio_exr)
+                      write_studio_exr(temporary,
+                                       encoded->float_data(),
+                                       encoded->x,
+                                       encoded->y,
+                                       is_color,
+                                       alpha);
+                    else if (!IMB_save_image(encoded.get(),
+                                             temporary.toUtf8().constData(),
+                                             ImBufFlags::FloatData |
+                                                 ImBufFlags::AlphaChannelPacked))
+                      throw std::runtime_error("Native image encoder failed: " +
+                                               name.toStdString());
+                    if (cancel)
+                      return;
+                    // POSIX rename replaces one complete output atomically, including an
+                    // earlier own export.
+                    if (std::rename(temporary.toUtf8().constData(),
+                                    destination.toUtf8().constData()) != 0)
+                      throw std::runtime_error("Cannot install exported file: " +
+                                               name.toStdString());
+                  });
     }
   }
+  encoder.finish_all();
+  if (cancel)
+    return;
 #ifdef BTS_WITH_MATERIALX
   if (request.openpbr_materialx && !cancel)
     write_openpbr_texture_package(request, files, cancel, progress);
