@@ -146,6 +146,10 @@ float ray_average(const RayScene &scene,
   }
   return sum / rays;
 }
+struct NearestSurface {
+  std::vector<std::array<float, 3>> geometric;
+  std::vector<float> curvature;
+};
 bool displaced(const MeshBakeSettings &settings)
 {
   for (const auto &[uid, field] : settings.displacement)
@@ -346,9 +350,23 @@ MeshBakeJob::MeshBakeJob(std::shared_ptr<const SceneSnapshot> source,
       check_cancel();
       const float offset = settings.ray_offset > 0 ? settings.ray_offset : float(extent * 1e-6);
       int task = 0;
+      // The ray BVH covers the whole scene, so every ray map of the job shares it.
+      std::optional<std::vector<bake_bvh::Node>> gpu_nodes;
+      bool gpu_nodes_tried = false;
       for (const auto &input : inputs) {
         MeshBakeResult output;
         output.material_uid = input.material_uid;
+        std::map<int, NearestSurface> nearest_cache;
+        std::uint64_t nearest_bytes = 0;
+        for (const auto &[tile, surface] : input.atlas->tiles)
+          nearest_bytes = resource_sum(
+              nearest_bytes,
+              resource_product(surface.size(), sizeof(std::array<float, 3>) + sizeof(float)));
+        const int nearest_users = int(settings.enabled[int(MeshMapRole::AmbientOcclusion)]) +
+                                  int(settings.enabled[int(MeshMapRole::Curvature)]) +
+                                  int(settings.enabled[int(MeshMapRole::Thickness)]);
+        const bool cache_nearest = nearest_users > 1 &&
+                                   nearest_bytes <= ResourceAvailability{}.ram() / 8;
         for (int role = 0; role < 7; ++role)
           if (settings.enabled[role]) {
             if (cancelled)
@@ -370,40 +388,69 @@ MeshBakeJob::MeshBakeJob(std::shared_ptr<const SceneSnapshot> source,
               const int resolution = settings.resolution * settings.sampling,
                         height = settings.rows() * settings.sampling;
               std::vector<float> gpu_values;
-              std::vector<std::array<float, 3>> geometric(surface.size());
-              std::vector<float> curvature(surface.size(), 0);
-              threading::parallel_for(
-                  IndexRange(surface.size()), 256, [&](const IndexRange range) {
-                    for (std::size_t i : range)
-                      if (surface[i].valid) {
-                        geometric[i] = surface[i].normal;
-                        const auto nearest = scene->nearest(surface[i]);
-                        if (nearest.index < 0)
-                          continue;
-                        std::copy_n(nearest.no, 3, geometric[i].begin());
-                        const auto &tri = snapshot.uv_triangles[nearest.index];
-                        float weights[3];
-                        interp_weights_tri_v3(weights,
-                                              tri.positions[0].data(),
-                                              tri.positions[1].data(),
-                                              tri.positions[2].data(),
-                                              nearest.co);
-                        for (int k = 0; k < 3; ++k)
-                          curvature[i] += weights[k] *
-                                          curvature_field
-                                              .vertices[curvature_field.corners[nearest.index][k]]
-                                              .curvature;
-                      }
-                  });
               const bool inward = role == int(MeshMapRole::Thickness);
+              const bool ray_map = role == int(MeshMapRole::AmbientOcclusion) ||
+                                   role == int(MeshMapRole::Thickness);
+              // Only the ray maps and Curvature read the nearest-surface lookup. One
+              // lookup per tile serves all three when the tiles fit the cache budget.
+              NearestSurface uncached;
+              auto *lookup = &uncached;
+              if (ray_map || role == int(MeshMapRole::Curvature)) {
+                bool fresh = true;
+                if (cache_nearest) {
+                  const auto [found, inserted] = nearest_cache.try_emplace(tile);
+                  lookup = &found->second;
+                  fresh = inserted;
+                }
+                if (fresh) {
+                  lookup->geometric.resize(surface.size());
+                  lookup->curvature.assign(surface.size(), 0);
+                  auto &geometric = lookup->geometric;
+                  auto &curvature = lookup->curvature;
+                  threading::parallel_for(
+                      IndexRange(surface.size()), 256, [&](const IndexRange range) {
+                        for (std::size_t i : range)
+                          if (surface[i].valid) {
+                            geometric[i] = surface[i].normal;
+                            const auto nearest = scene->nearest(surface[i]);
+                            if (nearest.index < 0)
+                              continue;
+                            std::copy_n(nearest.no, 3, geometric[i].begin());
+                            const auto &tri = snapshot.uv_triangles[nearest.index];
+                            float weights[3];
+                            interp_weights_tri_v3(weights,
+                                                  tri.positions[0].data(),
+                                                  tri.positions[1].data(),
+                                                  tri.positions[2].data(),
+                                                  nearest.co);
+                            for (int k = 0; k < 3; ++k)
+                              curvature[i] +=
+                                  weights[k] *
+                                  curvature_field
+                                      .vertices[curvature_field.corners[nearest.index][k]]
+                                      .curvature;
+                          }
+                      });
+                }
+              }
+              const auto &geometric = lookup->geometric;
+              const auto &curvature = lookup->curvature;
               const float maximum = inward ? (settings.thickness_distance > 0 ?
                                                   settings.thickness_distance :
                                                   float(extent * .25)) :
                                              (settings.ao_distance > 0 ? settings.ao_distance :
                                                                          float(extent));
-              const bool ray_map = role == int(MeshMapRole::AmbientOcclusion) ||
-                                   role == int(MeshMapRole::Thickness);
               if (ray_map && settings.with_gpu) {
+                if (!gpu_nodes_tried) {
+                  gpu_nodes_tried = true;
+                  try {
+                    gpu_nodes = bake_bvh::build(scene->triangles);
+                  }
+                  catch (const std::exception &) {
+                    // The GPU call repeats the build and reports the reason.
+                    gpu_nodes.reset();
+                  }
+                }
                 std::string gpu_error;
                 GpuBakeRayStats stats;
                 const GpuBakeRayFilter filter{
@@ -420,7 +467,8 @@ MeshBakeJob::MeshBakeJob(std::shared_ptr<const SceneSnapshot> source,
                                                              offset,
                                                              true,
                                                              geometric,
-                                                             &filter);
+                                                             &filter,
+                                                             gpu_nodes ? &*gpu_nodes : nullptr);
                     },
                     settings.with_gpu,
                     gpu_error);

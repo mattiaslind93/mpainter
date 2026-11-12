@@ -9,8 +9,9 @@ PaintPixels::Bounds stroke_bounds(const StrokeRaster &raster)
 {
   PaintPixels::Bounds total;
   for (const auto *tiles : {&raster.paint, &raster.ao})
-    for (const auto &[tile, pixels] : tiles->tiles())
-      for (const auto &channel : pixels.page_versions())
+    for (const auto &[tile, pixels] : tiles->tiles()) {
+      PaintPixels::PageVersions storage;
+      for (const auto &channel : pixels.page_versions(storage))
         for (const auto &[key, version] : channel) {
           PaintPixels::Bounds page{int(key % 65536) * 64,
                                    int(key / 65536) * 64,
@@ -25,6 +26,7 @@ PaintPixels::Bounds stroke_bounds(const StrokeRaster &raster)
             total.y1 = std::max(total.y1, page.y1);
           }
         }
+    }
   return total;
 }
 std::shared_ptr<const StrokeHistory> append_surface_path(

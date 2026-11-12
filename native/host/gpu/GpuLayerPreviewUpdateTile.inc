@@ -18,18 +18,21 @@ GpuPreviewUpdate GpuLayerPreview::update_tile(const TextureSet &source_set,
   const auto normal_set = channel == 6 ?
                               std::optional<TextureSet>(native_normal_stack(source_set)) :
                               std::nullopt;
-  auto view = normal_set ? *normal_set : source_set;
-  if (view.residency_view && !view.tile_loaded(tile)) {
-    view.layers = {TextureLayer{}};
-    view.layers.front().channels.fill(false);
-    view.layers.front().ao_enabled = false;
-    view.instance_layers.reset();
-    view.mesh_maps = {};
-    view.projection_geometry.reset();
-    view.projection_tiles.clear();
-    view.geometry_ownership.clear();
+  // Only an unloaded tile needs its own emptied copy of the set.
+  const TextureSet &whole = normal_set ? *normal_set : source_set;
+  std::optional<TextureSet> unloaded;
+  if (whole.residency_view && !whole.tile_loaded(tile)) {
+    unloaded = whole;
+    unloaded->layers = {TextureLayer{}};
+    unloaded->layers.front().channels.fill(false);
+    unloaded->layers.front().ao_enabled = false;
+    unloaded->instance_layers.reset();
+    unloaded->mesh_maps = {};
+    unloaded->projection_geometry.reset();
+    unloaded->projection_tiles.clear();
+    unloaded->geometry_ownership.clear();
   }
-  const auto &set = view;
+  const TextureSet &set = unloaded ? *unloaded : whole;
   PaintMetadataScope metadata;
   if (!supported(set, channel) || !set.tiles.contains(tile) ||
       GPU_texture_dimensions(target) != 2 || target_offset[0] < 0 || target_offset[1] < 0 ||
@@ -163,8 +166,8 @@ GpuPreviewUpdate GpuLayerPreview::update_tile(const TextureSet &source_set,
       return;
     const double sx = double(width) / pixels.resolution(),
                  sy = double(height) / pixels.resolution();
-    const auto versions = pixels.page_versions();
-    for (const auto &[page, revision] : versions[plane]) {
+    PaintPixels::PageVersions storage;
+    for (const auto &[page, revision] : pixels.page_versions(storage)[plane]) {
       const int px = int(page % 65536) * 64, py = int(page / 65536) * 64;
       const int x = int(std::floor(px * sx)) - 1, y = int(std::floor(py * sy)) - 1,
                 right = int(std::ceil((px + 64) * sx)) + 1,

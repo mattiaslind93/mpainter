@@ -353,12 +353,16 @@ void MaterialInspection::upload_staging_images(bool allow_gpu_compute, bool inpu
               regions[tile] = {region.x, region.y, region.layer};
             }
             if (result != GpuPreviewUpdate::Unsupported) {
-              auto active = request.set;
-              if (active.residency_view) {
-                active.tiles = active.loaded_tiles();
-                std::erase_if(regions,
-                              [&](const auto &entry) { return !active.tile_loaded(entry.first); });
+              // Only a set with unloaded tiles needs its own trimmed copy.
+              std::optional<TextureSet> partial;
+              if (request.set.residency_view && request.set.loaded_tiles() != request.set.tiles) {
+                partial = request.set;
+                partial->tiles = partial->loaded_tiles();
+                std::erase_if(regions, [&](const auto &entry) {
+                  return !partial->tile_loaded(entry.first);
+                });
               }
+              const TextureSet &active = partial ? *partial : request.set;
               if (!active.tiles.empty())
                 result = impl_->gpu_preview.update_tiles(active, c, texture, regions);
             }
