@@ -17,6 +17,7 @@
 #include "IMB_imbuf_types.hh"
 #include "DNA_scene_types.h"
 #include "IMB_colormanagement.hh"
+#include "BLI_task.hh"
 #include <OpenImageIO/imagebufalgo.h>
 #include <OpenImageIO/imageio.h>
 #include <QDir>
@@ -25,6 +26,8 @@
 #include <QRegularExpression>
 #include <QUuid>
 #include <cmath>
+#include <exception>
+#include <mutex>
 #include <stdexcept>
 namespace bts {
 bool texture_export_has_adjustment(const TextureSet &set)
@@ -101,6 +104,33 @@ bool texture_export_has_adjustment(const TextureSet &set)
 }
 namespace {
 const auto &names = export_channel_suffixes;
+// Export rows are independent, like the rows of the native composite job. The
+// first failure is rethrown on the calling thread; a cancel stops the rest.
+template<class Function>
+void export_rows(int height, const std::atomic_bool &cancel, const Function &row)
+{
+  std::mutex guard;
+  std::exception_ptr failure;
+  std::atomic_bool failed{false};
+  blender::threading::parallel_for(
+      blender::IndexRange(height), 16, [&](const blender::IndexRange range) {
+        for (const int y : range) {
+          if (cancel || failed)
+            return;
+          try {
+            row(y);
+          }
+          catch (...) {
+            std::lock_guard lock(guard);
+            if (!failure)
+              failure = std::current_exception();
+            failed = true;
+          }
+        }
+      });
+  if (failure)
+    std::rethrow_exception(failure);
+}
 bool png(ExportFormat format)
 {
   return format == ExportFormat::Png8 || format == ExportFormat::Png16;
@@ -288,9 +318,21 @@ void validate_captured(const ExportTile &tile)
   const auto check = [&](const std::shared_ptr<const std::vector<float>> &plane) {
     if (!plane || plane->size() != count)
       throw std::invalid_argument("GPU export packet has a missing or incomplete channel");
-    for (std::size_t i = 0; i < plane->size(); ++i)
-      if (!std::isfinite((*plane)[i]) || (i % 4 == 3 && ((*plane)[i] < 0 || (*plane)[i] > 1)))
-        throw std::invalid_argument("GPU export packet has invalid values or coverage");
+    const float *values = plane->data();
+    std::atomic_bool invalid{false};
+    blender::threading::parallel_for(
+        blender::IndexRange(plane->size() / 4), 65536, [&](const blender::IndexRange range) {
+          bool bad = false;
+          for (const std::size_t texel : range) {
+            const float *v = values + texel * 4;
+            bad |= !std::isfinite(v[0]) || !std::isfinite(v[1]) || !std::isfinite(v[2]) ||
+                   !std::isfinite(v[3]) || v[3] < 0 || v[3] > 1;
+          }
+          if (bad)
+            invalid = true;
+        });
+    if (invalid)
+      throw std::invalid_argument("GPU export packet has invalid values or coverage");
   };
   for (int c = 0; c < 6; ++c)
     check(packet.channels[c]);
@@ -302,31 +344,61 @@ void validate_captured(const ExportTile &tile)
   for (const auto &[id, coverage] : packet.material_id_coverage)
     check(coverage);
 }
-std::array<float, 3> captured_material_id(const ExportTile &tile, std::size_t index)
-{
-  std::map<int, std::optional<MaterialIdColor>> ids;
-  const auto &layers = evaluation_layers(tile.set);
-  for (std::size_t i = 0; i < layers.size(); ++i) {
-    const auto &layer = layers[i];
-    const auto found = tile.captured->material_id_coverage.find(layer.id);
-    const float coverage = found == tile.captured->material_id_coverage.end() ?
-                               0 :
-                               found->second->at(index);
-    auto id = layer.material_id.value_or(material_id_palette[i % material_id_palette.size()]);
-    bool contributes = layer.visible && coverage >= .5f;
-    if (layer.kind == LayerKind::Folder) {
-      const auto child = ids[layer.depth + 1];
-      ids[layer.depth + 1].reset();
-      if (!child)
-        contributes = false;
-      else if (!layer.material_id_override_children)
-        id = *child;
+// The layer walk of a Material ID texel, with everything that does not depend
+// on the texel looked up once per tile instead of once per texel.
+struct CapturedIdLayers {
+  struct Layer {
+    const std::vector<float> *coverage = nullptr;
+    MaterialIdColor id;
+    bool visible = false, folder = false, override_children = false;
+    int slot = 0;
+  };
+  std::vector<Layer> layers;
+  int slots = 2, root = 0;
+  explicit CapturedIdLayers(const ExportTile &tile)
+  {
+    const auto &source = evaluation_layers(tile.set);
+    int lowest = 0, highest = 0;
+    for (const auto &layer : source) {
+      lowest = std::min(lowest, layer.depth);
+      highest = std::max(highest, layer.depth);
     }
-    if (contributes)
-      ids[layer.depth] = id;
+    root = -lowest;
+    slots = highest - lowest + 2;
+    for (std::size_t i = 0; i < source.size(); ++i) {
+      const auto &layer = source[i];
+      const auto found = tile.captured->material_id_coverage.find(layer.id);
+      layers.push_back(
+          {found == tile.captured->material_id_coverage.end() ? nullptr : found->second.get(),
+           layer.material_id.value_or(material_id_palette[i % material_id_palette.size()]),
+           layer.visible,
+           layer.kind == LayerKind::Folder,
+           layer.material_id_override_children,
+           layer.depth - lowest});
+    }
   }
-  return ids[0] ? material_id_rgb(*ids[0]) : std::array<float, 3>{};
-}
+  std::array<float, 3> pixel(std::size_t index,
+                             std::vector<std::optional<MaterialIdColor>> &ids) const
+  {
+    ids.assign(std::size_t(slots), std::nullopt);
+    for (const auto &layer : layers) {
+      const float coverage = layer.coverage ? layer.coverage->at(index) : 0;
+      auto id = layer.id;
+      bool contributes = layer.visible && coverage >= .5f;
+      if (layer.folder) {
+        const auto child = ids[layer.slot + 1];
+        ids[layer.slot + 1].reset();
+        if (!child)
+          contributes = false;
+        else if (!layer.override_children)
+          id = *child;
+      }
+      if (contributes)
+        ids[layer.slot] = id;
+    }
+    return ids[root] ? material_id_rgb(*ids[root]) : std::array<float, 3>{};
+  }
+};
 MaterialValues captured_value(const ExportTile &tile, std::size_t index)
 {
   const auto &p = *tile.captured;
@@ -506,16 +578,16 @@ void write_texture_export(const ExportRequest &request,
       materials.resize(count);
       if (cache_alpha)
         painted_alpha.resize(count);
-      for (int y = 0; y < height; ++y) {
-        if (cancel)
-          return;
+      export_rows(height, cancel, [&](int y) {
         for (int x = 0; x < res; ++x) {
           const auto result = TextureDocument::evaluate(tile.set, x, y, tile.number);
           materials[std::size_t(y) * res + x] = result.material;
           if (cache_alpha)
             painted_alpha[std::size_t(y) * res + x] = result.coverage[0];
         }
-      }
+      });
+      if (cancel)
+        return;
     }
     // Convert once on the export worker. Never use the derived preview normal:
     // that plane already contains scalar Height and would count it twice.
@@ -534,9 +606,7 @@ void write_texture_export(const ExportRequest &request,
         (tile.set.channels[3] || tile.set.mesh_maps[0]))
     {
       auto pixels = std::make_shared<std::vector<float>>(count * 4);
-      for (int y = 0; y < height; ++y) {
-        if (cancel)
-          return;
+      export_rows(height, cancel, [&](int y) {
         for (int x = 0; x < res; ++x) {
           const auto i = std::size_t(y) * res + x;
           std::array<bool, 6> wanted{};
@@ -554,7 +624,9 @@ void write_texture_export(const ExportRequest &request,
             (*pixels)[i * 4 + c] = n[c] * .5f + .5f;
           (*pixels)[i * 4 + 3] = 1;
         }
-      }
+      });
+      if (cancel)
+        return;
       normal_sources.push_back({std::move(pixels)});
     }
     const bool replace_scalar = std::any_of(normal_sources.begin(),
@@ -616,9 +688,7 @@ void write_texture_export(const ExportRequest &request,
               IMB_colormanagement_role_colorspace_name_get(COLOR_ROLE_SCENE_LINEAR) :
               "Non-Color");
       auto *out = image->float_data_for_write();
-      for (int y = 0; y < height; ++y) {
-        if (cancel)
-          return;
+      export_rows(height, cancel, [&](int y) {
         for (int x = 0; x < res; ++x) {
           const auto index = (std::size_t(y) * res + x) * 4;
           if (map && map->source == ExportMapSource::MaterialId) {
@@ -713,7 +783,9 @@ void write_texture_export(const ExportRequest &request,
           }
           out[index + 3] = map && map->alpha ? alpha : 1;
         }
-      }
+      });
+      if (cancel)
+        return;
       const int output = tile.output_resolution ? tile.output_resolution : res,
                 output_height = tile.output_rows();
       require_texture_resolution(output, "Export width", 128, true);
@@ -788,25 +860,28 @@ void write_texture_export(const ExportRequest &request,
         id_set.texture_resolution = output;
         id_set.texture_height = output_height;
         id_set.tile_resolutions.erase(tile.number);
-        for (int y = 0; y < output_height; ++y) {
-          if (cancel)
-            return;
+        const auto captured_ids = tile.captured ? std::optional<CapturedIdLayers>(tile) :
+                                                  std::nullopt;
+        export_rows(output_height, cancel, [&](int y) {
+          std::vector<std::optional<MaterialIdColor>> ids;
           for (int x = 0; x < output; ++x) {
-            const auto id = tile.captured ?
-                                captured_material_id(
-                                    tile,
+            const auto id = captured_ids ?
+                                captured_ids->pixel(
                                     (std::size_t(std::min(
                                          height - 1, int((y + .5) * height / output_height))) *
                                          res +
                                      std::min(res - 1, int((x + .5) * res / output))) *
-                                        4) :
+                                        4,
+                                    ids) :
                                 TextureDocument::material_id_pixel(id_set, x, y, tile.number);
             const auto i = (std::size_t(y) * output + x) * 4;
             for (int c = 0; c < 3; ++c)
               out[i + c] = id[c];
             out[i + 3] = 1;
           }
-        }
+        });
+        if (cancel)
+          return;
       }
       // Derive gloss after padding/resampling. Quantize with the native PNG backend's
       // own conversion so encoded roughness and glossiness complement exactly.
@@ -843,34 +918,39 @@ void write_texture_export(const ExportRequest &request,
             throw std::runtime_error("Native PNG8 quantization failed");
         }
       }
-      for (std::size_t index = 0; index < std::size_t(output) * output_height * 4; index += 4) {
-        if (gloss_source(map)) {
-          float gloss = 1 - out[index];
-          if (!rough16.empty())
-            gloss = float(65535 - rough16[index / 4]) / 65535.f;
-          else if (!rough8.empty())
-            gloss = float(255 - rough8[index / 4]) / 255.f;
-          if (map->source == ExportMapSource::GlossinessSquared)
-            gloss *= gloss;
-          for (int c = 0; c < 3; ++c)
-            out[index + c] = gloss;
+      export_rows(output_height, cancel, [&](int y) {
+        const auto first = std::size_t(y) * output * 4, last = first + std::size_t(output) * 4;
+        for (auto index = first; index < last; index += 4) {
+          if (gloss_source(map)) {
+            float gloss = 1 - out[index];
+            if (!rough16.empty())
+              gloss = float(65535 - rough16[index / 4]) / 65535.f;
+            else if (!rough8.empty())
+              gloss = float(255 - rough8[index / 4]) / 255.f;
+            if (map->source == ExportMapSource::GlossinessSquared)
+              gloss *= gloss;
+            for (int c = 0; c < 3; ++c)
+              out[index + c] = gloss;
+          }
+          if (is_color && integer_image(format))
+            IMB_colormanagement_scene_linear_to_srgb_v3(out + index, out + index);
+          if (request.studio && is_color)
+            IMB_colormanagement_scene_linear_to_acescg(out + index, out + index);
+          if (is_normal && out[index + 3] > 0) {
+            auto direction = normalized_normal(
+                {out[index] * 2 - 1, out[index + 1] * 2 - 1, out[index + 2] * 2 - 1});
+            for (int c = 0; c < 3; ++c)
+              out[index + c] = direction[c] * .5f + .5f;
+          }
+          if (map && map->source == ExportMapSource::NormalDirectX)
+            out[index + 1] = 1 - out[index + 1];
+          if (integer_image(format))
+            for (int c = 0; c < 3; ++c)
+              out[index + c] = std::clamp(out[index + c], 0.f, 1.f);
         }
-        if (is_color && integer_image(format))
-          IMB_colormanagement_scene_linear_to_srgb_v3(out + index, out + index);
-        if (request.studio && is_color)
-          IMB_colormanagement_scene_linear_to_acescg(out + index, out + index);
-        if (is_normal && out[index + 3] > 0) {
-          auto direction = normalized_normal(
-              {out[index] * 2 - 1, out[index + 1] * 2 - 1, out[index + 2] * 2 - 1});
-          for (int c = 0; c < 3; ++c)
-            out[index + c] = direction[c] * .5f + .5f;
-        }
-        if (map && map->source == ExportMapSource::NormalDirectX)
-          out[index + 1] = 1 - out[index + 1];
-        if (integer_image(format))
-          for (int c = 0; c < 3; ++c)
-            out[index + c] = std::clamp(out[index + c], 0.f, 1.f);
-      }
+      });
+      if (cancel)
+        return;
       const auto name = filename(tile, channel, request);
       const auto destination = directory.filePath(name);
       const auto parent = QFileInfo(destination).absolutePath();
