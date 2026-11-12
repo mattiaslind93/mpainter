@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "MeshBakeFilter.hh"
+#include "DilationFill.hh"
 #include "IMB_imbuf.hh"
 #include "IMB_imbuf_types.hh"
 #include "MEM_guardedalloc.h"
@@ -202,11 +203,10 @@ std::vector<float> filter_mesh_bake(std::vector<float> pixels,
           data[i + c] = (vector[c] / length * .5f + .5f) * alpha;
     }
   if (dilation) {
-    std::unique_ptr<char[], decltype([](char *p) { MEM_delete(p); })> mask(
-        MEM_new_array_uninitialized<char>(std::size_t(width) * height, __func__));
-    for (std::size_t i = 0; i < std::size_t(width) * height; ++i)
+    std::vector<char> mask(std::size_t(width) * height);
+    for (std::size_t i = 0; i < mask.size(); ++i)
       mask[i] = data[i * 4 + 3] > 0 ? FILTER_MASK_USED : 0;
-    blender::IMB_filter_extend(image.get(), mask.get(), dilation);
+    dilate_rgba(data, mask.data(), width, height, dilation);
   }
   if (diffusion)
     diffuse(*image);
