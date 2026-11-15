@@ -60,6 +60,7 @@
 #include "GpuBrushRasterTest.hh"
 #include "GpuAuthoringWorkerTest.hh"
 #endif
+#include "GpuPaintPages.hh"
 #include "GpuTextureProbe.hh"
 #include "IMB_imbuf.hh"
 #include "IMB_imbuf_types.hh"

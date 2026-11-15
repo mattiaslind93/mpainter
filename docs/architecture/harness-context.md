@@ -7,8 +7,11 @@ the release build behind `MPAINTER_WITH_HARNESS` (restructure plan, phase 4).
 
 - `MPAINTER_WITH_HARNESS` is a CMake option, ON by default. OFF does not compile `native/harness`
   or the `native/tests` sources that are on `bts-host` only so the harness can run, and `main()`
-  includes `native/host/app/HarnessDisabled.hh` instead of the harness headers. An OFF configure
-  and link has not been run; that build directory needs the owner's go-ahead.
+  includes `native/host/app/HarnessDisabled.hh` instead of the harness headers. The owner built
+  OFF: `GpuLayerPreview` failed because its paint types were only included from the harness
+  tests. The preview includes `GpuPaintPages.hh` itself now. CTest registers
+  `asset-dragdrop-workspace` only when the option is ON. The OFF link after that fix is still
+  for the owner to run.
 - `native/harness/HarnessOptions.hh` registers the 148 harness command-line options.
   `HarnessDispatch.hh` runs the tests that need no workspace. `MainHarnessInput.inc` holds the
   synthetic input helpers. The session demo sections and the other harness calls in host files
@@ -87,7 +90,8 @@ class HarnessContext {
 3. `WorkspaceContext` and the first hooks, one demo family per step. Each step moves one block
    verbatim, apart from the reads of `main()` locals, which become `ctx.` reads.
 4. `MPAINTER_WITH_HARNESS` and `HarnessDisabled.hh` are in place, and the harness calls that
-   would otherwise need harness symbols are behind `#if MPAINTER_WITH_HARNESS`. An `OFF` build
-   that configures, compiles and links is still to be run. That build is a new build directory,
-   so it needs the owner's go-ahead. `env_set` and the `WorkspaceContext` hooks above are not
-   done; the preprocessor gate is what keeps those blocks out of the release translation unit.
+   would otherwise need harness symbols are behind `#if MPAINTER_WITH_HARNESS`. Production
+   headers the preview needs stay outside that gate. The owner has run an OFF configure; the
+   link after the paint-header fix is still to be run. `env_set` and the `WorkspaceContext`
+   hooks above are not done; the preprocessor gate is what keeps the harness blocks out of the
+   release translation unit.
