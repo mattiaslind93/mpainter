@@ -1,4 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+#ifndef MPAINTER_WITH_HARNESS
+#define MPAINTER_WITH_HARNESS 1
+#endif
 #include "TextureSetResidency.hh"
 #include "Theme.hh"
 #include "MaskEffectContext.hh"
@@ -36,7 +39,9 @@
 #include "SubsurfacePreviewIO.hh"
 #include "QtSharedContext.hh"
 #include "BlenderHost.hh"
+#if MPAINTER_WITH_HARNESS
 #include "CyclesCudaTest.hh"
+#endif
 #include "FileBrowser.hh"
 #include "TextureExtent.hh"
 #include "TextureMemory.hh"

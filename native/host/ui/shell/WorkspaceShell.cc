@@ -1,4 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+#ifndef MPAINTER_WITH_HARNESS
+#define MPAINTER_WITH_HARNESS 1
+#endif
 #include "Theme.hh"
 #include <QDateTime>
 #include "PainterLayerDelegate.hh"
@@ -12,7 +15,9 @@
 #include "SpsmImportUi.hh"
 #include "TextureExtentChoices.hh"
 #include "NumericLocale.hh"
+#if MPAINTER_WITH_HARNESS
 #include "MaskFillUiTest.hh"
+#endif
 #include "FillGradient.hh"
 #include <QSettings>
 #include <QDesktopServices>
@@ -2901,7 +2906,9 @@ void bts::WorkspaceShell::set_texture_load_status(QUuid set,
 }
 
 namespace bts {
+#if MPAINTER_WITH_HARNESS
 #include "AcPanelCaptureHelpers.inc"
+#endif
 void WorkspaceShell::set_mask_clipboard_available(bool ready)
 {
   mask_clipboard_available_ = ready;
@@ -2910,5 +2917,7 @@ void WorkspaceShell::set_mask_clipboard_available(bool ready)
   if (paste)
     paste->setEnabled(ready && copy && copy->isEnabled());
 }
+#if MPAINTER_WITH_HARNESS
 #include "AcPanelCapture.inc"
+#endif
 }  // namespace bts

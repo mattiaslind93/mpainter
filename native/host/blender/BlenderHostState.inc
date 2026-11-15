@@ -132,6 +132,7 @@ void BlenderHost::set_render_quality(int samples, bool denoise)
 }
 void BlenderHost::diagnostic_cycles_cuda_render(const QString &directory)
 {
+#if MPAINTER_WITH_HARNESS
   auto &s = *impl_;
   s.require_owner();
   if (s.phase != Impl::Phase::SceneReady)
@@ -146,6 +147,10 @@ void BlenderHost::diagnostic_cycles_cuda_render(const QString &directory)
   code += cycles_cuda_test_python;
   if (!BPY_run_string_exec(s.context, nullptr, code.constData()))
     throw std::runtime_error("Cycles CUDA test failed; see result.json and the CUDA error above");
+#else
+  (void)directory;
+  throw std::runtime_error("Cycles CUDA diagnostic is not in this build");
+#endif
 }
 QJsonObject BlenderHost::render_state() const
 {

@@ -5,9 +5,14 @@ the release build behind `MPAINTER_WITH_HARNESS` (restructure plan, phase 4).
 
 ## Where we are
 
+- `MPAINTER_WITH_HARNESS` is a CMake option, ON by default. OFF does not compile `native/harness`
+  or the `native/tests` sources that are on `bts-host` only so the harness can run, and `main()`
+  includes `native/host/app/HarnessDisabled.hh` instead of the harness headers. An OFF configure
+  and link has not been run; that build directory needs the owner's go-ahead.
 - `native/harness/HarnessOptions.hh` registers the 148 harness command-line options.
   `HarnessDispatch.hh` runs the tests that need no workspace. `MainHarnessInput.inc` holds the
-  synthetic input helpers.
+  synthetic input helpers. The session demo sections and the other harness calls in host files
+  sit behind `#if MPAINTER_WITH_HARNESS`, so an OFF translation unit does not name harness symbols.
 - The rest of `main()` still reads harness options 305 times (`parser.isSet`, `parser.value`,
   `parser.values`; product options are read 15 times) and `BTS_*` environment switches 127 times. They sit inline, mixed with product code, and share
   `main()`'s local lambdas and state (`workspace`, `viewport`, `host`, `document`, the callbacks).
@@ -81,5 +86,8 @@ class HarnessContext {
    `docs/architecture/bts-variables.md`.
 3. `WorkspaceContext` and the first hooks, one demo family per step. Each step moves one block
    verbatim, apart from the reads of `main()` locals, which become `ctx.` reads.
-4. `MPAINTER_WITH_HARNESS`, `HarnessDisabled.hh`, and an `OFF` build that configures, compiles
-   and links. That build is a new build directory, so it needs the owner's go-ahead.
+4. `MPAINTER_WITH_HARNESS` and `HarnessDisabled.hh` are in place, and the harness calls that
+   would otherwise need harness symbols are behind `#if MPAINTER_WITH_HARNESS`. An `OFF` build
+   that configures, compiles and links is still to be run. That build is a new build directory,
+   so it needs the owner's go-ahead. `env_set` and the `WorkspaceContext` hooks above are not
+   done; the preprocessor gate is what keeps those blocks out of the release translation unit.

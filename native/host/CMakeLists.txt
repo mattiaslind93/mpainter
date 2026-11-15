@@ -1,6 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 option(BTS_MACOS_METAL_PROBE "Build the headless macOS Metal diagnostic instead of the editor" OFF)
 option(BTS_MACOS_METAL_EDITOR "Build the Metal editor alongside diagnostics" OFF)
+# Demo and acceptance code stays available for the tests. A release build passes
+# -DMPAINTER_WITH_HARNESS=OFF so native/harness is not compiled into bts-host.
+# ON is the default: every current verifier keeps the same binary.
+option(MPAINTER_WITH_HARNESS "Compile the demo and test harness into the application" ON)
 if(BTS_MACOS_METAL_PROBE)
   include("${BTS_HOST_SOURCE_DIR}/blender/macos/CMakeLists.txt")
   if(NOT BTS_MACOS_METAL_EDITOR)
@@ -276,6 +280,11 @@ set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/blender/EeveeCompletionSnapshot.cc AP
 set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/blender/MaterialLayeringSourceSnapshots.cc APPEND PROPERTY
   INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/source/blender/imbuf/opencolorio")
 target_compile_definitions(bts-host PRIVATE WITH_BTS_HOST QT_NO_KEYWORDS)
+if(MPAINTER_WITH_HARNESS)
+  target_compile_definitions(bts-host PRIVATE MPAINTER_WITH_HARNESS=1)
+else()
+  target_compile_definitions(bts-host PRIVATE MPAINTER_WITH_HARNESS=0)
+endif()
 add_custom_command(TARGET bts-host POST_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:bts-host>/branding COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BTS_HOST_SOURCE_DIR}/../../assets/branding/splash-featured.png ${BTS_HOST_SOURCE_DIR}/../../assets/branding/splash-featured.focus $<TARGET_FILE_DIR:bts-host>/branding)
 install(FILES ${BTS_HOST_SOURCE_DIR}/../../assets/branding/splash-featured.png ${BTS_HOST_SOURCE_DIR}/../../assets/branding/splash-featured.focus DESTINATION branding)
 set_source_files_properties(${BTS_HOST_SOURCE_DIR}/app/Branding.cc PROPERTIES COMPILE_DEFINITIONS "BTS_PRODUCT_VERSION=\"${BTS_PRODUCT_VERSION}\"")
@@ -1459,7 +1468,7 @@ set_property(SOURCE ${BTS_HOST_SOURCE_DIR}/blender/MaterialLayerParameterSurface
 target_sources(bts-host PRIVATE ${BTS_HOST_SOURCE_DIR}/materials/layering/MaterialLayerParameterImportJob.cc ${BTS_HOST_SOURCE_DIR}/blender/MaterialLayerParameterReadback.cc ${BTS_HOST_SOURCE_DIR}/blender/MaterialLayerParameterSurface.cc ${BTS_HOST_SOURCE_DIR}/materials/layering/MaterialLayerParameterIO.cc ${BTS_HOST_SOURCE_DIR}/ui/panels/MaterialLayeringPanel.cc ${BTS_HOST_SOURCE_DIR}/materials/layering/MaterialLayeringUi.cc ${BTS_HOST_SOURCE_DIR}/../tests/material_layering_panel_test.cc ${BTS_HOST_SOURCE_DIR}/../tests/shader_controller_target_test.cc ${BTS_HOST_SOURCE_DIR}/../tests/material_layering_source_pixels_test.cc)
 
 # Keep the opaque loader probe on the real Cycles ABI and flags.
-if(TARGET bf_intern_cycles)
+if(MPAINTER_WITH_HARNESS AND TARGET bf_intern_cycles)
   get_filename_component(BTS_MATERIAL_LAYER_SOURCE_PROBE
     "${BTS_HOST_SOURCE_DIR}/../tests/material_layering_cycles_source_probe.cc" ABSOLUTE)
   target_sources(bf_intern_cycles PRIVATE "${BTS_MATERIAL_LAYER_SOURCE_PROBE}")
@@ -1801,3 +1810,11 @@ add_dependencies(bts-cpu-tests bts-surface-curvature-tests)
 
 target_compile_definitions(bts-builtin-smartmasks PRIVATE BTS_POLYHAVEN_ASSET_DIR="${BTS_HOST_SOURCE_DIR}/../../assets/materials/polyhaven")
 install(DIRECTORY ${BTS_HOST_SOURCE_DIR}/../../assets/materials/polyhaven DESTINATION assets/materials)
+
+# After every target_sources: a release build drops the harness and the test
+# sources that exist only so the harness can run. Blender's own sources stay.
+if(NOT MPAINTER_WITH_HARNESS)
+  get_target_property(_bts_host_sources bts-host SOURCES)
+  list(FILTER _bts_host_sources EXCLUDE REGEX "(^|/)native/(host/\\.\\./)?(harness|tests)/")
+  set_property(TARGET bts-host PROPERTY SOURCES ${_bts_host_sources})
+endif()

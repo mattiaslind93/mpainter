@@ -1,6 +1,6 @@
 # native/harness
 
-Test, demo, proof and witness code for the app (`*Demo`, `*Test`, `*Proof`, `*Witness`, `*Fixture`, ...). It is still compiled into `bts-host`, because `main()` calls it. Phase 4 of the restructure plan takes it out of the release build behind `MPAINTER_WITH_HARNESS`; `docs/architecture/harness-context.md` is the design.
+Test, demo, proof and witness code for the app (`*Demo`, `*Test`, `*Proof`, `*Witness`, `*Fixture`, ...). `bts-host` compiles it when the CMake option `MPAINTER_WITH_HARNESS` is ON, which is the default, so the tests and verifiers keep this code. A release build sets the option OFF: these sources are not compiled, and `main()` uses `native/host/app/HarnessDisabled.hh` instead. `docs/architecture/harness-context.md` is the design.
 
 ## How main() reaches it
 

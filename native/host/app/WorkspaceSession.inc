@@ -1,4 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+// main.cc defines this before including the session. A driver that compiles main.cc
+// without the CMake definition keeps the harness.
+#ifndef MPAINTER_WITH_HARNESS
+#define MPAINTER_WITH_HARNESS 1
+#endif
 // The Painter session: everything main() does once the Blender host is up, from the workspace
 // and its callbacks to the event loop and an orderly shutdown. main() builds one
 // WorkspaceSession from what it set up and calls run().
@@ -54,10 +59,12 @@ int WorkspaceSession::run()
 #include "WorkspaceMenus.inc"
 #include "WorkspaceAutomation.inc"
 #include "WorkspaceWindow.inc"
+#if MPAINTER_WITH_HARNESS
 #include "SessionDemoFlags.inc"
 #include "SessionDemoSequence.inc"
 #include "SessionCaptureDemos.inc"
 #include "SessionDemoActions.inc"
+#endif
   // Declared after every callback capture: normal return and exceptions from
   // the event loop retire/delete widgets while all referenced locals are alive.
   bool ui_shutdown_done = false, ui_shutdown_failed = false;
@@ -98,12 +105,14 @@ int WorkspaceSession::run()
     recovery_timer.stop();
     material_pick_timer.stop();
     resource_ui_timer.stop();
+#if MPAINTER_WITH_HARNESS
     sets_demo.stop();
     new_demo.stop();
     open_demo.stop();
     demo.stop();
     layout_demo.stop();
     navigation_demo.stop();
+#endif
     attempt("project-open-height-import", [&] {
       if (parameter_import)
         parameter_import->shutdown();
