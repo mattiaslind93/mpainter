@@ -32,7 +32,7 @@ The session is one translation unit with `main.cc` on purpose. The reviewed live
 
 ## Blender boundary
 
-- Only `blender/` may include Blender headers. In this folder only `app/main.cc` still includes them outside `blender/`; the rest of the count is harness and test code. `docs/blender-surface.md` lists every Blender header in use; `python3 scripts/mp.py check` counts the files outside `blender/` and fails if the count grows.
+- Only `blender/` may include Blender headers. In this folder only `app/main.cc` still includes them outside `blender/`; the rest of the count is harness and test code. `blender/GpuTextureProbe.hh` is the diagnostic readback product code calls, so it lives here. `docs/blender-surface.md` lists every Blender header in use; `python3 scripts/mp.py check` counts the files outside `blender/` and fails if the count grows.
 - Do not add Blender includes to UI, panel or widget files.
 
 ## Platform code
