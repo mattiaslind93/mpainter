@@ -7,11 +7,11 @@ the release build behind `MPAINTER_WITH_HARNESS` (restructure plan, phase 4).
 
 - `MPAINTER_WITH_HARNESS` is a CMake option, ON by default. OFF does not compile `native/harness`
   or the `native/tests` sources that are on `bts-host` only so the harness can run, and `main()`
-  includes `native/host/app/HarnessDisabled.hh` instead of the harness headers. The owner built
-  OFF: `GpuLayerPreview` failed because its paint types were only included from the harness
-  tests. The preview includes `GpuPaintPages.hh` itself now. CTest registers
-  `asset-dragdrop-workspace` only when the option is ON. The OFF link after that fix is still
-  for the owner to run.
+  includes `native/host/app/HarnessDisabled.hh` instead of the harness headers. The preview
+  includes `GpuPaintPages.hh` itself, so an OFF build can compile the paint path. CTest
+  registers `asset-dragdrop-workspace` only when the option is ON, and `bts-cpu-check` launches
+  `mpainter --cpu-*` only then. The three older CPU failures (drag-and-drop, numeric locale,
+  session guard) stay in the suite.
 - `native/harness/HarnessOptions.hh` registers the 148 harness command-line options.
   `HarnessDispatch.hh` runs the tests that need no workspace. `MainHarnessInput.inc` holds the
   synthetic input helpers. The session demo sections and the other harness calls in host files

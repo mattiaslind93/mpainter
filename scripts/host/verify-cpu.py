@@ -3,6 +3,16 @@
 import argparse,json,os,subprocess,sys
 from pathlib import Path
 from cpu_test_plan import cpu_test_binaries
+def with_harness(build_dir):
+    """True unless this build configured MPAINTER_WITH_HARNESS=OFF. Missing cache stays ON."""
+    cache = Path(build_dir) / 'CMakeCache.txt'
+    if not cache.is_file():
+        return True
+    prefix = 'MPAINTER_WITH_HARNESS:'
+    for line in cache.read_text(errors='replace').splitlines():
+        if line.startswith(prefix):
+            return line.split('=', 1)[1].strip().upper() not in {'OFF', 'FALSE', '0', 'NO', ''}
+    return True
 p=argparse.ArgumentParser();p.add_argument('--build-dir',type=Path,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--export-only',action='store_true');p.add_argument('--config');p.add_argument('--plan-only',action='store_true');a=p.parse_args();a.build_dir=a.build_dir.resolve();a.output=a.output.resolve();a.output.mkdir(parents=True,exist_ok=True)
 (a.output/'tmp').mkdir(exist_ok=True)
 env=dict(os.environ,TMPDIR=str(a.output.resolve()/'tmp'),XDG_CACHE_HOME=str(a.output.resolve()/'cache'),QT_QPA_PLATFORM='offscreen',QT_QPA_OFFSCREEN_NO_GLX='1',BTS_NO_BACKGROUND_GPU='1',XDG_CONFIG_HOME=str(a.output.resolve()/'config'),XDG_DATA_HOME=str(a.output.resolve()/'data'),BTS_RECOVERY_DIR=str(a.output.resolve()/'recovery'),BTS_RESOURCE_CACHE=str(a.output.resolve()/'resource-cache'))
@@ -38,13 +48,15 @@ if not a.export_only:
  commands.append(('material-layer-parameter-packet-cpu',[sys.executable,str(Path(__file__).resolve().parents[2]/'native/tests/material_layer_parameter_verifier_test.py')]))
  commands.append(('material-layer-surface-causal-cpu',[sys.executable,str(Path(__file__).resolve().parents[2]/'native/tests/material_layer_surface_verifier_test.py')]))
  commands.append(('eevee-completion-observation-values-cpu',[sys.executable,str(Path(__file__).with_name('verify_eevee_completion_test.py'))]))
-commands.append(('bts-requested-features-native',[str(a.build_dir/'bin/mpainter'),'--cpu-export-test',str(a.output/'requested-features')]))
-commands.append(('bts-export-files',[str(a.build_dir/'bin/mpainter'),'--cpu-export-test',str(a.output/'export')]))
-if not a.export_only:commands.append(('bts-asset-dragdrop-workspace',[str(a.build_dir/'bin/mpainter'),'--cpu-asset-dragdrop-test',str(a.output/'asset-dragdrop-workspace')]))
-if not a.export_only:commands.append(('bts-workspace-shutdown-ui',[str(a.build_dir/'bin/mpainter'),'--cpu-workspace-shutdown-test']))
-if not a.export_only:commands.append(('bts-native-material-ui',[str(a.build_dir/'bin/mpainter'),'--cpu-native-material-test',str(a.output/'native-material-ui')]))
-if not a.export_only:commands.append(('bts-texture-import-files',[str(a.build_dir/'bin/mpainter'),'--cpu-texture-import-test',str(a.output/'texture-import')]))
-if not a.export_only:commands.append(('bts-skew-rays',[str(a.build_dir/'bin/mpainter'),'--cpu-skew-test',str(a.output/'skew')]))
+# These launch mpainter with harness options. An OFF binary rejects every --cpu-* flag.
+if with_harness(a.build_dir):
+ commands.append(('bts-requested-features-native',[str(a.build_dir/'bin/mpainter'),'--cpu-export-test',str(a.output/'requested-features')]))
+ commands.append(('bts-export-files',[str(a.build_dir/'bin/mpainter'),'--cpu-export-test',str(a.output/'export')]))
+ if not a.export_only:commands.append(('bts-asset-dragdrop-workspace',[str(a.build_dir/'bin/mpainter'),'--cpu-asset-dragdrop-test',str(a.output/'asset-dragdrop-workspace')]))
+ if not a.export_only:commands.append(('bts-workspace-shutdown-ui',[str(a.build_dir/'bin/mpainter'),'--cpu-workspace-shutdown-test']))
+ if not a.export_only:commands.append(('bts-native-material-ui',[str(a.build_dir/'bin/mpainter'),'--cpu-native-material-test',str(a.output/'native-material-ui')]))
+ if not a.export_only:commands.append(('bts-texture-import-files',[str(a.build_dir/'bin/mpainter'),'--cpu-texture-import-test',str(a.output/'texture-import')]))
+ if not a.export_only:commands.append(('bts-skew-rays',[str(a.build_dir/'bin/mpainter'),'--cpu-skew-test',str(a.output/'skew')]))
 if a.plan_only:
  (a.output/'plan.json').write_text(json.dumps({'cpu_only':True,'BTS_NO_BACKGROUND_GPU':env['BTS_NO_BACKGROUND_GPU'],'QT_QPA_OFFSCREEN_NO_GLX':env['QT_QPA_OFFSCREEN_NO_GLX'],'commands':commands},indent=2)+'\n')
  print(f'{len(commands)} explicitly planned CPU checks; no test process started.')
