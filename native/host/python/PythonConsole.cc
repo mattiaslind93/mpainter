@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+#ifndef MPAINTER_WITH_HARNESS
+#define MPAINTER_WITH_HARNESS 1
+#endif
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include "PythonConsole.hh"
 #include "ResourceAvailability.hh"
+#if MPAINTER_WITH_HARNESS
 #include "ViewportIdleDemo.hh"
+#endif
 #include "PythonApi.hh"
 #include "PythonExtensionApi.hh"
 #include "PythonLayerApi.hh"
@@ -32,6 +37,7 @@
 #include <limits>
 #include <QTextDocument>
 namespace bts {
+#if MPAINTER_WITH_HARNESS
 void start_automation_demo(QMainWindow *, const QString &, std::function<bool()>);
 void start_layer_api_demo(QMainWindow *, std::function<bool()>, std::function<QJsonObject()>);
 void start_hard_surface_demo(QMainWindow *, std::function<bool()>, std::function<QJsonObject()>);
@@ -44,6 +50,7 @@ void start_fill_symmetry_demo(QMainWindow *, std::function<bool()>, std::functio
 void start_channel_configuration_demo(QMainWindow *,
                                       std::function<bool()>,
                                       std::function<QJsonObject()>);
+#endif
 namespace {
 struct Gil {
   PyGILState_STATE state = PyGILState_Ensure();
@@ -322,6 +329,7 @@ PythonConsole::PythonConsole(QMainWindow *window, PythonHooks hooks)
   }
   Py_DECREF(result);
   QTimer::singleShot(0, this, [this] { notify("GraphicalUserInterfaceStarted"); });
+#if MPAINTER_WITH_HARNESS
   if (qEnvironmentVariableIsSet("BTS_AUTOMATION_DEMO"))
     start_automation_demo(window, s.plugins, s.hooks.busy);
   if (qEnvironmentVariableIsSet("BTS_BATCH_CHANNEL_DEMO"))
@@ -340,6 +348,7 @@ PythonConsole::PythonConsole(QMainWindow *window, PythonHooks hooks)
     start_hard_surface_demo(window, s.hooks.busy, s.hooks.snapshot);
   if (qEnvironmentVariableIsSet("BTS_LAYER_API_DEMO"))
     start_layer_api_demo(window, s.hooks.busy, s.hooks.snapshot);
+#endif
 }
 PythonConsole::~PythonConsole()
 {

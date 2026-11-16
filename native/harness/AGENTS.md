@@ -1,10 +1,10 @@
 # native/harness
 
-Test, demo, proof and witness code for the app (`*Demo`, `*Test`, `*Proof`, `*Witness`, `*Fixture`, ...). It is still compiled into `bts-host`, because `main()` calls it. Phase 4 of the restructure plan takes it out of the release build behind `MPAINTER_WITH_HARNESS`; `docs/architecture/harness-context.md` is the design.
+Test, demo, proof and witness code for the app (`*Demo`, `*Test`, `*Proof`, `*Witness`, `*Fixture`, ...). `bts-host` compiles it when the CMake option `MPAINTER_WITH_HARNESS` is ON, which is the default, so the tests and verifiers keep this code. A release build sets the option OFF: these sources are not compiled, and `main()` uses `native/host/app/HarnessDisabled.hh` instead. `docs/architecture/harness-context.md` is the design.
 
 ## How main() reaches it
 
-- `HarnessOptions.hh` registers the 148 harness command-line options. Product options stay in `main()`.
+- `HarnessOptions.hh` registers the 149 harness command-line options. Product options stay in `main()`.
 - `HarnessDispatch.hh` runs the tests that need no workspace (`run_pre_host_test`, `run_host_test`).
 - `HarnessContext.hh` is main()'s one view of the harness command line. Read harness options only through it; `python3 scripts/mp.py check` (gate `harness-seam`) enforces that.
 - `SessionDemoFlags.inc`, `SessionDemoSequence.inc`, `SessionCaptureDemos.inc` and `SessionDemoActions.inc` are the demo sections of the Painter session; `native/host/app/WorkspaceSession.inc` includes them in order.

@@ -24,6 +24,8 @@ inline QJsonObject dialog(TextureDocument &document,
         require(settings && settings->objectName() == "meshBakeDialog",
                 "Actual MeshBakeDialog did not open");
         visited = true;
+        require(settings->minimumWidth() >= 700 && settings->width() >= 780,
+                "Baking dialog opened narrower than 780 or allows less than 700");
         settings->resize(1024, 768);
         QApplication::processEvents();
         auto &count = control<QSpinBox>(*settings, "bakeSecondaryRays");

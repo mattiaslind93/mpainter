@@ -74,6 +74,25 @@ class CpuPlanTest(unittest.TestCase):
             self.assertNotIn('verify-mask-fill-ui.py', [Path(arg).name for arg in command])
             if Path(command[0]).name == 'bts-host':
                 self.assertTrue(command[1].startswith('--cpu-'), command)
+        self.assertEqual(self.harness_checks(plan), {
+            'bts-requested-features-native', 'bts-export-files', 'bts-asset-dragdrop-workspace',
+            'bts-workspace-shutdown-ui', 'bts-native-material-ui', 'bts-texture-import-files',
+            'bts-skew-rays'})
+
+    def harness_checks(self, plan):
+        return {name for name, command in plan['commands'] if Path(command[0]).name == 'mpainter'}
+
+    def test_off_build_omits_harness_host_checks(self):
+        self.manifest(['bts-fixture-tests', 'bts-gpu-program-warmup-tests'])
+        (self.directory / 'CMakeCache.txt').write_text('MPAINTER_WITH_HARNESS:BOOL=OFF\n')
+        output = self.directory / 'plan-off'
+        result = subprocess.run([sys.executable, str(ROOT / 'scripts/host/verify-cpu.py'),
+                                 '--build-dir', str(self.directory), '--output', str(output),
+                                 '--plan-only'], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        plan = json.loads((output / 'plan.json').read_text())
+        self.assertEqual(self.harness_checks(plan), set())
+        self.assertTrue(any(name == 'bts-fixture-tests' for name, _ in plan['commands']))
 
     @unittest.skipUnless(shutil.which('cmake'), 'CMake required for metadata generation')
     def test_actual_cmake_group_generates_only_explicit_targets(self):

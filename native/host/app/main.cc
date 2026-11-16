@@ -1,16 +1,25 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+// CMake sets this on bts-host. The live-render drivers compile this file without
+// that definition and keep the harness, which is what they drive.
+#ifndef MPAINTER_WITH_HARNESS
+#define MPAINTER_WITH_HARNESS 1
+#endif
 #include "PolyHavenPreparation.hh"
 #include "TextureResidencyMemory.hh"
 #include "GPU_host_texture_memory.hh"
 #include "TextureSetResidency.hh"
 #include "Theme.hh"
+#if MPAINTER_WITH_HARNESS
 #include "RenderStatusTest.hh"
+#endif
 #include "AssetApplicationTarget.hh"
 #include "AssetApplyProgress.hh"
 #include "AssetViewportDrop.hh"
 #include "UpdateNotice.hh"
 #include "MaterialIdDialog.hh"
+#if MPAINTER_WITH_HARNESS
 #include "BrushPresetDemo.hh"
+#endif
 #include "ReferenceImage.hh"
 #include "BrushPresetUi.hh"
 #include "BrushPresetThumbnailJobs.hh"
@@ -36,14 +45,18 @@
 #include "SpsmImportUi.hh"
 #include "SpsmSource.hh"
 #include "GpuPerformance.hh"
+#if MPAINTER_WITH_HARNESS
 #include "BakeSourceCpuDemo.hh"
 #include "NativeMaterialInspectionDemo.hh"
+#endif
 #include "NativeMaterialSourceLoader.hh"
 #include "SmartMaskThumbnailJobs.hh"
 #include "BuiltinSmartMasks.hh"
+#if MPAINTER_WITH_HARNESS
 #include "SmartMaskProjectWitness.hh"
 #include "SpmskShelfProjectWitness.hh"
 #include "NativeMaterialProjectionWitness.hh"
+#endif
 #include "GPU_pass.hh"
 #include "NativeMaterialImageUi.hh"
 #include "NativeMaterialImagePanel.hh"
@@ -74,7 +87,9 @@
 #include "BrushFootprintBounds.hh"
 #include "GpuLayerPreview.hh"
 #include "GPU_shader.hh"
+#if MPAINTER_WITH_HARNESS
 #include "../tests/GpuProgramWarmupDiagnostic.hh"
+#endif
 #include <QScopedValueRollback>
 #include <QScopeGuard>
 #include "FlattenExport.hh"
@@ -99,23 +114,31 @@
 #include "WarpProjection.hh"
 #include "LayerEditDiff.hh"
 #include "OriginalMeshObj.hh"
+#if MPAINTER_WITH_HARNESS
 #include "ExportCpuDemo.hh"
+#endif
 #include "EditTiming.hh"
 #include "TexturePadding.hh"
 #include <QOpenGLFunctions>
 #include "EmptyProjectView.hh"
 #include <clocale>
 #include <cstring>
+#if MPAINTER_WITH_HARNESS
 #include "GuiFixDemo.hh"
 #include "HarnessOptions.hh"
 #include "HarnessDispatch.hh"
 #include "HarnessContext.hh"
+#else
+#include "HarnessDisabled.hh"
+#endif
 #include "CompositeStatus.hh"
 #include "Preferences.hh"
 #include "TabletDiagnostics.hh"
 #include <QPointer>
 #include <QSettings>
+#if MPAINTER_WITH_HARNESS
 #include "SkewBakeCpuDemo.hh"
+#endif
 #include "ColorPicker.hh"
 #include "GeometryTileClip.hh"
 #include <QInputDialog>
@@ -180,15 +203,21 @@
 #include "MaterialLayeringUi.hh"
 #include "MaterialLayerParameterImportJob.hh"
 #include "MaterialLayerParameterCatalog.hh"
+#if MPAINTER_WITH_HARNESS
 #include "../tests/MaterialLayeringUiArtist.hh"
+#endif
 #include "MaterialLayeringAuthoring.hh"
 #include "MaterialLayeringSourceSnapshots.hh"
 #include <QBoxLayout>
+#if MPAINTER_WITH_HARNESS
 #include "ViewportHeadlessDemo.hh"
+#endif
 #include "TextureLoadController.hh"
 #include "LongOperationCancel.hh"
 #include "OrdinaryColorSource.hh"
+#if MPAINTER_WITH_HARNESS
 #include "TextureImportCpuDemo.hh"
+#endif
 #include "TextureIoAwait.hh"
 #include "AssetThumbnail.hh"
 #include "BrushJitterStamp.hh"
@@ -275,7 +304,9 @@ void configure_theme(QApplication &app)
   bts::theme::apply(app);
 }
 
+#if MPAINTER_WITH_HARNESS
 #include "MainHarnessInput.inc"
+#endif
 
 #include "WorkspaceSession.inc"
 

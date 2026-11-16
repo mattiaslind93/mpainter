@@ -5,9 +5,17 @@ the release build behind `MPAINTER_WITH_HARNESS` (restructure plan, phase 4).
 
 ## Where we are
 
-- `native/harness/HarnessOptions.hh` registers the 148 harness command-line options.
+- `MPAINTER_WITH_HARNESS` is a CMake option, ON by default. OFF does not compile `native/harness`
+  or the `native/tests` sources that are on `bts-host` only so the harness can run, and `main()`
+  includes `native/host/app/HarnessDisabled.hh` instead of the harness headers. The preview
+  includes `GpuPaintPages.hh` itself, so an OFF build can compile the paint path. CTest
+  registers `asset-dragdrop-workspace` only when the option is ON, and `bts-cpu-check` launches
+  `mpainter --cpu-*` only then. The three older CPU failures (drag-and-drop, numeric locale,
+  session guard) stay in the suite.
+- `native/harness/HarnessOptions.hh` registers the 149 harness command-line options.
   `HarnessDispatch.hh` runs the tests that need no workspace. `MainHarnessInput.inc` holds the
-  synthetic input helpers.
+  synthetic input helpers. The session demo sections and the other harness calls in host files
+  sit behind `#if MPAINTER_WITH_HARNESS`, so an OFF translation unit does not name harness symbols.
 - The rest of `main()` still reads harness options 305 times (`parser.isSet`, `parser.value`,
   `parser.values`; product options are read 15 times) and `BTS_*` environment switches 127 times. They sit inline, mixed with product code, and share
   `main()`'s local lambdas and state (`workspace`, `viewport`, `host`, `document`, the callbacks).
@@ -81,5 +89,9 @@ class HarnessContext {
    `docs/architecture/bts-variables.md`.
 3. `WorkspaceContext` and the first hooks, one demo family per step. Each step moves one block
    verbatim, apart from the reads of `main()` locals, which become `ctx.` reads.
-4. `MPAINTER_WITH_HARNESS`, `HarnessDisabled.hh`, and an `OFF` build that configures, compiles
-   and links. That build is a new build directory, so it needs the owner's go-ahead.
+4. `MPAINTER_WITH_HARNESS` and `HarnessDisabled.hh` are in place, and the harness calls that
+   would otherwise need harness symbols are behind `#if MPAINTER_WITH_HARNESS`. Production
+   headers the preview needs stay outside that gate. The owner has run an OFF configure; the
+   link after the paint-header fix is still to be run. `env_set` and the `WorkspaceContext`
+   hooks above are not done; the preprocessor gate is what keeps the harness blocks out of the
+   release translation unit.

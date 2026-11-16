@@ -166,7 +166,10 @@ std::optional<std::vector<MeshBakeResult>> choose_mesh_bake(
   QDialog settings(parent);
   settings.setObjectName("meshBakeDialog");
   settings.setWindowTitle("Baking");
-  settings.resize(620, 620);
+  // Device-independent points: the texture-set list and the settings column
+  // sit side by side and need room for both.
+  settings.setMinimumWidth(700);
+  settings.resize(780, 620);
   auto *layout = new QVBoxLayout(&settings);
   auto *body = new QHBoxLayout;
   layout->addLayout(body, 1);

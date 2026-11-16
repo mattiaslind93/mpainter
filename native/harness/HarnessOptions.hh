@@ -25,6 +25,8 @@ inline void add_harness_options(QCommandLineParser &parser)
   parser.addOption(
       {"navigation-demo-dir", "Capture camera navigation events and exit", "directory"});
   parser.addOption({"new-mesh", "Create a native project from this OBJ after startup", "file"});
+  parser.addOption(
+      {"startup-shaderball", "Open the bundled Shaderball as a test scene after startup"});
   parser.addOption({"new-demo-dir",
                     "Capture native New and invalid-import preservation, then exit",
                     "directory"});

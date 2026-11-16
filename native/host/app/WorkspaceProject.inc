@@ -553,6 +553,7 @@ const auto save_document = [&](QString path) {
     request_save({path, {}, document->id(), document_revision, false, false, expected});
   return true;
 };
+#if MPAINTER_WITH_HARNESS
 if (qEnvironmentVariableIsSet("BTS_AE_PERSISTENCE_DEMO")) {
   auto *state_action = new QAction(workspace);
   state_action->setObjectName("guiAeState");
@@ -593,6 +594,7 @@ if (qEnvironmentVariableIsSet("BTS_AE_PERSISTENCE_DEMO")) {
     save_document(harness.value("gui-fix-demo") + "/ae.blend");
   });
 }
+#endif
 bts::ProjectOpenJob project_opener(host);
 bts::NativeHeightUiHooks height_hooks;
 auto *height_panel = workspace ? workspace->native_material_panel() : nullptr;
@@ -1048,6 +1050,7 @@ const auto begin_open_document = [&](const QString &path, bool recovered = false
     workspace->set_status("Open failed: " + QString::fromUtf8(error.what()));
   }
 };
+#if MPAINTER_WITH_HARNESS
 if (qEnvironmentVariableIsSet("BTS_AE_PERSISTENCE_DEMO")) {
   auto *open_action = new QAction(workspace);
   open_action->setObjectName("guiAeOpen");
@@ -1056,6 +1059,7 @@ if (qEnvironmentVariableIsSet("BTS_AE_PERSISTENCE_DEMO")) {
         qEnvironmentVariable("BTS_AE_PROJECT", harness.value("gui-fix-demo") + "/ae.blend"));
   });
 }
+#endif
 const auto recover_project = [&](const QString &path) {
   open_document(path);
   document_path.clear();

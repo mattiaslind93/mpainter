@@ -1,17 +1,26 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+#ifndef MPAINTER_WITH_HARNESS
+#define MPAINTER_WITH_HARNESS 1
+#endif
 #include "NativeMaterialBundleRoundtrip.hh"
 #include "NativeMaterialImageUpload.hh"
 #include "NativeMaterialResource.hh"
 #include "NativeMaterialAsset.hh"
 #include "NativeMaterialGpuCompiler.hh"
+#if MPAINTER_WITH_HARNESS
 #include "NativeMaterialStackTest.hh"
+#endif
 #include "NativeMaterialImages.hh"
 #include "NativeMaterialArchive.hh"
 #include <QSaveFile>
+#if MPAINTER_WITH_HARNESS
 #include "NativeMaterialGpuProgramTest.hh"
+#endif
 #include "NativeMaterialGpuPrototype.hh"
 #include "NativeMaterialGraph.hh"
+#if MPAINTER_WITH_HARNESS
 #include "NativeMaterialMappingSourceTest.hh"
+#endif
 #include "BlendMaterial.hh"
 #include <QJsonArray>
 #include "BKE_image.hh"
@@ -52,6 +61,7 @@
 #include <memory>
 #include <stdexcept>
 namespace bts {
+#if MPAINTER_WITH_HARNESS
 namespace {
 using namespace blender;
 using Compilation = NativeMaterialCompilation;
@@ -547,4 +557,7 @@ void verify_native_material_gpu_prototype(const blender::Main &reference)
               compile_ms);
   std::fflush(stdout);
 }
+#else
+void verify_native_material_gpu_prototype(const blender::Main &) {}
+#endif
 }  // namespace bts

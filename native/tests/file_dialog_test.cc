@@ -471,6 +471,17 @@ int main(int argc, char **argv)
     std::cout << "Cross-process Recent/Pinned persistence passed\n";
     return 0;
   }
+  // cpu-check reuses this directory. A previous run leaves pins here, and the
+  // count below would then not be the two folders this process pins.
+  {
+    QSettings preferences("mPainter", "Preferences");
+    preferences.remove("fileBrowser/pinnedFolders");
+    preferences.remove("fileBrowser/recentFolders");
+    preferences.sync();
+    QSettings dialog_state("mPainter", "FileDialogState");
+    dialog_state.clear();
+    dialog_state.sync();
+  }
   for (int i = 0; i < 13; ++i)
     bts::FileDialog::remember_folder(root + QString("/folders/%1").arg(i));
   assert(bts::FileDialog::recent_folders().size() == 10);

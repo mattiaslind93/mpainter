@@ -1,4 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+#ifndef MPAINTER_WITH_HARNESS
+#define MPAINTER_WITH_HARNESS 1
+#endif
 #include "TextureSetResidency.hh"
 #include "LayerSourceChannels.hh"
 #include "NativeMaterialPreparationQueue.hh"
@@ -22,8 +25,10 @@
 #include "AdjustmentPaintPlan.hh"
 #include "BumpPrecision.hh"
 #include "GpuAdjustmentPages.hh"
+#if MPAINTER_WITH_HARNESS
 #include "../tests/FolderCompositionFixture.hh"
 #include "../tests/SmartMaskProbe.hh"
+#endif
 #include "GpuLayerChannel.hh"
 #include "GpuLayerEffects.hh"
 #include "GpuMaskStages.hh"
@@ -35,7 +40,9 @@
 #include "GpuThumbnail.hh"
 #include "SmartMaskThumbnailPacket.hh"
 #include "GpuLayerCapture.hh"
+#if MPAINTER_WITH_HARNESS
 #include "GpuFlattenTest.hh"
+#endif
 #include "QuickMaskPreview.hh"
 #include <thread>
 #include <QJsonDocument>
@@ -49,8 +56,11 @@
 #include "GpuMarginPlan.hh"
 #include "GpuMarginExecutor.hh"
 #include "GpuDerivedDirty.hh"
+#if MPAINTER_WITH_HARNESS
 #include "GpuBrushRasterTest.hh"
 #include "GpuAuthoringWorkerTest.hh"
+#endif
+#include "GpuPaintPages.hh"
 #include "GpuTextureProbe.hh"
 #include "IMB_imbuf.hh"
 #include "IMB_imbuf_types.hh"
@@ -561,11 +571,13 @@ void GpuLayerPreview::begin_frame()
       s.reported_authoring_pages = count;
     }
   }
+#if MPAINTER_WITH_HARNESS
   static bool tested = false;
   if (!tested && std::getenv("BTS_VERIFY_GPU_STACK")) {
     tested = true;
     self_test();
   }
+#endif
   collect_retired();
   impl_->poll_programs();
   if (!impl_->startup_prepared && !impl_->failed &&
@@ -637,7 +649,11 @@ void GpuLayerPreview::begin_frame()
     if (!impl_->authoring_pages.programs_started())
       throw std::runtime_error("Authoring oracle requires the hosted worker route");
     performance::Scope verification("gpu_authoring_worker_verification");
+#if MPAINTER_WITH_HARNESS
     verify_gpu_authoring_workers(impl_->authoring_pages);
+#else
+    throw std::runtime_error("Authoring worker oracle is not in this build");
+#endif
     authoring_verified = true;
   }
   impl_->remaining = upload_budget;
@@ -3033,6 +3049,8 @@ GpuPreviewUpdate GpuLayerPreview::resolve_normal(const TextureSet &source_set,
   }
   return GpuPreviewUpdate::Updated;
 }
+#if MPAINTER_WITH_HARNESS
 #include "GpuLayerPreviewSelfTest.inc"
+#endif
 
 }  // namespace bts

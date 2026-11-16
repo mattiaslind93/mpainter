@@ -22,7 +22,7 @@ The mPainter application, C++20, in domain folders. `docs/architecture/source-la
 
 ## Startup
 
-`main()` in `app/main.cc` is short: process setup, the command line (product options; the harness options come from `native/harness/HarnessOptions.hh`), the early harness dispatch, the splash and the Blender host. It then builds a `WorkspaceSession` (`app/WorkspaceSession.inc`) and calls its `run()`, which includes its sections in order (`app/WorkspaceState.inc` to `app/WorkspaceWindow.inc`, then the harness sections) and ends with `app.exec()` and the shutdown.
+`main()` in `app/main.cc` is short: process setup, the command line (product options; the harness options come from `native/harness/HarnessOptions.hh`), the early harness dispatch, the splash and the Blender host. It then builds a `WorkspaceSession` (`app/WorkspaceSession.inc`) and calls its `run()`, which includes its sections in order (`app/WorkspaceState.inc` to `app/WorkspaceWindow.inc`, then the harness sections) and ends with `app.exec()` and the shutdown. With `MPAINTER_WITH_HARNESS` OFF, `app/HarnessDisabled.hh` stands in for the harness and the harness sections are left out.
 
 The session is one translation unit with `main.cc` on purpose. The reviewed live-render drivers in `native/tests/` compile `main.cc` with a renamed `main()` and a `start_gui_fix_demo()` macro that names `host`, `viewport` and `edit_material` inside `WorkspaceSession::run()`. Keep preprocessor directives out of that call's arguments; a macro argument may not contain them. Verifiers that read main()'s code as text use `scripts/host/main_source.py`.
 
@@ -32,7 +32,7 @@ The session is one translation unit with `main.cc` on purpose. The reviewed live
 
 ## Blender boundary
 
-- Only `blender/` may include Blender headers. In this folder only `app/main.cc` still includes them outside `blender/`; the rest of the count is harness and test code. `docs/blender-surface.md` lists every Blender header in use; `python3 scripts/mp.py check` counts the files outside `blender/` and fails if the count grows.
+- Only `blender/` may include Blender headers. In this folder only `app/main.cc` still includes them outside `blender/`; the rest of the count is harness and test code. `blender/GpuTextureProbe.hh` is the diagnostic readback product code calls, so it lives here. `docs/blender-surface.md` lists every Blender header in use; `python3 scripts/mp.py check` counts the files outside `blender/` and fails if the count grows.
 - Do not add Blender includes to UI, panel or widget files.
 
 ## Platform code
