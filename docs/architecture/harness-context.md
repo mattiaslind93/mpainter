@@ -12,7 +12,7 @@ the release build behind `MPAINTER_WITH_HARNESS` (restructure plan, phase 4).
   registers `asset-dragdrop-workspace` only when the option is ON, and `bts-cpu-check` launches
   `mpainter --cpu-*` only then. The three older CPU failures (drag-and-drop, numeric locale,
   session guard) stay in the suite.
-- `native/harness/HarnessOptions.hh` registers the 148 harness command-line options.
+- `native/harness/HarnessOptions.hh` registers the 149 harness command-line options.
   `HarnessDispatch.hh` runs the tests that need no workspace. `MainHarnessInput.inc` holds the
   synthetic input helpers. The session demo sections and the other harness calls in host files
   sit behind `#if MPAINTER_WITH_HARNESS`, so an OFF translation unit does not name harness symbols.

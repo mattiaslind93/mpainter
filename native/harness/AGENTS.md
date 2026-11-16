@@ -4,7 +4,7 @@ Test, demo, proof and witness code for the app (`*Demo`, `*Test`, `*Proof`, `*Wi
 
 ## How main() reaches it
 
-- `HarnessOptions.hh` registers the 148 harness command-line options. Product options stay in `main()`.
+- `HarnessOptions.hh` registers the 149 harness command-line options. Product options stay in `main()`.
 - `HarnessDispatch.hh` runs the tests that need no workspace (`run_pre_host_test`, `run_host_test`).
 - `HarnessContext.hh` is main()'s one view of the harness command line. Read harness options only through it; `python3 scripts/mp.py check` (gate `harness-seam`) enforces that.
 - `SessionDemoFlags.inc`, `SessionDemoSequence.inc`, `SessionCaptureDemos.inc` and `SessionDemoActions.inc` are the demo sections of the Painter session; `native/host/app/WorkspaceSession.inc` includes them in order.

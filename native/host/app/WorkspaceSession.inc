@@ -254,19 +254,14 @@ int WorkspaceSession::run()
     });
     material_filter_test.start();
   }
-  // A plain launch with nothing to open starts on the bundled Shaderball, so
-  // the app opens on something to paint instead of on an empty viewport. The
-  // New Project dialog does the work unshown, which is what keeps the mesh
-  // lookup, the validation and every default in one place. Demo and test
-  // launches always pass options of their own, and are left alone.
+  // A customer launch opens on the empty workspace. The bundled Shaderball
+  // opens as a test scene only when the harness asks for it with
+  // --startup-shaderball, which a release build does not register. The New
+  // Project dialog does the work unshown, which is what keeps the mesh
+  // lookup, the validation and every default in one place.
   QTimer startup_project;
   if (workspace && !qEnvironmentVariableIsSet("BTS_HEADLESS_WORKSPACE")) {
-    const auto given = parser.optionNames();
-    const bool plain = parser.positionalArguments().isEmpty() &&
-                       std::all_of(given.begin(), given.end(), [](const QString &name) {
-                         return name == "workspace" || name == "no-splash";
-                       });
-    if (plain) {
+    if (harness.is_set("startup-shaderball")) {
       startup_project.setSingleShot(true);
       QObject::connect(&startup_project, &QTimer::timeout, window.get(), [&] {
         if (document || opening_project || project_opener.pending())
