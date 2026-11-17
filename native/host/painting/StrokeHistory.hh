@@ -22,8 +22,10 @@ inline bool same_stroke_storage(const StrokeRaster &a, const StrokeRaster &b)
       return false;
     for (const auto &[tile, pixels] : a.tiles()) {
       const auto found = b.tiles().find(tile);
-      if (found == b.tiles().end() || pixels.resolution() != found->second.resolution() ||
-          pixels.page_versions() != found->second.page_versions())
+      if (found == b.tiles().end() || pixels.resolution() != found->second.resolution())
+        return false;
+      PaintPixels::PageVersions left, right;
+      if (pixels.page_versions(left) != found->second.page_versions(right))
         return false;
     }
     return true;

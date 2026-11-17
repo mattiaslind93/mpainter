@@ -3,6 +3,7 @@
 #include "GpuBakeBvh.hh"
 #include "DisplacementBake.hh"
 #include "FillProjection.hh"
+#include "BLI_task.hh"
 #include "GPU_context.hh"
 #include "GPU_capabilities.hh"
 #include "GPU_compute.hh"
@@ -41,7 +42,8 @@ inline std::vector<float> gpu_bake_cosine_occlusion(
     float origin_epsilon = 0,
     bool visibility = false,
     std::span<const std::array<float, 3>> geometric = {},
-    const GpuBakeRayFilter *filter = nullptr)
+    const GpuBakeRayFilter *filter = nullptr,
+    const std::vector<bake_bvh::Node> *prebuilt = nullptr)
 {
   using namespace blender;
   if (!GPU_context_active_get())
@@ -63,7 +65,13 @@ inline std::vector<float> gpu_bake_cosine_occlusion(
                                    GPU_max_storage_buffer_size(),
                                    GPU_max_work_group_count(0),
                                    availability ? *availability : ResourceAvailability{});
-  auto nodes = bake_bvh::build(triangles);
+  // A caller tracing several maps against one scene builds the tree once.
+  std::vector<bake_bvh::Node> built;
+  if (!prebuilt)
+    built = bake_bvh::build(triangles);
+  else if (prebuilt->size() != bake_bvh::node_count(triangles.size()))
+    throw std::invalid_argument("GPU bake BVH does not match the triangles");
+  const auto &nodes = prebuilt ? *prebuilt : built;
   std::vector<std::array<float, 4>> tris(std::size_t(resource_product(triangles.size(), 3)));
   for (std::size_t i = 0; i < triangles.size(); ++i)
     for (int k = 0; k < 3; ++k)
@@ -199,32 +207,43 @@ void main(){
       const auto index = point++;
       const auto &value = points[index];
       bake_bvh::Frame frame;
-      if (!value.valid ||
-          !bake_bvh::frame(
+      if (value.valid &&
+          bake_bvh::frame(
               frame, value.position, value.normal, std::uint32_t(index), maximum, inward))
-        continue;
-      const auto offset = owners.size() * std::size_t(rays);
-      for (int sample = 0; sample < rays; ++sample) {
-        auto &origin = ray_data[(offset + sample) * 2];
-        auto &direction = ray_data[(offset + sample) * 2 + 1];
-        if (!geometric.empty())
-          bake_bvh::surface_ray(
-              frame, sample, rays, geometric[index], inward, origin_epsilon, origin, direction);
-        else {
-          bake_bvh::ray(frame, sample, rays, origin, direction);
-          if (origin_epsilon > 0)
-            for (int axis = 0; axis < 3; ++axis)
-              origin[axis] = frame.position[axis] + frame.n[axis] * origin_epsilon;
-        }
-      }
-      const auto match = match_offsets.find(value.match_object);
-      const float packed = std::bit_cast<float>(match == match_offsets.end() ? 0u : match->second);
-      for (int sample = 0; sample < rays; ++sample)
-        ray_data[(offset + sample) * 2 + 1][3] = packed;
-      owners.push_back(index);
+        owners.push_back(index);
     }
     if (owners.empty())
       continue;
+    // Each point writes only its own rays, so the samples are the same ones the
+    // serial loop produced; building them is most of the CPU time of a ray map.
+    threading::parallel_for(IndexRange(owners.size()), 64, [&](const IndexRange range) {
+      for (const std::size_t owner : range) {
+        const auto index = owners[owner];
+        const auto &value = points[index];
+        bake_bvh::Frame frame;
+        bake_bvh::frame(
+            frame, value.position, value.normal, std::uint32_t(index), maximum, inward);
+        const auto offset = owner * std::size_t(rays);
+        for (int sample = 0; sample < rays; ++sample) {
+          auto &origin = ray_data[(offset + sample) * 2];
+          auto &direction = ray_data[(offset + sample) * 2 + 1];
+          if (!geometric.empty())
+            bake_bvh::surface_ray(
+                frame, sample, rays, geometric[index], inward, origin_epsilon, origin, direction);
+          else {
+            bake_bvh::ray(frame, sample, rays, origin, direction);
+            if (origin_epsilon > 0)
+              for (int axis = 0; axis < 3; ++axis)
+                origin[axis] = frame.position[axis] + frame.n[axis] * origin_epsilon;
+          }
+        }
+        const auto match = match_offsets.find(value.match_object);
+        const float packed = std::bit_cast<float>(match == match_offsets.end() ? 0u :
+                                                                               match->second);
+        for (int sample = 0; sample < rays; ++sample)
+          ray_data[(offset + sample) * 2 + 1][3] = packed;
+      }
+    });
     GPU_storagebuf_update(ray_buf.get(), ray_data.data());
     const int count = int(owners.size() * std::size_t(rays));
     if (statistics) {
@@ -277,14 +296,16 @@ void main(){
     } while (unfinished[0]);
     GPU_storagebuf_sync_to_host(hit_buf.get());
     GPU_storagebuf_read(hit_buf.get(), hits.data());
-    for (std::size_t owner = 0; owner < owners.size(); ++owner) {
-      float sum = 0;
-      for (int sample = 0; sample < rays; ++sample) {
-        const float value = hits[owner * std::size_t(rays) + sample];
-        sum += visibility ? (value >= 1 ? 1.f : 0.f) : value;
+    threading::parallel_for(IndexRange(owners.size()), 1024, [&](const IndexRange range) {
+      for (const std::size_t owner : range) {
+        float sum = 0;
+        for (int sample = 0; sample < rays; ++sample) {
+          const float value = hits[owner * std::size_t(rays) + sample];
+          sum += visibility ? (value >= 1 ? 1.f : 0.f) : value;
+        }
+        occlusion[owners[owner]] = sum / rays;
       }
-      occlusion[owners[owner]] = sum / rays;
-    }
+    });
   }
   return occlusion;
 }

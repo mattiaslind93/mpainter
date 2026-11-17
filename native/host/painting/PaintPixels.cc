@@ -409,6 +409,13 @@ PaintPixels::PageVersions PaintPixels::page_versions() const
       result[c][key] = page->version();
   return result;
 }
+const PaintPixels::PageVersions &PaintPixels::page_versions(PageVersions &storage) const
+{
+  if (recipe_)
+    return recipe_->versions;
+  storage = page_versions();
+  return storage;
+}
 void PaintPixels::visit_page_versions(
     int channel, const std::function<void(std::uint32_t, std::uint64_t)> &visit) const
 {
@@ -1056,7 +1063,8 @@ PaintPixels PaintPixels::difference(const PaintPixels &before,
   recipe->resolution = resolution;
   recipe->erase = erase;
   recipe->revision = next_page_version.fetch_add(1, std::memory_order_relaxed);
-  const auto a = before.page_versions(), b = after.page_versions();
+  PageVersions before_storage, after_storage;
+  const auto &a = before.page_versions(before_storage), &b = after.page_versions(after_storage);
   for (int c = 0; c < 5; ++c) {
     auto keys = a[c];
     keys.insert(b[c].begin(), b[c].end());
@@ -1125,7 +1133,9 @@ PaintPixels::Bounds PaintPixels::mix_stroke(const PaintPixels &before,
     recipe->complete_stroke = true;
     recipe->versions = page_versions();
     recipe->revision = next_page_version.fetch_add(1, std::memory_order_relaxed);
-    const auto a = before.page_versions(), b = transported.page_versions();
+    PageVersions before_storage, transported_storage;
+    const auto &a = before.page_versions(before_storage),
+               &b = transported.page_versions(transported_storage);
     bool changed = false;
     for (int c = 0; c < 5; ++c)
       for (int y = touched.y0 / page_side; y <= (touched.y1 - 1) / page_side; ++y)
@@ -1237,7 +1247,9 @@ PaintPixels::Bounds PaintPixels::over_stroke(const PaintPixels &before,
     recipe->complete_stroke = complete_stroke && replace;
     recipe->versions = page_versions();
     recipe->revision = next_page_version.fetch_add(1, std::memory_order_relaxed);
-    const auto source = stroke.page_versions(), basis = before.page_versions();
+    PageVersions source_storage, basis_storage;
+    const auto &source = stroke.page_versions(source_storage),
+               &basis = before.page_versions(basis_storage);
     bool changed = false;
     for (int c = 0; c < 5; ++c) {
       if (source[c].empty() && (!replace || recipe->versions[c] == basis[c]))
